@@ -1,0 +1,970 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Getting started with kmemcheck &mdash; The Linux Kernel 4.10.0-rc8+ documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="The Linux Kernel 4.10.0-rc8+ documentation" href="../index.html"/>
+        <link rel="up" title="Development tools for the kernel" href="index.html"/>
+        <link rel="next" title="Debugging kernel and modules via gdb" href="gdb-kernel-debugging.html"/>
+        <link rel="prev" title="Kernel Memory Leak Detector" href="kmemleak.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                4.10.0-rc8
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user&#8217;s and administrator&#8217;s guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Development tools for the kernel</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="coccinelle.html">Coccinelle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sparse.html">Sparse</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kcov.html">kcov: code coverage for fuzzing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gcov.html">Using gcov with the Linux kernel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kasan.html">The Kernel Address Sanitizer (KASAN)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ubsan.html">The Undefined Behavior Sanitizer - UBSAN</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kmemleak.html">Kernel Memory Leak Detector</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Getting started with kmemcheck</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#downloading">Downloading</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#configuring-and-compiling">Configuring and compiling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#how-to-use">How to use</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#booting">Booting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#run-time-enable-disable">Run-time enable/disable</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#debugging">Debugging</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#annotating-false-positives">Annotating false positives</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#reporting-errors">Reporting errors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#technical-description">Technical description</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="gdb-kernel-debugging.html">Debugging kernel and modules via gdb</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer&#8217;s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../media/index.html">Linux Media Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer&#8217;s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/ko_KR/index.html">Korean translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">The Linux Kernel</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="index.html">Development tools for the kernel</a> &raquo;</li>
+      
+    <li>Getting started with kmemcheck</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/dev-tools/kmemcheck.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="getting-started-with-kmemcheck">
+<h1>Getting started with kmemcheck<a class="headerlink" href="#getting-started-with-kmemcheck" title="Permalink to this headline">¶</a></h1>
+<p>Vegard Nossum &lt;<a class="reference external" href="mailto:vegardno&#37;&#52;&#48;ifi&#46;uio&#46;no">vegardno<span>&#64;</span>ifi<span>&#46;</span>uio<span>&#46;</span>no</a>&gt;</p>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>kmemcheck is a debugging feature for the Linux Kernel. More specifically, it
+is a dynamic checker that detects and warns about some uses of uninitialized
+memory.</p>
+<p>Userspace programmers might be familiar with Valgrind&#8217;s memcheck. The main
+difference between memcheck and kmemcheck is that memcheck works for userspace
+programs only, and kmemcheck works for the kernel only. The implementations
+are of course vastly different. Because of this, kmemcheck is not as accurate
+as memcheck, but it turns out to be good enough in practice to discover real
+programmer errors that the compiler is not able to find through static
+analysis.</p>
+<p>Enabling kmemcheck on a kernel will probably slow it down to the extent that
+the machine will not be usable for normal workloads such as e.g. an
+interactive desktop. kmemcheck will also cause the kernel to use about twice
+as much memory as normal. For this reason, kmemcheck is strictly a debugging
+feature.</p>
+</div>
+<div class="section" id="downloading">
+<h2>Downloading<a class="headerlink" href="#downloading" title="Permalink to this headline">¶</a></h2>
+<p>As of version 2.6.31-rc1, kmemcheck is included in the mainline kernel.</p>
+</div>
+<div class="section" id="configuring-and-compiling">
+<h2>Configuring and compiling<a class="headerlink" href="#configuring-and-compiling" title="Permalink to this headline">¶</a></h2>
+<p>kmemcheck only works for the x86 (both 32- and 64-bit) platform. A number of
+configuration variables must have specific settings in order for the kmemcheck
+menu to even appear in &#8220;menuconfig&#8221;. These are:</p>
+<ul>
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">CONFIG_CC_OPTIMIZE_FOR_SIZE=n</span></code></dt>
+<dd><p class="first">This option is located under &#8220;General setup&#8221; / &#8220;Optimize for size&#8221;.</p>
+<p class="last">Without this, gcc will use certain optimizations that usually lead to
+false positive warnings from kmemcheck. An example of this is a 16-bit
+field in a struct, where gcc may load 32 bits, then discard the upper
+16 bits. kmemcheck sees only the 32-bit load, and may trigger a
+warning for the upper 16 bits (if they&#8217;re uninitialized).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">CONFIG_SLAB=y</span></code> or <code class="docutils literal"><span class="pre">CONFIG_SLUB=y</span></code></dt>
+<dd><p class="first last">This option is located under &#8220;General setup&#8221; / &#8220;Choose SLAB
+allocator&#8221;.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">CONFIG_FUNCTION_TRACER=n</span></code></dt>
+<dd><p class="first">This option is located under &#8220;Kernel hacking&#8221; / &#8220;Tracers&#8221; / &#8220;Kernel
+Function Tracer&#8221;</p>
+<p class="last">When function tracing is compiled in, gcc emits a call to another
+function at the beginning of every function. This means that when the
+page fault handler is called, the ftrace framework will be called
+before kmemcheck has had a chance to handle the fault. If ftrace then
+modifies memory that was tracked by kmemcheck, the result is an
+endless recursive page fault.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">CONFIG_DEBUG_PAGEALLOC=n</span></code></dt>
+<dd><p class="first last">This option is located under &#8220;Kernel hacking&#8221; / &#8220;Memory Debugging&#8221;
+/ &#8220;Debug page memory allocations&#8221;.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>In addition, I highly recommend turning on <code class="docutils literal"><span class="pre">CONFIG_DEBUG_INFO=y</span></code>. This is also
+located under &#8220;Kernel hacking&#8221;. With this, you will be able to get line number
+information from the kmemcheck warnings, which is extremely valuable in
+debugging a problem. This option is not mandatory, however, because it slows
+down the compilation process and produces a much bigger kernel image.</p>
+<p>Now the kmemcheck menu should be visible (under &#8220;Kernel hacking&#8221; / &#8220;Memory
+Debugging&#8221; / &#8220;kmemcheck: trap use of uninitialized memory&#8221;). Here follows
+a description of the kmemcheck configuration variables:</p>
+<ul>
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">CONFIG_KMEMCHECK</span></code></dt>
+<dd><p class="first last">This must be enabled in order to use kmemcheck at all...</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">CONFIG_KMEMCHECK_``[``DISABLED</span></code> | <code class="docutils literal"><span class="pre">ENABLED</span></code> | <code class="docutils literal"><span class="pre">ONESHOT</span></code>]``_BY_DEFAULT``</dt>
+<dd><p class="first">This option controls the status of kmemcheck at boot-time. &#8220;Enabled&#8221;
+will enable kmemcheck right from the start, &#8220;disabled&#8221; will boot the
+kernel as normal (but with the kmemcheck code compiled in, so it can
+be enabled at run-time after the kernel has booted), and &#8220;one-shot&#8221; is
+a special mode which will turn kmemcheck off automatically after
+detecting the first use of uninitialized memory.</p>
+<p>If you are using kmemcheck to actively debug a problem, then you
+probably want to choose &#8220;enabled&#8221; here.</p>
+<p>The one-shot mode is mostly useful in automated test setups because it
+can prevent floods of warnings and increase the chances of the machine
+surviving in case something is really wrong. In other cases, the one-
+shot mode could actually be counter-productive because it would turn
+itself off at the very first error &#8211; in the case of a false positive
+too &#8211; and this would come in the way of debugging the specific
+problem you were interested in.</p>
+<p class="last">If you would like to use your kernel as normal, but with a chance to
+enable kmemcheck in case of some problem, it might be a good idea to
+choose &#8220;disabled&#8221; here. When kmemcheck is disabled, most of the run-
+time overhead is not incurred, and the kernel will be almost as fast
+as normal.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">CONFIG_KMEMCHECK_QUEUE_SIZE</span></code></dt>
+<dd><p class="first">Select the maximum number of error reports to store in an internal
+(fixed-size) buffer. Since errors can occur virtually anywhere and in
+any context, we need a temporary storage area which is guaranteed not
+to generate any other page faults when accessed. The queue will be
+emptied as soon as a tasklet may be scheduled. If the queue is full,
+new error reports will be lost.</p>
+<p>The default value of 64 is probably fine. If some code produces more
+than 64 errors within an irqs-off section, then the code is likely to
+produce many, many more, too, and these additional reports seldom give
+any more information (the first report is usually the most valuable
+anyway).</p>
+<p class="last">This number might have to be adjusted if you are not using serial
+console or similar to capture the kernel log. If you are using the
+&#8220;dmesg&#8221; command to save the log, then getting a lot of kmemcheck
+warnings might overflow the kernel log itself, and the earlier reports
+will get lost in that way instead. Try setting this to 10 or so on
+such a setup.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">CONFIG_KMEMCHECK_SHADOW_COPY_SHIFT</span></code></dt>
+<dd><p class="first">Select the number of shadow bytes to save along with each entry of the
+error-report queue. These bytes indicate what parts of an allocation
+are initialized, uninitialized, etc. and will be displayed when an
+error is detected to help the debugging of a particular problem.</p>
+<p>The number entered here is actually the logarithm of the number of
+bytes that will be saved. So if you pick for example 5 here, kmemcheck
+will save 2^5 = 32 bytes.</p>
+<p class="last">The default value should be fine for debugging most problems. It also
+fits nicely within 80 columns.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">CONFIG_KMEMCHECK_PARTIAL_OK</span></code></dt>
+<dd><p class="first">This option (when enabled) works around certain GCC optimizations that
+produce 32-bit reads from 16-bit variables where the upper 16 bits are
+thrown away afterwards.</p>
+<p class="last">The default value (enabled) is recommended. This may of course hide
+some real errors, but disabling it would probably produce a lot of
+false positives.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">CONFIG_KMEMCHECK_BITOPS_OK</span></code></dt>
+<dd><p class="first">This option silences warnings that would be generated for bit-field
+accesses where not all the bits are initialized at the same time. This
+may also hide some real bugs.</p>
+<p class="last">This option is probably obsolete, or it should be replaced with
+the kmemcheck-/bitfield-annotations for the code in question. The
+default value is therefore fine.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Now compile the kernel as usual.</p>
+</div>
+<div class="section" id="how-to-use">
+<h2>How to use<a class="headerlink" href="#how-to-use" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="booting">
+<h3>Booting<a class="headerlink" href="#booting" title="Permalink to this headline">¶</a></h3>
+<p>First some information about the command-line options. There is only one
+option specific to kmemcheck, and this is called &#8220;kmemcheck&#8221;. It can be used
+to override the default mode as chosen by the <code class="docutils literal"><span class="pre">CONFIG_KMEMCHECK_*_BY_DEFAULT</span></code>
+option. Its possible settings are:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">kmemcheck=0</span></code> (disabled)</li>
+<li><code class="docutils literal"><span class="pre">kmemcheck=1</span></code> (enabled)</li>
+<li><code class="docutils literal"><span class="pre">kmemcheck=2</span></code> (one-shot mode)</li>
+</ul>
+<p>If SLUB debugging has been enabled in the kernel, it may take precedence over
+kmemcheck in such a way that the slab caches which are under SLUB debugging
+will not be tracked by kmemcheck. In order to ensure that this doesn&#8217;t happen
+(even though it shouldn&#8217;t by default), use SLUB&#8217;s boot option <code class="docutils literal"><span class="pre">slub_debug</span></code>,
+like this: <code class="docutils literal"><span class="pre">slub_debug=-</span></code></p>
+<p>In fact, this option may also be used for fine-grained control over SLUB vs.
+kmemcheck. For example, if the command line includes
+<code class="docutils literal"><span class="pre">kmemcheck=1</span> <span class="pre">slub_debug=,dentry</span></code>, then SLUB debugging will be used only
+for the &#8220;dentry&#8221; slab cache, and with kmemcheck tracking all the other
+caches. This is advanced usage, however, and is not generally recommended.</p>
+</div>
+<div class="section" id="run-time-enable-disable">
+<h3>Run-time enable/disable<a class="headerlink" href="#run-time-enable-disable" title="Permalink to this headline">¶</a></h3>
+<p>When the kernel has booted, it is possible to enable or disable kmemcheck at
+run-time. WARNING: This feature is still experimental and may cause false
+positive warnings to appear. Therefore, try not to use this. If you find that
+it doesn&#8217;t work properly (e.g. you see an unreasonable amount of warnings), I
+will be happy to take bug reports.</p>
+<p>Use the file <code class="docutils literal"><span class="pre">/proc/sys/kernel/kmemcheck</span></code> for this purpose, e.g.:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>$ echo 0 &gt; /proc/sys/kernel/kmemcheck # disables kmemcheck
+</pre></div>
+</div>
+<p>The numbers are the same as for the <code class="docutils literal"><span class="pre">kmemcheck=</span></code> command-line option.</p>
+</div>
+<div class="section" id="debugging">
+<h3>Debugging<a class="headerlink" href="#debugging" title="Permalink to this headline">¶</a></h3>
+<p>A typical report will look something like this:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>WARNING: kmemcheck: Caught 32-bit read from uninitialized memory (ffff88003e4a2024)
+80000000000000000000000000000000000000000088ffff0000000000000000
+ i i i i u u u u i i i i i i i i u u u u u u u u u u u u u u u u
+         ^
+
+Pid: 1856, comm: ntpdate Not tainted 2.6.29-rc5 #264 945P-A
+RIP: 0010:[&lt;ffffffff8104ede8&gt;]  [&lt;ffffffff8104ede8&gt;] __dequeue_signal+0xc8/0x190
+RSP: 0018:ffff88003cdf7d98  EFLAGS: 00210002
+RAX: 0000000000000030 RBX: ffff88003d4ea968 RCX: 0000000000000009
+RDX: ffff88003e5d6018 RSI: ffff88003e5d6024 RDI: ffff88003cdf7e84
+RBP: ffff88003cdf7db8 R08: ffff88003e5d6000 R09: 0000000000000000
+R10: 0000000000000080 R11: 0000000000000000 R12: 000000000000000e
+R13: ffff88003cdf7e78 R14: ffff88003d530710 R15: ffff88003d5a98c8
+FS:  0000000000000000(0000) GS:ffff880001982000(0063) knlGS:00000
+CS:  0010 DS: 002b ES: 002b CR0: 0000000080050033
+CR2: ffff88003f806ea0 CR3: 000000003c036000 CR4: 00000000000006a0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000ffff4ff0 DR7: 0000000000000400
+ [&lt;ffffffff8104f04e&gt;] dequeue_signal+0x8e/0x170
+ [&lt;ffffffff81050bd8&gt;] get_signal_to_deliver+0x98/0x390
+ [&lt;ffffffff8100b87d&gt;] do_notify_resume+0xad/0x7d0
+ [&lt;ffffffff8100c7b5&gt;] int_signal+0x12/0x17
+ [&lt;ffffffffffffffff&gt;] 0xffffffffffffffff
+</pre></div>
+</div>
+<p>The single most valuable information in this report is the RIP (or EIP on 32-
+bit) value. This will help us pinpoint exactly which instruction that caused
+the warning.</p>
+<p>If your kernel was compiled with <code class="docutils literal"><span class="pre">CONFIG_DEBUG_INFO=y</span></code>, then all we have to do
+is give this address to the addr2line program, like this:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>$ addr2line -e vmlinux -i ffffffff8104ede8
+arch/x86/include/asm/string_64.h:12
+include/asm-generic/siginfo.h:287
+kernel/signal.c:380
+kernel/signal.c:410
+</pre></div>
+</div>
+<p>The &#8220;<code class="docutils literal"><span class="pre">-e</span> <span class="pre">vmlinux</span></code>&#8221; tells addr2line which file to look in. <strong>IMPORTANT:</strong>
+This must be the vmlinux of the kernel that produced the warning in the
+first place! If not, the line number information will almost certainly be
+wrong.</p>
+<p>The &#8220;<code class="docutils literal"><span class="pre">-i</span></code>&#8221; tells addr2line to also print the line numbers of inlined
+functions.  In this case, the flag was very important, because otherwise,
+it would only have printed the first line, which is just a call to
+<code class="docutils literal"><span class="pre">memcpy()</span></code>, which could be called from a thousand places in the kernel, and
+is therefore not very useful.  These inlined functions would not show up in
+the stack trace above, simply because the kernel doesn&#8217;t load the extra
+debugging information. This technique can of course be used with ordinary
+kernel oopses as well.</p>
+<p>In this case, it&#8217;s the caller of <code class="docutils literal"><span class="pre">memcpy()</span></code> that is interesting, and it can be
+found in <code class="docutils literal"><span class="pre">include/asm-generic/siginfo.h</span></code>, line 287:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>281 static inline void copy_siginfo(struct siginfo *to, struct siginfo *from)
+282 {
+283         if (from-&gt;si_code &lt; 0)
+284                 memcpy(to, from, sizeof(*to));
+285         else
+286                 /* _sigchld is currently the largest know union member */
+287                 memcpy(to, from, __ARCH_SI_PREAMBLE_SIZE + sizeof(from-&gt;_sifields._sigchld));
+288 }
+</pre></div>
+</div>
+<p>Since this was a read (kmemcheck usually warns about reads only, though it can
+warn about writes to unallocated or freed memory as well), it was probably the
+&#8220;from&#8221; argument which contained some uninitialized bytes. Following the chain
+of calls, we move upwards to see where &#8220;from&#8221; was allocated or initialized,
+<code class="docutils literal"><span class="pre">kernel/signal.c</span></code>, line 380:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>359 static void collect_signal(int sig, struct sigpending *list, siginfo_t *info)
+360 {
+...
+367         list_for_each_entry(q, &amp;list-&gt;list, list) {
+368                 if (q-&gt;info.si_signo == sig) {
+369                         if (first)
+370                                 goto still_pending;
+371                         first = q;
+...
+377         if (first) {
+378 still_pending:
+379                 list_del_init(&amp;first-&gt;list);
+380                 copy_siginfo(info, &amp;first-&gt;info);
+381                 __sigqueue_free(first);
+...
+392         }
+393 }
+</pre></div>
+</div>
+<p>Here, it is <code class="docutils literal"><span class="pre">&amp;first-&gt;info</span></code> that is being passed on to <code class="docutils literal"><span class="pre">copy_siginfo()</span></code>. The
+variable <code class="docutils literal"><span class="pre">first</span></code> was found on a list &#8211; passed in as the second argument to
+<code class="docutils literal"><span class="pre">collect_signal()</span></code>. We  continue our journey through the stack, to figure out
+where the item on &#8220;list&#8221; was allocated or initialized. We move to line 410:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>395 static int __dequeue_signal(struct sigpending *pending, sigset_t *mask,
+396                         siginfo_t *info)
+397 {
+...
+410                 collect_signal(sig, pending, info);
+...
+414 }
+</pre></div>
+</div>
+<p>Now we need to follow the <code class="docutils literal"><span class="pre">pending</span></code> pointer, since that is being passed on to
+<code class="docutils literal"><span class="pre">collect_signal()</span></code> as <code class="docutils literal"><span class="pre">list</span></code>. At this point, we&#8217;ve run out of lines from the
+&#8220;addr2line&#8221; output. Not to worry, we just paste the next addresses from the
+kmemcheck stack dump, i.e.:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>[&lt;ffffffff8104f04e&gt;] dequeue_signal+0x8e/0x170
+[&lt;ffffffff81050bd8&gt;] get_signal_to_deliver+0x98/0x390
+[&lt;ffffffff8100b87d&gt;] do_notify_resume+0xad/0x7d0
+[&lt;ffffffff8100c7b5&gt;] int_signal+0x12/0x17
+
+   $ addr2line -e vmlinux -i ffffffff8104f04e ffffffff81050bd8 \
+           ffffffff8100b87d ffffffff8100c7b5
+   kernel/signal.c:446
+   kernel/signal.c:1806
+   arch/x86/kernel/signal.c:805
+   arch/x86/kernel/signal.c:871
+   arch/x86/kernel/entry_64.S:694
+</pre></div>
+</div>
+<p>Remember that since these addresses were found on the stack and not as the
+RIP value, they actually point to the _next_ instruction (they are return
+addresses). This becomes obvious when we look at the code for line 446:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>422 int dequeue_signal(struct task_struct *tsk, sigset_t *mask, siginfo_t *info)
+423 {
+...
+431                 signr = __dequeue_signal(&amp;tsk-&gt;signal-&gt;shared_pending,
+432                                          mask, info);
+433                 /*
+434                  * itimer signal ?
+435                  *
+436                  * itimers are process shared and we restart periodic
+437                  * itimers in the signal delivery path to prevent DoS
+438                  * attacks in the high resolution timer case. This is
+439                  * compliant with the old way of self restarting
+440                  * itimers, as the SIGALRM is a legacy signal and only
+441                  * queued once. Changing the restart behaviour to
+442                  * restart the timer in the signal dequeue path is
+443                  * reducing the timer noise on heavy loaded !highres
+444                  * systems too.
+445                  */
+446                 if (unlikely(signr == SIGALRM)) {
+...
+489 }
+</pre></div>
+</div>
+<p>So instead of looking at 446, we should be looking at 431, which is the line
+that executes just before 446. Here we see that what we are looking for is
+<code class="docutils literal"><span class="pre">&amp;tsk-&gt;signal-&gt;shared_pending</span></code>.</p>
+<p>Our next task is now to figure out which function that puts items on this
+<code class="docutils literal"><span class="pre">shared_pending</span></code> list. A crude, but efficient tool, is <code class="docutils literal"><span class="pre">git</span> <span class="pre">grep</span></code>:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>$ git grep -n &#39;shared_pending&#39; kernel/
+...
+kernel/signal.c:828:    pending = group ? &amp;t-&gt;signal-&gt;shared_pending : &amp;t-&gt;pending;
+kernel/signal.c:1339:   pending = group ? &amp;t-&gt;signal-&gt;shared_pending : &amp;t-&gt;pending;
+...
+</pre></div>
+</div>
+<p>There were more results, but none of them were related to list operations,
+and these were the only assignments. We inspect the line numbers more closely
+and find that this is indeed where items are being added to the list:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>816 static int send_signal(int sig, struct siginfo *info, struct task_struct *t,
+817                         int group)
+818 {
+...
+828         pending = group ? &amp;t-&gt;signal-&gt;shared_pending : &amp;t-&gt;pending;
+...
+851         q = __sigqueue_alloc(t, GFP_ATOMIC, (sig &lt; SIGRTMIN &amp;&amp;
+852                                              (is_si_special(info) ||
+853                                               info-&gt;si_code &gt;= 0)));
+854         if (q) {
+855                 list_add_tail(&amp;q-&gt;list, &amp;pending-&gt;list);
+...
+890 }
+</pre></div>
+</div>
+<p>and:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>1309 int send_sigqueue(struct sigqueue *q, struct task_struct *t, int group)
+1310 {
+....
+1339         pending = group ? &amp;t-&gt;signal-&gt;shared_pending : &amp;t-&gt;pending;
+1340         list_add_tail(&amp;q-&gt;list, &amp;pending-&gt;list);
+....
+1347 }
+</pre></div>
+</div>
+<p>In the first case, the list element we are looking for, <code class="docutils literal"><span class="pre">q</span></code>, is being
+returned from the function <code class="docutils literal"><span class="pre">__sigqueue_alloc()</span></code>, which looks like an
+allocation function.  Let&#8217;s take a look at it:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>187 static struct sigqueue *__sigqueue_alloc(struct task_struct *t, gfp_t flags,
+188                                          int override_rlimit)
+189 {
+190         struct sigqueue *q = NULL;
+191         struct user_struct *user;
+192
+193         /*
+194          * We won&#39;t get problems with the target&#39;s UID changing under us
+195          * because changing it requires RCU be used, and if t != current, the
+196          * caller must be holding the RCU readlock (by way of a spinlock) and
+197          * we use RCU protection here
+198          */
+199         user = get_uid(__task_cred(t)-&gt;user);
+200         atomic_inc(&amp;user-&gt;sigpending);
+201         if (override_rlimit ||
+202             atomic_read(&amp;user-&gt;sigpending) &lt;=
+203                         t-&gt;signal-&gt;rlim[RLIMIT_SIGPENDING].rlim_cur)
+204                 q = kmem_cache_alloc(sigqueue_cachep, flags);
+205         if (unlikely(q == NULL)) {
+206                 atomic_dec(&amp;user-&gt;sigpending);
+207                 free_uid(user);
+208         } else {
+209                 INIT_LIST_HEAD(&amp;q-&gt;list);
+210                 q-&gt;flags = 0;
+211                 q-&gt;user = user;
+212         }
+213
+214         return q;
+215 }
+</pre></div>
+</div>
+<p>We see that this function initializes <code class="docutils literal"><span class="pre">q-&gt;list</span></code>, <code class="docutils literal"><span class="pre">q-&gt;flags</span></code>, and
+<code class="docutils literal"><span class="pre">q-&gt;user</span></code>. It seems that now is the time to look at the definition of
+<code class="docutils literal"><span class="pre">struct</span> <span class="pre">sigqueue</span></code>, e.g.:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>14 struct sigqueue {
+15         struct list_head list;
+16         int flags;
+17         siginfo_t info;
+18         struct user_struct *user;
+19 };
+</pre></div>
+</div>
+<p>And, you might remember, it was a <code class="docutils literal"><span class="pre">memcpy()</span></code> on <code class="docutils literal"><span class="pre">&amp;first-&gt;info</span></code> that
+caused the warning, so this makes perfect sense. It also seems reasonable
+to assume that it is the caller of <code class="docutils literal"><span class="pre">__sigqueue_alloc()</span></code> that has the
+responsibility of filling out (initializing) this member.</p>
+<p>But just which fields of the struct were uninitialized? Let&#8217;s look at
+kmemcheck&#8217;s report again:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>WARNING: kmemcheck: Caught 32-bit read from uninitialized memory (ffff88003e4a2024)
+80000000000000000000000000000000000000000088ffff0000000000000000
+ i i i i u u u u i i i i i i i i u u u u u u u u u u u u u u u u
+         ^
+</pre></div>
+</div>
+<p>These first two lines are the memory dump of the memory object itself, and
+the shadow bytemap, respectively. The memory object itself is in this case
+<code class="docutils literal"><span class="pre">&amp;first-&gt;info</span></code>. Just beware that the start of this dump is NOT the start
+of the object itself! The position of the caret (^) corresponds with the
+address of the read (ffff88003e4a2024).</p>
+<p>The shadow bytemap dump legend is as follows:</p>
+<ul class="simple">
+<li>i: initialized</li>
+<li>u: uninitialized</li>
+<li>a: unallocated (memory has been allocated by the slab layer, but has not
+yet been handed off to anybody)</li>
+<li>f: freed (memory has been allocated by the slab layer, but has been freed
+by the previous owner)</li>
+</ul>
+<p>In order to figure out where (relative to the start of the object) the
+uninitialized memory was located, we have to look at the disassembly. For
+that, we&#8217;ll need the RIP address again:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>RIP: 0010:[&lt;ffffffff8104ede8&gt;]  [&lt;ffffffff8104ede8&gt;] __dequeue_signal+0xc8/0x190
+
+    $ objdump -d --no-show-raw-insn vmlinux | grep -C 8 ffffffff8104ede8:
+    ffffffff8104edc8:       mov    %r8,0x8(%r8)
+    ffffffff8104edcc:       test   %r10d,%r10d
+    ffffffff8104edcf:       js     ffffffff8104ee88 &lt;__dequeue_signal+0x168&gt;
+    ffffffff8104edd5:       mov    %rax,%rdx
+    ffffffff8104edd8:       mov    $0xc,%ecx
+    ffffffff8104eddd:       mov    %r13,%rdi
+    ffffffff8104ede0:       mov    $0x30,%eax
+    ffffffff8104ede5:       mov    %rdx,%rsi
+    ffffffff8104ede8:       rep movsl %ds:(%rsi),%es:(%rdi)
+    ffffffff8104edea:       test   $0x2,%al
+    ffffffff8104edec:       je     ffffffff8104edf0 &lt;__dequeue_signal+0xd0&gt;
+    ffffffff8104edee:       movsw  %ds:(%rsi),%es:(%rdi)
+    ffffffff8104edf0:       test   $0x1,%al
+    ffffffff8104edf2:       je     ffffffff8104edf5 &lt;__dequeue_signal+0xd5&gt;
+    ffffffff8104edf4:       movsb  %ds:(%rsi),%es:(%rdi)
+    ffffffff8104edf5:       mov    %r8,%rdi
+    ffffffff8104edf8:       callq  ffffffff8104de60 &lt;__sigqueue_free&gt;
+</pre></div>
+</div>
+<p>As expected, it&#8217;s the &#8220;<code class="docutils literal"><span class="pre">rep</span> <span class="pre">movsl</span></code>&#8221; instruction from the <code class="docutils literal"><span class="pre">memcpy()</span></code>
+that causes the warning. We know about <code class="docutils literal"><span class="pre">REP</span> <span class="pre">MOVSL</span></code> that it uses the register
+<code class="docutils literal"><span class="pre">RCX</span></code> to count the number of remaining iterations. By taking a look at the
+register dump again (from the kmemcheck report), we can figure out how many
+bytes were left to copy:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>RAX: 0000000000000030 RBX: ffff88003d4ea968 RCX: 0000000000000009
+</pre></div>
+</div>
+<p>By looking at the disassembly, we also see that <code class="docutils literal"><span class="pre">%ecx</span></code> is being loaded
+with the value <code class="docutils literal"><span class="pre">$0xc</span></code> just before (ffffffff8104edd8), so we are very
+lucky. Keep in mind that this is the number of iterations, not bytes. And
+since this is a &#8220;long&#8221; operation, we need to multiply by 4 to get the
+number of bytes. So this means that the uninitialized value was encountered
+at 4 * (0xc - 0x9) = 12 bytes from the start of the object.</p>
+<p>We can now try to figure out which field of the &#8220;<code class="docutils literal"><span class="pre">struct</span> <span class="pre">siginfo</span></code>&#8221; that
+was not initialized. This is the beginning of the struct:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>40 typedef struct siginfo {
+41         int si_signo;
+42         int si_errno;
+43         int si_code;
+44
+45         union {
+..
+92         } _sifields;
+93 } siginfo_t;
+</pre></div>
+</div>
+<p>On 64-bit, the int is 4 bytes long, so it must the union member that has
+not been initialized. We can verify this using gdb:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>$ gdb vmlinux
+...
+(gdb) p &amp;((struct siginfo *) 0)-&gt;_sifields
+$1 = (union {...} *) 0x10
+</pre></div>
+</div>
+<p>Actually, it seems that the union member is located at offset 0x10 &#8211; which
+means that gcc has inserted 4 bytes of padding between the members <code class="docutils literal"><span class="pre">si_code</span></code>
+and <code class="docutils literal"><span class="pre">_sifields</span></code>. We can now get a fuller picture of the memory dump:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>         _----------------------------=&gt; si_code
+        /        _--------------------=&gt; (padding)
+       |        /        _------------=&gt; _sifields(._kill._pid)
+       |       |        /        _----=&gt; _sifields(._kill._uid)
+       |       |       |        /
+-------|-------|-------|-------|
+80000000000000000000000000000000000000000088ffff0000000000000000
+ i i i i u u u u i i i i i i i i u u u u u u u u u u u u u u u u
+</pre></div>
+</div>
+<p>This allows us to realize another important fact: <code class="docutils literal"><span class="pre">si_code</span></code> contains the
+value 0x80. Remember that x86 is little endian, so the first 4 bytes
+&#8220;80000000&#8221; are really the number 0x00000080. With a bit of research, we
+find that this is actually the constant <code class="docutils literal"><span class="pre">SI_KERNEL</span></code> defined in
+<code class="docutils literal"><span class="pre">include/asm-generic/siginfo.h</span></code>:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>144 #define SI_KERNEL       0x80            /* sent by the kernel from somewhere     */
+</pre></div>
+</div>
+<p>This macro is used in exactly one place in the x86 kernel: In <code class="docutils literal"><span class="pre">send_signal()</span></code>
+in <code class="docutils literal"><span class="pre">kernel/signal.c</span></code>:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>816 static int send_signal(int sig, struct siginfo *info, struct task_struct *t,
+817                         int group)
+818 {
+...
+828         pending = group ? &amp;t-&gt;signal-&gt;shared_pending : &amp;t-&gt;pending;
+...
+851         q = __sigqueue_alloc(t, GFP_ATOMIC, (sig &lt; SIGRTMIN &amp;&amp;
+852                                              (is_si_special(info) ||
+853                                               info-&gt;si_code &gt;= 0)));
+854         if (q) {
+855                 list_add_tail(&amp;q-&gt;list, &amp;pending-&gt;list);
+856                 switch ((unsigned long) info) {
+...
+865                 case (unsigned long) SEND_SIG_PRIV:
+866                         q-&gt;info.si_signo = sig;
+867                         q-&gt;info.si_errno = 0;
+868                         q-&gt;info.si_code = SI_KERNEL;
+869                         q-&gt;info.si_pid = 0;
+870                         q-&gt;info.si_uid = 0;
+871                         break;
+...
+890 }
+</pre></div>
+</div>
+<p>Not only does this match with the <code class="docutils literal"><span class="pre">.si_code</span></code> member, it also matches the place
+we found earlier when looking for where siginfo_t objects are enqueued on the
+<code class="docutils literal"><span class="pre">shared_pending</span></code> list.</p>
+<p>So to sum up: It seems that it is the padding introduced by the compiler
+between two struct fields that is uninitialized, and this gets reported when
+we do a <code class="docutils literal"><span class="pre">memcpy()</span></code> on the struct. This means that we have identified a false
+positive warning.</p>
+<p>Normally, kmemcheck will not report uninitialized accesses in <code class="docutils literal"><span class="pre">memcpy()</span></code> calls
+when both the source and destination addresses are tracked. (Instead, we copy
+the shadow bytemap as well). In this case, the destination address clearly
+was not tracked. We can dig a little deeper into the stack trace from above:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>arch/x86/kernel/signal.c:805
+arch/x86/kernel/signal.c:871
+arch/x86/kernel/entry_64.S:694
+</pre></div>
+</div>
+<p>And we clearly see that the destination siginfo object is located on the
+stack:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>782 static void do_signal(struct pt_regs *regs)
+783 {
+784         struct k_sigaction ka;
+785         siginfo_t info;
+...
+804         signr = get_signal_to_deliver(&amp;info, &amp;ka, regs, NULL);
+...
+854 }
+</pre></div>
+</div>
+<p>And this <code class="docutils literal"><span class="pre">&amp;info</span></code> is what eventually gets passed to <code class="docutils literal"><span class="pre">copy_siginfo()</span></code> as the
+destination argument.</p>
+<p>Now, even though we didn&#8217;t find an actual error here, the example is still a
+good one, because it shows how one would go about to find out what the report
+was all about.</p>
+</div>
+<div class="section" id="annotating-false-positives">
+<h3>Annotating false positives<a class="headerlink" href="#annotating-false-positives" title="Permalink to this headline">¶</a></h3>
+<p>There are a few different ways to make annotations in the source code that
+will keep kmemcheck from checking and reporting certain allocations. Here
+they are:</p>
+<ul>
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">__GFP_NOTRACK_FALSE_POSITIVE</span></code></dt>
+<dd><p class="first">This flag can be passed to <code class="docutils literal"><span class="pre">kmalloc()</span></code> or <code class="docutils literal"><span class="pre">kmem_cache_alloc()</span></code>
+(therefore also to other functions that end up calling one of
+these) to indicate that the allocation should not be tracked
+because it would lead to a false positive report. This is a &#8220;big
+hammer&#8221; way of silencing kmemcheck; after all, even if the false
+positive pertains to particular field in a struct, for example, we
+will now lose the ability to find (real) errors in other parts of
+the same struct.</p>
+<p>Example:</p>
+<div class="last highlight-none"><div class="highlight"><pre><span></span>/* No warnings will ever trigger on accessing any part of x */
+x = kmalloc(sizeof *x, GFP_KERNEL | __GFP_NOTRACK_FALSE_POSITIVE);
+</pre></div>
+</div>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">kmemcheck_bitfield_begin(name)</span></code>/<code class="docutils literal"><span class="pre">kmemcheck_bitfield_end(name)</span></code> and</dt>
+<dd><p class="first"><code class="docutils literal"><span class="pre">kmemcheck_annotate_bitfield(ptr,</span> <span class="pre">name)</span></code>
+The first two of these three macros can be used inside struct
+definitions to signal, respectively, the beginning and end of a
+bitfield. Additionally, this will assign the bitfield a name, which
+is given as an argument to the macros.</p>
+<p>Having used these markers, one can later use
+kmemcheck_annotate_bitfield() at the point of allocation, to indicate
+which parts of the allocation is part of a bitfield.</p>
+<p>Example:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>struct foo {
+    int x;
+
+    kmemcheck_bitfield_begin(flags);
+    int flag_a:1;
+    int flag_b:1;
+    kmemcheck_bitfield_end(flags);
+
+    int y;
+};
+
+struct foo *x = kmalloc(sizeof *x);
+
+/* No warnings will trigger on accessing the bitfield of x */
+kmemcheck_annotate_bitfield(x, flags);
+</pre></div>
+</div>
+<p class="last">Note that <code class="docutils literal"><span class="pre">kmemcheck_annotate_bitfield()</span></code> can be used even before the
+return value of <code class="docutils literal"><span class="pre">kmalloc()</span></code> is checked &#8211; in other words, passing NULL
+as the first argument is legal (and will do nothing).</p>
+</dd>
+</dl>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="reporting-errors">
+<h2>Reporting errors<a class="headerlink" href="#reporting-errors" title="Permalink to this headline">¶</a></h2>
+<p>As we have seen, kmemcheck will produce false positive reports. Therefore, it
+is not very wise to blindly post kmemcheck warnings to mailing lists and
+maintainers. Instead, I encourage maintainers and developers to find errors
+in their own code. If you get a warning, you can try to work around it, try
+to figure out if it&#8217;s a real error or not, or simply ignore it. Most
+developers know their own code and will quickly and efficiently determine the
+root cause of a kmemcheck report. This is therefore also the most efficient
+way to work with kmemcheck.</p>
+<p>That said, we (the kmemcheck maintainers) will always be on the lookout for
+false positives that we can annotate and silence. So whatever you find,
+please drop us a note privately! Kernel configs and steps to reproduce (if
+available) are of course a great help too.</p>
+<p>Happy hacking!</p>
+</div>
+<div class="section" id="technical-description">
+<h2>Technical description<a class="headerlink" href="#technical-description" title="Permalink to this headline">¶</a></h2>
+<p>kmemcheck works by marking memory pages non-present. This means that whenever
+somebody attempts to access the page, a page fault is generated. The page
+fault handler notices that the page was in fact only hidden, and so it calls
+on the kmemcheck code to make further investigations.</p>
+<p>When the investigations are completed, kmemcheck &#8220;shows&#8221; the page by marking
+it present (as it would be under normal circumstances). This way, the
+interrupted code can continue as usual.</p>
+<p>But after the instruction has been executed, we should hide the page again, so
+that we can catch the next access too! Now kmemcheck makes use of a debugging
+feature of the processor, namely single-stepping. When the processor has
+finished the one instruction that generated the memory access, a debug
+exception is raised. From here, we simply hide the page again and continue
+execution, this time with the single-stepping feature turned off.</p>
+<p>kmemcheck requires some assistance from the memory allocator in order to work.
+The memory allocator needs to</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li>Tell kmemcheck about newly allocated pages and pages that are about to
+be freed. This allows kmemcheck to set up and tear down the shadow memory
+for the pages in question. The shadow memory stores the status of each
+byte in the allocation proper, e.g. whether it is initialized or
+uninitialized.</li>
+<li>Tell kmemcheck which parts of memory should be marked uninitialized.
+There are actually a few more states, such as &#8220;not yet allocated&#8221; and
+&#8220;recently freed&#8221;.</li>
+</ol>
+</div></blockquote>
+<p>If a slab cache is set up using the SLAB_NOTRACK flag, it will never return
+memory that can take page faults because of kmemcheck.</p>
+<p>If a slab cache is NOT set up using the SLAB_NOTRACK flag, callers can still
+request memory with the __GFP_NOTRACK or __GFP_NOTRACK_FALSE_POSITIVE flags.
+This does not prevent the page faults from occurring, however, but marks the
+object in question as being initialized so that no warnings will ever be
+produced for this object.</p>
+<p>Currently, the SLAB and SLUB allocators are supported by kmemcheck.</p>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="gdb-kernel-debugging.html" class="btn btn-neutral float-right" title="Debugging kernel and modules via gdb" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="kmemleak.html" class="btn btn-neutral" title="Kernel Memory Leak Detector" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, The kernel development community.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'4.10.0-rc8+',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

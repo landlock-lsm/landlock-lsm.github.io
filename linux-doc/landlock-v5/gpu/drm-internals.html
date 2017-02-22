@@ -1,0 +1,1498 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>DRM Internals &mdash; The Linux Kernel 4.10.0-rc8+ documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="The Linux Kernel 4.10.0-rc8+ documentation" href="../index.html"/>
+        <link rel="up" title="Linux GPU Driver Developer’s Guide" href="index.html"/>
+        <link rel="next" title="DRM Memory Management" href="drm-mm.html"/>
+        <link rel="prev" title="Introduction" href="introduction.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                4.10.0-rc8
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user&#8217;s and administrator&#8217;s guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer&#8217;s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../media/index.html">Linux Media Subsystem Documentation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Linux GPU Driver Developer&#8217;s Guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">DRM Internals</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#driver-initialization">Driver Initialization</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#driver-information">Driver Information</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#device-instance-and-driver-handling">Device Instance and Driver Handling</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#driver-load">Driver Load</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bus-specific-device-registration-and-pci-support">Bus-specific Device Registration and PCI Support</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#open-close-file-operations-and-ioctls">Open/Close, File Operations and IOCTLs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#open-and-close">Open and Close</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#file-operations">File Operations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#ioctls">IOCTLs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#misc-utilities">Misc Utilities</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#printer">Printer</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#legacy-support-code">Legacy Support Code</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#legacy-suspend-resume">Legacy Suspend/Resume</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#legacy-dma-services">Legacy DMA Services</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="drm-mm.html">DRM Memory Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms.html">Kernel Mode Setting (KMS)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms-helpers.html">Mode Setting Helper Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-uapi.html">Userland interfaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="i915.html">drm/i915 Intel GFX Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vga-switcheroo.html">VGA Switcheroo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vgaarbiter.html">VGA Arbiter</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/ko_KR/index.html">Korean translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">The Linux Kernel</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="index.html">Linux GPU Driver Developer&#8217;s Guide</a> &raquo;</li>
+      
+    <li>DRM Internals</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/gpu/drm-internals.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="drm-internals">
+<h1>DRM Internals<a class="headerlink" href="#drm-internals" title="Permalink to this headline">¶</a></h1>
+<p>This chapter documents DRM internals relevant to driver authors and
+developers working to add support for the latest features to existing
+drivers.</p>
+<p>First, we go over some typical driver initialization requirements, like
+setting up command buffers, creating an initial output configuration,
+and initializing core services. Subsequent sections cover core internals
+in more detail, providing implementation notes and examples.</p>
+<p>The DRM layer provides several services to graphics drivers, many of
+them driven by the application interfaces it provides through libdrm,
+the library that wraps most of the DRM ioctls. These include vblank
+event handling, memory management, output management, framebuffer
+management, command submission &amp; fencing, suspend/resume support, and
+DMA services.</p>
+<div class="section" id="driver-initialization">
+<h2>Driver Initialization<a class="headerlink" href="#driver-initialization" title="Permalink to this headline">¶</a></h2>
+<p>At the core of every DRM driver is a <a class="reference internal" href="#c.drm_driver" title="drm_driver"><code class="xref c c-type docutils literal"><span class="pre">struct</span> <span class="pre">drm_driver</span></code></a> structure. Drivers typically statically initialize
+a drm_driver structure, and then pass it to
+<a class="reference internal" href="#c.drm_dev_alloc" title="drm_dev_alloc"><code class="xref c c-func docutils literal"><span class="pre">drm_dev_alloc()</span></code></a> to allocate a device instance. After the
+device instance is fully initialized it can be registered (which makes
+it accessible from userspace) using <a class="reference internal" href="#c.drm_dev_register" title="drm_dev_register"><code class="xref c c-func docutils literal"><span class="pre">drm_dev_register()</span></code></a>.</p>
+<p>The <a class="reference internal" href="#c.drm_driver" title="drm_driver"><code class="xref c c-type docutils literal"><span class="pre">struct</span> <span class="pre">drm_driver</span></code></a> structure
+contains static information that describes the driver and features it
+supports, and pointers to methods that the DRM core will call to
+implement the DRM API. We will first go through the <a class="reference internal" href="#c.drm_driver" title="drm_driver"><code class="xref c c-type docutils literal"><span class="pre">struct</span>
+<span class="pre">drm_driver</span></code></a> static information fields, and will
+then describe individual operations in details as they get used in later
+sections.</p>
+<div class="section" id="driver-information">
+<h3>Driver Information<a class="headerlink" href="#driver-information" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="driver-features">
+<h4>Driver Features<a class="headerlink" href="#driver-features" title="Permalink to this headline">¶</a></h4>
+<p>Drivers inform the DRM core about their requirements and supported
+features by setting appropriate flags in the driver_features field.
+Since those flags influence the DRM core behaviour since registration
+time, most of them must be set to registering the <a class="reference internal" href="#c.drm_driver" title="drm_driver"><code class="xref c c-type docutils literal"><span class="pre">struct</span>
+<span class="pre">drm_driver</span></code></a> instance.</p>
+<p>u32 driver_features;</p>
+<dl class="docutils">
+<dt>DRIVER_USE_AGP</dt>
+<dd>Driver uses AGP interface, the DRM core will manage AGP resources.</dd>
+<dt>DRIVER_LEGACY</dt>
+<dd>Denote a legacy driver using shadow attach. Don&#8217;t use.</dd>
+<dt>DRIVER_KMS_LEGACY_CONTEXT</dt>
+<dd>Used only by nouveau for backwards compatibility with existing userspace.
+Don&#8217;t use.</dd>
+<dt>DRIVER_PCI_DMA</dt>
+<dd>Driver is capable of PCI DMA, mapping of PCI DMA buffers to
+userspace will be enabled. Deprecated.</dd>
+<dt>DRIVER_SG</dt>
+<dd>Driver can perform scatter/gather DMA, allocation and mapping of
+scatter/gather buffers will be enabled. Deprecated.</dd>
+<dt>DRIVER_HAVE_DMA</dt>
+<dd>Driver supports DMA, the userspace DMA API will be supported.
+Deprecated.</dd>
+<dt>DRIVER_HAVE_IRQ; DRIVER_IRQ_SHARED</dt>
+<dd><p class="first">DRIVER_HAVE_IRQ indicates whether the driver has an IRQ handler
+managed by the DRM Core. The core will support simple IRQ handler
+installation when the flag is set. The installation process is
+described in ?.</p>
+<p class="last">DRIVER_IRQ_SHARED indicates whether the device &amp; handler support
+shared IRQs (note that this is required of PCI drivers).</p>
+</dd>
+<dt>DRIVER_GEM</dt>
+<dd>Driver use the GEM memory manager.</dd>
+<dt>DRIVER_MODESET</dt>
+<dd>Driver supports mode setting interfaces (KMS).</dd>
+<dt>DRIVER_PRIME</dt>
+<dd>Driver implements DRM PRIME buffer sharing.</dd>
+<dt>DRIVER_RENDER</dt>
+<dd>Driver supports dedicated render nodes.</dd>
+<dt>DRIVER_ATOMIC</dt>
+<dd>Driver supports atomic properties. In this case the driver must
+implement appropriate obj-&gt;atomic_get_property() vfuncs for any
+modeset objects with driver specific properties.</dd>
+</dl>
+</div>
+<div class="section" id="major-minor-and-patchlevel">
+<h4>Major, Minor and Patchlevel<a class="headerlink" href="#major-minor-and-patchlevel" title="Permalink to this headline">¶</a></h4>
+<p>int major; int minor; int patchlevel;
+The DRM core identifies driver versions by a major, minor and patch
+level triplet. The information is printed to the kernel log at
+initialization time and passed to userspace through the
+DRM_IOCTL_VERSION ioctl.</p>
+<p>The major and minor numbers are also used to verify the requested driver
+API version passed to DRM_IOCTL_SET_VERSION. When the driver API
+changes between minor versions, applications can call
+DRM_IOCTL_SET_VERSION to select a specific version of the API. If the
+requested major isn&#8217;t equal to the driver major, or the requested minor
+is larger than the driver minor, the DRM_IOCTL_SET_VERSION call will
+return an error. Otherwise the driver&#8217;s set_version() method will be
+called with the requested version.</p>
+</div>
+<div class="section" id="name-description-and-date">
+<h4>Name, Description and Date<a class="headerlink" href="#name-description-and-date" title="Permalink to this headline">¶</a></h4>
+<p>char *name; char *desc; char *date;
+The driver name is printed to the kernel log at initialization time,
+used for IRQ registration and passed to userspace through
+DRM_IOCTL_VERSION.</p>
+<p>The driver description is a purely informative string passed to
+userspace through the DRM_IOCTL_VERSION ioctl and otherwise unused by
+the kernel.</p>
+<p>The driver date, formatted as YYYYMMDD, is meant to identify the date of
+the latest modification to the driver. However, as most drivers fail to
+update it, its value is mostly useless. The DRM core prints it to the
+kernel log at initialization time and passes it to userspace through the
+DRM_IOCTL_VERSION ioctl.</p>
+</div>
+</div>
+<div class="section" id="device-instance-and-driver-handling">
+<h3>Device Instance and Driver Handling<a class="headerlink" href="#device-instance-and-driver-handling" title="Permalink to this headline">¶</a></h3>
+<p>A device instance for a drm driver is represented by struct <code class="xref c c-type docutils literal"><span class="pre">drm_device</span></code>. This
+is allocated with <a class="reference internal" href="#c.drm_dev_alloc" title="drm_dev_alloc"><code class="xref c c-func docutils literal"><span class="pre">drm_dev_alloc()</span></code></a>, usually from bus-specific -&gt;:c:func:<cite>probe()</cite>
+callbacks implemented by the driver. The driver then needs to initialize all
+the various subsystems for the drm device like memory management, vblank
+handling, modesetting support and intial output configuration plus obviously
+initialize all the corresponding hardware bits. An important part of this is
+also calling <a class="reference internal" href="#c.drm_dev_set_unique" title="drm_dev_set_unique"><code class="xref c c-func docutils literal"><span class="pre">drm_dev_set_unique()</span></code></a> to set the userspace-visible unique name of
+this device instance. Finally when everything is up and running and ready for
+userspace the device instance can be published using <a class="reference internal" href="#c.drm_dev_register" title="drm_dev_register"><code class="xref c c-func docutils literal"><span class="pre">drm_dev_register()</span></code></a>.</p>
+<p>There is also deprecated support for initalizing device instances using
+bus-specific helpers and the -&gt;:c:func:<cite>load()</cite> callback. But due to
+backwards-compatibility needs the device instance have to be published too
+early, which requires unpretty global locking to make safe and is therefore
+only support for existing drivers not yet converted to the new scheme.</p>
+<p>When cleaning up a device instance everything needs to be done in reverse:
+First unpublish the device instance with <a class="reference internal" href="#c.drm_dev_unregister" title="drm_dev_unregister"><code class="xref c c-func docutils literal"><span class="pre">drm_dev_unregister()</span></code></a>. Then clean up
+any other resources allocated at device initialization and drop the driver&#8217;s
+reference to <code class="xref c c-type docutils literal"><span class="pre">drm_device</span></code> using <a class="reference internal" href="#c.drm_dev_unref" title="drm_dev_unref"><code class="xref c c-func docutils literal"><span class="pre">drm_dev_unref()</span></code></a>.</p>
+<p>Note that the lifetime rules for <code class="xref c c-type docutils literal"><span class="pre">drm_device</span></code> instance has still a lot of
+historical baggage. Hence use the reference counting provided by
+<a class="reference internal" href="#c.drm_dev_ref" title="drm_dev_ref"><code class="xref c c-func docutils literal"><span class="pre">drm_dev_ref()</span></code></a> and <a class="reference internal" href="#c.drm_dev_unref" title="drm_dev_unref"><code class="xref c c-func docutils literal"><span class="pre">drm_dev_unref()</span></code></a> only carefully.</p>
+<p>Also note that embedding of <code class="xref c c-type docutils literal"><span class="pre">drm_device</span></code> is currently not (yet) supported (but
+it would be easy to add). Drivers can store driver-private data in the
+dev_priv field of <code class="xref c c-type docutils literal"><span class="pre">drm_device</span></code>.</p>
+<dl class="function">
+<dt id="c.drm_put_dev">
+void <code class="descname">drm_put_dev</code><span class="sig-paren">(</span>struct drm_device *<em>&nbsp;dev</em><span class="sig-paren">)</span><a class="headerlink" href="#c.drm_put_dev" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unregister and release a DRM device</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_device</span> <span class="pre">*</span> <span class="pre">dev</span></code></dt>
+<dd>DRM device</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Called at module unload time or when a PCI device is unplugged.</p>
+<p>Cleans up all DRM device, calling <code class="xref c c-func docutils literal"><span class="pre">drm_lastclose()</span></code>.</p>
+<p><strong>Note</strong></p>
+<p>Use of this function is deprecated. It will eventually go away
+completely.  Please use <a class="reference internal" href="#c.drm_dev_unregister" title="drm_dev_unregister"><code class="xref c c-func docutils literal"><span class="pre">drm_dev_unregister()</span></code></a> and <a class="reference internal" href="#c.drm_dev_unref" title="drm_dev_unref"><code class="xref c c-func docutils literal"><span class="pre">drm_dev_unref()</span></code></a> explicitly
+instead to make sure that the device isn&#8217;t userspace accessible any more
+while teardown is in progress, ensuring that userspace can&#8217;t access an
+inconsistent state.</p>
+<dl class="function">
+<dt id="c.drm_dev_init">
+int <code class="descname">drm_dev_init</code><span class="sig-paren">(</span>struct drm_device *<em>&nbsp;dev</em>, struct <a class="reference internal" href="#c.drm_driver" title="drm_driver">drm_driver</a> *<em>&nbsp;driver</em>, struct <a class="reference internal" href="../driver-api/infrastructure.html#c.device" title="device">device</a> *<em>&nbsp;parent</em><span class="sig-paren">)</span><a class="headerlink" href="#c.drm_dev_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialise new DRM device</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_device</span> <span class="pre">*</span> <span class="pre">dev</span></code></dt>
+<dd>DRM device</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_driver</span> <span class="pre">*</span> <span class="pre">driver</span></code></dt>
+<dd>DRM driver</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">device</span> <span class="pre">*</span> <span class="pre">parent</span></code></dt>
+<dd>Parent device object</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Initialize a new DRM device. No device registration is done.
+Call <a class="reference internal" href="#c.drm_dev_register" title="drm_dev_register"><code class="xref c c-func docutils literal"><span class="pre">drm_dev_register()</span></code></a> to advertice the device to user space and register it
+with other core subsystems. This should be done last in the device
+initialization sequence to make sure userspace can&#8217;t access an inconsistent
+state.</p>
+<p>The initial ref-count of the object is 1. Use <a class="reference internal" href="#c.drm_dev_ref" title="drm_dev_ref"><code class="xref c c-func docutils literal"><span class="pre">drm_dev_ref()</span></code></a> and
+<a class="reference internal" href="#c.drm_dev_unref" title="drm_dev_unref"><code class="xref c c-func docutils literal"><span class="pre">drm_dev_unref()</span></code></a> to take and drop further ref-counts.</p>
+<p>Note that for purely virtual devices <strong>parent</strong> can be NULL.</p>
+<p>Drivers that do not want to allocate their own device struct
+embedding struct <code class="xref c c-type docutils literal"><span class="pre">drm_device</span></code> can call <a class="reference internal" href="#c.drm_dev_alloc" title="drm_dev_alloc"><code class="xref c c-func docutils literal"><span class="pre">drm_dev_alloc()</span></code></a> instead.</p>
+<p><strong>Return</strong></p>
+<p>0 on success, or error code on failure.</p>
+<dl class="function">
+<dt id="c.drm_dev_alloc">
+struct drm_device * <code class="descname">drm_dev_alloc</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.drm_driver" title="drm_driver">drm_driver</a> *<em>&nbsp;driver</em>, struct <a class="reference internal" href="../driver-api/infrastructure.html#c.device" title="device">device</a> *<em>&nbsp;parent</em><span class="sig-paren">)</span><a class="headerlink" href="#c.drm_dev_alloc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Allocate new DRM device</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_driver</span> <span class="pre">*</span> <span class="pre">driver</span></code></dt>
+<dd>DRM driver to allocate device for</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">device</span> <span class="pre">*</span> <span class="pre">parent</span></code></dt>
+<dd>Parent device object</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Allocate and initialize a new DRM device. No device registration is done.
+Call <a class="reference internal" href="#c.drm_dev_register" title="drm_dev_register"><code class="xref c c-func docutils literal"><span class="pre">drm_dev_register()</span></code></a> to advertice the device to user space and register it
+with other core subsystems. This should be done last in the device
+initialization sequence to make sure userspace can&#8217;t access an inconsistent
+state.</p>
+<p>The initial ref-count of the object is 1. Use <a class="reference internal" href="#c.drm_dev_ref" title="drm_dev_ref"><code class="xref c c-func docutils literal"><span class="pre">drm_dev_ref()</span></code></a> and
+<a class="reference internal" href="#c.drm_dev_unref" title="drm_dev_unref"><code class="xref c c-func docutils literal"><span class="pre">drm_dev_unref()</span></code></a> to take and drop further ref-counts.</p>
+<p>Note that for purely virtual devices <strong>parent</strong> can be NULL.</p>
+<p>Drivers that wish to subclass or embed struct <code class="xref c c-type docutils literal"><span class="pre">drm_device</span></code> into their
+own struct should look at using <a class="reference internal" href="#c.drm_dev_init" title="drm_dev_init"><code class="xref c c-func docutils literal"><span class="pre">drm_dev_init()</span></code></a> instead.</p>
+<p><strong>Return</strong></p>
+<p>Pointer to new DRM device, or ERR_PTR on failure.</p>
+<dl class="function">
+<dt id="c.drm_dev_ref">
+void <code class="descname">drm_dev_ref</code><span class="sig-paren">(</span>struct drm_device *<em>&nbsp;dev</em><span class="sig-paren">)</span><a class="headerlink" href="#c.drm_dev_ref" title="Permalink to this definition">¶</a></dt>
+<dd><p>Take reference of a DRM device</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_device</span> <span class="pre">*</span> <span class="pre">dev</span></code></dt>
+<dd>device to take reference of or NULL</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This increases the ref-count of <strong>dev</strong> by one. You <em>must</em> already own a
+reference when calling this. Use <a class="reference internal" href="#c.drm_dev_unref" title="drm_dev_unref"><code class="xref c c-func docutils literal"><span class="pre">drm_dev_unref()</span></code></a> to drop this reference
+again.</p>
+<p>This function never fails. However, this function does not provide <em>any</em>
+guarantee whether the device is alive or running. It only provides a
+reference to the object and the memory associated with it.</p>
+<dl class="function">
+<dt id="c.drm_dev_unref">
+void <code class="descname">drm_dev_unref</code><span class="sig-paren">(</span>struct drm_device *<em>&nbsp;dev</em><span class="sig-paren">)</span><a class="headerlink" href="#c.drm_dev_unref" title="Permalink to this definition">¶</a></dt>
+<dd><p>Drop reference of a DRM device</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_device</span> <span class="pre">*</span> <span class="pre">dev</span></code></dt>
+<dd>device to drop reference of or NULL</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This decreases the ref-count of <strong>dev</strong> by one. The device is destroyed if the
+ref-count drops to zero.</p>
+<dl class="function">
+<dt id="c.drm_dev_register">
+int <code class="descname">drm_dev_register</code><span class="sig-paren">(</span>struct drm_device *<em>&nbsp;dev</em>, unsigned long<em>&nbsp;flags</em><span class="sig-paren">)</span><a class="headerlink" href="#c.drm_dev_register" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register DRM device</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_device</span> <span class="pre">*</span> <span class="pre">dev</span></code></dt>
+<dd>Device to register</dd>
+<dt><code class="docutils literal"><span class="pre">unsigned</span> <span class="pre">long</span> <span class="pre">flags</span></code></dt>
+<dd>Flags passed to the driver&#8217;s .:c:func:<cite>load()</cite> function</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Register the DRM device <strong>dev</strong> with the system, advertise device to user-space
+and start normal device operation. <strong>dev</strong> must be allocated via <a class="reference internal" href="#c.drm_dev_alloc" title="drm_dev_alloc"><code class="xref c c-func docutils literal"><span class="pre">drm_dev_alloc()</span></code></a>
+previously.</p>
+<p>Never call this twice on any device!</p>
+<p><strong>NOTE</strong></p>
+<p>To ensure backward compatibility with existing drivers method this
+function calls the -&gt;:c:func:<cite>load()</cite> method after registering the device nodes,
+creating race conditions. Usage of the -&gt;:c:func:<cite>load()</cite> methods is therefore
+deprecated, drivers must perform all initialization before calling
+<a class="reference internal" href="#c.drm_dev_register" title="drm_dev_register"><code class="xref c c-func docutils literal"><span class="pre">drm_dev_register()</span></code></a>.</p>
+<p><strong>Return</strong></p>
+<p>0 on success, negative error code on failure.</p>
+<dl class="function">
+<dt id="c.drm_dev_unregister">
+void <code class="descname">drm_dev_unregister</code><span class="sig-paren">(</span>struct drm_device *<em>&nbsp;dev</em><span class="sig-paren">)</span><a class="headerlink" href="#c.drm_dev_unregister" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unregister DRM device</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_device</span> <span class="pre">*</span> <span class="pre">dev</span></code></dt>
+<dd>Device to unregister</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Unregister the DRM device from the system. This does the reverse of
+<a class="reference internal" href="#c.drm_dev_register" title="drm_dev_register"><code class="xref c c-func docutils literal"><span class="pre">drm_dev_register()</span></code></a> but does not deallocate the device. The caller must call
+<a class="reference internal" href="#c.drm_dev_unref" title="drm_dev_unref"><code class="xref c c-func docutils literal"><span class="pre">drm_dev_unref()</span></code></a> to drop their final reference.</p>
+<p>This should be called first in the device teardown code to make sure
+userspace can&#8217;t access the device instance any more.</p>
+<dl class="function">
+<dt id="c.drm_dev_set_unique">
+int <code class="descname">drm_dev_set_unique</code><span class="sig-paren">(</span>struct drm_device *<em>&nbsp;dev</em>, const char *<em>&nbsp;name</em><span class="sig-paren">)</span><a class="headerlink" href="#c.drm_dev_set_unique" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the unique name of a DRM device</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_device</span> <span class="pre">*</span> <span class="pre">dev</span></code></dt>
+<dd>device of which to set the unique name</dd>
+<dt><code class="docutils literal"><span class="pre">const</span> <span class="pre">char</span> <span class="pre">*</span> <span class="pre">name</span></code></dt>
+<dd>unique name</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Sets the unique name of a DRM device using the specified string. Drivers
+can use this at driver probe time if the unique name of the devices they
+drive is static.</p>
+<p><strong>Return</strong></p>
+<p>0 on success or a negative error code on failure.</p>
+<dl class="type">
+<dt id="c.drm_driver">
+struct <code class="descname">drm_driver</code><a class="headerlink" href="#c.drm_driver" title="Permalink to this definition">¶</a></dt>
+<dd><p>DRM driver structure</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>struct drm_driver {
+  u32 (* get_vblank_counter) (struct drm_device *dev, unsigned int pipe);
+  int (* enable_vblank) (struct drm_device *dev, unsigned int pipe);
+  void (* disable_vblank) (struct drm_device *dev, unsigned int pipe);
+  int (* device_is_agp) (struct drm_device *dev);
+  int (* get_scanout_position) (struct drm_device *dev, unsigned int pipe,unsigned int flags, int *vpos, int *hpos,ktime_t *stime, ktime_t *etime,const struct drm_display_mode *mode);
+  int (* get_vblank_timestamp) (struct drm_device *dev, unsigned int pipe,int *max_error,struct timeval *vblank_time,unsigned flags);
+  int (* master_create) (struct drm_device *dev, struct drm_master *master);
+  void (* master_destroy) (struct drm_device *dev, struct drm_master *master);
+  int (* master_set) (struct drm_device *dev, struct drm_file *file_priv,bool from_open);
+  void (* master_drop) (struct drm_device *dev, struct drm_file *file_priv);
+  void (* gem_free_object) (struct drm_gem_object *obj);
+  void (* gem_free_object_unlocked) (struct drm_gem_object *obj);
+  struct drm_gem_object *(* gem_create_object) (struct drm_device *dev,size_t size);
+  int (* dumb_create) (struct drm_file *file_priv,struct drm_device *dev,struct drm_mode_create_dumb *args);
+  int (* dumb_map_offset) (struct drm_file *file_priv,struct drm_device *dev, uint32_t handle,uint64_t *offset);
+  int (* dumb_destroy) (struct drm_file *file_priv,struct drm_device *dev,uint32_t handle);
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">get_vblank_counter</span></code></dt>
+<dd><p class="first">Driver callback for fetching a raw hardware vblank counter for the
+CRTC specified with the pipe argument.  If a device doesn&#8217;t have a
+hardware counter, the driver can simply use
+<a class="reference internal" href="drm-kms.html#c.drm_vblank_no_hw_counter" title="drm_vblank_no_hw_counter"><code class="xref c c-func docutils literal"><span class="pre">drm_vblank_no_hw_counter()</span></code></a> function. The DRM core will account for
+missed vblank events while interrupts where disabled based on system
+timestamps.</p>
+<p>Wraparound handling and loss of events due to modesetting is dealt
+with in the DRM core code, as long as drivers call
+<a class="reference internal" href="drm-kms.html#c.drm_crtc_vblank_off" title="drm_crtc_vblank_off"><code class="xref c c-func docutils literal"><span class="pre">drm_crtc_vblank_off()</span></code></a> and <a class="reference internal" href="drm-kms.html#c.drm_crtc_vblank_on" title="drm_crtc_vblank_on"><code class="xref c c-func docutils literal"><span class="pre">drm_crtc_vblank_on()</span></code></a> when disabling or
+enabling a CRTC.</p>
+<p>Returns:</p>
+<p class="last">Raw vblank counter value.</p>
+</dd>
+<dt><code class="docutils literal"><span class="pre">enable_vblank</span></code></dt>
+<dd><p class="first">Enable vblank interrupts for the CRTC specified with the pipe
+argument.</p>
+<p>Returns:</p>
+<p class="last">Zero on success, appropriate errno if the given <strong>crtc</strong>&#8216;s vblank
+interrupt cannot be enabled.</p>
+</dd>
+<dt><code class="docutils literal"><span class="pre">disable_vblank</span></code></dt>
+<dd>Disable vblank interrupts for the CRTC specified with the pipe
+argument.</dd>
+<dt><code class="docutils literal"><span class="pre">device_is_agp</span></code></dt>
+<dd><p class="first">Called by <code class="xref c c-func docutils literal"><span class="pre">drm_device_is_agp()</span></code>.  Typically used to determine if a card
+is really attached to AGP or not.</p>
+<p>Returns:</p>
+<p class="last">One of three values is returned depending on whether or not the
+card is absolutely not AGP (return of 0), absolutely is AGP
+(return of 1), or may or may not be AGP (return of 2).</p>
+</dd>
+<dt><code class="docutils literal"><span class="pre">get_scanout_position</span></code></dt>
+<dd><p class="first">Called by vblank timestamping code.</p>
+<p>Returns the current display scanout position from a crtc, and an
+optional accurate <code class="xref c c-func docutils literal"><span class="pre">ktime_get()</span></code> timestamp of when position was
+measured. Note that this is a helper callback which is only used if a
+driver uses <a class="reference internal" href="drm-kms.html#c.drm_calc_vbltimestamp_from_scanoutpos" title="drm_calc_vbltimestamp_from_scanoutpos"><code class="xref c c-func docutils literal"><span class="pre">drm_calc_vbltimestamp_from_scanoutpos()</span></code></a> for the
+<strong>get_vblank_timestamp</strong> callback.</p>
+<p>Parameters:</p>
+<dl class="docutils">
+<dt>dev:</dt>
+<dd>DRM device.</dd>
+<dt>pipe:</dt>
+<dd>Id of the crtc to query.</dd>
+<dt>flags:</dt>
+<dd>Flags from the caller (DRM_CALLED_FROM_VBLIRQ or 0).</dd>
+<dt>vpos:</dt>
+<dd>Target location for current vertical scanout position.</dd>
+<dt>hpos:</dt>
+<dd>Target location for current horizontal scanout position.</dd>
+<dt>stime:</dt>
+<dd>Target location for timestamp taken immediately before
+scanout position query. Can be NULL to skip timestamp.</dd>
+<dt>etime:</dt>
+<dd>Target location for timestamp taken immediately after
+scanout position query. Can be NULL to skip timestamp.</dd>
+<dt>mode:</dt>
+<dd>Current display timings.</dd>
+</dl>
+<p>Returns vpos as a positive number while in active scanout area.
+Returns vpos as a negative number inside vblank, counting the number
+of scanlines to go until end of vblank, e.g., -1 means &#8220;one scanline
+until start of active scanout / end of vblank.&#8221;</p>
+<p>Returns:</p>
+<p>Flags, or&#8217;ed together as follows:</p>
+<dl class="last docutils">
+<dt>DRM_SCANOUTPOS_VALID:</dt>
+<dd>Query successful.</dd>
+<dt>DRM_SCANOUTPOS_INVBL:</dt>
+<dd>Inside vblank.</dd>
+<dt>DRM_SCANOUTPOS_ACCURATE: Returned position is accurate. A lack of</dt>
+<dd>this flag means that returned position may be offset by a
+constant but unknown small number of scanlines wrt. real scanout
+position.</dd>
+</dl>
+</dd>
+<dt><code class="docutils literal"><span class="pre">get_vblank_timestamp</span></code></dt>
+<dd><p class="first">Called by <code class="xref c c-func docutils literal"><span class="pre">drm_get_last_vbltimestamp()</span></code>. Should return a precise
+timestamp when the most recent VBLANK interval ended or will end.</p>
+<p>Specifically, the timestamp in <strong>vblank_time</strong> should correspond as
+closely as possible to the time when the first video scanline of
+the video frame after the end of VBLANK will start scanning out,
+the time immediately after end of the VBLANK interval. If the
+<strong>crtc</strong> is currently inside VBLANK, this will be a time in the future.
+If the <strong>crtc</strong> is currently scanning out a frame, this will be the
+past start time of the current scanout. This is meant to adhere
+to the OpenML OML_sync_control extension specification.</p>
+<p>Paramters:</p>
+<dl class="docutils">
+<dt>dev:</dt>
+<dd>dev DRM device handle.</dd>
+<dt>pipe:</dt>
+<dd>crtc for which timestamp should be returned.</dd>
+<dt>max_error:</dt>
+<dd>Maximum allowable timestamp error in nanoseconds.
+Implementation should strive to provide timestamp
+with an error of at most max_error nanoseconds.
+Returns true upper bound on error for timestamp.</dd>
+<dt>vblank_time:</dt>
+<dd>Target location for returned vblank timestamp.</dd>
+<dt>flags:</dt>
+<dd>0 = Defaults, no special treatment needed.
+DRM_CALLED_FROM_VBLIRQ = Function is called from vblank
+irq handler. Some drivers need to apply some workarounds
+for gpu-specific vblank irq quirks if flag is set.</dd>
+</dl>
+<p>Returns:</p>
+<p class="last">Zero if timestamping isn&#8217;t supported in current display mode or a
+negative number on failure. A positive status code on success,
+which describes how the vblank_time timestamp was computed.</p>
+</dd>
+<dt><code class="docutils literal"><span class="pre">master_create</span></code></dt>
+<dd>Called whenever a new master is created. Only used by vmwgfx.</dd>
+<dt><code class="docutils literal"><span class="pre">master_destroy</span></code></dt>
+<dd>Called whenever a master is destroyed. Only used by vmwgfx.</dd>
+<dt><code class="docutils literal"><span class="pre">master_set</span></code></dt>
+<dd>Called whenever the minor master is set. Only used by vmwgfx.</dd>
+<dt><code class="docutils literal"><span class="pre">master_drop</span></code></dt>
+<dd>Called whenever the minor master is dropped. Only used by vmwgfx.</dd>
+<dt><code class="docutils literal"><span class="pre">gem_free_object</span></code></dt>
+<dd><p class="first">deconstructor for drm_gem_objects</p>
+<p class="last">This is deprecated and should not be used by new drivers. Use
+<strong>gem_free_object_unlocked</strong> instead.</p>
+</dd>
+<dt><code class="docutils literal"><span class="pre">gem_free_object_unlocked</span></code></dt>
+<dd><p class="first">deconstructor for drm_gem_objects</p>
+<p class="last">This is for drivers which are not encumbered with dev-&gt;struct_mutex
+legacy locking schemes. Use this hook instead of <strong>gem_free_object</strong>.</p>
+</dd>
+<dt><code class="docutils literal"><span class="pre">gem_create_object</span></code></dt>
+<dd><p class="first">constructor for gem objects</p>
+<p class="last">Hook for allocating the GEM object struct, for use by core
+helpers.</p>
+</dd>
+<dt><code class="docutils literal"><span class="pre">dumb_create</span></code></dt>
+<dd><p class="first">This creates a new dumb buffer in the driver&#8217;s backing storage manager (GEM,
+TTM or something else entirely) and returns the resulting buffer handle. This
+handle can then be wrapped up into a framebuffer modeset object.</p>
+<p>Note that userspace is not allowed to use such objects for render
+acceleration - drivers must create their own private ioctls for such a use
+case.</p>
+<p>Width, height and depth are specified in the <code class="xref c c-type docutils literal"><span class="pre">drm_mode_create_dumb</span></code>
+argument. The callback needs to fill the handle, pitch and size for
+the created buffer.</p>
+<p>Called by the user via ioctl.</p>
+<p>Returns:</p>
+<p class="last">Zero on success, negative errno on failure.</p>
+</dd>
+<dt><code class="docutils literal"><span class="pre">dumb_map_offset</span></code></dt>
+<dd><p class="first">Allocate an offset in the drm device node&#8217;s address space to be able to
+memory map a dumb buffer. GEM-based drivers must use
+<a class="reference internal" href="drm-mm.html#c.drm_gem_create_mmap_offset" title="drm_gem_create_mmap_offset"><code class="xref c c-func docutils literal"><span class="pre">drm_gem_create_mmap_offset()</span></code></a> to implement this.</p>
+<p>Called by the user via ioctl.</p>
+<p>Returns:</p>
+<p class="last">Zero on success, negative errno on failure.</p>
+</dd>
+<dt><code class="docutils literal"><span class="pre">dumb_destroy</span></code></dt>
+<dd><p class="first">This destroys the userspace handle for the given dumb backing storage buffer.
+Since buffer objects must be reference counted in the kernel a buffer object
+won&#8217;t be immediately freed if a framebuffer modeset object still uses it.</p>
+<p>Called by the user via ioctl.</p>
+<p>Returns:</p>
+<p class="last">Zero on success, negative errno on failure.</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This structure represent the common code for a family of cards. There will
+one drm_device for each card present in this family. It contains lots of
+vfunc entries, and a pile of those probably should be moved to more
+appropriate places like <a class="reference internal" href="drm-kms.html#c.drm_mode_config_funcs" title="drm_mode_config_funcs"><code class="xref c c-type docutils literal"><span class="pre">drm_mode_config_funcs</span></code></a> or into a new operations
+structure for GEM drivers.</p>
+</div>
+<div class="section" id="driver-load">
+<h3>Driver Load<a class="headerlink" href="#driver-load" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="irq-registration">
+<h4>IRQ Registration<a class="headerlink" href="#irq-registration" title="Permalink to this headline">¶</a></h4>
+<p>The DRM core tries to facilitate IRQ handler registration and
+unregistration by providing <a class="reference internal" href="drm-kms.html#c.drm_irq_install" title="drm_irq_install"><code class="xref c c-func docutils literal"><span class="pre">drm_irq_install()</span></code></a> and
+<a class="reference internal" href="drm-kms.html#c.drm_irq_uninstall" title="drm_irq_uninstall"><code class="xref c c-func docutils literal"><span class="pre">drm_irq_uninstall()</span></code></a> functions. Those functions only
+support a single interrupt per device, devices that use more than one
+IRQs need to be handled manually.</p>
+<div class="section" id="managed-irq-registration">
+<h5>Managed IRQ Registration<a class="headerlink" href="#managed-irq-registration" title="Permalink to this headline">¶</a></h5>
+<p><a class="reference internal" href="drm-kms.html#c.drm_irq_install" title="drm_irq_install"><code class="xref c c-func docutils literal"><span class="pre">drm_irq_install()</span></code></a> starts by calling the irq_preinstall
+driver operation. The operation is optional and must make sure that the
+interrupt will not get fired by clearing all pending interrupt flags or
+disabling the interrupt.</p>
+<p>The passed-in IRQ will then be requested by a call to
+<code class="xref c c-func docutils literal"><span class="pre">request_irq()</span></code>. If the DRIVER_IRQ_SHARED driver feature
+flag is set, a shared (IRQF_SHARED) IRQ handler will be requested.</p>
+<p>The IRQ handler function must be provided as the mandatory irq_handler
+driver operation. It will get passed directly to
+<code class="xref c c-func docutils literal"><span class="pre">request_irq()</span></code> and thus has the same prototype as all IRQ
+handlers. It will get called with a pointer to the DRM device as the
+second argument.</p>
+<p>Finally the function calls the optional irq_postinstall driver
+operation. The operation usually enables interrupts (excluding the
+vblank interrupt, which is enabled separately), but drivers may choose
+to enable/disable interrupts at a different time.</p>
+<p><a class="reference internal" href="drm-kms.html#c.drm_irq_uninstall" title="drm_irq_uninstall"><code class="xref c c-func docutils literal"><span class="pre">drm_irq_uninstall()</span></code></a> is similarly used to uninstall an
+IRQ handler. It starts by waking up all processes waiting on a vblank
+interrupt to make sure they don&#8217;t hang, and then calls the optional
+irq_uninstall driver operation. The operation must disable all hardware
+interrupts. Finally the function frees the IRQ by calling
+<code class="xref c c-func docutils literal"><span class="pre">free_irq()</span></code>.</p>
+</div>
+<div class="section" id="manual-irq-registration">
+<h5>Manual IRQ Registration<a class="headerlink" href="#manual-irq-registration" title="Permalink to this headline">¶</a></h5>
+<p>Drivers that require multiple interrupt handlers can&#8217;t use the managed
+IRQ registration functions. In that case IRQs must be registered and
+unregistered manually (usually with the <code class="xref c c-func docutils literal"><span class="pre">request_irq()</span></code> and
+<code class="xref c c-func docutils literal"><span class="pre">free_irq()</span></code> functions, or their <code class="xref c c-func docutils literal"><span class="pre">devm_request_irq()</span></code> and
+<code class="xref c c-func docutils literal"><span class="pre">devm_free_irq()</span></code> equivalents).</p>
+<p>When manually registering IRQs, drivers must not set the
+DRIVER_HAVE_IRQ driver feature flag, and must not provide the
+irq_handler driver operation. They must set the <code class="xref c c-type docutils literal"><span class="pre">struct</span>
+<span class="pre">drm_device</span></code> irq_enabled field to 1 upon
+registration of the IRQs, and clear it to 0 after unregistering the
+IRQs.</p>
+</div>
+</div>
+<div class="section" id="memory-manager-initialization">
+<h4>Memory Manager Initialization<a class="headerlink" href="#memory-manager-initialization" title="Permalink to this headline">¶</a></h4>
+<p>Every DRM driver requires a memory manager which must be initialized at
+load time. DRM currently contains two memory managers, the Translation
+Table Manager (TTM) and the Graphics Execution Manager (GEM). This
+document describes the use of the GEM memory manager only. See ? for
+details.</p>
+</div>
+<div class="section" id="miscellaneous-device-configuration">
+<h4>Miscellaneous Device Configuration<a class="headerlink" href="#miscellaneous-device-configuration" title="Permalink to this headline">¶</a></h4>
+<p>Another task that may be necessary for PCI devices during configuration
+is mapping the video BIOS. On many devices, the VBIOS describes device
+configuration, LCD panel timings (if any), and contains flags indicating
+device state. Mapping the BIOS can be done using the pci_map_rom()
+call, a convenience function that takes care of mapping the actual ROM,
+whether it has been shadowed into memory (typically at address 0xc0000)
+or exists on the PCI device in the ROM BAR. Note that after the ROM has
+been mapped and any necessary information has been extracted, it should
+be unmapped; on many devices, the ROM address decoder is shared with
+other BARs, so leaving it mapped could cause undesired behaviour like
+hangs or memory corruption.</p>
+</div>
+</div>
+<div class="section" id="bus-specific-device-registration-and-pci-support">
+<h3>Bus-specific Device Registration and PCI Support<a class="headerlink" href="#bus-specific-device-registration-and-pci-support" title="Permalink to this headline">¶</a></h3>
+<p>A number of functions are provided to help with device registration. The
+functions deal with PCI and platform devices respectively and are only
+provided for historical reasons. These are all deprecated and shouldn&#8217;t
+be used in new drivers. Besides that there&#8217;s a few helpers for pci
+drivers.</p>
+<dl class="function">
+<dt id="c.drm_pci_alloc">
+drm_dma_handle_t * <code class="descname">drm_pci_alloc</code><span class="sig-paren">(</span>struct drm_device *<em>&nbsp;dev</em>, size_t<em>&nbsp;size</em>, size_t<em>&nbsp;align</em><span class="sig-paren">)</span><a class="headerlink" href="#c.drm_pci_alloc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Allocate a PCI consistent memory block, for DMA.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_device</span> <span class="pre">*</span> <span class="pre">dev</span></code></dt>
+<dd>DRM device</dd>
+<dt><code class="docutils literal"><span class="pre">size_t</span> <span class="pre">size</span></code></dt>
+<dd>size of block to allocate</dd>
+<dt><code class="docutils literal"><span class="pre">size_t</span> <span class="pre">align</span></code></dt>
+<dd>alignment of block</dd>
+</dl>
+<p><strong>Return</strong></p>
+<p>A handle to the allocated memory block on success or NULL on
+failure.</p>
+<dl class="function">
+<dt id="c.drm_pci_free">
+void <code class="descname">drm_pci_free</code><span class="sig-paren">(</span>struct drm_device *<em>&nbsp;dev</em>, drm_dma_handle_t *<em>&nbsp;dmah</em><span class="sig-paren">)</span><a class="headerlink" href="#c.drm_pci_free" title="Permalink to this definition">¶</a></dt>
+<dd><p>Free a PCI consistent memory block</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_device</span> <span class="pre">*</span> <span class="pre">dev</span></code></dt>
+<dd>DRM device</dd>
+<dt><code class="docutils literal"><span class="pre">drm_dma_handle_t</span> <span class="pre">*</span> <span class="pre">dmah</span></code></dt>
+<dd>handle to memory block</dd>
+</dl>
+<dl class="function">
+<dt id="c.drm_get_pci_dev">
+int <code class="descname">drm_get_pci_dev</code><span class="sig-paren">(</span>struct pci_dev *<em>&nbsp;pdev</em>, const struct pci_device_id *<em>&nbsp;ent</em>, struct <a class="reference internal" href="#c.drm_driver" title="drm_driver">drm_driver</a> *<em>&nbsp;driver</em><span class="sig-paren">)</span><a class="headerlink" href="#c.drm_get_pci_dev" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register a PCI device with the DRM subsystem</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">pci_dev</span> <span class="pre">*</span> <span class="pre">pdev</span></code></dt>
+<dd>PCI device</dd>
+<dt><code class="docutils literal"><span class="pre">const</span> <span class="pre">struct</span> <span class="pre">pci_device_id</span> <span class="pre">*</span> <span class="pre">ent</span></code></dt>
+<dd>entry from the PCI ID table that matches <strong>pdev</strong></dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_driver</span> <span class="pre">*</span> <span class="pre">driver</span></code></dt>
+<dd>DRM device driver</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Attempt to gets inter module &#8220;drm&#8221; information. If we are first
+then register the character device and inter module information.
+Try and register, if we fail to register, backout previous work.</p>
+<p><strong>NOTE</strong></p>
+<p>This function is deprecated, please use <a class="reference internal" href="#c.drm_dev_alloc" title="drm_dev_alloc"><code class="xref c c-func docutils literal"><span class="pre">drm_dev_alloc()</span></code></a> and
+<a class="reference internal" href="#c.drm_dev_register" title="drm_dev_register"><code class="xref c c-func docutils literal"><span class="pre">drm_dev_register()</span></code></a> instead and remove your -&gt;:c:func:<cite>load()</cite> callback.</p>
+<p><strong>Return</strong></p>
+<p>0 on success or a negative error code on failure.</p>
+<dl class="function">
+<dt id="c.drm_pci_init">
+int <code class="descname">drm_pci_init</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.drm_driver" title="drm_driver">drm_driver</a> *<em>&nbsp;driver</em>, struct pci_driver *<em>&nbsp;pdriver</em><span class="sig-paren">)</span><a class="headerlink" href="#c.drm_pci_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register matching PCI devices with the DRM subsystem</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_driver</span> <span class="pre">*</span> <span class="pre">driver</span></code></dt>
+<dd>DRM device driver</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">pci_driver</span> <span class="pre">*</span> <span class="pre">pdriver</span></code></dt>
+<dd>PCI device driver</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Initializes a drm_device structures, registering the stubs and initializing
+the AGP device.</p>
+<p><strong>NOTE</strong></p>
+<p>This function is deprecated. Modern modesetting drm drivers should use
+<code class="xref c c-func docutils literal"><span class="pre">pci_register_driver()</span></code> directly, this function only provides shadow-binding
+support for old legacy drivers on top of that core pci function.</p>
+<p><strong>Return</strong></p>
+<p>0 on success or a negative error code on failure.</p>
+<dl class="function">
+<dt id="c.drm_pci_exit">
+void <code class="descname">drm_pci_exit</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.drm_driver" title="drm_driver">drm_driver</a> *<em>&nbsp;driver</em>, struct pci_driver *<em>&nbsp;pdriver</em><span class="sig-paren">)</span><a class="headerlink" href="#c.drm_pci_exit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unregister matching PCI devices from the DRM subsystem</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_driver</span> <span class="pre">*</span> <span class="pre">driver</span></code></dt>
+<dd>DRM device driver</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">pci_driver</span> <span class="pre">*</span> <span class="pre">pdriver</span></code></dt>
+<dd>PCI device driver</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Unregisters one or more devices matched by a PCI driver from the DRM
+subsystem.</p>
+<p><strong>NOTE</strong></p>
+<p>This function is deprecated. Modern modesetting drm drivers should use
+<code class="xref c c-func docutils literal"><span class="pre">pci_unregister_driver()</span></code> directly, this function only provides shadow-binding
+support for old legacy drivers on top of that core pci function.</p>
+<dl class="function">
+<dt id="c.drm_platform_init">
+int <code class="descname">drm_platform_init</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.drm_driver" title="drm_driver">drm_driver</a> *<em>&nbsp;driver</em>, struct platform_device *<em>&nbsp;platform_device</em><span class="sig-paren">)</span><a class="headerlink" href="#c.drm_platform_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Register a platform device with the DRM subsystem</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_driver</span> <span class="pre">*</span> <span class="pre">driver</span></code></dt>
+<dd>DRM device driver</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">platform_device</span> <span class="pre">*</span> <span class="pre">platform_device</span></code></dt>
+<dd>platform device to register</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Registers the specified DRM device driver and platform device with the DRM
+subsystem, initializing a drm_device structure and calling the driver&#8217;s
+.:c:func:<cite>load()</cite> function.</p>
+<p><strong>NOTE</strong></p>
+<p>This function is deprecated, please use <a class="reference internal" href="#c.drm_dev_alloc" title="drm_dev_alloc"><code class="xref c c-func docutils literal"><span class="pre">drm_dev_alloc()</span></code></a> and
+<a class="reference internal" href="#c.drm_dev_register" title="drm_dev_register"><code class="xref c c-func docutils literal"><span class="pre">drm_dev_register()</span></code></a> instead and remove your -&gt;:c:func:<cite>load()</cite> callback.</p>
+<p><strong>Return</strong></p>
+<p>0 on success or a negative error code on failure.</p>
+</div>
+</div>
+<div class="section" id="open-close-file-operations-and-ioctls">
+<h2>Open/Close, File Operations and IOCTLs<a class="headerlink" href="#open-close-file-operations-and-ioctls" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="open-and-close">
+<h3>Open and Close<a class="headerlink" href="#open-and-close" title="Permalink to this headline">¶</a></h3>
+<p>Open and close handlers. None of those methods are mandatory:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>int (*firstopen) (struct drm_device *);
+void (*lastclose) (struct drm_device *);
+int (*open) (struct drm_device *, struct drm_file *);
+void (*preclose) (struct drm_device *, struct drm_file *);
+void (*postclose) (struct drm_device *, struct drm_file *);
+</pre></div>
+</div>
+<p>The firstopen method is called by the DRM core for legacy UMS (User Mode
+Setting) drivers only when an application opens a device that has no
+other opened file handle. UMS drivers can implement it to acquire device
+resources. KMS drivers can&#8217;t use the method and must acquire resources
+in the load method instead.</p>
+<p>Similarly the lastclose method is called when the last application
+holding a file handle opened on the device closes it, for both UMS and
+KMS drivers. Additionally, the method is also called at module unload
+time or, for hot-pluggable devices, when the device is unplugged. The
+firstopen and lastclose calls can thus be unbalanced.</p>
+<p>The open method is called every time the device is opened by an
+application. Drivers can allocate per-file private data in this method
+and store them in the struct <code class="xref c c-type docutils literal"><span class="pre">struct</span> <span class="pre">drm_file</span></code> driver_priv field. Note that the open method is
+called before firstopen.</p>
+<p>The close operation is split into preclose and postclose methods.
+Drivers must stop and cleanup all per-file operations in the preclose
+method. For instance pending vertical blanking and page flip events must
+be cancelled. No per-file operation is allowed on the file handle after
+returning from the preclose method.</p>
+<p>Finally the postclose method is called as the last step of the close
+operation, right before calling the lastclose method if no other open
+file handle exists for the device. Drivers that have allocated per-file
+private data in the open method should free it here.</p>
+<p>The lastclose method should restore CRTC and plane properties to default
+value, so that a subsequent open of the device will not inherit state
+from the previous user. It can also be used to execute delayed power
+switching state changes, e.g. in conjunction with the <a class="reference internal" href="vga-switcheroo.html#vga-switcheroo"><span class="std std-ref">VGA Switcheroo</span></a>
+infrastructure. Beyond that KMS drivers should not do any
+further cleanup. Only legacy UMS drivers might need to clean up device
+state so that the vga console or an independent fbdev driver could take
+over.</p>
+</div>
+<div class="section" id="file-operations">
+<h3>File Operations<a class="headerlink" href="#file-operations" title="Permalink to this headline">¶</a></h3>
+<p>Drivers must define the file operations structure that forms the DRM
+userspace API entry point, even though most of those operations are
+implemented in the DRM core. The mandatory functions are <a class="reference internal" href="#c.drm_open" title="drm_open"><code class="xref c c-func docutils literal"><span class="pre">drm_open()</span></code></a>,
+<a class="reference internal" href="#c.drm_read" title="drm_read"><code class="xref c c-func docutils literal"><span class="pre">drm_read()</span></code></a>, <a class="reference internal" href="#c.drm_ioctl" title="drm_ioctl"><code class="xref c c-func docutils literal"><span class="pre">drm_ioctl()</span></code></a> and <code class="xref c c-func docutils literal"><span class="pre">drm_compat_ioctl()</span></code> if CONFIG_COMPAT is enabled
+(note that drm_compat_ioctl will be NULL if CONFIG_COMPAT=n). Drivers which
+implement private ioctls that require 32/64 bit compatibility support must
+provide their own .:c:func:<cite>compat_ioctl()</cite> handler that processes private ioctls and
+calls <code class="xref c c-func docutils literal"><span class="pre">drm_compat_ioctl()</span></code> for core ioctls.</p>
+<p>In addition <a class="reference internal" href="#c.drm_read" title="drm_read"><code class="xref c c-func docutils literal"><span class="pre">drm_read()</span></code></a> and <a class="reference internal" href="#c.drm_poll" title="drm_poll"><code class="xref c c-func docutils literal"><span class="pre">drm_poll()</span></code></a> provide support for DRM events. DRM
+events are a generic and extensible means to send asynchronous events to
+userspace through the file descriptor. They are used to send vblank event and
+page flip completions by the KMS API. But drivers can also use it for their
+own needs, e.g. to signal completion of rendering.</p>
+<p>The memory mapping implementation will vary depending on how the driver
+manages memory. Legacy drivers will use the deprecated <code class="xref c c-func docutils literal"><span class="pre">drm_legacy_mmap()</span></code>
+function, modern drivers should use one of the provided memory-manager
+specific implementations. For GEM-based drivers this is <a class="reference internal" href="drm-mm.html#c.drm_gem_mmap" title="drm_gem_mmap"><code class="xref c c-func docutils literal"><span class="pre">drm_gem_mmap()</span></code></a>.</p>
+<p>No other file operations are supported by the DRM userspace API. Overall the
+following is an example #file_operations structure:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>static const example_drm_fops = {
+        .owner = THIS_MODULE,
+        .open = drm_open,
+        .release = drm_release,
+        .unlocked_ioctl = drm_ioctl,
+        .compat_ioctl = drm_compat_ioctl, // NULL if CONFIG_COMPAT=n
+        .poll = drm_poll,
+        .read = drm_read,
+        .llseek = no_llseek,
+        .mmap = drm_gem_mmap,
+};
+</pre></div>
+</div>
+<dl class="function">
+<dt id="c.drm_open">
+int <code class="descname">drm_open</code><span class="sig-paren">(</span>struct inode *<em>&nbsp;inode</em>, struct file *<em>&nbsp;filp</em><span class="sig-paren">)</span><a class="headerlink" href="#c.drm_open" title="Permalink to this definition">¶</a></dt>
+<dd><p>open method for DRM file</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">inode</span> <span class="pre">*</span> <span class="pre">inode</span></code></dt>
+<dd>device inode</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">file</span> <span class="pre">*</span> <span class="pre">filp</span></code></dt>
+<dd>file pointer.</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This function must be used by drivers as their .:c:func:<cite>open()</cite> #file_operations
+method. It looks up the correct DRM device and instantiates all the per-file
+resources for it.</p>
+<p><strong>Return</strong></p>
+<p>0 on success or negative errno value on falure.</p>
+<dl class="function">
+<dt id="c.drm_release">
+int <code class="descname">drm_release</code><span class="sig-paren">(</span>struct inode *<em>&nbsp;inode</em>, struct file *<em>&nbsp;filp</em><span class="sig-paren">)</span><a class="headerlink" href="#c.drm_release" title="Permalink to this definition">¶</a></dt>
+<dd><p>release method for DRM file</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">inode</span> <span class="pre">*</span> <span class="pre">inode</span></code></dt>
+<dd>device inode</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">file</span> <span class="pre">*</span> <span class="pre">filp</span></code></dt>
+<dd>file pointer.</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This function must be used by drivers as their .:c:func:<cite>release()</cite> #file_operations
+method. It frees any resources associated with the open file, and if this is
+the last open file for the DRM device also proceeds to call <code class="xref c c-func docutils literal"><span class="pre">drm_lastclose()</span></code>.</p>
+<p><strong>Return</strong></p>
+<p>Always succeeds and returns 0.</p>
+<dl class="function">
+<dt id="c.drm_read">
+ssize_t <code class="descname">drm_read</code><span class="sig-paren">(</span>struct file *<em>&nbsp;filp</em>, char __user *<em>&nbsp;buffer</em>, size_t<em>&nbsp;count</em>, loff_t *<em>&nbsp;offset</em><span class="sig-paren">)</span><a class="headerlink" href="#c.drm_read" title="Permalink to this definition">¶</a></dt>
+<dd><p>read method for DRM file</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">file</span> <span class="pre">*</span> <span class="pre">filp</span></code></dt>
+<dd>file pointer</dd>
+<dt><code class="docutils literal"><span class="pre">char</span> <span class="pre">__user</span> <span class="pre">*</span> <span class="pre">buffer</span></code></dt>
+<dd>userspace destination pointer for the read</dd>
+<dt><code class="docutils literal"><span class="pre">size_t</span> <span class="pre">count</span></code></dt>
+<dd>count in bytes to read</dd>
+<dt><code class="docutils literal"><span class="pre">loff_t</span> <span class="pre">*</span> <span class="pre">offset</span></code></dt>
+<dd>offset to read</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This function must be used by drivers as their .:c:func:<cite>read()</cite> #file_operations
+method iff they use DRM events for asynchronous signalling to userspace.
+Since events are used by the KMS API for vblank and page flip completion this
+means all modern display drivers must use it.</p>
+<p><strong>offset</strong> is ignore, DRM events are read like a pipe. Therefore drivers also
+must set the .:c:func:<cite>llseek()</cite> #file_operation to <code class="xref c c-func docutils literal"><span class="pre">no_llseek()</span></code>. Polling support is
+provided by <a class="reference internal" href="#c.drm_poll" title="drm_poll"><code class="xref c c-func docutils literal"><span class="pre">drm_poll()</span></code></a>.</p>
+<p>This function will only ever read a full event. Therefore userspace must
+supply a big enough buffer to fit any event to ensure forward progress. Since
+the maximum event space is currently 4K it&#8217;s recommended to just use that for
+safety.</p>
+<p><strong>Return</strong></p>
+<p>Number of bytes read (always aligned to full events, and can be 0) or a
+negative error code on failure.</p>
+<dl class="function">
+<dt id="c.drm_poll">
+unsigned int <code class="descname">drm_poll</code><span class="sig-paren">(</span>struct file *<em>&nbsp;filp</em>, struct poll_table_struct *<em>&nbsp;wait</em><span class="sig-paren">)</span><a class="headerlink" href="#c.drm_poll" title="Permalink to this definition">¶</a></dt>
+<dd><p>poll method for DRM file</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">file</span> <span class="pre">*</span> <span class="pre">filp</span></code></dt>
+<dd>file pointer</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">poll_table_struct</span> <span class="pre">*</span> <span class="pre">wait</span></code></dt>
+<dd>poll waiter table</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This function must be used by drivers as their .:c:func:<cite>read()</cite> #file_operations
+method iff they use DRM events for asynchronous signalling to userspace.
+Since events are used by the KMS API for vblank and page flip completion this
+means all modern display drivers must use it.</p>
+<p>See also <a class="reference internal" href="#c.drm_read" title="drm_read"><code class="xref c c-func docutils literal"><span class="pre">drm_read()</span></code></a>.</p>
+<p><strong>Return</strong></p>
+<p>Mask of POLL flags indicating the current status of the file.</p>
+<dl class="function">
+<dt id="c.drm_event_reserve_init_locked">
+int <code class="descname">drm_event_reserve_init_locked</code><span class="sig-paren">(</span>struct drm_device *<em>&nbsp;dev</em>, struct drm_file *<em>&nbsp;file_priv</em>, struct drm_pending_event *<em>&nbsp;p</em>, struct drm_event *<em>&nbsp;e</em><span class="sig-paren">)</span><a class="headerlink" href="#c.drm_event_reserve_init_locked" title="Permalink to this definition">¶</a></dt>
+<dd><p>init a DRM event and reserve space for it</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_device</span> <span class="pre">*</span> <span class="pre">dev</span></code></dt>
+<dd>DRM device</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_file</span> <span class="pre">*</span> <span class="pre">file_priv</span></code></dt>
+<dd>DRM file private data</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_pending_event</span> <span class="pre">*</span> <span class="pre">p</span></code></dt>
+<dd>tracking structure for the pending event</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_event</span> <span class="pre">*</span> <span class="pre">e</span></code></dt>
+<dd>actual event data to deliver to userspace</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This function prepares the passed in event for eventual delivery. If the event
+doesn&#8217;t get delivered (because the IOCTL fails later on, before queuing up
+anything) then the even must be cancelled and freed using
+<a class="reference internal" href="#c.drm_event_cancel_free" title="drm_event_cancel_free"><code class="xref c c-func docutils literal"><span class="pre">drm_event_cancel_free()</span></code></a>. Successfully initialized events should be sent out
+using <a class="reference internal" href="#c.drm_send_event" title="drm_send_event"><code class="xref c c-func docutils literal"><span class="pre">drm_send_event()</span></code></a> or <a class="reference internal" href="#c.drm_send_event_locked" title="drm_send_event_locked"><code class="xref c c-func docutils literal"><span class="pre">drm_send_event_locked()</span></code></a> to signal completion of the
+asynchronous event to userspace.</p>
+<p>If callers embedded <strong>p</strong> into a larger structure it must be allocated with
+kmalloc and <strong>p</strong> must be the first member element.</p>
+<p>This is the locked version of <a class="reference internal" href="#c.drm_event_reserve_init" title="drm_event_reserve_init"><code class="xref c c-func docutils literal"><span class="pre">drm_event_reserve_init()</span></code></a> for callers which
+already hold dev-&gt;event_lock.</p>
+<p><strong>Return</strong></p>
+<p>0 on success or a negative error code on failure.</p>
+<dl class="function">
+<dt id="c.drm_event_reserve_init">
+int <code class="descname">drm_event_reserve_init</code><span class="sig-paren">(</span>struct drm_device *<em>&nbsp;dev</em>, struct drm_file *<em>&nbsp;file_priv</em>, struct drm_pending_event *<em>&nbsp;p</em>, struct drm_event *<em>&nbsp;e</em><span class="sig-paren">)</span><a class="headerlink" href="#c.drm_event_reserve_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>init a DRM event and reserve space for it</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_device</span> <span class="pre">*</span> <span class="pre">dev</span></code></dt>
+<dd>DRM device</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_file</span> <span class="pre">*</span> <span class="pre">file_priv</span></code></dt>
+<dd>DRM file private data</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_pending_event</span> <span class="pre">*</span> <span class="pre">p</span></code></dt>
+<dd>tracking structure for the pending event</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_event</span> <span class="pre">*</span> <span class="pre">e</span></code></dt>
+<dd>actual event data to deliver to userspace</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This function prepares the passed in event for eventual delivery. If the event
+doesn&#8217;t get delivered (because the IOCTL fails later on, before queuing up
+anything) then the even must be cancelled and freed using
+<a class="reference internal" href="#c.drm_event_cancel_free" title="drm_event_cancel_free"><code class="xref c c-func docutils literal"><span class="pre">drm_event_cancel_free()</span></code></a>. Successfully initialized events should be sent out
+using <a class="reference internal" href="#c.drm_send_event" title="drm_send_event"><code class="xref c c-func docutils literal"><span class="pre">drm_send_event()</span></code></a> or <a class="reference internal" href="#c.drm_send_event_locked" title="drm_send_event_locked"><code class="xref c c-func docutils literal"><span class="pre">drm_send_event_locked()</span></code></a> to signal completion of the
+asynchronous event to userspace.</p>
+<p>If callers embedded <strong>p</strong> into a larger structure it must be allocated with
+kmalloc and <strong>p</strong> must be the first member element.</p>
+<p>Callers which already hold dev-&gt;event_lock should use
+<a class="reference internal" href="#c.drm_event_reserve_init" title="drm_event_reserve_init"><code class="xref c c-func docutils literal"><span class="pre">drm_event_reserve_init()</span></code></a> instead.</p>
+<p><strong>Return</strong></p>
+<p>0 on success or a negative error code on failure.</p>
+<dl class="function">
+<dt id="c.drm_event_cancel_free">
+void <code class="descname">drm_event_cancel_free</code><span class="sig-paren">(</span>struct drm_device *<em>&nbsp;dev</em>, struct drm_pending_event *<em>&nbsp;p</em><span class="sig-paren">)</span><a class="headerlink" href="#c.drm_event_cancel_free" title="Permalink to this definition">¶</a></dt>
+<dd><p>free a DRM event and release it&#8217;s space</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_device</span> <span class="pre">*</span> <span class="pre">dev</span></code></dt>
+<dd>DRM device</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_pending_event</span> <span class="pre">*</span> <span class="pre">p</span></code></dt>
+<dd>tracking structure for the pending event</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This function frees the event <strong>p</strong> initialized with <a class="reference internal" href="#c.drm_event_reserve_init" title="drm_event_reserve_init"><code class="xref c c-func docutils literal"><span class="pre">drm_event_reserve_init()</span></code></a>
+and releases any allocated space.</p>
+<dl class="function">
+<dt id="c.drm_send_event_locked">
+void <code class="descname">drm_send_event_locked</code><span class="sig-paren">(</span>struct drm_device *<em>&nbsp;dev</em>, struct drm_pending_event *<em>&nbsp;e</em><span class="sig-paren">)</span><a class="headerlink" href="#c.drm_send_event_locked" title="Permalink to this definition">¶</a></dt>
+<dd><p>send DRM event to file descriptor</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_device</span> <span class="pre">*</span> <span class="pre">dev</span></code></dt>
+<dd>DRM device</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_pending_event</span> <span class="pre">*</span> <span class="pre">e</span></code></dt>
+<dd>DRM event to deliver</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This function sends the event <strong>e</strong>, initialized with <a class="reference internal" href="#c.drm_event_reserve_init" title="drm_event_reserve_init"><code class="xref c c-func docutils literal"><span class="pre">drm_event_reserve_init()</span></code></a>,
+to its associated userspace DRM file. Callers must already hold
+dev-&gt;event_lock, see <a class="reference internal" href="#c.drm_send_event" title="drm_send_event"><code class="xref c c-func docutils literal"><span class="pre">drm_send_event()</span></code></a> for the unlocked version.</p>
+<p>Note that the core will take care of unlinking and disarming events when the
+corresponding DRM file is closed. Drivers need not worry about whether the
+DRM file for this event still exists and can call this function upon
+completion of the asynchronous work unconditionally.</p>
+<dl class="function">
+<dt id="c.drm_send_event">
+void <code class="descname">drm_send_event</code><span class="sig-paren">(</span>struct drm_device *<em>&nbsp;dev</em>, struct drm_pending_event *<em>&nbsp;e</em><span class="sig-paren">)</span><a class="headerlink" href="#c.drm_send_event" title="Permalink to this definition">¶</a></dt>
+<dd><p>send DRM event to file descriptor</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_device</span> <span class="pre">*</span> <span class="pre">dev</span></code></dt>
+<dd>DRM device</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_pending_event</span> <span class="pre">*</span> <span class="pre">e</span></code></dt>
+<dd>DRM event to deliver</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This function sends the event <strong>e</strong>, initialized with <a class="reference internal" href="#c.drm_event_reserve_init" title="drm_event_reserve_init"><code class="xref c c-func docutils literal"><span class="pre">drm_event_reserve_init()</span></code></a>,
+to its associated userspace DRM file. This function acquires dev-&gt;event_lock,
+see <a class="reference internal" href="#c.drm_send_event_locked" title="drm_send_event_locked"><code class="xref c c-func docutils literal"><span class="pre">drm_send_event_locked()</span></code></a> for callers which already hold this lock.</p>
+<p>Note that the core will take care of unlinking and disarming events when the
+corresponding DRM file is closed. Drivers need not worry about whether the
+DRM file for this event still exists and can call this function upon
+completion of the asynchronous work unconditionally.</p>
+</div>
+<div class="section" id="ioctls">
+<h3>IOCTLs<a class="headerlink" href="#ioctls" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt>struct drm_ioctl_desc *ioctls; int num_ioctls;</dt>
+<dd>Driver-specific ioctls descriptors table.</dd>
+</dl>
+<p>Driver-specific ioctls numbers start at DRM_COMMAND_BASE. The ioctls
+descriptors table is indexed by the ioctl number offset from the base
+value. Drivers can use the DRM_IOCTL_DEF_DRV() macro to initialize
+the table entries.</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>DRM_IOCTL_DEF_DRV(ioctl, func, flags)
+</pre></div>
+</div>
+<p><code class="docutils literal"><span class="pre">ioctl</span></code> is the ioctl name. Drivers must define the DRM_##ioctl and
+DRM_IOCTL_##ioctl macros to the ioctl number offset from
+DRM_COMMAND_BASE and the ioctl number respectively. The first macro is
+private to the device while the second must be exposed to userspace in a
+public header.</p>
+<p><code class="docutils literal"><span class="pre">func</span></code> is a pointer to the ioctl handler function compatible with the
+<code class="docutils literal"><span class="pre">drm_ioctl_t</span></code> type.</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>typedef int drm_ioctl_t(struct drm_device *dev, void *data,
+        struct drm_file *file_priv);
+</pre></div>
+</div>
+<p><code class="docutils literal"><span class="pre">flags</span></code> is a bitmask combination of the following values. It restricts
+how the ioctl is allowed to be called.</p>
+<ul class="simple">
+<li>DRM_AUTH - Only authenticated callers allowed</li>
+<li>DRM_MASTER - The ioctl can only be called on the master file handle</li>
+<li>DRM_ROOT_ONLY - Only callers with the SYSADMIN capability allowed</li>
+<li>DRM_CONTROL_ALLOW - The ioctl can only be called on a control
+device</li>
+<li>DRM_UNLOCKED - The ioctl handler will be called without locking the
+DRM global mutex. This is the enforced default for kms drivers (i.e.
+using the DRIVER_MODESET flag) and hence shouldn&#8217;t be used any more
+for new drivers.</li>
+</ul>
+<dl class="function">
+<dt id="c.drm_noop">
+int <code class="descname">drm_noop</code><span class="sig-paren">(</span>struct drm_device *<em>&nbsp;dev</em>, void *<em>&nbsp;data</em>, struct drm_file *<em>&nbsp;file_priv</em><span class="sig-paren">)</span><a class="headerlink" href="#c.drm_noop" title="Permalink to this definition">¶</a></dt>
+<dd><p>DRM no-op ioctl implemntation</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_device</span> <span class="pre">*</span> <span class="pre">dev</span></code></dt>
+<dd>DRM device for the ioctl</dd>
+<dt><code class="docutils literal"><span class="pre">void</span> <span class="pre">*</span> <span class="pre">data</span></code></dt>
+<dd>data pointer for the ioctl</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_file</span> <span class="pre">*</span> <span class="pre">file_priv</span></code></dt>
+<dd>DRM file for the ioctl call</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This no-op implementation for drm ioctls is useful for deprecated
+functionality where we can&#8217;t return a failure code because existing userspace
+checks the result of the ioctl, but doesn&#8217;t care about the action.</p>
+<p>Always returns successfully with 0.</p>
+<dl class="function">
+<dt id="c.drm_invalid_op">
+int <code class="descname">drm_invalid_op</code><span class="sig-paren">(</span>struct drm_device *<em>&nbsp;dev</em>, void *<em>&nbsp;data</em>, struct drm_file *<em>&nbsp;file_priv</em><span class="sig-paren">)</span><a class="headerlink" href="#c.drm_invalid_op" title="Permalink to this definition">¶</a></dt>
+<dd><p>DRM invalid ioctl implemntation</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_device</span> <span class="pre">*</span> <span class="pre">dev</span></code></dt>
+<dd>DRM device for the ioctl</dd>
+<dt><code class="docutils literal"><span class="pre">void</span> <span class="pre">*</span> <span class="pre">data</span></code></dt>
+<dd>data pointer for the ioctl</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_file</span> <span class="pre">*</span> <span class="pre">file_priv</span></code></dt>
+<dd>DRM file for the ioctl call</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This no-op implementation for drm ioctls is useful for deprecated
+functionality where we really don&#8217;t want to allow userspace to call the ioctl
+any more. This is the case for old ums interfaces for drivers that
+transitioned to kms gradually and so kept the old legacy tables around. This
+only applies to radeon and i915 kms drivers, other drivers shouldn&#8217;t need to
+use this function.</p>
+<p>Always fails with a return value of -EINVAL.</p>
+<dl class="function">
+<dt id="c.drm_ioctl">
+long <code class="descname">drm_ioctl</code><span class="sig-paren">(</span>struct file *<em>&nbsp;filp</em>, unsigned int<em>&nbsp;cmd</em>, unsigned long<em>&nbsp;arg</em><span class="sig-paren">)</span><a class="headerlink" href="#c.drm_ioctl" title="Permalink to this definition">¶</a></dt>
+<dd><p>ioctl callback implementation for DRM drivers</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">file</span> <span class="pre">*</span> <span class="pre">filp</span></code></dt>
+<dd>file this ioctl is called on</dd>
+<dt><code class="docutils literal"><span class="pre">unsigned</span> <span class="pre">int</span> <span class="pre">cmd</span></code></dt>
+<dd>ioctl cmd number</dd>
+<dt><code class="docutils literal"><span class="pre">unsigned</span> <span class="pre">long</span> <span class="pre">arg</span></code></dt>
+<dd>user argument</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Looks up the ioctl function in the ::ioctls table, checking for root
+previleges if so required, and dispatches to the respective function.</p>
+<p><strong>Return</strong></p>
+<p>Zero on success, negative error code on failure.</p>
+<dl class="function">
+<dt id="c.drm_ioctl_flags">
+bool <code class="descname">drm_ioctl_flags</code><span class="sig-paren">(</span>unsigned int<em>&nbsp;nr</em>, unsigned int *<em>&nbsp;flags</em><span class="sig-paren">)</span><a class="headerlink" href="#c.drm_ioctl_flags" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check for core ioctl and return ioctl permission flags</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">unsigned</span> <span class="pre">int</span> <span class="pre">nr</span></code></dt>
+<dd>ioctl number</dd>
+<dt><code class="docutils literal"><span class="pre">unsigned</span> <span class="pre">int</span> <span class="pre">*</span> <span class="pre">flags</span></code></dt>
+<dd>where to return the ioctl permission flags</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This ioctl is only used by the vmwgfx driver to augment the access checks
+done by the drm core and insofar a pretty decent layering violation. This
+shouldn&#8217;t be used by any drivers.</p>
+<p><strong>Return</strong></p>
+<p>True if the <strong>nr</strong> corresponds to a DRM core ioctl number, false otherwise.</p>
+</div>
+</div>
+<div class="section" id="misc-utilities">
+<h2>Misc Utilities<a class="headerlink" href="#misc-utilities" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="printer">
+<h3>Printer<a class="headerlink" href="#printer" title="Permalink to this headline">¶</a></h3>
+<p>A simple wrapper for <code class="xref c c-func docutils literal"><span class="pre">dev_printk()</span></code>, <code class="xref c c-func docutils literal"><span class="pre">seq_printf()</span></code>, etc.  Allows same
+debug code to be used for both debugfs and printk logging.</p>
+<p>For example:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>void log_some_info(struct drm_printer *p)
+{
+        drm_printf(p, &quot;foo=``d``\n&quot;, foo);
+        drm_printf(p, &quot;bar=``d``\n&quot;, bar);
+}
+
+#ifdef CONFIG_DEBUG_FS
+void debugfs_show(struct seq_file *f)
+{
+        struct drm_printer p = drm_seq_file_printer(f);
+        log_some_info(:c:type:`p`);
+}
+#endif
+
+void some_other_function(...)
+{
+        struct drm_printer p = drm_info_printer(drm-&gt;dev);
+        log_some_info(:c:type:`p`);
+}
+</pre></div>
+</div>
+<dl class="type">
+<dt id="c.drm_printer">
+struct <code class="descname">drm_printer</code><a class="headerlink" href="#c.drm_printer" title="Permalink to this definition">¶</a></dt>
+<dd><p>drm output &#8220;stream&#8221;</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>struct drm_printer {
+  void (* printfn) (struct drm_printer *p, struct va_format *vaf);
+  void * arg;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">printfn</span></code></dt>
+<dd>actual output fxn</dd>
+<dt><code class="docutils literal"><span class="pre">arg</span></code></dt>
+<dd>output fxn specific data</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Do not use struct members directly.  Use <code class="xref c c-func docutils literal"><span class="pre">drm_printer_seq_file()</span></code>,
+<code class="xref c c-func docutils literal"><span class="pre">drm_printer_info()</span></code>, etc to initialize.  And <a class="reference internal" href="#c.drm_printf" title="drm_printf"><code class="xref c c-func docutils literal"><span class="pre">drm_printf()</span></code></a> for output.</p>
+<dl class="function">
+<dt id="c.drm_seq_file_printer">
+struct <a class="reference internal" href="#c.drm_printer" title="drm_printer">drm_printer</a> <code class="descname">drm_seq_file_printer</code><span class="sig-paren">(</span>struct seq_file *<em>&nbsp;f</em><span class="sig-paren">)</span><a class="headerlink" href="#c.drm_seq_file_printer" title="Permalink to this definition">¶</a></dt>
+<dd><p>construct a <a class="reference internal" href="#c.drm_printer" title="drm_printer"><code class="xref c c-type docutils literal"><span class="pre">drm_printer</span></code></a> that outputs to <code class="xref c c-type docutils literal"><span class="pre">seq_file</span></code></p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">seq_file</span> <span class="pre">*</span> <span class="pre">f</span></code></dt>
+<dd>the struct <code class="xref c c-type docutils literal"><span class="pre">seq_file</span></code> to output to</dd>
+</dl>
+<p><strong>Return</strong></p>
+<p>The <a class="reference internal" href="#c.drm_printer" title="drm_printer"><code class="xref c c-type docutils literal"><span class="pre">drm_printer</span></code></a> object</p>
+<dl class="function">
+<dt id="c.drm_info_printer">
+struct <a class="reference internal" href="#c.drm_printer" title="drm_printer">drm_printer</a> <code class="descname">drm_info_printer</code><span class="sig-paren">(</span>struct <a class="reference internal" href="../driver-api/infrastructure.html#c.device" title="device">device</a> *<em>&nbsp;dev</em><span class="sig-paren">)</span><a class="headerlink" href="#c.drm_info_printer" title="Permalink to this definition">¶</a></dt>
+<dd><p>construct a <a class="reference internal" href="#c.drm_printer" title="drm_printer"><code class="xref c c-type docutils literal"><span class="pre">drm_printer</span></code></a> that outputs to <code class="xref c c-func docutils literal"><span class="pre">dev_printk()</span></code></p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">device</span> <span class="pre">*</span> <span class="pre">dev</span></code></dt>
+<dd>the struct <a class="reference internal" href="../driver-api/infrastructure.html#c.device" title="device"><code class="xref c c-type docutils literal"><span class="pre">device</span></code></a> pointer</dd>
+</dl>
+<p><strong>Return</strong></p>
+<p>The <a class="reference internal" href="#c.drm_printer" title="drm_printer"><code class="xref c c-type docutils literal"><span class="pre">drm_printer</span></code></a> object</p>
+<dl class="function">
+<dt id="c.drm_printf">
+void <code class="descname">drm_printf</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.drm_printer" title="drm_printer">drm_printer</a> *<em>&nbsp;p</em>, const char *<em>&nbsp;f</em>, ...<span class="sig-paren">)</span><a class="headerlink" href="#c.drm_printf" title="Permalink to this definition">¶</a></dt>
+<dd><p>print to a <a class="reference internal" href="#c.drm_printer" title="drm_printer"><code class="xref c c-type docutils literal"><span class="pre">drm_printer</span></code></a> stream</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">drm_printer</span> <span class="pre">*</span> <span class="pre">p</span></code></dt>
+<dd>the <a class="reference internal" href="#c.drm_printer" title="drm_printer"><code class="xref c c-type docutils literal"><span class="pre">drm_printer</span></code></a></dd>
+<dt><code class="docutils literal"><span class="pre">const</span> <span class="pre">char</span> <span class="pre">*</span> <span class="pre">f</span></code></dt>
+<dd>format string</dd>
+<dt><code class="docutils literal"><span class="pre">...</span></code></dt>
+<dd>variable arguments</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="legacy-support-code">
+<h2>Legacy Support Code<a class="headerlink" href="#legacy-support-code" title="Permalink to this headline">¶</a></h2>
+<p>The section very briefly covers some of the old legacy support code
+which is only used by old DRM drivers which have done a so-called
+shadow-attach to the underlying device instead of registering as a real
+driver. This also includes some of the old generic buffer management and
+command submission code. Do not use any of this in new and modern
+drivers.</p>
+<div class="section" id="legacy-suspend-resume">
+<h3>Legacy Suspend/Resume<a class="headerlink" href="#legacy-suspend-resume" title="Permalink to this headline">¶</a></h3>
+<p>The DRM core provides some suspend/resume code, but drivers wanting full
+suspend/resume support should provide save() and restore() functions.
+These are called at suspend, hibernate, or resume time, and should
+perform any state save or restore required by your device across suspend
+or hibernate states.</p>
+<p>int (*suspend) (struct drm_device *, pm_message_t state); int
+(*resume) (struct drm_device *);
+Those are legacy suspend and resume methods which <em>only</em> work with the
+legacy shadow-attach driver registration functions. New driver should
+use the power management interface provided by their bus type (usually
+through the <a class="reference internal" href="../driver-api/infrastructure.html#c.device_driver" title="device_driver"><code class="xref c c-type docutils literal"><span class="pre">struct</span> <span class="pre">device_driver</span></code></a>
+dev_pm_ops) and set these methods to NULL.</p>
+</div>
+<div class="section" id="legacy-dma-services">
+<h3>Legacy DMA Services<a class="headerlink" href="#legacy-dma-services" title="Permalink to this headline">¶</a></h3>
+<p>This should cover how DMA mapping etc. is supported by the core. These
+functions are deprecated and should not be used.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="drm-mm.html" class="btn btn-neutral float-right" title="DRM Memory Management" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="introduction.html" class="btn btn-neutral" title="Introduction" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, The kernel development community.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'4.10.0-rc8+',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
