@@ -1,0 +1,915 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>The Userspace I/O HOWTO &mdash; The Linux Kernel 4.11.0-rc3+ documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="The Linux Kernel 4.11.0-rc3+ documentation" href="../index.html"/>
+        <link rel="up" title="The Linux driver implementer’s API guide" href="index.html"/>
+        <link rel="next" title="Linux Firmware API" href="firmware/index.html"/>
+        <link rel="prev" title="mac80211 subsystem (advanced)" href="80211/mac80211-advanced.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                4.11.0-rc3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user&#8217;s and administrator&#8217;s guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">The Linux driver implementer&#8217;s API guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="basics.html">Driver Basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="infrastructure.html">Device drivers infrastructure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pm/index.html">Device Power Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="device-io.html">Bus-Independent Device Accesses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dma-buf.html">Buffer Sharing and Synchronization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="device_link.html">Device links</a></li>
+<li class="toctree-l2"><a class="reference internal" href="message-based.html">Message-based devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sound.html">Sound Devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="frame-buffer.html">Frame Buffer Library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="regulator.html">Voltage and current regulator API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input.html">Input Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usb.html">The Linux-USB Host Side API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spi.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="i2c.html">I<sup>2</sup>C and SMBus Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hsi.html">High Speed Synchronous Serial Interface (HSI)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="edac.html">Error Detection And Correction (EDAC) Devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="miscellaneous.html">Parallel Port Devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="miscellaneous.html#x50-uart-driver">16x50 UART Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="miscellaneous.html#pulse-width-modulation-pwm">Pulse-Width Modulation (PWM)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vme.html">VME Device Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="80211/index.html">Linux 802.11 Driver Developer&#8217;s Guide</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">The Userspace I/O HOWTO</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#about-this-document">About this document</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#translations">Translations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#preface">Preface</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#acknowledgments">Acknowledgments</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#feedback">Feedback</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#about-uio">About UIO</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#how-uio-works">How UIO works</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#writing-your-own-kernel-module">Writing your own kernel module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#struct-uio-info">struct uio_info</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#adding-an-interrupt-handler">Adding an interrupt handler</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#using-uio-pdrv-for-platform-devices">Using uio_pdrv for platform devices</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#using-uio-pdrv-genirq-for-platform-devices">Using uio_pdrv_genirq for platform devices</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#using-uio-dmem-genirq-for-platform-devices">Using uio_dmem_genirq for platform devices</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#writing-a-driver-in-userspace">Writing a driver in userspace</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#getting-information-about-your-uio-device">Getting information about your UIO device</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#mmap-device-memory">mmap() device memory</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#waiting-for-interrupts">Waiting for interrupts</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#generic-pci-uio-driver">Generic PCI UIO driver</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#making-the-driver-recognize-the-device">Making the driver recognize the device</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#things-to-know-about-uio-pci-generic">Things to know about uio_pci_generic</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#writing-userspace-driver-using-uio-pci-generic">Writing userspace driver using uio_pci_generic</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#example-code-using-uio-pci-generic">Example code using uio_pci_generic</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#generic-hyper-v-uio-driver">Generic Hyper-V UIO driver</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id1">Making the driver recognize the device</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#things-to-know-about-uio-hv-generic">Things to know about uio_hv_generic</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#further-information">Further information</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="firmware/index.html">Linux Firmware API</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../media/index.html">Linux Media Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer&#8217;s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/ko_KR/index.html">Korean translations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/zh_CN/index.html">Chinese translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">The Linux Kernel</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="index.html">The Linux driver implementer&#8217;s API guide</a> &raquo;</li>
+      
+    <li>The Userspace I/O HOWTO</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/driver-api/uio-howto.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="the-userspace-i-o-howto">
+<h1>The Userspace I/O HOWTO<a class="headerlink" href="#the-userspace-i-o-howto" title="Permalink to this headline">¶</a></h1>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Author:</th><td class="field-body">Hans-Jürgen Koch Linux developer, Linutronix</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Date:</th><td class="field-body">2006-12-11</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="about-this-document">
+<h2>About this document<a class="headerlink" href="#about-this-document" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="translations">
+<h3>Translations<a class="headerlink" href="#translations" title="Permalink to this headline">¶</a></h3>
+<p>If you know of any translations for this document, or you are interested
+in translating it, please email me <a class="reference external" href="mailto:hjk&#37;&#52;&#48;hansjkoch&#46;de">hjk<span>&#64;</span>hansjkoch<span>&#46;</span>de</a>.</p>
+</div>
+<div class="section" id="preface">
+<h3>Preface<a class="headerlink" href="#preface" title="Permalink to this headline">¶</a></h3>
+<p>For many types of devices, creating a Linux kernel driver is overkill.
+All that is really needed is some way to handle an interrupt and provide
+access to the memory space of the device. The logic of controlling the
+device does not necessarily have to be within the kernel, as the device
+does not need to take advantage of any of other resources that the
+kernel provides. One such common class of devices that are like this are
+for industrial I/O cards.</p>
+<p>To address this situation, the userspace I/O system (UIO) was designed.
+For typical industrial I/O cards, only a very small kernel module is
+needed. The main part of the driver will run in user space. This
+simplifies development and reduces the risk of serious bugs within a
+kernel module.</p>
+<p>Please note that UIO is not an universal driver interface. Devices that
+are already handled well by other kernel subsystems (like networking or
+serial or USB) are no candidates for an UIO driver. Hardware that is
+ideally suited for an UIO driver fulfills all of the following:</p>
+<ul class="simple">
+<li>The device has memory that can be mapped. The device can be
+controlled completely by writing to this memory.</li>
+<li>The device usually generates interrupts.</li>
+<li>The device does not fit into one of the standard kernel subsystems.</li>
+</ul>
+</div>
+<div class="section" id="acknowledgments">
+<h3>Acknowledgments<a class="headerlink" href="#acknowledgments" title="Permalink to this headline">¶</a></h3>
+<p>I&#8217;d like to thank Thomas Gleixner and Benedikt Spranger of Linutronix,
+who have not only written most of the UIO code, but also helped greatly
+writing this HOWTO by giving me all kinds of background information.</p>
+</div>
+<div class="section" id="feedback">
+<h3>Feedback<a class="headerlink" href="#feedback" title="Permalink to this headline">¶</a></h3>
+<p>Find something wrong with this document? (Or perhaps something right?) I
+would love to hear from you. Please email me at <a class="reference external" href="mailto:hjk&#37;&#52;&#48;hansjkoch&#46;de">hjk<span>&#64;</span>hansjkoch<span>&#46;</span>de</a>.</p>
+</div>
+</div>
+<div class="section" id="about-uio">
+<h2>About UIO<a class="headerlink" href="#about-uio" title="Permalink to this headline">¶</a></h2>
+<p>If you use UIO for your card&#8217;s driver, here&#8217;s what you get:</p>
+<ul class="simple">
+<li>only one small kernel module to write and maintain.</li>
+<li>develop the main part of your driver in user space, with all the
+tools and libraries you&#8217;re used to.</li>
+<li>bugs in your driver won&#8217;t crash the kernel.</li>
+<li>updates of your driver can take place without recompiling the kernel.</li>
+</ul>
+<div class="section" id="how-uio-works">
+<h3>How UIO works<a class="headerlink" href="#how-uio-works" title="Permalink to this headline">¶</a></h3>
+<p>Each UIO device is accessed through a device file and several sysfs
+attribute files. The device file will be called <code class="docutils literal"><span class="pre">/dev/uio0</span></code> for the
+first device, and <code class="docutils literal"><span class="pre">/dev/uio1</span></code>, <code class="docutils literal"><span class="pre">/dev/uio2</span></code> and so on for subsequent
+devices.</p>
+<p><code class="docutils literal"><span class="pre">/dev/uioX</span></code> is used to access the address space of the card. Just use
+<code class="xref c c-func docutils literal"><span class="pre">mmap()</span></code> to access registers or RAM locations of your card.</p>
+<p>Interrupts are handled by reading from <code class="docutils literal"><span class="pre">/dev/uioX</span></code>. A blocking
+<code class="xref c c-func docutils literal"><span class="pre">read()</span></code> from <code class="docutils literal"><span class="pre">/dev/uioX</span></code> will return as soon as an
+interrupt occurs. You can also use <code class="xref c c-func docutils literal"><span class="pre">select()</span></code> on
+<code class="docutils literal"><span class="pre">/dev/uioX</span></code> to wait for an interrupt. The integer value read from
+<code class="docutils literal"><span class="pre">/dev/uioX</span></code> represents the total interrupt count. You can use this
+number to figure out if you missed some interrupts.</p>
+<p>For some hardware that has more than one interrupt source internally,
+but not separate IRQ mask and status registers, there might be
+situations where userspace cannot determine what the interrupt source
+was if the kernel handler disables them by writing to the chip&#8217;s IRQ
+register. In such a case, the kernel has to disable the IRQ completely
+to leave the chip&#8217;s register untouched. Now the userspace part can
+determine the cause of the interrupt, but it cannot re-enable
+interrupts. Another cornercase is chips where re-enabling interrupts is
+a read-modify-write operation to a combined IRQ status/acknowledge
+register. This would be racy if a new interrupt occurred simultaneously.</p>
+<p>To address these problems, UIO also implements a write() function. It is
+normally not used and can be ignored for hardware that has only a single
+interrupt source or has separate IRQ mask and status registers. If you
+need it, however, a write to <code class="docutils literal"><span class="pre">/dev/uioX</span></code> will call the
+<code class="xref c c-func docutils literal"><span class="pre">irqcontrol()</span></code> function implemented by the driver. You have
+to write a 32-bit value that is usually either 0 or 1 to disable or
+enable interrupts. If a driver does not implement
+<code class="xref c c-func docutils literal"><span class="pre">irqcontrol()</span></code>, <a class="reference internal" href="../media/uapi/dvb/video-fwrite.html#c.write" title="write"><code class="xref c c-func docutils literal"><span class="pre">write()</span></code></a> will return with
+<code class="docutils literal"><span class="pre">-ENOSYS</span></code>.</p>
+<p>To handle interrupts properly, your custom kernel module can provide its
+own interrupt handler. It will automatically be called by the built-in
+handler.</p>
+<p>For cards that don&#8217;t generate interrupts but need to be polled, there is
+the possibility to set up a timer that triggers the interrupt handler at
+configurable time intervals. This interrupt simulation is done by
+calling <a class="reference internal" href="infrastructure.html#c.uio_event_notify" title="uio_event_notify"><code class="xref c c-func docutils literal"><span class="pre">uio_event_notify()</span></code></a> from the timer&#8217;s event
+handler.</p>
+<p>Each driver provides attributes that are used to read or write
+variables. These attributes are accessible through sysfs files. A custom
+kernel driver module can add its own attributes to the device owned by
+the uio driver, but not added to the UIO device itself at this time.
+This might change in the future if it would be found to be useful.</p>
+<p>The following standard attributes are provided by the UIO framework:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">name</span></code>: The name of your device. It is recommended to use the name
+of your kernel module for this.</li>
+<li><code class="docutils literal"><span class="pre">version</span></code>: A version string defined by your driver. This allows the
+user space part of your driver to deal with different versions of the
+kernel module.</li>
+<li><code class="docutils literal"><span class="pre">event</span></code>: The total number of interrupts handled by the driver since
+the last time the device node was read.</li>
+</ul>
+<p>These attributes appear under the <code class="docutils literal"><span class="pre">/sys/class/uio/uioX</span></code> directory.
+Please note that this directory might be a symlink, and not a real
+directory. Any userspace code that accesses it must be able to handle
+this.</p>
+<p>Each UIO device can make one or more memory regions available for memory
+mapping. This is necessary because some industrial I/O cards require
+access to more than one PCI memory region in a driver.</p>
+<p>Each mapping has its own directory in sysfs, the first mapping appears
+as <code class="docutils literal"><span class="pre">/sys/class/uio/uioX/maps/map0/</span></code>. Subsequent mappings create
+directories <code class="docutils literal"><span class="pre">map1/</span></code>, <code class="docutils literal"><span class="pre">map2/</span></code>, and so on. These directories will only
+appear if the size of the mapping is not 0.</p>
+<p>Each <code class="docutils literal"><span class="pre">mapX/</span></code> directory contains four read-only files that show
+attributes of the memory:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">name</span></code>: A string identifier for this mapping. This is optional, the
+string can be empty. Drivers can set this to make it easier for
+userspace to find the correct mapping.</li>
+<li><code class="docutils literal"><span class="pre">addr</span></code>: The address of memory that can be mapped.</li>
+<li><code class="docutils literal"><span class="pre">size</span></code>: The size, in bytes, of the memory pointed to by addr.</li>
+<li><code class="docutils literal"><span class="pre">offset</span></code>: The offset, in bytes, that has to be added to the pointer
+returned by <code class="xref c c-func docutils literal"><span class="pre">mmap()</span></code> to get to the actual device memory.
+This is important if the device&#8217;s memory is not page aligned.
+Remember that pointers returned by <code class="xref c c-func docutils literal"><span class="pre">mmap()</span></code> are always
+page aligned, so it is good style to always add this offset.</li>
+</ul>
+<p>From userspace, the different mappings are distinguished by adjusting
+the <code class="docutils literal"><span class="pre">offset</span></code> parameter of the <code class="xref c c-func docutils literal"><span class="pre">mmap()</span></code> call. To map the
+memory of mapping N, you have to use N times the page size as your
+offset:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>offset = N * getpagesize();
+</pre></div>
+</div>
+<p>Sometimes there is hardware with memory-like regions that can not be
+mapped with the technique described here, but there are still ways to
+access them from userspace. The most common example are x86 ioports. On
+x86 systems, userspace can access these ioports using
+<code class="xref c c-func docutils literal"><span class="pre">ioperm()</span></code>, <code class="xref c c-func docutils literal"><span class="pre">iopl()</span></code>, <code class="xref c c-func docutils literal"><span class="pre">inb()</span></code>,
+<code class="xref c c-func docutils literal"><span class="pre">outb()</span></code>, and similar functions.</p>
+<p>Since these ioport regions can not be mapped, they will not appear under
+<code class="docutils literal"><span class="pre">/sys/class/uio/uioX/maps/</span></code> like the normal memory described above.
+Without information about the port regions a hardware has to offer, it
+becomes difficult for the userspace part of the driver to find out which
+ports belong to which UIO device.</p>
+<p>To address this situation, the new directory
+<code class="docutils literal"><span class="pre">/sys/class/uio/uioX/portio/</span></code> was added. It only exists if the driver
+wants to pass information about one or more port regions to userspace.
+If that is the case, subdirectories named <code class="docutils literal"><span class="pre">port0</span></code>, <code class="docutils literal"><span class="pre">port1</span></code>, and so
+on, will appear underneath <code class="docutils literal"><span class="pre">/sys/class/uio/uioX/portio/</span></code>.</p>
+<p>Each <code class="docutils literal"><span class="pre">portX/</span></code> directory contains four read-only files that show name,
+start, size, and type of the port region:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">name</span></code>: A string identifier for this port region. The string is
+optional and can be empty. Drivers can set it to make it easier for
+userspace to find a certain port region.</li>
+<li><code class="docutils literal"><span class="pre">start</span></code>: The first port of this region.</li>
+<li><code class="docutils literal"><span class="pre">size</span></code>: The number of ports in this region.</li>
+<li><code class="docutils literal"><span class="pre">porttype</span></code>: A string describing the type of port.</li>
+</ul>
+</div>
+</div>
+<div class="section" id="writing-your-own-kernel-module">
+<h2>Writing your own kernel module<a class="headerlink" href="#writing-your-own-kernel-module" title="Permalink to this headline">¶</a></h2>
+<p>Please have a look at <code class="docutils literal"><span class="pre">uio_cif.c</span></code> as an example. The following
+paragraphs explain the different sections of this file.</p>
+<div class="section" id="struct-uio-info">
+<h3>struct uio_info<a class="headerlink" href="#struct-uio-info" title="Permalink to this headline">¶</a></h3>
+<p>This structure tells the framework the details of your driver, Some of
+the members are required, others are optional.</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">const</span> <span class="pre">char</span> <span class="pre">*name</span></code>: Required. The name of your driver as it will
+appear in sysfs. I recommend using the name of your module for this.</li>
+<li><code class="docutils literal"><span class="pre">const</span> <span class="pre">char</span> <span class="pre">*version</span></code>: Required. This string appears in
+<code class="docutils literal"><span class="pre">/sys/class/uio/uioX/version</span></code>.</li>
+<li><code class="docutils literal"><span class="pre">struct</span> <span class="pre">uio_mem</span> <span class="pre">mem[</span> <span class="pre">MAX_UIO_MAPS</span> <span class="pre">]</span></code>: Required if you have memory
+that can be mapped with <code class="xref c c-func docutils literal"><span class="pre">mmap()</span></code>. For each mapping you
+need to fill one of the <code class="docutils literal"><span class="pre">uio_mem</span></code> structures. See the description
+below for details.</li>
+<li><code class="docutils literal"><span class="pre">struct</span> <span class="pre">uio_port</span> <span class="pre">port[</span> <span class="pre">MAX_UIO_PORTS_REGIONS</span> <span class="pre">]</span></code>: Required if you
+want to pass information about ioports to userspace. For each port
+region you need to fill one of the <code class="docutils literal"><span class="pre">uio_port</span></code> structures. See the
+description below for details.</li>
+<li><code class="docutils literal"><span class="pre">long</span> <span class="pre">irq</span></code>: Required. If your hardware generates an interrupt, it&#8217;s
+your modules task to determine the irq number during initialization.
+If you don&#8217;t have a hardware generated interrupt but want to trigger
+the interrupt handler in some other way, set <code class="docutils literal"><span class="pre">irq</span></code> to
+<code class="docutils literal"><span class="pre">UIO_IRQ_CUSTOM</span></code>. If you had no interrupt at all, you could set
+<code class="docutils literal"><span class="pre">irq</span></code> to <code class="docutils literal"><span class="pre">UIO_IRQ_NONE</span></code>, though this rarely makes sense.</li>
+<li><code class="docutils literal"><span class="pre">unsigned</span> <span class="pre">long</span> <span class="pre">irq_flags</span></code>: Required if you&#8217;ve set <code class="docutils literal"><span class="pre">irq</span></code> to a
+hardware interrupt number. The flags given here will be used in the
+call to <code class="xref c c-func docutils literal"><span class="pre">request_irq()</span></code>.</li>
+<li><code class="docutils literal"><span class="pre">int</span> <span class="pre">(*mmap)(struct</span> <span class="pre">uio_info</span> <span class="pre">*info,</span> <span class="pre">struct</span> <span class="pre">vm_area_struct</span> <span class="pre">*vma)</span></code>:
+Optional. If you need a special <code class="xref c c-func docutils literal"><span class="pre">mmap()</span></code>
+function, you can set it here. If this pointer is not NULL, your
+<code class="xref c c-func docutils literal"><span class="pre">mmap()</span></code> will be called instead of the built-in one.</li>
+<li><code class="docutils literal"><span class="pre">int</span> <span class="pre">(*open)(struct</span> <span class="pre">uio_info</span> <span class="pre">*info,</span> <span class="pre">struct</span> <span class="pre">inode</span> <span class="pre">*inode)</span></code>:
+Optional. You might want to have your own <a class="reference internal" href="../media/uapi/dvb/video-fopen.html#c.open" title="open"><code class="xref c c-func docutils literal"><span class="pre">open()</span></code></a>,
+e.g. to enable interrupts only when your device is actually used.</li>
+<li><code class="docutils literal"><span class="pre">int</span> <span class="pre">(*release)(struct</span> <span class="pre">uio_info</span> <span class="pre">*info,</span> <span class="pre">struct</span> <span class="pre">inode</span> <span class="pre">*inode)</span></code>:
+Optional. If you define your own <a class="reference internal" href="../media/uapi/dvb/video-fopen.html#c.open" title="open"><code class="xref c c-func docutils literal"><span class="pre">open()</span></code></a>, you will
+probably also want a custom <code class="xref c c-func docutils literal"><span class="pre">release()</span></code> function.</li>
+<li><code class="docutils literal"><span class="pre">int</span> <span class="pre">(*irqcontrol)(struct</span> <span class="pre">uio_info</span> <span class="pre">*info,</span> <span class="pre">s32</span> <span class="pre">irq_on)</span></code>:
+Optional. If you need to be able to enable or disable interrupts
+from userspace by writing to <code class="docutils literal"><span class="pre">/dev/uioX</span></code>, you can implement this
+function. The parameter <code class="docutils literal"><span class="pre">irq_on</span></code> will be 0 to disable interrupts
+and 1 to enable them.</li>
+</ul>
+<p>Usually, your device will have one or more memory regions that can be
+mapped to user space. For each region, you have to set up a
+<code class="docutils literal"><span class="pre">struct</span> <span class="pre">uio_mem</span></code> in the <code class="docutils literal"><span class="pre">mem[]</span></code> array. Here&#8217;s a description of the
+fields of <code class="docutils literal"><span class="pre">struct</span> <span class="pre">uio_mem</span></code>:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">const</span> <span class="pre">char</span> <span class="pre">*name</span></code>: Optional. Set this to help identify the memory
+region, it will show up in the corresponding sysfs node.</li>
+<li><code class="docutils literal"><span class="pre">int</span> <span class="pre">memtype</span></code>: Required if the mapping is used. Set this to
+<code class="docutils literal"><span class="pre">UIO_MEM_PHYS</span></code> if you you have physical memory on your card to be
+mapped. Use <code class="docutils literal"><span class="pre">UIO_MEM_LOGICAL</span></code> for logical memory (e.g. allocated
+with <code class="xref c c-func docutils literal"><span class="pre">kmalloc()</span></code>). There&#8217;s also <code class="docutils literal"><span class="pre">UIO_MEM_VIRTUAL</span></code> for
+virtual memory.</li>
+<li><code class="docutils literal"><span class="pre">phys_addr_t</span> <span class="pre">addr</span></code>: Required if the mapping is used. Fill in the
+address of your memory block. This address is the one that appears in
+sysfs.</li>
+<li><code class="docutils literal"><span class="pre">resource_size_t</span> <span class="pre">size</span></code>: Fill in the size of the memory block that
+<code class="docutils literal"><span class="pre">addr</span></code> points to. If <code class="docutils literal"><span class="pre">size</span></code> is zero, the mapping is considered
+unused. Note that you <em>must</em> initialize <code class="docutils literal"><span class="pre">size</span></code> with zero for all
+unused mappings.</li>
+<li><code class="docutils literal"><span class="pre">void</span> <span class="pre">*internal_addr</span></code>: If you have to access this memory region
+from within your kernel module, you will want to map it internally by
+using something like <a class="reference internal" href="device-io.html#c.ioremap" title="ioremap"><code class="xref c c-func docutils literal"><span class="pre">ioremap()</span></code></a>. Addresses returned by
+this function cannot be mapped to user space, so you must not store
+it in <code class="docutils literal"><span class="pre">addr</span></code>. Use <code class="docutils literal"><span class="pre">internal_addr</span></code> instead to remember such an
+address.</li>
+</ul>
+<p>Please do not touch the <code class="docutils literal"><span class="pre">map</span></code> element of <code class="docutils literal"><span class="pre">struct</span> <span class="pre">uio_mem</span></code>! It is
+used by the UIO framework to set up sysfs files for this mapping. Simply
+leave it alone.</p>
+<p>Sometimes, your device can have one or more port regions which can not
+be mapped to userspace. But if there are other possibilities for
+userspace to access these ports, it makes sense to make information
+about the ports available in sysfs. For each region, you have to set up
+a <code class="docutils literal"><span class="pre">struct</span> <span class="pre">uio_port</span></code> in the <code class="docutils literal"><span class="pre">port[]</span></code> array. Here&#8217;s a description of
+the fields of <code class="docutils literal"><span class="pre">struct</span> <span class="pre">uio_port</span></code>:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">char</span> <span class="pre">*porttype</span></code>: Required. Set this to one of the predefined
+constants. Use <code class="docutils literal"><span class="pre">UIO_PORT_X86</span></code> for the ioports found in x86
+architectures.</li>
+<li><code class="docutils literal"><span class="pre">unsigned</span> <span class="pre">long</span> <span class="pre">start</span></code>: Required if the port region is used. Fill in
+the number of the first port of this region.</li>
+<li><code class="docutils literal"><span class="pre">unsigned</span> <span class="pre">long</span> <span class="pre">size</span></code>: Fill in the number of ports in this region.
+If <code class="docutils literal"><span class="pre">size</span></code> is zero, the region is considered unused. Note that you
+<em>must</em> initialize <code class="docutils literal"><span class="pre">size</span></code> with zero for all unused regions.</li>
+</ul>
+<p>Please do not touch the <code class="docutils literal"><span class="pre">portio</span></code> element of <code class="docutils literal"><span class="pre">struct</span> <span class="pre">uio_port</span></code>! It is
+used internally by the UIO framework to set up sysfs files for this
+region. Simply leave it alone.</p>
+</div>
+<div class="section" id="adding-an-interrupt-handler">
+<h3>Adding an interrupt handler<a class="headerlink" href="#adding-an-interrupt-handler" title="Permalink to this headline">¶</a></h3>
+<p>What you need to do in your interrupt handler depends on your hardware
+and on how you want to handle it. You should try to keep the amount of
+code in your kernel interrupt handler low. If your hardware requires no
+action that you <em>have</em> to perform after each interrupt, then your
+handler can be empty.</p>
+<p>If, on the other hand, your hardware <em>needs</em> some action to be performed
+after each interrupt, then you <em>must</em> do it in your kernel module. Note
+that you cannot rely on the userspace part of your driver. Your
+userspace program can terminate at any time, possibly leaving your
+hardware in a state where proper interrupt handling is still required.</p>
+<p>There might also be applications where you want to read data from your
+hardware at each interrupt and buffer it in a piece of kernel memory
+you&#8217;ve allocated for that purpose. With this technique you could avoid
+loss of data if your userspace program misses an interrupt.</p>
+<p>A note on shared interrupts: Your driver should support interrupt
+sharing whenever this is possible. It is possible if and only if your
+driver can detect whether your hardware has triggered the interrupt or
+not. This is usually done by looking at an interrupt status register. If
+your driver sees that the IRQ bit is actually set, it will perform its
+actions, and the handler returns IRQ_HANDLED. If the driver detects
+that it was not your hardware that caused the interrupt, it will do
+nothing and return IRQ_NONE, allowing the kernel to call the next
+possible interrupt handler.</p>
+<p>If you decide not to support shared interrupts, your card won&#8217;t work in
+computers with no free interrupts. As this frequently happens on the PC
+platform, you can save yourself a lot of trouble by supporting interrupt
+sharing.</p>
+</div>
+<div class="section" id="using-uio-pdrv-for-platform-devices">
+<h3>Using uio_pdrv for platform devices<a class="headerlink" href="#using-uio-pdrv-for-platform-devices" title="Permalink to this headline">¶</a></h3>
+<p>In many cases, UIO drivers for platform devices can be handled in a
+generic way. In the same place where you define your
+<code class="docutils literal"><span class="pre">struct</span> <span class="pre">platform_device</span></code>, you simply also implement your interrupt
+handler and fill your <code class="docutils literal"><span class="pre">struct</span> <span class="pre">uio_info</span></code>. A pointer to this
+<code class="docutils literal"><span class="pre">struct</span> <span class="pre">uio_info</span></code> is then used as <code class="docutils literal"><span class="pre">platform_data</span></code> for your platform
+device.</p>
+<p>You also need to set up an array of <code class="docutils literal"><span class="pre">struct</span> <span class="pre">resource</span></code> containing
+addresses and sizes of your memory mappings. This information is passed
+to the driver using the <code class="docutils literal"><span class="pre">.resource</span></code> and <code class="docutils literal"><span class="pre">.num_resources</span></code> elements of
+<code class="docutils literal"><span class="pre">struct</span> <span class="pre">platform_device</span></code>.</p>
+<p>You now have to set the <code class="docutils literal"><span class="pre">.name</span></code> element of <code class="docutils literal"><span class="pre">struct</span> <span class="pre">platform_device</span></code>
+to <code class="docutils literal"><span class="pre">&quot;uio_pdrv&quot;</span></code> to use the generic UIO platform device driver. This
+driver will fill the <code class="docutils literal"><span class="pre">mem[]</span></code> array according to the resources given,
+and register the device.</p>
+<p>The advantage of this approach is that you only have to edit a file you
+need to edit anyway. You do not have to create an extra driver.</p>
+</div>
+<div class="section" id="using-uio-pdrv-genirq-for-platform-devices">
+<h3>Using uio_pdrv_genirq for platform devices<a class="headerlink" href="#using-uio-pdrv-genirq-for-platform-devices" title="Permalink to this headline">¶</a></h3>
+<p>Especially in embedded devices, you frequently find chips where the irq
+pin is tied to its own dedicated interrupt line. In such cases, where
+you can be really sure the interrupt is not shared, we can take the
+concept of <code class="docutils literal"><span class="pre">uio_pdrv</span></code> one step further and use a generic interrupt
+handler. That&#8217;s what <code class="docutils literal"><span class="pre">uio_pdrv_genirq</span></code> does.</p>
+<p>The setup for this driver is the same as described above for
+<code class="docutils literal"><span class="pre">uio_pdrv</span></code>, except that you do not implement an interrupt handler. The
+<code class="docutils literal"><span class="pre">.handler</span></code> element of <code class="docutils literal"><span class="pre">struct</span> <span class="pre">uio_info</span></code> must remain <code class="docutils literal"><span class="pre">NULL</span></code>. The
+<code class="docutils literal"><span class="pre">.irq_flags</span></code> element must not contain <code class="docutils literal"><span class="pre">IRQF_SHARED</span></code>.</p>
+<p>You will set the <code class="docutils literal"><span class="pre">.name</span></code> element of <code class="docutils literal"><span class="pre">struct</span> <span class="pre">platform_device</span></code> to
+<code class="docutils literal"><span class="pre">&quot;uio_pdrv_genirq&quot;</span></code> to use this driver.</p>
+<p>The generic interrupt handler of <code class="docutils literal"><span class="pre">uio_pdrv_genirq</span></code> will simply disable
+the interrupt line using <code class="xref c c-func docutils literal"><span class="pre">disable_irq_nosync()</span></code>. After
+doing its work, userspace can reenable the interrupt by writing
+0x00000001 to the UIO device file. The driver already implements an
+<code class="xref c c-func docutils literal"><span class="pre">irq_control()</span></code> to make this possible, you must not
+implement your own.</p>
+<p>Using <code class="docutils literal"><span class="pre">uio_pdrv_genirq</span></code> not only saves a few lines of interrupt
+handler code. You also do not need to know anything about the chip&#8217;s
+internal registers to create the kernel part of the driver. All you need
+to know is the irq number of the pin the chip is connected to.</p>
+</div>
+<div class="section" id="using-uio-dmem-genirq-for-platform-devices">
+<h3>Using uio_dmem_genirq for platform devices<a class="headerlink" href="#using-uio-dmem-genirq-for-platform-devices" title="Permalink to this headline">¶</a></h3>
+<p>In addition to statically allocated memory ranges, they may also be a
+desire to use dynamically allocated regions in a user space driver. In
+particular, being able to access memory made available through the
+dma-mapping API, may be particularly useful. The <code class="docutils literal"><span class="pre">uio_dmem_genirq</span></code>
+driver provides a way to accomplish this.</p>
+<p>This driver is used in a similar manner to the <code class="docutils literal"><span class="pre">&quot;uio_pdrv_genirq&quot;</span></code>
+driver with respect to interrupt configuration and handling.</p>
+<p>Set the <code class="docutils literal"><span class="pre">.name</span></code> element of <code class="docutils literal"><span class="pre">struct</span> <span class="pre">platform_device</span></code> to
+<code class="docutils literal"><span class="pre">&quot;uio_dmem_genirq&quot;</span></code> to use this driver.</p>
+<p>When using this driver, fill in the <code class="docutils literal"><span class="pre">.platform_data</span></code> element of
+<code class="docutils literal"><span class="pre">struct</span> <span class="pre">platform_device</span></code>, which is of type
+<code class="docutils literal"><span class="pre">struct</span> <span class="pre">uio_dmem_genirq_pdata</span></code> and which contains the following
+elements:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">struct</span> <span class="pre">uio_info</span> <span class="pre">uioinfo</span></code>: The same structure used as the
+<code class="docutils literal"><span class="pre">uio_pdrv_genirq</span></code> platform data</li>
+<li><code class="docutils literal"><span class="pre">unsigned</span> <span class="pre">int</span> <span class="pre">*dynamic_region_sizes</span></code>: Pointer to list of sizes of
+dynamic memory regions to be mapped into user space.</li>
+<li><code class="docutils literal"><span class="pre">unsigned</span> <span class="pre">int</span> <span class="pre">num_dynamic_regions</span></code>: Number of elements in
+<code class="docutils literal"><span class="pre">dynamic_region_sizes</span></code> array.</li>
+</ul>
+<p>The dynamic regions defined in the platform data will be appended to the
+`` mem[] `` array after the platform device resources, which implies
+that the total number of static and dynamic memory regions cannot exceed
+<code class="docutils literal"><span class="pre">MAX_UIO_MAPS</span></code>.</p>
+<p>The dynamic memory regions will be allocated when the UIO device file,
+<code class="docutils literal"><span class="pre">/dev/uioX</span></code> is opened. Similar to static memory resources, the memory
+region information for dynamic regions is then visible via sysfs at
+<code class="docutils literal"><span class="pre">/sys/class/uio/uioX/maps/mapY/*</span></code>. The dynamic memory regions will be
+freed when the UIO device file is closed. When no processes are holding
+the device file open, the address returned to userspace is ~0.</p>
+</div>
+</div>
+<div class="section" id="writing-a-driver-in-userspace">
+<h2>Writing a driver in userspace<a class="headerlink" href="#writing-a-driver-in-userspace" title="Permalink to this headline">¶</a></h2>
+<p>Once you have a working kernel module for your hardware, you can write
+the userspace part of your driver. You don&#8217;t need any special libraries,
+your driver can be written in any reasonable language, you can use
+floating point numbers and so on. In short, you can use all the tools
+and libraries you&#8217;d normally use for writing a userspace application.</p>
+<div class="section" id="getting-information-about-your-uio-device">
+<h3>Getting information about your UIO device<a class="headerlink" href="#getting-information-about-your-uio-device" title="Permalink to this headline">¶</a></h3>
+<p>Information about all UIO devices is available in sysfs. The first thing
+you should do in your driver is check <code class="docutils literal"><span class="pre">name</span></code> and <code class="docutils literal"><span class="pre">version</span></code> to make
+sure your talking to the right device and that its kernel driver has the
+version you expect.</p>
+<p>You should also make sure that the memory mapping you need exists and
+has the size you expect.</p>
+<p>There is a tool called <code class="docutils literal"><span class="pre">lsuio</span></code> that lists UIO devices and their
+attributes. It is available here:</p>
+<p><a class="reference external" href="http://www.osadl.org/projects/downloads/UIO/user/">http://www.osadl.org/projects/downloads/UIO/user/</a></p>
+<p>With <code class="docutils literal"><span class="pre">lsuio</span></code> you can quickly check if your kernel module is loaded and
+which attributes it exports. Have a look at the manpage for details.</p>
+<p>The source code of <code class="docutils literal"><span class="pre">lsuio</span></code> can serve as an example for getting
+information about an UIO device. The file <code class="docutils literal"><span class="pre">uio_helper.c</span></code> contains a
+lot of functions you could use in your userspace driver code.</p>
+</div>
+<div class="section" id="mmap-device-memory">
+<h3>mmap() device memory<a class="headerlink" href="#mmap-device-memory" title="Permalink to this headline">¶</a></h3>
+<p>After you made sure you&#8217;ve got the right device with the memory mappings
+you need, all you have to do is to call <code class="xref c c-func docutils literal"><span class="pre">mmap()</span></code> to map the
+device&#8217;s memory to userspace.</p>
+<p>The parameter <code class="docutils literal"><span class="pre">offset</span></code> of the <code class="xref c c-func docutils literal"><span class="pre">mmap()</span></code> call has a special
+meaning for UIO devices: It is used to select which mapping of your
+device you want to map. To map the memory of mapping N, you have to use
+N times the page size as your offset:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>offset = N * getpagesize();
+</pre></div>
+</div>
+<p>N starts from zero, so if you&#8217;ve got only one memory range to map, set
+<code class="docutils literal"><span class="pre">offset</span> <span class="pre">=</span> <span class="pre">0</span></code>. A drawback of this technique is that memory is always
+mapped beginning with its start address.</p>
+</div>
+<div class="section" id="waiting-for-interrupts">
+<h3>Waiting for interrupts<a class="headerlink" href="#waiting-for-interrupts" title="Permalink to this headline">¶</a></h3>
+<p>After you successfully mapped your devices memory, you can access it
+like an ordinary array. Usually, you will perform some initialization.
+After that, your hardware starts working and will generate an interrupt
+as soon as it&#8217;s finished, has some data available, or needs your
+attention because an error occurred.</p>
+<p><code class="docutils literal"><span class="pre">/dev/uioX</span></code> is a read-only file. A <code class="xref c c-func docutils literal"><span class="pre">read()</span></code> will always
+block until an interrupt occurs. There is only one legal value for the
+<code class="docutils literal"><span class="pre">count</span></code> parameter of <code class="xref c c-func docutils literal"><span class="pre">read()</span></code>, and that is the size of a
+signed 32 bit integer (4). Any other value for <code class="docutils literal"><span class="pre">count</span></code> causes
+<code class="xref c c-func docutils literal"><span class="pre">read()</span></code> to fail. The signed 32 bit integer read is the
+interrupt count of your device. If the value is one more than the value
+you read the last time, everything is OK. If the difference is greater
+than one, you missed interrupts.</p>
+<p>You can also use <code class="xref c c-func docutils literal"><span class="pre">select()</span></code> on <code class="docutils literal"><span class="pre">/dev/uioX</span></code>.</p>
+</div>
+</div>
+<div class="section" id="generic-pci-uio-driver">
+<h2>Generic PCI UIO driver<a class="headerlink" href="#generic-pci-uio-driver" title="Permalink to this headline">¶</a></h2>
+<p>The generic driver is a kernel module named uio_pci_generic. It can
+work with any device compliant to PCI 2.3 (circa 2002) and any compliant
+PCI Express device. Using this, you only need to write the userspace
+driver, removing the need to write a hardware-specific kernel module.</p>
+<div class="section" id="making-the-driver-recognize-the-device">
+<h3>Making the driver recognize the device<a class="headerlink" href="#making-the-driver-recognize-the-device" title="Permalink to this headline">¶</a></h3>
+<p>Since the driver does not declare any device ids, it will not get loaded
+automatically and will not automatically bind to any devices, you must
+load it and allocate id to the driver yourself. For example:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>modprobe uio_pci_generic
+echo &quot;8086 10f5&quot; &gt; /sys/bus/pci/drivers/uio_pci_generic/new_id
+</pre></div>
+</div>
+<p>If there already is a hardware specific kernel driver for your device,
+the generic driver still won&#8217;t bind to it, in this case if you want to
+use the generic driver (why would you?) you&#8217;ll have to manually unbind
+the hardware specific driver and bind the generic driver, like this:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>echo -n 0000:00:19.0 &gt; /sys/bus/pci/drivers/e1000e/unbind
+echo -n 0000:00:19.0 &gt; /sys/bus/pci/drivers/uio_pci_generic/bind
+</pre></div>
+</div>
+<p>You can verify that the device has been bound to the driver by looking
+for it in sysfs, for example like the following:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>ls -l /sys/bus/pci/devices/0000:00:19.0/driver
+</pre></div>
+</div>
+<p>Which if successful should print:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>.../0000:00:19.0/driver -&gt; ../../../bus/pci/drivers/uio_pci_generic
+</pre></div>
+</div>
+<p>Note that the generic driver will not bind to old PCI 2.2 devices. If
+binding the device failed, run the following command:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>dmesg
+</pre></div>
+</div>
+<p>and look in the output for failure reasons.</p>
+</div>
+<div class="section" id="things-to-know-about-uio-pci-generic">
+<h3>Things to know about uio_pci_generic<a class="headerlink" href="#things-to-know-about-uio-pci-generic" title="Permalink to this headline">¶</a></h3>
+<p>Interrupts are handled using the Interrupt Disable bit in the PCI
+command register and Interrupt Status bit in the PCI status register.
+All devices compliant to PCI 2.3 (circa 2002) and all compliant PCI
+Express devices should support these bits. uio_pci_generic detects
+this support, and won&#8217;t bind to devices which do not support the
+Interrupt Disable Bit in the command register.</p>
+<p>On each interrupt, uio_pci_generic sets the Interrupt Disable bit.
+This prevents the device from generating further interrupts until the
+bit is cleared. The userspace driver should clear this bit before
+blocking and waiting for more interrupts.</p>
+</div>
+<div class="section" id="writing-userspace-driver-using-uio-pci-generic">
+<h3>Writing userspace driver using uio_pci_generic<a class="headerlink" href="#writing-userspace-driver-using-uio-pci-generic" title="Permalink to this headline">¶</a></h3>
+<p>Userspace driver can use pci sysfs interface, or the libpci library that
+wraps it, to talk to the device and to re-enable interrupts by writing
+to the command register.</p>
+</div>
+<div class="section" id="example-code-using-uio-pci-generic">
+<h3>Example code using uio_pci_generic<a class="headerlink" href="#example-code-using-uio-pci-generic" title="Permalink to this headline">¶</a></h3>
+<p>Here is some sample userspace driver code using uio_pci_generic:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>#include &lt;stdlib.h&gt;
+#include &lt;stdio.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;sys/types.h&gt;
+#include &lt;sys/stat.h&gt;
+#include &lt;fcntl.h&gt;
+#include &lt;errno.h&gt;
+
+int main()
+{
+    int uiofd;
+    int configfd;
+    int err;
+    int i;
+    unsigned icount;
+    unsigned char command_high;
+
+    uiofd = open(&quot;/dev/uio0&quot;, O_RDONLY);
+    if (uiofd &lt; 0) {
+        perror(&quot;uio open:&quot;);
+        return errno;
+    }
+    configfd = open(&quot;/sys/class/uio/uio0/device/config&quot;, O_RDWR);
+    if (configfd &lt; 0) {
+        perror(&quot;config open:&quot;);
+        return errno;
+    }
+
+    /* Read and cache command value */
+    err = pread(configfd, &amp;command_high, 1, 5);
+    if (err != 1) {
+        perror(&quot;command config read:&quot;);
+        return errno;
+    }
+    command_high &amp;= ~0x4;
+
+    for(i = 0;; ++i) {
+        /* Print out a message, for debugging. */
+        if (i == 0)
+            fprintf(stderr, &quot;Started uio test driver.\n&quot;);
+        else
+            fprintf(stderr, &quot;Interrupts: %d\n&quot;, icount);
+
+        /****************************************/
+        /* Here we got an interrupt from the
+           device. Do something to it. */
+        /****************************************/
+
+        /* Re-enable interrupts. */
+        err = pwrite(configfd, &amp;command_high, 1, 5);
+        if (err != 1) {
+            perror(&quot;config write:&quot;);
+            break;
+        }
+
+        /* Wait for next interrupt. */
+        err = read(uiofd, &amp;icount, 4);
+        if (err != 4) {
+            perror(&quot;uio read:&quot;);
+            break;
+        }
+
+    }
+    return errno;
+}
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="generic-hyper-v-uio-driver">
+<h2>Generic Hyper-V UIO driver<a class="headerlink" href="#generic-hyper-v-uio-driver" title="Permalink to this headline">¶</a></h2>
+<p>The generic driver is a kernel module named uio_hv_generic. It
+supports devices on the Hyper-V VMBus similar to uio_pci_generic on
+PCI bus.</p>
+<div class="section" id="id1">
+<h3>Making the driver recognize the device<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>Since the driver does not declare any device GUID&#8217;s, it will not get
+loaded automatically and will not automatically bind to any devices, you
+must load it and allocate id to the driver yourself. For example, to use
+the network device GUID:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>modprobe uio_hv_generic
+echo &quot;f8615163-df3e-46c5-913f-f2d2f965ed0e&quot; &gt; /sys/bus/vmbus/drivers/uio_hv_generic/new_id
+</pre></div>
+</div>
+<p>If there already is a hardware specific kernel driver for the device,
+the generic driver still won&#8217;t bind to it, in this case if you want to
+use the generic driver (why would you?) you&#8217;ll have to manually unbind
+the hardware specific driver and bind the generic driver, like this:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>echo -n vmbus-ed963694-e847-4b2a-85af-bc9cfc11d6f3 &gt; /sys/bus/vmbus/drivers/hv_netvsc/unbind
+echo -n vmbus-ed963694-e847-4b2a-85af-bc9cfc11d6f3 &gt; /sys/bus/vmbus/drivers/uio_hv_generic/bind
+</pre></div>
+</div>
+<p>You can verify that the device has been bound to the driver by looking
+for it in sysfs, for example like the following:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>ls -l /sys/bus/vmbus/devices/vmbus-ed963694-e847-4b2a-85af-bc9cfc11d6f3/driver
+</pre></div>
+</div>
+<p>Which if successful should print:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>.../vmbus-ed963694-e847-4b2a-85af-bc9cfc11d6f3/driver -&gt; ../../../bus/vmbus/drivers/uio_hv_generic
+</pre></div>
+</div>
+</div>
+<div class="section" id="things-to-know-about-uio-hv-generic">
+<h3>Things to know about uio_hv_generic<a class="headerlink" href="#things-to-know-about-uio-hv-generic" title="Permalink to this headline">¶</a></h3>
+<p>On each interrupt, uio_hv_generic sets the Interrupt Disable bit. This
+prevents the device from generating further interrupts until the bit is
+cleared. The userspace driver should clear this bit before blocking and
+waiting for more interrupts.</p>
+</div>
+</div>
+<div class="section" id="further-information">
+<h2>Further information<a class="headerlink" href="#further-information" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><a class="reference external" href="http://www.osadl.org">OSADL homepage.</a></li>
+<li><a class="reference external" href="http://www.linutronix.de">Linutronix homepage.</a></li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="firmware/index.html" class="btn btn-neutral float-right" title="Linux Firmware API" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="80211/mac80211-advanced.html" class="btn btn-neutral" title="mac80211 subsystem (advanced)" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'4.11.0-rc3+',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

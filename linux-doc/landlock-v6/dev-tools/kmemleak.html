@@ -1,0 +1,477 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Kernel Memory Leak Detector &mdash; The Linux Kernel 4.11.0-rc3+ documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="The Linux Kernel 4.11.0-rc3+ documentation" href="../index.html"/>
+        <link rel="up" title="Development tools for the kernel" href="index.html"/>
+        <link rel="next" title="Getting started with kmemcheck" href="kmemcheck.html"/>
+        <link rel="prev" title="The Undefined Behavior Sanitizer - UBSAN" href="ubsan.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                4.11.0-rc3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user&#8217;s and administrator&#8217;s guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Development tools for the kernel</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="coccinelle.html">Coccinelle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sparse.html">Sparse</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kcov.html">kcov: code coverage for fuzzing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gcov.html">Using gcov with the Linux kernel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kasan.html">The Kernel Address Sanitizer (KASAN)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ubsan.html">The Undefined Behavior Sanitizer - UBSAN</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Kernel Memory Leak Detector</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#basic-algorithm">Basic Algorithm</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#testing-specific-sections-with-kmemleak">Testing specific sections with kmemleak</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#freeing-kmemleak-internal-objects">Freeing kmemleak internal objects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#kmemleak-api">Kmemleak API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dealing-with-false-positives-negatives">Dealing with false positives/negatives</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#limitations-and-drawbacks">Limitations and Drawbacks</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="kmemcheck.html">Getting started with kmemcheck</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gdb-kernel-debugging.html">Debugging kernel and modules via gdb</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer&#8217;s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../media/index.html">Linux Media Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer&#8217;s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/ko_KR/index.html">Korean translations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/zh_CN/index.html">Chinese translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">The Linux Kernel</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="index.html">Development tools for the kernel</a> &raquo;</li>
+      
+    <li>Kernel Memory Leak Detector</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/dev-tools/kmemleak.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="kernel-memory-leak-detector">
+<h1>Kernel Memory Leak Detector<a class="headerlink" href="#kernel-memory-leak-detector" title="Permalink to this headline">¶</a></h1>
+<p>Kmemleak provides a way of detecting possible kernel memory leaks in a
+way similar to a tracing garbage collector
+(<a class="reference external" href="https://en.wikipedia.org/wiki/Garbage_collection_%28computer_science%29#Tracing_garbage_collectors">https://en.wikipedia.org/wiki/Garbage_collection_%28computer_science%29#Tracing_garbage_collectors</a>),
+with the difference that the orphan objects are not freed but only
+reported via /sys/kernel/debug/kmemleak. A similar method is used by the
+Valgrind tool (<code class="docutils literal"><span class="pre">memcheck</span> <span class="pre">--leak-check</span></code>) to detect the memory leaks in
+user-space applications.
+Kmemleak is supported on x86, arm, powerpc, sparc, sh, microblaze, ppc, mips, s390, metag and tile.</p>
+<div class="section" id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<p>CONFIG_DEBUG_KMEMLEAK in &#8220;Kernel hacking&#8221; has to be enabled. A kernel
+thread scans the memory every 10 minutes (by default) and prints the
+number of new unreferenced objects found. To display the details of all
+the possible memory leaks:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span># mount -t debugfs nodev /sys/kernel/debug/
+# cat /sys/kernel/debug/kmemleak
+</pre></div>
+</div>
+<p>To trigger an intermediate memory scan:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span># echo scan &gt; /sys/kernel/debug/kmemleak
+</pre></div>
+</div>
+<p>To clear the list of all current possible memory leaks:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span># echo clear &gt; /sys/kernel/debug/kmemleak
+</pre></div>
+</div>
+<p>New leaks will then come up upon reading <code class="docutils literal"><span class="pre">/sys/kernel/debug/kmemleak</span></code>
+again.</p>
+<p>Note that the orphan objects are listed in the order they were allocated
+and one object at the beginning of the list may cause other subsequent
+objects to be reported as orphan.</p>
+<p>Memory scanning parameters can be modified at run-time by writing to the
+<code class="docutils literal"><span class="pre">/sys/kernel/debug/kmemleak</span></code> file. The following parameters are supported:</p>
+<ul class="simple">
+<li><dl class="first docutils">
+<dt>off</dt>
+<dd>disable kmemleak (irreversible)</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>stack=on</dt>
+<dd>enable the task stacks scanning (default)</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>stack=off</dt>
+<dd>disable the tasks stacks scanning</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>scan=on</dt>
+<dd>start the automatic memory scanning thread (default)</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>scan=off</dt>
+<dd>stop the automatic memory scanning thread</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>scan=&lt;secs&gt;</dt>
+<dd>set the automatic memory scanning period in seconds
+(default 600, 0 to stop the automatic scanning)</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>scan</dt>
+<dd>trigger a memory scan</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>clear</dt>
+<dd>clear list of current memory leak suspects, done by
+marking all current reported unreferenced objects grey,
+or free all kmemleak objects if kmemleak has been disabled.</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>dump=&lt;addr&gt;</dt>
+<dd>dump information about the object found at &lt;addr&gt;</dd>
+</dl>
+</li>
+</ul>
+<p>Kmemleak can also be disabled at boot-time by passing <code class="docutils literal"><span class="pre">kmemleak=off</span></code> on
+the kernel command line.</p>
+<p>Memory may be allocated or freed before kmemleak is initialised and
+these actions are stored in an early log buffer. The size of this buffer
+is configured via the CONFIG_DEBUG_KMEMLEAK_EARLY_LOG_SIZE option.</p>
+<p>If CONFIG_DEBUG_KMEMLEAK_DEFAULT_OFF are enabled, the kmemleak is
+disabled by default. Passing <code class="docutils literal"><span class="pre">kmemleak=on</span></code> on the kernel command
+line enables the function.</p>
+</div>
+<div class="section" id="basic-algorithm">
+<h2>Basic Algorithm<a class="headerlink" href="#basic-algorithm" title="Permalink to this headline">¶</a></h2>
+<p>The memory allocations via <code class="xref c c-func docutils literal"><span class="pre">kmalloc()</span></code>, <code class="xref c c-func docutils literal"><span class="pre">vmalloc()</span></code>,
+<code class="xref c c-func docutils literal"><span class="pre">kmem_cache_alloc()</span></code> and
+friends are traced and the pointers, together with additional
+information like size and stack trace, are stored in a rbtree.
+The corresponding freeing function calls are tracked and the pointers
+removed from the kmemleak data structures.</p>
+<p>An allocated block of memory is considered orphan if no pointer to its
+start address or to any location inside the block can be found by
+scanning the memory (including saved registers). This means that there
+might be no way for the kernel to pass the address of the allocated
+block to a freeing function and therefore the block is considered a
+memory leak.</p>
+<p>The scanning algorithm steps:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li>mark all objects as white (remaining white objects will later be
+considered orphan)</li>
+<li>scan the memory starting with the data section and stacks, checking
+the values against the addresses stored in the rbtree. If
+a pointer to a white object is found, the object is added to the
+gray list</li>
+<li>scan the gray objects for matching addresses (some white objects
+can become gray and added at the end of the gray list) until the
+gray set is finished</li>
+<li>the remaining white objects are considered orphan and reported via
+/sys/kernel/debug/kmemleak</li>
+</ol>
+</div></blockquote>
+<p>Some allocated memory blocks have pointers stored in the kernel&#8217;s
+internal data structures and they cannot be detected as orphans. To
+avoid this, kmemleak can also store the number of values pointing to an
+address inside the block address range that need to be found so that the
+block is not considered a leak. One example is __vmalloc().</p>
+</div>
+<div class="section" id="testing-specific-sections-with-kmemleak">
+<h2>Testing specific sections with kmemleak<a class="headerlink" href="#testing-specific-sections-with-kmemleak" title="Permalink to this headline">¶</a></h2>
+<p>Upon initial bootup your /sys/kernel/debug/kmemleak output page may be
+quite extensive. This can also be the case if you have very buggy code
+when doing development. To work around these situations you can use the
+&#8216;clear&#8217; command to clear all reported unreferenced objects from the
+/sys/kernel/debug/kmemleak output. By issuing a &#8216;scan&#8217; after a &#8216;clear&#8217;
+you can find new unreferenced objects; this should help with testing
+specific sections of code.</p>
+<p>To test a critical section on demand with a clean kmemleak do:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span># echo clear &gt; /sys/kernel/debug/kmemleak
+... test your kernel or modules ...
+# echo scan &gt; /sys/kernel/debug/kmemleak
+</pre></div>
+</div>
+<p>Then as usual to get your report with:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span># cat /sys/kernel/debug/kmemleak
+</pre></div>
+</div>
+</div>
+<div class="section" id="freeing-kmemleak-internal-objects">
+<h2>Freeing kmemleak internal objects<a class="headerlink" href="#freeing-kmemleak-internal-objects" title="Permalink to this headline">¶</a></h2>
+<p>To allow access to previously found memory leaks after kmemleak has been
+disabled by the user or due to an fatal error, internal kmemleak objects
+won&#8217;t be freed when kmemleak is disabled, and those objects may occupy
+a large part of physical memory.</p>
+<p>In this situation, you may reclaim memory with:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span># echo clear &gt; /sys/kernel/debug/kmemleak
+</pre></div>
+</div>
+</div>
+<div class="section" id="kmemleak-api">
+<h2>Kmemleak API<a class="headerlink" href="#kmemleak-api" title="Permalink to this headline">¶</a></h2>
+<p>See the include/linux/kmemleak.h header for the functions prototype.</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">kmemleak_init</span></code>              - initialize kmemleak</li>
+<li><code class="docutils literal"><span class="pre">kmemleak_alloc</span></code>             - notify of a memory block allocation</li>
+<li><code class="docutils literal"><span class="pre">kmemleak_alloc_percpu</span></code>      - notify of a percpu memory block allocation</li>
+<li><code class="docutils literal"><span class="pre">kmemleak_free</span></code>              - notify of a memory block freeing</li>
+<li><code class="docutils literal"><span class="pre">kmemleak_free_part</span></code>         - notify of a partial memory block freeing</li>
+<li><code class="docutils literal"><span class="pre">kmemleak_free_percpu</span></code>       - notify of a percpu memory block freeing</li>
+<li><code class="docutils literal"><span class="pre">kmemleak_update_trace</span></code>      - update object allocation stack trace</li>
+<li><code class="docutils literal"><span class="pre">kmemleak_not_leak</span></code>  - mark an object as not a leak</li>
+<li><code class="docutils literal"><span class="pre">kmemleak_ignore</span></code>            - do not scan or report an object as leak</li>
+<li><code class="docutils literal"><span class="pre">kmemleak_scan_area</span></code>         - add scan areas inside a memory block</li>
+<li><code class="docutils literal"><span class="pre">kmemleak_no_scan</span></code>   - do not scan a memory block</li>
+<li><code class="docutils literal"><span class="pre">kmemleak_erase</span></code>             - erase an old value in a pointer variable</li>
+<li><code class="docutils literal"><span class="pre">kmemleak_alloc_recursive</span></code> - as kmemleak_alloc but checks the recursiveness</li>
+<li><code class="docutils literal"><span class="pre">kmemleak_free_recursive</span></code>    - as kmemleak_free but checks the recursiveness</li>
+</ul>
+<p>The following functions take a physical address as the object pointer
+and only perform the corresponding action if the address has a lowmem
+mapping:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">kmemleak_alloc_phys</span></code></li>
+<li><code class="docutils literal"><span class="pre">kmemleak_free_part_phys</span></code></li>
+<li><code class="docutils literal"><span class="pre">kmemleak_not_leak_phys</span></code></li>
+<li><code class="docutils literal"><span class="pre">kmemleak_ignore_phys</span></code></li>
+</ul>
+</div>
+<div class="section" id="dealing-with-false-positives-negatives">
+<h2>Dealing with false positives/negatives<a class="headerlink" href="#dealing-with-false-positives-negatives" title="Permalink to this headline">¶</a></h2>
+<p>The false negatives are real memory leaks (orphan objects) but not
+reported by kmemleak because values found during the memory scanning
+point to such objects. To reduce the number of false negatives, kmemleak
+provides the kmemleak_ignore, kmemleak_scan_area, kmemleak_no_scan and
+kmemleak_erase functions (see above). The task stacks also increase the
+amount of false negatives and their scanning is not enabled by default.</p>
+<p>The false positives are objects wrongly reported as being memory leaks
+(orphan). For objects known not to be leaks, kmemleak provides the
+kmemleak_not_leak function. The kmemleak_ignore could also be used if
+the memory block is known not to contain other pointers and it will no
+longer be scanned.</p>
+<p>Some of the reported leaks are only transient, especially on SMP
+systems, because of pointers temporarily stored in CPU registers or
+stacks. Kmemleak defines MSECS_MIN_AGE (defaulting to 1000) representing
+the minimum age of an object to be reported as a memory leak.</p>
+</div>
+<div class="section" id="limitations-and-drawbacks">
+<h2>Limitations and Drawbacks<a class="headerlink" href="#limitations-and-drawbacks" title="Permalink to this headline">¶</a></h2>
+<p>The main drawback is the reduced performance of memory allocation and
+freeing. To avoid other penalties, the memory scanning is only performed
+when the /sys/kernel/debug/kmemleak file is read. Anyway, this tool is
+intended for debugging purposes where the performance might not be the
+most important requirement.</p>
+<p>To keep the algorithm simple, kmemleak scans for values pointing to any
+address inside a block&#8217;s address range. This may lead to an increased
+number of false negatives. However, it is likely that a real memory leak
+will eventually become visible.</p>
+<p>Another source of false negatives is the data stored in non-pointer
+values. In a future version, kmemleak could only scan the pointer
+members in the allocated structures. This feature would solve many of
+the false negative cases described above.</p>
+<p>The tool can report false positives. These are cases where an allocated
+block doesn&#8217;t need to be freed (some cases in the init_call functions),
+the pointer is calculated by other methods than the usual container_of
+macro or the pointer is stored in a location not scanned by kmemleak.</p>
+<p>Page allocations and ioremap are not tracked.</p>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="kmemcheck.html" class="btn btn-neutral float-right" title="Getting started with kmemcheck" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="ubsan.html" class="btn btn-neutral" title="The Undefined Behavior Sanitizer - UBSAN" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'4.11.0-rc3+',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

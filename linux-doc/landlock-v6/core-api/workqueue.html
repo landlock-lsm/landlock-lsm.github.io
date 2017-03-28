@@ -1,0 +1,846 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Concurrency Managed Workqueue (cmwq) &mdash; The Linux Kernel 4.11.0-rc3+ documentation</title>
+  
+
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="The Linux Kernel 4.11.0-rc3+ documentation" href="../index.html"/>
+        <link rel="up" title="Core API Documentation" href="index.html"/>
+        <link rel="next" title="The object-lifetime debugging infrastructure" href="debug-objects.html"/>
+        <link rel="prev" title="Semantics and Behavior of Local Atomic Operations" href="local_ops.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                4.11.0-rc3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user&#8217;s and administrator&#8217;s guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer&#8217;s API guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Core API Documentation</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#core-utilities">Core utilities</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="assoc_array.html">Generic Associative Array Implementation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="atomic_ops.html">Semantics and Behavior of Atomic and Bitmask Operations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cpu_hotplug.html">CPU hotplug in the Kernel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="local_ops.html">Semantics and Behavior of Local Atomic Operations</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Concurrency Managed Workqueue (cmwq)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#why-cmwq">Why cmwq?</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#the-design">The Design</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#application-programming-interface-api">Application Programming Interface (API)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#example-execution-scenarios">Example Execution Scenarios</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#guidelines">Guidelines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#debugging">Debugging</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#kernel-inline-documentations-reference">Kernel Inline Documentations Reference</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#interfaces-for-kernel-debugging">Interfaces for kernel debugging</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../media/index.html">Linux Media Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer&#8217;s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/ko_KR/index.html">Korean translations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/zh_CN/index.html">Chinese translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../index.html">The Linux Kernel</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../index.html">Docs</a> &raquo;</li>
+      
+          <li><a href="index.html">Core API Documentation</a> &raquo;</li>
+      
+    <li>Concurrency Managed Workqueue (cmwq)</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/core-api/workqueue.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="concurrency-managed-workqueue-cmwq">
+<h1>Concurrency Managed Workqueue (cmwq)<a class="headerlink" href="#concurrency-managed-workqueue-cmwq" title="Permalink to this headline">¶</a></h1>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Date:</th><td class="field-body">September, 2010</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Author:</th><td class="field-body">Tejun Heo &lt;<a class="reference external" href="mailto:tj&#37;&#52;&#48;kernel&#46;org">tj<span>&#64;</span>kernel<span>&#46;</span>org</a>&gt;</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Author:</th><td class="field-body">Florian Mickler &lt;<a class="reference external" href="mailto:florian&#37;&#52;&#48;mickler&#46;org">florian<span>&#64;</span>mickler<span>&#46;</span>org</a>&gt;</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>There are many cases where an asynchronous process execution context
+is needed and the workqueue (wq) API is the most commonly used
+mechanism for such cases.</p>
+<p>When such an asynchronous execution context is needed, a work item
+describing which function to execute is put on a queue.  An
+independent thread serves as the asynchronous execution context.  The
+queue is called workqueue and the thread is called worker.</p>
+<p>While there are work items on the workqueue the worker executes the
+functions associated with the work items one after the other.  When
+there is no work item left on the workqueue the worker becomes idle.
+When a new work item gets queued, the worker begins executing again.</p>
+</div>
+<div class="section" id="why-cmwq">
+<h2>Why cmwq?<a class="headerlink" href="#why-cmwq" title="Permalink to this headline">¶</a></h2>
+<p>In the original wq implementation, a multi threaded (MT) wq had one
+worker thread per CPU and a single threaded (ST) wq had one worker
+thread system-wide.  A single MT wq needed to keep around the same
+number of workers as the number of CPUs.  The kernel grew a lot of MT
+wq users over the years and with the number of CPU cores continuously
+rising, some systems saturated the default 32k PID space just booting
+up.</p>
+<p>Although MT wq wasted a lot of resource, the level of concurrency
+provided was unsatisfactory.  The limitation was common to both ST and
+MT wq albeit less severe on MT.  Each wq maintained its own separate
+worker pool.  A MT wq could provide only one execution context per CPU
+while a ST wq one for the whole system.  Work items had to compete for
+those very limited execution contexts leading to various problems
+including proneness to deadlocks around the single execution context.</p>
+<p>The tension between the provided level of concurrency and resource
+usage also forced its users to make unnecessary tradeoffs like libata
+choosing to use ST wq for polling PIOs and accepting an unnecessary
+limitation that no two polling PIOs can progress at the same time.  As
+MT wq don&#8217;t provide much better concurrency, users which require
+higher level of concurrency, like async or fscache, had to implement
+their own thread pool.</p>
+<p>Concurrency Managed Workqueue (cmwq) is a reimplementation of wq with
+focus on the following goals.</p>
+<ul class="simple">
+<li>Maintain compatibility with the original workqueue API.</li>
+<li>Use per-CPU unified worker pools shared by all wq to provide
+flexible level of concurrency on demand without wasting a lot of
+resource.</li>
+<li>Automatically regulate worker pool and level of concurrency so that
+the API users don&#8217;t need to worry about such details.</li>
+</ul>
+</div>
+<div class="section" id="the-design">
+<h2>The Design<a class="headerlink" href="#the-design" title="Permalink to this headline">¶</a></h2>
+<p>In order to ease the asynchronous execution of functions a new
+abstraction, the work item, is introduced.</p>
+<p>A work item is a simple struct that holds a pointer to the function
+that is to be executed asynchronously.  Whenever a driver or subsystem
+wants a function to be executed asynchronously it has to set up a work
+item pointing to that function and queue that work item on a
+workqueue.</p>
+<p>Special purpose threads, called worker threads, execute the functions
+off of the queue, one after the other.  If no work is queued, the
+worker threads become idle.  These worker threads are managed in so
+called worker-pools.</p>
+<p>The cmwq design differentiates between the user-facing workqueues that
+subsystems and drivers queue work items on and the backend mechanism
+which manages worker-pools and processes the queued work items.</p>
+<p>There are two worker-pools, one for normal work items and the other
+for high priority ones, for each possible CPU and some extra
+worker-pools to serve work items queued on unbound workqueues - the
+number of these backing pools is dynamic.</p>
+<p>Subsystems and drivers can create and queue work items through special
+workqueue API functions as they see fit. They can influence some
+aspects of the way the work items are executed by setting flags on the
+workqueue they are putting the work item on. These flags include
+things like CPU locality, concurrency limits, priority and more.  To
+get a detailed overview refer to the API description of
+<code class="docutils literal"><span class="pre">alloc_workqueue()</span></code> below.</p>
+<p>When a work item is queued to a workqueue, the target worker-pool is
+determined according to the queue parameters and workqueue attributes
+and appended on the shared worklist of the worker-pool.  For example,
+unless specifically overridden, a work item of a bound workqueue will
+be queued on the worklist of either normal or highpri worker-pool that
+is associated to the CPU the issuer is running on.</p>
+<p>For any worker pool implementation, managing the concurrency level
+(how many execution contexts are active) is an important issue.  cmwq
+tries to keep the concurrency at a minimal but sufficient level.
+Minimal to save resources and sufficient in that the system is used at
+its full capacity.</p>
+<p>Each worker-pool bound to an actual CPU implements concurrency
+management by hooking into the scheduler.  The worker-pool is notified
+whenever an active worker wakes up or sleeps and keeps track of the
+number of the currently runnable workers.  Generally, work items are
+not expected to hog a CPU and consume many cycles.  That means
+maintaining just enough concurrency to prevent work processing from
+stalling should be optimal.  As long as there are one or more runnable
+workers on the CPU, the worker-pool doesn&#8217;t start execution of a new
+work, but, when the last running worker goes to sleep, it immediately
+schedules a new worker so that the CPU doesn&#8217;t sit idle while there
+are pending work items.  This allows using a minimal number of workers
+without losing execution bandwidth.</p>
+<p>Keeping idle workers around doesn&#8217;t cost other than the memory space
+for kthreads, so cmwq holds onto idle ones for a while before killing
+them.</p>
+<p>For unbound workqueues, the number of backing pools is dynamic.
+Unbound workqueue can be assigned custom attributes using
+<code class="docutils literal"><span class="pre">apply_workqueue_attrs()</span></code> and workqueue will automatically create
+backing worker pools matching the attributes.  The responsibility of
+regulating concurrency level is on the users.  There is also a flag to
+mark a bound wq to ignore the concurrency management.  Please refer to
+the API section for details.</p>
+<p>Forward progress guarantee relies on that workers can be created when
+more execution contexts are necessary, which in turn is guaranteed
+through the use of rescue workers.  All work items which might be used
+on code paths that handle memory reclaim are required to be queued on
+wq&#8217;s that have a rescue-worker reserved for execution under memory
+pressure.  Else it is possible that the worker-pool deadlocks waiting
+for execution contexts to free up.</p>
+</div>
+<div class="section" id="application-programming-interface-api">
+<h2>Application Programming Interface (API)<a class="headerlink" href="#application-programming-interface-api" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal"><span class="pre">alloc_workqueue()</span></code> allocates a wq.  The original
+<code class="docutils literal"><span class="pre">create_*workqueue()</span></code> functions are deprecated and scheduled for
+removal.  <code class="docutils literal"><span class="pre">alloc_workqueue()</span></code> takes three arguments - &#64;``name``,
+<code class="docutils literal"><span class="pre">&#64;flags</span></code> and <code class="docutils literal"><span class="pre">&#64;max_active</span></code>.  <code class="docutils literal"><span class="pre">&#64;name</span></code> is the name of the wq and
+also used as the name of the rescuer thread if there is one.</p>
+<p>A wq no longer manages execution resources but serves as a domain for
+forward progress guarantee, flush and work item attributes. <code class="docutils literal"><span class="pre">&#64;flags</span></code>
+and <code class="docutils literal"><span class="pre">&#64;max_active</span></code> control how work items are assigned execution
+resources, scheduled and executed.</p>
+<div class="section" id="flags">
+<h3><code class="docutils literal"><span class="pre">flags</span></code><a class="headerlink" href="#flags" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">WQ_UNBOUND</span></code></dt>
+<dd><p class="first">Work items queued to an unbound wq are served by the special
+worker-pools which host workers which are not bound to any
+specific CPU.  This makes the wq behave as a simple execution
+context provider without concurrency management.  The unbound
+worker-pools try to start execution of work items as soon as
+possible.  Unbound wq sacrifices locality but is useful for
+the following cases.</p>
+<ul class="last simple">
+<li>Wide fluctuation in the concurrency level requirement is
+expected and using bound wq may end up creating large number
+of mostly unused workers across different CPUs as the issuer
+hops through different CPUs.</li>
+<li>Long running CPU intensive workloads which can be better
+managed by the system scheduler.</li>
+</ul>
+</dd>
+<dt><code class="docutils literal"><span class="pre">WQ_FREEZABLE</span></code></dt>
+<dd>A freezable wq participates in the freeze phase of the system
+suspend operations.  Work items on the wq are drained and no
+new work item starts execution until thawed.</dd>
+<dt><code class="docutils literal"><span class="pre">WQ_MEM_RECLAIM</span></code></dt>
+<dd>All wq which might be used in the memory reclaim paths <strong>MUST</strong>
+have this flag set.  The wq is guaranteed to have at least one
+execution context regardless of memory pressure.</dd>
+<dt><code class="docutils literal"><span class="pre">WQ_HIGHPRI</span></code></dt>
+<dd><p class="first">Work items of a highpri wq are queued to the highpri
+worker-pool of the target cpu.  Highpri worker-pools are
+served by worker threads with elevated nice level.</p>
+<p class="last">Note that normal and highpri worker-pools don&#8217;t interact with
+each other.  Each maintain its separate pool of workers and
+implements concurrency management among its workers.</p>
+</dd>
+<dt><code class="docutils literal"><span class="pre">WQ_CPU_INTENSIVE</span></code></dt>
+<dd><p class="first">Work items of a CPU intensive wq do not contribute to the
+concurrency level.  In other words, runnable CPU intensive
+work items will not prevent other work items in the same
+worker-pool from starting execution.  This is useful for bound
+work items which are expected to hog CPU cycles so that their
+execution is regulated by the system scheduler.</p>
+<p>Although CPU intensive work items don&#8217;t contribute to the
+concurrency level, start of their executions is still
+regulated by the concurrency management and runnable
+non-CPU-intensive work items can delay execution of CPU
+intensive work items.</p>
+<p class="last">This flag is meaningless for unbound wq.</p>
+</dd>
+</dl>
+<p>Note that the flag <code class="docutils literal"><span class="pre">WQ_NON_REENTRANT</span></code> no longer exists as all
+workqueues are now non-reentrant - any work item is guaranteed to be
+executed by at most one worker system-wide at any given time.</p>
+</div>
+<div class="section" id="max-active">
+<h3><code class="docutils literal"><span class="pre">max_active</span></code><a class="headerlink" href="#max-active" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal"><span class="pre">&#64;max_active</span></code> determines the maximum number of execution contexts
+per CPU which can be assigned to the work items of a wq.  For example,
+with <code class="docutils literal"><span class="pre">&#64;max_active</span></code> of 16, at most 16 work items of the wq can be
+executing at the same time per CPU.</p>
+<p>Currently, for a bound wq, the maximum limit for <code class="docutils literal"><span class="pre">&#64;max_active</span></code> is
+512 and the default value used when 0 is specified is 256.  For an
+unbound wq, the limit is higher of 512 and 4 *
+<code class="docutils literal"><span class="pre">num_possible_cpus()</span></code>.  These values are chosen sufficiently high
+such that they are not the limiting factor while providing protection
+in runaway cases.</p>
+<p>The number of active work items of a wq is usually regulated by the
+users of the wq, more specifically, by how many work items the users
+may queue at the same time.  Unless there is a specific need for
+throttling the number of active work items, specifying &#8216;0&#8217; is
+recommended.</p>
+<p>Some users depend on the strict execution ordering of ST wq.  The
+combination of <code class="docutils literal"><span class="pre">&#64;max_active</span></code> of 1 and <code class="docutils literal"><span class="pre">WQ_UNBOUND</span></code> is used to
+achieve this behavior.  Work items on such wq are always queued to the
+unbound worker-pools and only one work item can be active at any given
+time thus achieving the same ordering property as ST wq.</p>
+</div>
+</div>
+<div class="section" id="example-execution-scenarios">
+<h2>Example Execution Scenarios<a class="headerlink" href="#example-execution-scenarios" title="Permalink to this headline">¶</a></h2>
+<p>The following example execution scenarios try to illustrate how cmwq
+behave under different configurations.</p>
+<blockquote>
+<div>Work items w0, w1, w2 are queued to a bound wq q0 on the same CPU.
+w0 burns CPU for 5ms then sleeps for 10ms then burns CPU for 5ms
+again before finishing.  w1 and w2 burn CPU for 5ms then sleep for
+10ms.</div></blockquote>
+<p>Ignoring all other tasks, works and processing overhead, and assuming
+simple FIFO scheduling, the following is one highly simplified version
+of possible sequences of events with the original wq.</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>TIME IN MSECS  EVENT
+0              w0 starts and burns CPU
+5              w0 sleeps
+15             w0 wakes up and burns CPU
+20             w0 finishes
+20             w1 starts and burns CPU
+25             w1 sleeps
+35             w1 wakes up and finishes
+35             w2 starts and burns CPU
+40             w2 sleeps
+50             w2 wakes up and finishes
+</pre></div>
+</div>
+<p>And with cmwq with <code class="docutils literal"><span class="pre">&#64;max_active</span></code> &gt;= 3,</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>TIME IN MSECS  EVENT
+0              w0 starts and burns CPU
+5              w0 sleeps
+5              w1 starts and burns CPU
+10             w1 sleeps
+10             w2 starts and burns CPU
+15             w2 sleeps
+15             w0 wakes up and burns CPU
+20             w0 finishes
+20             w1 wakes up and finishes
+25             w2 wakes up and finishes
+</pre></div>
+</div>
+<p>If <code class="docutils literal"><span class="pre">&#64;max_active</span></code> == 2,</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>TIME IN MSECS  EVENT
+0              w0 starts and burns CPU
+5              w0 sleeps
+5              w1 starts and burns CPU
+10             w1 sleeps
+15             w0 wakes up and burns CPU
+20             w0 finishes
+20             w1 wakes up and finishes
+20             w2 starts and burns CPU
+25             w2 sleeps
+35             w2 wakes up and finishes
+</pre></div>
+</div>
+<p>Now, let&#8217;s assume w1 and w2 are queued to a different wq q1 which has
+<code class="docutils literal"><span class="pre">WQ_CPU_INTENSIVE</span></code> set,</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>TIME IN MSECS  EVENT
+0              w0 starts and burns CPU
+5              w0 sleeps
+5              w1 and w2 start and burn CPU
+10             w1 sleeps
+15             w2 sleeps
+15             w0 wakes up and burns CPU
+20             w0 finishes
+20             w1 wakes up and finishes
+25             w2 wakes up and finishes
+</pre></div>
+</div>
+</div>
+<div class="section" id="guidelines">
+<h2>Guidelines<a class="headerlink" href="#guidelines" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>Do not forget to use <code class="docutils literal"><span class="pre">WQ_MEM_RECLAIM</span></code> if a wq may process work
+items which are used during memory reclaim.  Each wq with
+<code class="docutils literal"><span class="pre">WQ_MEM_RECLAIM</span></code> set has an execution context reserved for it.  If
+there is dependency among multiple work items used during memory
+reclaim, they should be queued to separate wq each with
+<code class="docutils literal"><span class="pre">WQ_MEM_RECLAIM</span></code>.</li>
+<li>Unless strict ordering is required, there is no need to use ST wq.</li>
+<li>Unless there is a specific need, using 0 for &#64;max_active is
+recommended.  In most use cases, concurrency level usually stays
+well under the default limit.</li>
+<li>A wq serves as a domain for forward progress guarantee
+(<code class="docutils literal"><span class="pre">WQ_MEM_RECLAIM</span></code>, flush and work item attributes.  Work items
+which are not involved in memory reclaim and don&#8217;t need to be
+flushed as a part of a group of work items, and don&#8217;t require any
+special attribute, can use one of the system wq.  There is no
+difference in execution characteristics between using a dedicated wq
+and a system wq.</li>
+<li>Unless work items are expected to consume a huge amount of CPU
+cycles, using a bound wq is usually beneficial due to the increased
+level of locality in wq operations and work item execution.</li>
+</ul>
+</div>
+<div class="section" id="debugging">
+<h2>Debugging<a class="headerlink" href="#debugging" title="Permalink to this headline">¶</a></h2>
+<p>Because the work functions are executed by generic worker threads
+there are a few tricks needed to shed some light on misbehaving
+workqueue users.</p>
+<p>Worker threads show up in the process list as:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>root      5671  0.0  0.0      0     0 ?        S    12:07   0:00 [kworker/0:1]
+root      5672  0.0  0.0      0     0 ?        S    12:07   0:00 [kworker/1:2]
+root      5673  0.0  0.0      0     0 ?        S    12:12   0:00 [kworker/0:0]
+root      5674  0.0  0.0      0     0 ?        S    12:13   0:00 [kworker/1:0]
+</pre></div>
+</div>
+<p>If kworkers are going crazy (using too much cpu), there are two types
+of possible problems:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li>Something being scheduled in rapid succession</li>
+<li>A single work item that consumes lots of cpu cycles</li>
+</ol>
+</div></blockquote>
+<p>The first one can be tracked using tracing:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>$ echo workqueue:workqueue_queue_work &gt; /sys/kernel/debug/tracing/set_event
+$ cat /sys/kernel/debug/tracing/trace_pipe &gt; out.txt
+(wait a few secs)
+^C
+</pre></div>
+</div>
+<p>If something is busy looping on work queueing, it would be dominating
+the output and the offender can be determined with the work item
+function.</p>
+<p>For the second type of problems it should be possible to just check
+the stack trace of the offending worker thread.</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>$ cat /proc/THE_OFFENDING_KWORKER/stack
+</pre></div>
+</div>
+<p>The work item&#8217;s function should be trivially visible in the stack
+trace.</p>
+</div>
+<div class="section" id="kernel-inline-documentations-reference">
+<h2>Kernel Inline Documentations Reference<a class="headerlink" href="#kernel-inline-documentations-reference" title="Permalink to this headline">¶</a></h2>
+<dl class="type">
+<dt id="c.workqueue_attrs">
+struct <code class="descname">workqueue_attrs</code><a class="headerlink" href="#c.workqueue_attrs" title="Permalink to this definition">¶</a></dt>
+<dd><p>A struct for workqueue attributes.</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>struct workqueue_attrs {
+  int nice;
+  cpumask_var_t cpumask;
+  bool no_numa;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">nice</span></code></dt>
+<dd>nice level</dd>
+<dt><code class="docutils literal"><span class="pre">cpumask</span></code></dt>
+<dd>allowed CPUs</dd>
+<dt><code class="docutils literal"><span class="pre">no_numa</span></code></dt>
+<dd><p class="first">disable NUMA affinity</p>
+<p class="last">Unlike other fields, <code class="docutils literal"><span class="pre">no_numa</span></code> isn&#8217;t a property of a worker_pool. It
+only modifies how <code class="xref c c-func docutils literal"><span class="pre">apply_workqueue_attrs()</span></code> select pools and thus
+doesn&#8217;t participate in pool hash calculations or equality comparisons.</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This can be used to change attributes of an unbound workqueue.</p>
+<dl class="function">
+<dt id="c.work_pending">
+<code class="descname">work_pending</code><span class="sig-paren">(</span><em>work</em><span class="sig-paren">)</span><a class="headerlink" href="#c.work_pending" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find out whether a work item is currently pending</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">work</span></code></dt>
+<dd>The work item in question</dd>
+</dl>
+<dl class="function">
+<dt id="c.delayed_work_pending">
+<code class="descname">delayed_work_pending</code><span class="sig-paren">(</span><em>w</em><span class="sig-paren">)</span><a class="headerlink" href="#c.delayed_work_pending" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find out whether a delayable work item is currently pending</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">w</span></code></dt>
+<dd>The work item in question</dd>
+</dl>
+<dl class="function">
+<dt id="c.alloc_workqueue">
+<code class="descname">alloc_workqueue</code><span class="sig-paren">(</span><em>fmt</em>, <em>flags</em>, <em>max_active</em>, <em>args...</em><span class="sig-paren">)</span><a class="headerlink" href="#c.alloc_workqueue" title="Permalink to this definition">¶</a></dt>
+<dd><p>allocate a workqueue</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">fmt</span></code></dt>
+<dd>printf format for the name of the workqueue</dd>
+<dt><code class="docutils literal"><span class="pre">flags</span></code></dt>
+<dd>WQ_* flags</dd>
+<dt><code class="docutils literal"><span class="pre">max_active</span></code></dt>
+<dd>max in-flight work items, 0 for default</dd>
+<dt><code class="docutils literal"><span class="pre">args...</span></code></dt>
+<dd>args for <strong>fmt</strong></dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Allocate a workqueue with the specified parameters.  For detailed
+information on WQ_* flags, please refer to
+Documentation/core-api/workqueue.rst.</p>
+<p>The __lock_name macro dance is to guarantee that single lock_class_key
+doesn&#8217;t end up with different namesm, which isn&#8217;t allowed by lockdep.</p>
+<p><strong>Return</strong></p>
+<p>Pointer to the allocated workqueue on success, <code class="docutils literal"><span class="pre">NULL</span></code> on failure.</p>
+<dl class="function">
+<dt id="c.alloc_ordered_workqueue">
+<code class="descname">alloc_ordered_workqueue</code><span class="sig-paren">(</span><em>fmt</em>, <em>flags</em>, <em>args...</em><span class="sig-paren">)</span><a class="headerlink" href="#c.alloc_ordered_workqueue" title="Permalink to this definition">¶</a></dt>
+<dd><p>allocate an ordered workqueue</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">fmt</span></code></dt>
+<dd>printf format for the name of the workqueue</dd>
+<dt><code class="docutils literal"><span class="pre">flags</span></code></dt>
+<dd>WQ_* flags (only WQ_FREEZABLE and WQ_MEM_RECLAIM are meaningful)</dd>
+<dt><code class="docutils literal"><span class="pre">args...</span></code></dt>
+<dd>args for <strong>fmt</strong></dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Allocate an ordered workqueue.  An ordered workqueue executes at
+most one work item at any given time in the queued order.  They are
+implemented as unbound workqueues with <strong>max_active</strong> of one.</p>
+<p><strong>Return</strong></p>
+<p>Pointer to the allocated workqueue on success, <code class="docutils literal"><span class="pre">NULL</span></code> on failure.</p>
+<dl class="function">
+<dt id="c.queue_work">
+bool <code class="descname">queue_work</code><span class="sig-paren">(</span>struct workqueue_struct *<em>&nbsp;wq</em>, struct work_struct *<em>&nbsp;work</em><span class="sig-paren">)</span><a class="headerlink" href="#c.queue_work" title="Permalink to this definition">¶</a></dt>
+<dd><p>queue work on a workqueue</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">workqueue_struct</span> <span class="pre">*</span> <span class="pre">wq</span></code></dt>
+<dd>workqueue to use</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">work_struct</span> <span class="pre">*</span> <span class="pre">work</span></code></dt>
+<dd>work to queue</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Returns <code class="docutils literal"><span class="pre">false</span></code> if <strong>work</strong> was already on a queue, <code class="docutils literal"><span class="pre">true</span></code> otherwise.</p>
+<p>We queue the work to the CPU on which it was submitted, but if the CPU dies
+it can be processed by another CPU.</p>
+<dl class="function">
+<dt id="c.queue_delayed_work">
+bool <code class="descname">queue_delayed_work</code><span class="sig-paren">(</span>struct workqueue_struct *<em>&nbsp;wq</em>, struct delayed_work *<em>&nbsp;dwork</em>, unsigned long<em>&nbsp;delay</em><span class="sig-paren">)</span><a class="headerlink" href="#c.queue_delayed_work" title="Permalink to this definition">¶</a></dt>
+<dd><p>queue work on a workqueue after delay</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">workqueue_struct</span> <span class="pre">*</span> <span class="pre">wq</span></code></dt>
+<dd>workqueue to use</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">delayed_work</span> <span class="pre">*</span> <span class="pre">dwork</span></code></dt>
+<dd>delayable work to queue</dd>
+<dt><code class="docutils literal"><span class="pre">unsigned</span> <span class="pre">long</span> <span class="pre">delay</span></code></dt>
+<dd>number of jiffies to wait before queueing</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Equivalent to <a class="reference internal" href="../driver-api/basics.html#c.queue_delayed_work_on" title="queue_delayed_work_on"><code class="xref c c-func docutils literal"><span class="pre">queue_delayed_work_on()</span></code></a> but tries to use the local CPU.</p>
+<dl class="function">
+<dt id="c.mod_delayed_work">
+bool <code class="descname">mod_delayed_work</code><span class="sig-paren">(</span>struct workqueue_struct *<em>&nbsp;wq</em>, struct delayed_work *<em>&nbsp;dwork</em>, unsigned long<em>&nbsp;delay</em><span class="sig-paren">)</span><a class="headerlink" href="#c.mod_delayed_work" title="Permalink to this definition">¶</a></dt>
+<dd><p>modify delay of or queue a delayed work</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">workqueue_struct</span> <span class="pre">*</span> <span class="pre">wq</span></code></dt>
+<dd>workqueue to use</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">delayed_work</span> <span class="pre">*</span> <span class="pre">dwork</span></code></dt>
+<dd>work to queue</dd>
+<dt><code class="docutils literal"><span class="pre">unsigned</span> <span class="pre">long</span> <span class="pre">delay</span></code></dt>
+<dd>number of jiffies to wait before queueing</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p><a class="reference internal" href="../driver-api/basics.html#c.mod_delayed_work_on" title="mod_delayed_work_on"><code class="xref c c-func docutils literal"><span class="pre">mod_delayed_work_on()</span></code></a> on local CPU.</p>
+<dl class="function">
+<dt id="c.schedule_work_on">
+bool <code class="descname">schedule_work_on</code><span class="sig-paren">(</span>int<em>&nbsp;cpu</em>, struct work_struct *<em>&nbsp;work</em><span class="sig-paren">)</span><a class="headerlink" href="#c.schedule_work_on" title="Permalink to this definition">¶</a></dt>
+<dd><p>put work task on a specific cpu</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">int</span> <span class="pre">cpu</span></code></dt>
+<dd>cpu to put the work task on</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">work_struct</span> <span class="pre">*</span> <span class="pre">work</span></code></dt>
+<dd>job to be done</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This puts a job on a specific cpu</p>
+<dl class="function">
+<dt id="c.schedule_work">
+bool <code class="descname">schedule_work</code><span class="sig-paren">(</span>struct work_struct *<em>&nbsp;work</em><span class="sig-paren">)</span><a class="headerlink" href="#c.schedule_work" title="Permalink to this definition">¶</a></dt>
+<dd><p>put work task in global workqueue</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">work_struct</span> <span class="pre">*</span> <span class="pre">work</span></code></dt>
+<dd>job to be done</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Returns <code class="docutils literal"><span class="pre">false</span></code> if <strong>work</strong> was already on the kernel-global workqueue and
+<code class="docutils literal"><span class="pre">true</span></code> otherwise.</p>
+<p>This puts a job in the kernel-global workqueue if it was not already
+queued and leaves it in the same position on the kernel-global
+workqueue otherwise.</p>
+<dl class="function">
+<dt id="c.flush_scheduled_work">
+void <code class="descname">flush_scheduled_work</code><span class="sig-paren">(</span>void<span class="sig-paren">)</span><a class="headerlink" href="#c.flush_scheduled_work" title="Permalink to this definition">¶</a></dt>
+<dd><p>ensure that any scheduled work has run to completion.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">void</span></code></dt>
+<dd>no arguments</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Forces execution of the kernel-global workqueue and blocks until its
+completion.</p>
+<p>Think twice before calling this function!  It&#8217;s very easy to get into
+trouble if you don&#8217;t take great care.  Either of the following situations
+will lead to deadlock:</p>
+<blockquote>
+<div><p>One of the work items currently on the workqueue needs to acquire
+a lock held by your code or its caller.</p>
+<p>Your code is running in the context of a work routine.</p>
+</div></blockquote>
+<p>They will be detected by lockdep when they occur, but the first might not
+occur very often.  It depends on what work items are on the workqueue and
+what locks they need, which you have no control over.</p>
+<p>In most situations flushing the entire workqueue is overkill; you merely
+need to know that a particular work item isn&#8217;t queued and isn&#8217;t running.
+In such cases you should use <a class="reference internal" href="../driver-api/basics.html#c.cancel_delayed_work_sync" title="cancel_delayed_work_sync"><code class="xref c c-func docutils literal"><span class="pre">cancel_delayed_work_sync()</span></code></a> or
+<a class="reference internal" href="../driver-api/basics.html#c.cancel_work_sync" title="cancel_work_sync"><code class="xref c c-func docutils literal"><span class="pre">cancel_work_sync()</span></code></a> instead.</p>
+<dl class="function">
+<dt id="c.schedule_delayed_work_on">
+bool <code class="descname">schedule_delayed_work_on</code><span class="sig-paren">(</span>int<em>&nbsp;cpu</em>, struct delayed_work *<em>&nbsp;dwork</em>, unsigned long<em>&nbsp;delay</em><span class="sig-paren">)</span><a class="headerlink" href="#c.schedule_delayed_work_on" title="Permalink to this definition">¶</a></dt>
+<dd><p>queue work in global workqueue on CPU after delay</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">int</span> <span class="pre">cpu</span></code></dt>
+<dd>cpu to use</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">delayed_work</span> <span class="pre">*</span> <span class="pre">dwork</span></code></dt>
+<dd>job to be done</dd>
+<dt><code class="docutils literal"><span class="pre">unsigned</span> <span class="pre">long</span> <span class="pre">delay</span></code></dt>
+<dd>number of jiffies to wait</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>After waiting for a given time this puts a job in the kernel-global
+workqueue on the specified CPU.</p>
+<dl class="function">
+<dt id="c.schedule_delayed_work">
+bool <code class="descname">schedule_delayed_work</code><span class="sig-paren">(</span>struct delayed_work *<em>&nbsp;dwork</em>, unsigned long<em>&nbsp;delay</em><span class="sig-paren">)</span><a class="headerlink" href="#c.schedule_delayed_work" title="Permalink to this definition">¶</a></dt>
+<dd><p>put work task in global workqueue after delay</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">delayed_work</span> <span class="pre">*</span> <span class="pre">dwork</span></code></dt>
+<dd>job to be done</dd>
+<dt><code class="docutils literal"><span class="pre">unsigned</span> <span class="pre">long</span> <span class="pre">delay</span></code></dt>
+<dd>number of jiffies to wait or 0 for immediate execution</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>After waiting for a given time this puts a job in the kernel-global
+workqueue.</p>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="debug-objects.html" class="btn btn-neutral float-right" title="The object-lifetime debugging infrastructure" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="local_ops.html" class="btn btn-neutral" title="Semantics and Behavior of Local Atomic Operations" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'4.11.0-rc3+',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
