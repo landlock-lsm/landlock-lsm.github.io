@@ -1,0 +1,555 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Kernel module signing facility &mdash; The Linux Kernel 4.13.0-rc5+ documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="The Linux Kernel 4.13.0-rc5+ documentation" href="../index.html"/>
+        <link rel="up" title="The Linux kernel user’s and administrator’s guide" href="index.html"/>
+        <link rel="next" title="Linux Magic System Request Key Hacks" href="sysrq.html"/>
+        <link rel="prev" title="RAID arrays" href="md.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                4.13.0-rc5
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">The Linux kernel user&#8217;s and administrator&#8217;s guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="README.html">Linux kernel release 4.x &lt;http://kernel.org/&gt;</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel-parameters.html">The kernel&#8217;s command-line parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devices.html">Linux allocated devices (4.x+ version)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reporting-bugs.html">Reporting bugs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="security-bugs.html">Security bugs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bug-hunting.html">Bug hunting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bug-bisect.html">Bisecting a bug</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tainted-kernels.html">Tainted kernels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ramoops.html">Ramoops oops/panic logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dynamic-debug-howto.html">Dynamic debug</a></li>
+<li class="toctree-l2"><a class="reference internal" href="init.html">Explaining the dreaded &#8220;No init found.&#8221; boot hang message</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sysfs-rules.html">Rules on how to access information in sysfs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="initrd.html">Using the initial RAM disk (initrd)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="serial-console.html">Linux Serial Console</a></li>
+<li class="toctree-l2"><a class="reference internal" href="braille-console.html">Linux Braille Console</a></li>
+<li class="toctree-l2"><a class="reference internal" href="parport.html">Parport</a></li>
+<li class="toctree-l2"><a class="reference internal" href="md.html">RAID arrays</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Kernel module signing facility</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#configuring-module-signing">Configuring module signing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generating-signing-keys">Generating signing keys</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#public-keys-in-the-kernel">Public keys in the kernel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#manually-signing-modules">Manually signing modules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#signed-modules-and-stripping">Signed modules and stripping</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#loading-signed-modules">Loading signed modules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#non-valid-signatures-and-unsigned-modules">Non-valid signatures and unsigned modules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#administering-protecting-the-private-key">Administering/protecting the private key</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="sysrq.html">Linux Magic System Request Key Hacks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="unicode.html">Unicode support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vga-softcursor.html">Software cursor for VGA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="binfmt-misc.html">Kernel Support for miscellaneous (your favourite) Binary Formats v1.1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mono.html">Mono(tm) Binary Kernel Support for Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="java.html">Java(tm) Binary Kernel Support for Linux v1.03</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ras.html">Reliability, Availability and Serviceability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pm/index.html">Power Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="thunderbolt.html">Thunderbolt</a></li>
+<li class="toctree-l2"><a class="reference internal" href="LSM/index.html">Linux Security Module Usage</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer&#8217;s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../media/index.html">Linux Media Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer&#8217;s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Linux Filesystems API</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/ko_KR/index.html">Korean translations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/zh_CN/index.html">Chinese translations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/ja_JP/index.html">Japanese translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">The Linux kernel user&#8217;s and administrator&#8217;s guide</a> &raquo;</li>
+        
+      <li>Kernel module signing facility</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/admin-guide/module-signing.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="kernel-module-signing-facility">
+<h1>Kernel module signing facility<a class="headerlink" href="#kernel-module-signing-facility" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>The kernel module signing facility cryptographically signs modules during
+installation and then checks the signature upon loading the module.  This
+allows increased kernel security by disallowing the loading of unsigned modules
+or modules signed with an invalid key.  Module signing increases security by
+making it harder to load a malicious module into the kernel.  The module
+signature checking is done by the kernel so that it is not necessary to have
+trusted userspace bits.</p>
+<p>This facility uses X.509 ITU-T standard certificates to encode the public keys
+involved.  The signatures are not themselves encoded in any industrial standard
+type.  The facility currently only supports the RSA public key encryption
+standard (though it is pluggable and permits others to be used).  The possible
+hash algorithms that can be used are SHA-1, SHA-224, SHA-256, SHA-384, and
+SHA-512 (the algorithm is selected by data in the signature).</p>
+</div>
+<div class="section" id="configuring-module-signing">
+<h2>Configuring module signing<a class="headerlink" href="#configuring-module-signing" title="Permalink to this headline">¶</a></h2>
+<p>The module signing facility is enabled by going to the
+<span class="menuselection">Enable Loadable Module Support</span> section of
+the kernel configuration and turning on:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>CONFIG_MODULE_SIG       &quot;Module signature verification&quot;
+</pre></div>
+</div>
+<p>This has a number of options available:</p>
+<blockquote>
+<div><ol class="arabic">
+<li><p class="first"><span class="menuselection">Require modules to be validly signed</span>
+(<code class="docutils literal"><span class="pre">CONFIG_MODULE_SIG_FORCE</span></code>)</p>
+<p>This specifies how the kernel should deal with a module that has a
+signature for which the key is not known or a module that is unsigned.</p>
+<p>If this is off (ie. &#8220;permissive&#8221;), then modules for which the key is not
+available and modules that are unsigned are permitted, but the kernel will
+be marked as being tainted, and the concerned modules will be marked as
+tainted, shown with the character &#8216;E&#8217;.</p>
+<p>If this is on (ie. &#8220;restrictive&#8221;), only modules that have a valid
+signature that can be verified by a public key in the kernel&#8217;s possession
+will be loaded.  All other modules will generate an error.</p>
+<p>Irrespective of the setting here, if the module has a signature block that
+cannot be parsed, it will be rejected out of hand.</p>
+</li>
+<li><p class="first"><span class="menuselection">Automatically sign all modules</span>
+(<code class="docutils literal"><span class="pre">CONFIG_MODULE_SIG_ALL</span></code>)</p>
+<p>If this is on then modules will be automatically signed during the
+modules_install phase of a build.  If this is off, then the modules must
+be signed manually using:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>scripts/sign-file
+</pre></div>
+</div>
+</li>
+<li><p class="first"><span class="menuselection">Which hash algorithm should modules be signed with?</span></p>
+<p>This presents a choice of which hash algorithm the installation phase will
+sign the modules with:</p>
+<blockquote>
+<div><table border="1" class="docutils">
+<colgroup>
+<col width="42%" />
+<col width="58%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">CONFIG_MODULE_SIG_SHA1</span></code></td>
+<td><span class="menuselection">Sign modules with SHA-1</span></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">CONFIG_MODULE_SIG_SHA224</span></code></td>
+<td><span class="menuselection">Sign modules with SHA-224</span></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">CONFIG_MODULE_SIG_SHA256</span></code></td>
+<td><span class="menuselection">Sign modules with SHA-256</span></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">CONFIG_MODULE_SIG_SHA384</span></code></td>
+<td><span class="menuselection">Sign modules with SHA-384</span></td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">CONFIG_MODULE_SIG_SHA512</span></code></td>
+<td><span class="menuselection">Sign modules with SHA-512</span></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>The algorithm selected here will also be built into the kernel (rather
+than being a module) so that modules signed with that algorithm can have
+their signatures checked without causing a dependency loop.</p>
+</li>
+<li><p class="first"><span class="menuselection">File name or PKCS#11 URI of module signing key</span>
+(<code class="docutils literal"><span class="pre">CONFIG_MODULE_SIG_KEY</span></code>)</p>
+<p>Setting this option to something other than its default of
+<code class="docutils literal"><span class="pre">certs/signing_key.pem</span></code> will disable the autogeneration of signing keys
+and allow the kernel modules to be signed with a key of your choosing.
+The string provided should identify a file containing both a private key
+and its corresponding X.509 certificate in PEM form, or — on systems where
+the OpenSSL ENGINE_pkcs11 is functional — a PKCS#11 URI as defined by
+RFC7512. In the latter case, the PKCS#11 URI should reference both a
+certificate and a private key.</p>
+<p>If the PEM file containing the private key is encrypted, or if the
+PKCS#11 token requries a PIN, this can be provided at build time by
+means of the <code class="docutils literal"><span class="pre">KBUILD_SIGN_PIN</span></code> variable.</p>
+</li>
+<li><p class="first"><span class="menuselection">Additional X.509 keys for default system keyring</span>
+(<code class="docutils literal"><span class="pre">CONFIG_SYSTEM_TRUSTED_KEYS</span></code>)</p>
+<p>This option can be set to the filename of a PEM-encoded file containing
+additional certificates which will be included in the system keyring by
+default.</p>
+</li>
+</ol>
+</div></blockquote>
+<p>Note that enabling module signing adds a dependency on the OpenSSL devel
+packages to the kernel build processes for the tool that does the signing.</p>
+</div>
+<div class="section" id="generating-signing-keys">
+<h2>Generating signing keys<a class="headerlink" href="#generating-signing-keys" title="Permalink to this headline">¶</a></h2>
+<p>Cryptographic keypairs are required to generate and check signatures.  A
+private key is used to generate a signature and the corresponding public key is
+used to check it.  The private key is only needed during the build, after which
+it can be deleted or stored securely.  The public key gets built into the
+kernel so that it can be used to check the signatures as the modules are
+loaded.</p>
+<p>Under normal conditions, when <code class="docutils literal"><span class="pre">CONFIG_MODULE_SIG_KEY</span></code> is unchanged from its
+default, the kernel build will automatically generate a new keypair using
+openssl if one does not exist in the file:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>certs/signing_key.pem
+</pre></div>
+</div>
+<p>during the building of vmlinux (the public part of the key needs to be built
+into vmlinux) using parameters in the:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>certs/x509.genkey
+</pre></div>
+</div>
+<p>file (which is also generated if it does not already exist).</p>
+<p>It is strongly recommended that you provide your own x509.genkey file.</p>
+<p>Most notably, in the x509.genkey file, the req_distinguished_name section
+should be altered from the default:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>[ req_distinguished_name ]
+#O = Unspecified company
+CN = Build time autogenerated kernel key
+#emailAddress = unspecified.user@unspecified.company
+</pre></div>
+</div>
+<p>The generated RSA key size can also be set with:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>[ req ]
+default_bits = 4096
+</pre></div>
+</div>
+<p>It is also possible to manually generate the key private/public files using the
+x509.genkey key generation configuration file in the root node of the Linux
+kernel sources tree and the openssl command.  The following is an example to
+generate the public/private key files:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>openssl req -new -nodes -utf8 -sha256 -days 36500 -batch -x509 \
+   -config x509.genkey -outform PEM -out kernel_key.pem \
+   -keyout kernel_key.pem
+</pre></div>
+</div>
+<p>The full pathname for the resulting kernel_key.pem file can then be specified
+in the <code class="docutils literal"><span class="pre">CONFIG_MODULE_SIG_KEY</span></code> option, and the certificate and key therein will
+be used instead of an autogenerated keypair.</p>
+</div>
+<div class="section" id="public-keys-in-the-kernel">
+<h2>Public keys in the kernel<a class="headerlink" href="#public-keys-in-the-kernel" title="Permalink to this headline">¶</a></h2>
+<p>The kernel contains a ring of public keys that can be viewed by root.  They&#8217;re
+in a keyring called &#8221;.system_keyring&#8221; that can be seen by:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>[root@deneb ~]# cat /proc/keys
+...
+223c7853 I------     1 perm 1f030000     0     0 keyring   .system_keyring: 1
+302d2d52 I------     1 perm 1f010000     0     0 asymmetri Fedora kernel signing key: d69a84e6bce3d216b979e9505b3e3ef9a7118079: X509.RSA a7118079 []
+...
+</pre></div>
+</div>
+<p>Beyond the public key generated specifically for module signing, additional
+trusted certificates can be provided in a PEM-encoded file referenced by the
+<code class="docutils literal"><span class="pre">CONFIG_SYSTEM_TRUSTED_KEYS</span></code> configuration option.</p>
+<p>Further, the architecture code may take public keys from a hardware store and
+add those in also (e.g. from the UEFI key database).</p>
+<p>Finally, it is possible to add additional public keys by doing:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>keyctl padd asymmetric &quot;&quot; [.system_keyring-ID] &lt;[key-file]
+</pre></div>
+</div>
+<p>e.g.:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>keyctl padd asymmetric &quot;&quot; 0x223c7853 &lt;my_public_key.x509
+</pre></div>
+</div>
+<p>Note, however, that the kernel will only permit keys to be added to
+<code class="docutils literal"><span class="pre">.system_keyring</span> <span class="pre">_if_</span></code> the new key&#8217;s X.509 wrapper is validly signed by a key
+that is already resident in the .system_keyring at the time the key was added.</p>
+</div>
+<div class="section" id="manually-signing-modules">
+<h2>Manually signing modules<a class="headerlink" href="#manually-signing-modules" title="Permalink to this headline">¶</a></h2>
+<p>To manually sign a module, use the scripts/sign-file tool available in
+the Linux kernel source tree.  The script requires 4 arguments:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li>The hash algorithm (e.g., sha256)</li>
+<li>The private key filename or PKCS#11 URI</li>
+<li>The public key filename</li>
+<li>The kernel module to be signed</li>
+</ol>
+</div></blockquote>
+<p>The following is an example to sign a kernel module:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>scripts/sign-file sha512 kernel-signkey.priv \
+        kernel-signkey.x509 module.ko
+</pre></div>
+</div>
+<p>The hash algorithm used does not have to match the one configured, but if it
+doesn&#8217;t, you should make sure that hash algorithm is either built into the
+kernel or can be loaded without requiring itself.</p>
+<p>If the private key requires a passphrase or PIN, it can be provided in the
+$KBUILD_SIGN_PIN environment variable.</p>
+</div>
+<div class="section" id="signed-modules-and-stripping">
+<h2>Signed modules and stripping<a class="headerlink" href="#signed-modules-and-stripping" title="Permalink to this headline">¶</a></h2>
+<p>A signed module has a digital signature simply appended at the end.  The string
+<code class="docutils literal"><span class="pre">~Module</span> <span class="pre">signature</span> <span class="pre">appended~.</span></code> at the end of the module&#8217;s file confirms that a
+signature is present but it does not confirm that the signature is valid!</p>
+<p>Signed modules are BRITTLE as the signature is outside of the defined ELF
+container.  Thus they MAY NOT be stripped once the signature is computed and
+attached.  Note the entire module is the signed payload, including any and all
+debug information present at the time of signing.</p>
+</div>
+<div class="section" id="loading-signed-modules">
+<h2>Loading signed modules<a class="headerlink" href="#loading-signed-modules" title="Permalink to this headline">¶</a></h2>
+<p>Modules are loaded with insmod, modprobe, <code class="docutils literal"><span class="pre">init_module()</span></code> or
+<code class="docutils literal"><span class="pre">finit_module()</span></code>, exactly as for unsigned modules as no processing is
+done in userspace.  The signature checking is all done within the kernel.</p>
+</div>
+<div class="section" id="non-valid-signatures-and-unsigned-modules">
+<h2>Non-valid signatures and unsigned modules<a class="headerlink" href="#non-valid-signatures-and-unsigned-modules" title="Permalink to this headline">¶</a></h2>
+<p>If <code class="docutils literal"><span class="pre">CONFIG_MODULE_SIG_FORCE</span></code> is enabled or module.sig_enforce=1 is supplied on
+the kernel command line, the kernel will only load validly signed modules
+for which it has a public key.   Otherwise, it will also load modules that are
+unsigned.   Any module for which the kernel has a key, but which proves to have
+a signature mismatch will not be permitted to load.</p>
+<p>Any module that has an unparseable signature will be rejected.</p>
+</div>
+<div class="section" id="administering-protecting-the-private-key">
+<h2>Administering/protecting the private key<a class="headerlink" href="#administering-protecting-the-private-key" title="Permalink to this headline">¶</a></h2>
+<p>Since the private key is used to sign modules, viruses and malware could use
+the private key to sign modules and compromise the operating system.  The
+private key must be either destroyed or moved to a secure location and not kept
+in the root node of the kernel source tree.</p>
+<p>If you use the same private key to sign modules for multiple kernel
+configurations, you must ensure that the module version information is
+sufficient to prevent loading a module into a different kernel.  Either
+set <code class="docutils literal"><span class="pre">CONFIG_MODVERSIONS=y</span></code> or ensure that each configuration has a different
+kernel release string by changing <code class="docutils literal"><span class="pre">EXTRAVERSION</span></code> or <code class="docutils literal"><span class="pre">CONFIG_LOCALVERSION</span></code>.</p>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="sysrq.html" class="btn btn-neutral float-right" title="Linux Magic System Request Key Hacks" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="md.html" class="btn btn-neutral" title="RAID arrays" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'4.13.0-rc5+',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

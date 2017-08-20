@@ -1,0 +1,3040 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>2. Digital TV (DVB) devices &mdash; The Linux Kernel 4.13.0-rc5+ documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../genindex.html"/>
+        <link rel="search" title="Search" href="../../search.html"/>
+    <link rel="top" title="The Linux Kernel 4.13.0-rc5+ documentation" href="../../index.html"/>
+        <link rel="up" title="Media subsystem kernel internal API" href="../media_kapi.html"/>
+        <link rel="next" title="9. Remote Controller devices" href="rc-core.html"/>
+        <link rel="prev" title="1.25. Hauppauge TV EEPROM functions and data structures" href="v4l2-tveeprom.html"/> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                4.13.0-rc5
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../admin-guide/index.html">The Linux kernel user&#8217;s and administrator&#8217;s guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../driver-api/index.html">The Linux driver implementer&#8217;s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Linux Media Subsystem Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../media_uapi.html">Linux Media Infrastructure userspace API</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../media_kapi.html">Media subsystem kernel internal API</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="v4l2-core.html">1. Video4Linux devices</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">2. Digital TV (DVB) devices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#digital-tv-common-functions">3. Digital TV Common functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#digital-tv-ring-buffer">4. Digital TV Ring buffer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#digital-tv-frontend-kabi">5. Digital TV Frontend kABI</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#digital-tv-frontend">5.1. Digital TV Frontend</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#digital-tv-frontend-statistics">5.2. Digital TV Frontend statistics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#digital-tv-frontend-functions-and-types">5.3. Digital TV Frontend functions and types</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#digital-tv-demux-kabi">6. Digital TV Demux kABI</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#digital-tv-demux">6.1. Digital TV Demux</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#demux-callback-api">7. Demux Callback API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#demux-callback">7.1. Demux Callback</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#digital-tv-conditional-access-kabi">8. Digital TV Conditional Access kABI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rc-core.html">9. Remote Controller devices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mc-core.html">10. Media Controller devices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cec-core.html">11. CEC Kernel Support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="csi2.html">12. MIPI CSI-2</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../dvb-drivers/index.html">Linux Digital TV driver-specific documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../v4l-drivers/index.html">Video4Linux (V4L)  driver-specific documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gpu/index.html">Linux GPU Driver Developer&#8217;s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../filesystems/index.html">Linux Filesystems API</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../sh/index.html">SuperH Interfaces Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../translations/ko_KR/index.html">Korean translations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../translations/zh_CN/index.html">Chinese translations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../translations/ja_JP/index.html">Japanese translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Linux Media Subsystem Documentation</a> &raquo;</li>
+        
+          <li><a href="../media_kapi.html">Media subsystem kernel internal API</a> &raquo;</li>
+        
+      <li>2. Digital TV (DVB) devices</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/media/kapi/dtv-core.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="digital-tv-dvb-devices">
+<h1>2. Digital TV (DVB) devices<a class="headerlink" href="#digital-tv-dvb-devices" title="Permalink to this headline">¶</a></h1>
+<p>Digital TV devices are implemented by several different drivers:</p>
+<ul class="simple">
+<li>A bridge driver that is responsible to talk with the bus where the other
+devices are connected (PCI, USB, SPI), bind to the other drivers and
+implement the digital demux logic (either in software or in hardware);</li>
+<li>Frontend drivers that are usually implemented as two separate drivers:<ul>
+<li>A tuner driver that implements the logic with commands the part of the
+hardware with is reponsible to tune into a digital TV transponder or
+physical channel. The output of a tuner is usually a baseband or
+Intermediate Frequency (IF) signal;</li>
+<li>A demodulator driver (a.k.a &#8220;demod&#8221;) that implements the logic with
+commands the digital TV decoding hardware. The output of a demod is
+a digital stream, with multiple audio, video and data channels typically
+multiplexed using MPEG Transport Stream <a class="footnote-reference" href="#f1" id="id1">[1]</a>.</li>
+</ul>
+</li>
+</ul>
+<p>On most hardware, the frontend drivers talk with the bridge driver using an
+I2C bus.</p>
+<table class="docutils footnote" frame="void" id="f1" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>Some standards use TCP/IP for multiplexing data, like DVB-H (an
+abandoned standard, not used anymore) and ATSC version 3.0 current
+proposals. Currently, the DVB subsystem doesn&#8217;t implement those standards.</td></tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="digital-tv-common-functions">
+<h1>3. Digital TV Common functions<a class="headerlink" href="#digital-tv-common-functions" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="c.intlog2">
+unsigned int <code class="descname">intlog2</code><span class="sig-paren">(</span>u32<em>&nbsp;value</em><span class="sig-paren">)</span><a class="headerlink" href="#c.intlog2" title="Permalink to this definition">¶</a></dt>
+<dd><p>computes log2 of a value; the result is shifted left by 24 bits</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">u32</span> <span class="pre">value</span></code></dt>
+<dd>The value (must be != 0)</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>to use rational values you can use the following method:</p>
+<blockquote>
+<div>intlog2(value) = intlog2(value * 2^x) - x * 2^24</div></blockquote>
+<p>Some usecase examples:</p>
+<blockquote>
+<div><p>intlog2(8) will give 3 &lt;&lt; 24 = 3 * 2^24</p>
+<p>intlog2(9) will give 3 &lt;&lt; 24 + ... = 3.16... * 2^24</p>
+<p>intlog2(1.5) = intlog2(3) - 2^24 = 0.584... * 2^24</p>
+</div></blockquote>
+<p><strong>Return</strong></p>
+<p>log2(value) * 2^24</p>
+<dl class="function">
+<dt id="c.intlog10">
+unsigned int <code class="descname">intlog10</code><span class="sig-paren">(</span>u32<em>&nbsp;value</em><span class="sig-paren">)</span><a class="headerlink" href="#c.intlog10" title="Permalink to this definition">¶</a></dt>
+<dd><p>computes log10 of a value; the result is shifted left by 24 bits</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">u32</span> <span class="pre">value</span></code></dt>
+<dd>The value (must be != 0)</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>to use rational values you can use the following method:</p>
+<blockquote>
+<div>intlog10(value) = intlog10(value * 10^x) - x * 2^24</div></blockquote>
+<p>An usecase example:</p>
+<blockquote>
+<div><blockquote>
+<div>intlog10(1000) will give 3 &lt;&lt; 24 = 3 * 2^24</div></blockquote>
+<p>due to the implementation intlog10(1000) might be not exactly 3 * 2^24</p>
+</div></blockquote>
+<p>look at intlog2 for similar examples</p>
+<p><strong>Return</strong></p>
+<p>log10(value) * 2^24</p>
+<dl class="type">
+<dt id="c.dvb_adapter">
+struct <code class="descname">dvb_adapter</code><a class="headerlink" href="#c.dvb_adapter" title="Permalink to this definition">¶</a></dt>
+<dd><p>represents a Digital TV adapter using Linux DVB API</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>struct dvb_adapter {
+  int num;
+  struct list_head list_head;
+  struct list_head device_list;
+  const char * name;
+  u8 proposed_mac;
+  void * priv;
+  struct device * device;
+  struct module * module;
+  int mfe_shared;
+  struct dvb_device * mfe_dvbdev;
+  struct mutex mfe_lock;
+#if defined(CONFIG_MEDIA_CONTROLLER_DVB
+  struct media_device * mdev;
+  struct media_entity * conn;
+  struct media_pad * conn_pads;
+#endif
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">num</span></code></dt>
+<dd>Number of the adapter</dd>
+<dt><code class="docutils literal"><span class="pre">list_head</span></code></dt>
+<dd>List with the DVB adapters</dd>
+<dt><code class="docutils literal"><span class="pre">device_list</span></code></dt>
+<dd>List with the DVB devices</dd>
+<dt><code class="docutils literal"><span class="pre">name</span></code></dt>
+<dd>Name of the adapter</dd>
+<dt><code class="docutils literal"><span class="pre">proposed_mac</span></code></dt>
+<dd>proposed MAC address for the adapter</dd>
+<dt><code class="docutils literal"><span class="pre">priv</span></code></dt>
+<dd>private data</dd>
+<dt><code class="docutils literal"><span class="pre">device</span></code></dt>
+<dd>pointer to struct device</dd>
+<dt><code class="docutils literal"><span class="pre">module</span></code></dt>
+<dd>pointer to struct module</dd>
+<dt><code class="docutils literal"><span class="pre">mfe_shared</span></code></dt>
+<dd>mfe shared: indicates mutually exclusive frontends
+Thie usage of this flag is currently deprecated</dd>
+<dt><code class="docutils literal"><span class="pre">mfe_dvbdev</span></code></dt>
+<dd>Frontend device in use, in the case of MFE</dd>
+<dt><code class="docutils literal"><span class="pre">mfe_lock</span></code></dt>
+<dd>Lock to prevent using the other frontends when MFE is
+used.</dd>
+<dt><code class="docutils literal"><span class="pre">mdev</span></code></dt>
+<dd>pointer to struct media_device, used when the media
+controller is used.</dd>
+<dt><code class="docutils literal"><span class="pre">conn</span></code></dt>
+<dd>RF connector. Used only if the device has no separate
+tuner.</dd>
+<dt><code class="docutils literal"><span class="pre">conn_pads</span></code></dt>
+<dd>pointer to struct media_pad associated with <strong>conn</strong>;</dd>
+</dl>
+<dl class="type">
+<dt id="c.dvb_device">
+struct <code class="descname">dvb_device</code><a class="headerlink" href="#c.dvb_device" title="Permalink to this definition">¶</a></dt>
+<dd><p>represents a DVB device node</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>struct dvb_device {
+  struct list_head list_head;
+  const struct file_operations * fops;
+  struct dvb_adapter * adapter;
+  int type;
+  int minor;
+  u32 id;
+  int readers;
+  int writers;
+  int users;
+  wait_queue_head_t wait_queue;
+  int (* kernel_ioctl) (struct file *file, unsigned int cmd, void *arg);
+#if defined(CONFIG_MEDIA_CONTROLLER_DVB
+  const char * name;
+  struct media_intf_devnode * intf_devnode;
+  unsigned tsout_num_entities;
+  struct media_entity * entity;
+  struct media_entity * tsout_entity;
+  struct media_pad * pads;
+  struct media_pad * tsout_pads;
+#endif
+  void * priv;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">list_head</span></code></dt>
+<dd>List head with all DVB devices</dd>
+<dt><code class="docutils literal"><span class="pre">fops</span></code></dt>
+<dd>pointer to struct file_operations</dd>
+<dt><code class="docutils literal"><span class="pre">adapter</span></code></dt>
+<dd>pointer to the adapter that holds this device node</dd>
+<dt><code class="docutils literal"><span class="pre">type</span></code></dt>
+<dd>type of the device: DVB_DEVICE_SEC, DVB_DEVICE_FRONTEND,
+DVB_DEVICE_DEMUX, DVB_DEVICE_DVR, DVB_DEVICE_CA, DVB_DEVICE_NET</dd>
+<dt><code class="docutils literal"><span class="pre">minor</span></code></dt>
+<dd>devnode minor number. Major number is always DVB_MAJOR.</dd>
+<dt><code class="docutils literal"><span class="pre">id</span></code></dt>
+<dd>device ID number, inside the adapter</dd>
+<dt><code class="docutils literal"><span class="pre">readers</span></code></dt>
+<dd>Initialized by the caller. Each call to <a class="reference internal" href="../uapi/dvb/video-fopen.html#c.open" title="open"><code class="xref c c-func docutils literal"><span class="pre">open()</span></code></a> in Read Only mode
+decreases this counter by one.</dd>
+<dt><code class="docutils literal"><span class="pre">writers</span></code></dt>
+<dd>Initialized by the caller. Each call to <a class="reference internal" href="../uapi/dvb/video-fopen.html#c.open" title="open"><code class="xref c c-func docutils literal"><span class="pre">open()</span></code></a> in Read/Write
+mode decreases this counter by one.</dd>
+<dt><code class="docutils literal"><span class="pre">users</span></code></dt>
+<dd>Initialized by the caller. Each call to <a class="reference internal" href="../uapi/dvb/video-fopen.html#c.open" title="open"><code class="xref c c-func docutils literal"><span class="pre">open()</span></code></a> in any mode
+decreases this counter by one.</dd>
+<dt><code class="docutils literal"><span class="pre">wait_queue</span></code></dt>
+<dd>wait queue, used to wait for certain events inside one of
+the DVB API callers</dd>
+<dt><code class="docutils literal"><span class="pre">kernel_ioctl</span></code></dt>
+<dd>callback function used to handle ioctl calls from userspace.</dd>
+<dt><code class="docutils literal"><span class="pre">name</span></code></dt>
+<dd>Name to be used for the device at the Media Controller</dd>
+<dt><code class="docutils literal"><span class="pre">intf_devnode</span></code></dt>
+<dd>Pointer to media_intf_devnode. Used by the dvbdev core to
+store the MC device node interface</dd>
+<dt><code class="docutils literal"><span class="pre">tsout_num_entities</span></code></dt>
+<dd>Number of Transport Stream output entities</dd>
+<dt><code class="docutils literal"><span class="pre">entity</span></code></dt>
+<dd>pointer to struct media_entity associated with the device node</dd>
+<dt><code class="docutils literal"><span class="pre">tsout_entity</span></code></dt>
+<dd>array with MC entities associated to each TS output node</dd>
+<dt><code class="docutils literal"><span class="pre">pads</span></code></dt>
+<dd>pointer to struct media_pad associated with <strong>entity</strong>;</dd>
+<dt><code class="docutils literal"><span class="pre">tsout_pads</span></code></dt>
+<dd>array with the source pads for each <strong>tsout_entity</strong></dd>
+<dt><code class="docutils literal"><span class="pre">priv</span></code></dt>
+<dd>private data</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This structure is used by the DVB core (frontend, CA, net, demux) in
+order to create the device nodes. Usually, driver should not initialize
+this struct diretly.</p>
+<dl class="function">
+<dt id="c.dvb_register_adapter">
+int <code class="descname">dvb_register_adapter</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_adapter" title="dvb_adapter">dvb_adapter</a> *<em>&nbsp;adap</em>, const char *<em>&nbsp;name</em>, struct module *<em>&nbsp;module</em>, struct <a class="reference internal" href="../../driver-api/infrastructure.html#c.device" title="device">device</a> *<em>&nbsp;device</em>, short *<em>&nbsp;adapter_nums</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_register_adapter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers a new DVB adapter</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_adapter</span> <span class="pre">*</span> <span class="pre">adap</span></code></dt>
+<dd>pointer to struct dvb_adapter</dd>
+<dt><code class="docutils literal"><span class="pre">const</span> <span class="pre">char</span> <span class="pre">*</span> <span class="pre">name</span></code></dt>
+<dd>Adapter&#8217;s name</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">module</span> <span class="pre">*</span> <span class="pre">module</span></code></dt>
+<dd>initialized with THIS_MODULE at the caller</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">device</span> <span class="pre">*</span> <span class="pre">device</span></code></dt>
+<dd>pointer to struct device that corresponds to the device driver</dd>
+<dt><code class="docutils literal"><span class="pre">short</span> <span class="pre">*</span> <span class="pre">adapter_nums</span></code></dt>
+<dd>Array with a list of the numbers for <strong>dvb_register_adapter</strong>;
+to select among them. Typically, initialized with:
+DVB_DEFINE_MOD_OPT_ADAPTER_NR(adapter_nums)</dd>
+</dl>
+<dl class="function">
+<dt id="c.dvb_unregister_adapter">
+int <code class="descname">dvb_unregister_adapter</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_adapter" title="dvb_adapter">dvb_adapter</a> *<em>&nbsp;adap</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_unregister_adapter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unregisters a DVB adapter</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_adapter</span> <span class="pre">*</span> <span class="pre">adap</span></code></dt>
+<dd>pointer to struct dvb_adapter</dd>
+</dl>
+<dl class="function">
+<dt id="c.dvb_register_device">
+int <code class="descname">dvb_register_device</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_adapter" title="dvb_adapter">dvb_adapter</a> *<em>&nbsp;adap</em>, struct <a class="reference internal" href="#c.dvb_device" title="dvb_device">dvb_device</a> **<em>&nbsp;pdvbdev</em>, const struct <a class="reference internal" href="#c.dvb_device" title="dvb_device">dvb_device</a> *<em>&nbsp;template</em>, void *<em>&nbsp;priv</em>, int<em>&nbsp;type</em>, int<em>&nbsp;demux_sink_pads</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_register_device" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers a new DVB device</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_adapter</span> <span class="pre">*</span> <span class="pre">adap</span></code></dt>
+<dd>pointer to struct dvb_adapter</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_device</span> <span class="pre">**</span> <span class="pre">pdvbdev</span></code></dt>
+<dd>pointer to the place where the new struct dvb_device will be
+stored</dd>
+<dt><code class="docutils literal"><span class="pre">const</span> <span class="pre">struct</span> <span class="pre">dvb_device</span> <span class="pre">*</span> <span class="pre">template</span></code></dt>
+<dd>Template used to create <code class="xref c c-type docutils literal"><span class="pre">pdvbdev</span></code>;</dd>
+<dt><code class="docutils literal"><span class="pre">void</span> <span class="pre">*</span> <span class="pre">priv</span></code></dt>
+<dd>private data</dd>
+<dt><code class="docutils literal"><span class="pre">int</span> <span class="pre">type</span></code></dt>
+<dd>type of the device: <code class="docutils literal"><span class="pre">DVB_DEVICE_SEC</span></code>, <code class="docutils literal"><span class="pre">DVB_DEVICE_FRONTEND</span></code>,
+<code class="docutils literal"><span class="pre">DVB_DEVICE_DEMUX</span></code>, <code class="docutils literal"><span class="pre">DVB_DEVICE_DVR</span></code>, <code class="docutils literal"><span class="pre">DVB_DEVICE_CA</span></code>,
+<code class="docutils literal"><span class="pre">DVB_DEVICE_NET</span></code></dd>
+<dt><code class="docutils literal"><span class="pre">int</span> <span class="pre">demux_sink_pads</span></code></dt>
+<dd>Number of demux outputs, to be used to create the TS
+outputs via the Media Controller.</dd>
+</dl>
+<dl class="function">
+<dt id="c.dvb_remove_device">
+void <code class="descname">dvb_remove_device</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_device" title="dvb_device">dvb_device</a> *<em>&nbsp;dvbdev</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_remove_device" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove a registered DVB device</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_device</span> <span class="pre">*</span> <span class="pre">dvbdev</span></code></dt>
+<dd>pointer to struct dvb_device</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This does not free memory.  To do that, call <a class="reference internal" href="#c.dvb_free_device" title="dvb_free_device"><code class="xref c c-func docutils literal"><span class="pre">dvb_free_device()</span></code></a>.</p>
+<dl class="function">
+<dt id="c.dvb_free_device">
+void <code class="descname">dvb_free_device</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_device" title="dvb_device">dvb_device</a> *<em>&nbsp;dvbdev</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_free_device" title="Permalink to this definition">¶</a></dt>
+<dd><p>Free memory occupied by a DVB device.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_device</span> <span class="pre">*</span> <span class="pre">dvbdev</span></code></dt>
+<dd>pointer to struct dvb_device</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Call <a class="reference internal" href="#c.dvb_unregister_device" title="dvb_unregister_device"><code class="xref c c-func docutils literal"><span class="pre">dvb_unregister_device()</span></code></a> before calling this function.</p>
+<dl class="function">
+<dt id="c.dvb_unregister_device">
+void <code class="descname">dvb_unregister_device</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_device" title="dvb_device">dvb_device</a> *<em>&nbsp;dvbdev</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_unregister_device" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unregisters a DVB device</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_device</span> <span class="pre">*</span> <span class="pre">dvbdev</span></code></dt>
+<dd>pointer to struct dvb_device</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This is a combination of <a class="reference internal" href="#c.dvb_remove_device" title="dvb_remove_device"><code class="xref c c-func docutils literal"><span class="pre">dvb_remove_device()</span></code></a> and <a class="reference internal" href="#c.dvb_free_device" title="dvb_free_device"><code class="xref c c-func docutils literal"><span class="pre">dvb_free_device()</span></code></a>.
+Using this function is usually a mistake, and is often an indicator
+for a use-after-free bug (when a userspace process keeps a file
+handle to a detached device).</p>
+<dl class="function">
+<dt id="c.dvb_create_media_graph">
+int <code class="descname">dvb_create_media_graph</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_adapter" title="dvb_adapter">dvb_adapter</a> *<em>&nbsp;adap</em>, bool<em>&nbsp;create_rf_connector</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_create_media_graph" title="Permalink to this definition">¶</a></dt>
+<dd><p>Creates media graph for the Digital TV part of the device.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_adapter</span> <span class="pre">*</span> <span class="pre">adap</span></code></dt>
+<dd>pointer to struct dvb_adapter</dd>
+<dt><code class="docutils literal"><span class="pre">bool</span> <span class="pre">create_rf_connector</span></code></dt>
+<dd>if true, it creates the RF connector too</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This function checks all DVB-related functions at the media controller
+entities and creates the needed links for the media graph. It is
+capable of working with multiple tuners or multiple frontends, but it
+won&#8217;t create links if the device has multiple tuners and multiple frontends
+or if the device has multiple muxes. In such case, the caller driver should
+manually create the remaining links.</p>
+</div>
+<div class="section" id="digital-tv-ring-buffer">
+<h1>4. Digital TV Ring buffer<a class="headerlink" href="#digital-tv-ring-buffer" title="Permalink to this headline">¶</a></h1>
+<p>Those routines implement ring buffers used to handle digital TV data and
+copy it from/to userspace.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<ol class="arabic simple">
+<li>For performance reasons read and write routines don&#8217;t check buffer sizes
+and/or number of bytes free/available. This has to be done before these
+routines are called. For example:</li>
+</ol>
+<blockquote>
+<div><div class="highlight-c"><div class="highlight"><pre><span></span><span class="cm">/* write @buflen: bytes */</span>
+<span class="n">free</span> <span class="o">=</span> <span class="n">dvb_ringbuffer_free</span><span class="p">(</span><span class="n">rbuf</span><span class="p">);</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">free</span> <span class="o">&gt;=</span> <span class="n">buflen</span><span class="p">)</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="n">dvb_ringbuffer_write</span><span class="p">(</span><span class="n">rbuf</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">buflen</span><span class="p">);</span>
+<span class="k">else</span>
+        <span class="cm">/* do something */</span>
+
+<span class="cm">/* read min. 1000, max. @bufsize: bytes */</span>
+<span class="n">avail</span> <span class="o">=</span> <span class="n">dvb_ringbuffer_avail</span><span class="p">(</span><span class="n">rbuf</span><span class="p">);</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">avail</span> <span class="o">&gt;=</span> <span class="mi">1000</span><span class="p">)</span>
+        <span class="n">count</span> <span class="o">=</span> <span class="n">dvb_ringbuffer_read</span><span class="p">(</span><span class="n">rbuf</span><span class="p">,</span> <span class="n">buffer</span><span class="p">,</span> <span class="n">min</span><span class="p">(</span><span class="n">avail</span><span class="p">,</span> <span class="n">bufsize</span><span class="p">));</span>
+<span class="k">else</span>
+        <span class="cm">/* do something */</span>
+</pre></div>
+</div>
+</div></blockquote>
+<ol class="last arabic simple" start="2">
+<li>If there is exactly one reader and one writer, there is no need
+to lock read or write operations.
+Two or more readers must be locked against each other.
+Flushing the buffer counts as a read operation.
+Resetting the buffer counts as a read and write operation.
+Two or more writers must be locked against each other.</li>
+</ol>
+</div>
+<dl class="type">
+<dt id="c.dvb_ringbuffer">
+struct <code class="descname">dvb_ringbuffer</code><a class="headerlink" href="#c.dvb_ringbuffer" title="Permalink to this definition">¶</a></dt>
+<dd><p>Describes a ring buffer used at DVB framework</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>struct dvb_ringbuffer {
+  u8 * data;
+  ssize_t size;
+  ssize_t pread;
+  ssize_t pwrite;
+  int error;
+  wait_queue_head_t queue;
+  spinlock_t lock;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">data</span></code></dt>
+<dd>Area were the ringbuffer data is written</dd>
+<dt><code class="docutils literal"><span class="pre">size</span></code></dt>
+<dd>size of the ringbuffer</dd>
+<dt><code class="docutils literal"><span class="pre">pread</span></code></dt>
+<dd>next position to read</dd>
+<dt><code class="docutils literal"><span class="pre">pwrite</span></code></dt>
+<dd>next position to write</dd>
+<dt><code class="docutils literal"><span class="pre">error</span></code></dt>
+<dd>used by ringbuffer clients to indicate that an error happened.</dd>
+<dt><code class="docutils literal"><span class="pre">queue</span></code></dt>
+<dd>Wait queue used by ringbuffer clients to indicate when buffer
+was filled</dd>
+<dt><code class="docutils literal"><span class="pre">lock</span></code></dt>
+<dd>Spinlock used to protect the ringbuffer</dd>
+</dl>
+<dl class="function">
+<dt id="c.dvb_ringbuffer_init">
+void <code class="descname">dvb_ringbuffer_init</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_ringbuffer" title="dvb_ringbuffer">dvb_ringbuffer</a> *<em>&nbsp;rbuf</em>, void *<em>&nbsp;data</em>, size_t<em>&nbsp;len</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_ringbuffer_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>initialize ring buffer, lock and queue</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_ringbuffer</span> <span class="pre">*</span> <span class="pre">rbuf</span></code></dt>
+<dd>pointer to struct dvb_ringbuffer</dd>
+<dt><code class="docutils literal"><span class="pre">void</span> <span class="pre">*</span> <span class="pre">data</span></code></dt>
+<dd>pointer to the buffer where the data will be stored</dd>
+<dt><code class="docutils literal"><span class="pre">size_t</span> <span class="pre">len</span></code></dt>
+<dd>bytes from ring buffer into <strong>buf</strong></dd>
+</dl>
+<dl class="function">
+<dt id="c.dvb_ringbuffer_empty">
+int <code class="descname">dvb_ringbuffer_empty</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_ringbuffer" title="dvb_ringbuffer">dvb_ringbuffer</a> *<em>&nbsp;rbuf</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_ringbuffer_empty" title="Permalink to this definition">¶</a></dt>
+<dd><p>test whether buffer is empty</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_ringbuffer</span> <span class="pre">*</span> <span class="pre">rbuf</span></code></dt>
+<dd>pointer to struct dvb_ringbuffer</dd>
+</dl>
+<dl class="function">
+<dt id="c.dvb_ringbuffer_free">
+ssize_t <code class="descname">dvb_ringbuffer_free</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_ringbuffer" title="dvb_ringbuffer">dvb_ringbuffer</a> *<em>&nbsp;rbuf</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_ringbuffer_free" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns the number of free bytes in the buffer</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_ringbuffer</span> <span class="pre">*</span> <span class="pre">rbuf</span></code></dt>
+<dd>pointer to struct dvb_ringbuffer</dd>
+</dl>
+<p><strong>Return</strong></p>
+<p>number of free bytes in the buffer</p>
+<dl class="function">
+<dt id="c.dvb_ringbuffer_avail">
+ssize_t <code class="descname">dvb_ringbuffer_avail</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_ringbuffer" title="dvb_ringbuffer">dvb_ringbuffer</a> *<em>&nbsp;rbuf</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_ringbuffer_avail" title="Permalink to this definition">¶</a></dt>
+<dd><p>returns the number of bytes waiting in the buffer</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_ringbuffer</span> <span class="pre">*</span> <span class="pre">rbuf</span></code></dt>
+<dd>pointer to struct dvb_ringbuffer</dd>
+</dl>
+<p><strong>Return</strong></p>
+<p>number of bytes waiting in the buffer</p>
+<dl class="function">
+<dt id="c.dvb_ringbuffer_reset">
+void <code class="descname">dvb_ringbuffer_reset</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_ringbuffer" title="dvb_ringbuffer">dvb_ringbuffer</a> *<em>&nbsp;rbuf</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_ringbuffer_reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>resets the ringbuffer to initial state</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_ringbuffer</span> <span class="pre">*</span> <span class="pre">rbuf</span></code></dt>
+<dd>pointer to struct dvb_ringbuffer</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Resets the read and write pointers to zero and flush the buffer.</p>
+<p>This counts as a read and write operation</p>
+<dl class="function">
+<dt id="c.dvb_ringbuffer_flush">
+void <code class="descname">dvb_ringbuffer_flush</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_ringbuffer" title="dvb_ringbuffer">dvb_ringbuffer</a> *<em>&nbsp;rbuf</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_ringbuffer_flush" title="Permalink to this definition">¶</a></dt>
+<dd><p>flush buffer</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_ringbuffer</span> <span class="pre">*</span> <span class="pre">rbuf</span></code></dt>
+<dd>pointer to struct dvb_ringbuffer</dd>
+</dl>
+<dl class="function">
+<dt id="c.dvb_ringbuffer_flush_spinlock_wakeup">
+void <code class="descname">dvb_ringbuffer_flush_spinlock_wakeup</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_ringbuffer" title="dvb_ringbuffer">dvb_ringbuffer</a> *<em>&nbsp;rbuf</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_ringbuffer_flush_spinlock_wakeup" title="Permalink to this definition">¶</a></dt>
+<dd><p>flush buffer protected by spinlock and wake-up waiting task(s)</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_ringbuffer</span> <span class="pre">*</span> <span class="pre">rbuf</span></code></dt>
+<dd>pointer to struct dvb_ringbuffer</dd>
+</dl>
+<dl class="function">
+<dt id="c.DVB_RINGBUFFER_PEEK">
+<code class="descname">DVB_RINGBUFFER_PEEK</code><span class="sig-paren">(</span><em>rbuf</em>, <em>offs</em><span class="sig-paren">)</span><a class="headerlink" href="#c.DVB_RINGBUFFER_PEEK" title="Permalink to this definition">¶</a></dt>
+<dd><p>peek at byte <strong>offs</strong> in the buffer</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">rbuf</span></code></dt>
+<dd>pointer to struct dvb_ringbuffer</dd>
+<dt><code class="docutils literal"><span class="pre">offs</span></code></dt>
+<dd>offset inside the ringbuffer</dd>
+</dl>
+<dl class="function">
+<dt id="c.DVB_RINGBUFFER_SKIP">
+<code class="descname">DVB_RINGBUFFER_SKIP</code><span class="sig-paren">(</span><em>rbuf</em>, <em>num</em><span class="sig-paren">)</span><a class="headerlink" href="#c.DVB_RINGBUFFER_SKIP" title="Permalink to this definition">¶</a></dt>
+<dd><p>advance read ptr by <strong>num</strong> bytes</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">rbuf</span></code></dt>
+<dd>pointer to struct dvb_ringbuffer</dd>
+<dt><code class="docutils literal"><span class="pre">num</span></code></dt>
+<dd>number of bytes to advance</dd>
+</dl>
+<dl class="function">
+<dt id="c.dvb_ringbuffer_read_user">
+ssize_t <code class="descname">dvb_ringbuffer_read_user</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_ringbuffer" title="dvb_ringbuffer">dvb_ringbuffer</a> *<em>&nbsp;rbuf</em>, u8 __user *<em>&nbsp;buf</em>, size_t<em>&nbsp;len</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_ringbuffer_read_user" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads a buffer into a user pointer</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_ringbuffer</span> <span class="pre">*</span> <span class="pre">rbuf</span></code></dt>
+<dd>pointer to struct dvb_ringbuffer</dd>
+<dt><code class="docutils literal"><span class="pre">u8</span> <span class="pre">__user</span> <span class="pre">*</span> <span class="pre">buf</span></code></dt>
+<dd>pointer to the buffer where the data will be stored</dd>
+<dt><code class="docutils literal"><span class="pre">size_t</span> <span class="pre">len</span></code></dt>
+<dd>bytes from ring buffer into <strong>buf</strong></dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This variant assumes that the buffer is a memory at the userspace. So,
+it will internally call <code class="xref c c-func docutils literal"><span class="pre">copy_to_user()</span></code>.</p>
+<p><strong>Return</strong></p>
+<p>number of bytes transferred or -EFAULT</p>
+<dl class="function">
+<dt id="c.dvb_ringbuffer_read">
+void <code class="descname">dvb_ringbuffer_read</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_ringbuffer" title="dvb_ringbuffer">dvb_ringbuffer</a> *<em>&nbsp;rbuf</em>, u8 *<em>&nbsp;buf</em>, size_t<em>&nbsp;len</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_ringbuffer_read" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads a buffer into a pointer</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_ringbuffer</span> <span class="pre">*</span> <span class="pre">rbuf</span></code></dt>
+<dd>pointer to struct dvb_ringbuffer</dd>
+<dt><code class="docutils literal"><span class="pre">u8</span> <span class="pre">*</span> <span class="pre">buf</span></code></dt>
+<dd>pointer to the buffer where the data will be stored</dd>
+<dt><code class="docutils literal"><span class="pre">size_t</span> <span class="pre">len</span></code></dt>
+<dd>bytes from ring buffer into <strong>buf</strong></dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This variant assumes that the buffer is a memory at the Kernel space</p>
+<p><strong>Return</strong></p>
+<p>number of bytes transferred or -EFAULT</p>
+<dl class="function">
+<dt id="c.DVB_RINGBUFFER_WRITE_BYTE">
+<code class="descname">DVB_RINGBUFFER_WRITE_BYTE</code><span class="sig-paren">(</span><em>rbuf</em>, <em>byte</em><span class="sig-paren">)</span><a class="headerlink" href="#c.DVB_RINGBUFFER_WRITE_BYTE" title="Permalink to this definition">¶</a></dt>
+<dd><p>write single byte to ring buffer</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">rbuf</span></code></dt>
+<dd>pointer to struct dvb_ringbuffer</dd>
+<dt><code class="docutils literal"><span class="pre">byte</span></code></dt>
+<dd>byte to write</dd>
+</dl>
+<dl class="function">
+<dt id="c.dvb_ringbuffer_write">
+ssize_t <code class="descname">dvb_ringbuffer_write</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_ringbuffer" title="dvb_ringbuffer">dvb_ringbuffer</a> *<em>&nbsp;rbuf</em>, const u8 *<em>&nbsp;buf</em>, size_t<em>&nbsp;len</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_ringbuffer_write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes a buffer into the ringbuffer</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_ringbuffer</span> <span class="pre">*</span> <span class="pre">rbuf</span></code></dt>
+<dd>pointer to struct dvb_ringbuffer</dd>
+<dt><code class="docutils literal"><span class="pre">const</span> <span class="pre">u8</span> <span class="pre">*</span> <span class="pre">buf</span></code></dt>
+<dd>pointer to the buffer where the data will be read</dd>
+<dt><code class="docutils literal"><span class="pre">size_t</span> <span class="pre">len</span></code></dt>
+<dd>bytes from ring buffer into <strong>buf</strong></dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This variant assumes that the buffer is a memory at the Kernel space</p>
+<p><strong>Return</strong></p>
+<p>number of bytes transferred or -EFAULT</p>
+<dl class="function">
+<dt id="c.dvb_ringbuffer_write_user">
+ssize_t <code class="descname">dvb_ringbuffer_write_user</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_ringbuffer" title="dvb_ringbuffer">dvb_ringbuffer</a> *<em>&nbsp;rbuf</em>, const u8 __user *<em>&nbsp;buf</em>, size_t<em>&nbsp;len</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_ringbuffer_write_user" title="Permalink to this definition">¶</a></dt>
+<dd><p>Writes a buffer received via a user pointer</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_ringbuffer</span> <span class="pre">*</span> <span class="pre">rbuf</span></code></dt>
+<dd>pointer to struct dvb_ringbuffer</dd>
+<dt><code class="docutils literal"><span class="pre">const</span> <span class="pre">u8</span> <span class="pre">__user</span> <span class="pre">*</span> <span class="pre">buf</span></code></dt>
+<dd>pointer to the buffer where the data will be read</dd>
+<dt><code class="docutils literal"><span class="pre">size_t</span> <span class="pre">len</span></code></dt>
+<dd>bytes from ring buffer into <strong>buf</strong></dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This variant assumes that the buffer is a memory at the userspace. So,
+it will internally call <code class="xref c c-func docutils literal"><span class="pre">copy_from_user()</span></code>.</p>
+<p><strong>Return</strong></p>
+<p>number of bytes transferred or -EFAULT</p>
+<dl class="function">
+<dt id="c.dvb_ringbuffer_pkt_write">
+ssize_t <code class="descname">dvb_ringbuffer_pkt_write</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_ringbuffer" title="dvb_ringbuffer">dvb_ringbuffer</a> *<em>&nbsp;rbuf</em>, u8 *<em>&nbsp;buf</em>, size_t<em>&nbsp;len</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_ringbuffer_pkt_write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write a packet into the ringbuffer.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_ringbuffer</span> <span class="pre">*</span> <span class="pre">rbuf</span></code></dt>
+<dd>Ringbuffer to write to.</dd>
+<dt><code class="docutils literal"><span class="pre">u8</span> <span class="pre">*</span> <span class="pre">buf</span></code></dt>
+<dd>Buffer to write.</dd>
+<dt><code class="docutils literal"><span class="pre">size_t</span> <span class="pre">len</span></code></dt>
+<dd>Length of buffer (currently limited to 65535 bytes max).</dd>
+</dl>
+<p><strong>Return</strong></p>
+<p>Number of bytes written, or -EFAULT, -ENOMEM, -EVINAL.</p>
+<dl class="function">
+<dt id="c.dvb_ringbuffer_pkt_read_user">
+ssize_t <code class="descname">dvb_ringbuffer_pkt_read_user</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_ringbuffer" title="dvb_ringbuffer">dvb_ringbuffer</a> *<em>&nbsp;rbuf</em>, size_t<em>&nbsp;idx</em>, int<em>&nbsp;offset</em>, u8 __user *<em>&nbsp;buf</em>, size_t<em>&nbsp;len</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_ringbuffer_pkt_read_user" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read from a packet in the ringbuffer.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_ringbuffer</span> <span class="pre">*</span> <span class="pre">rbuf</span></code></dt>
+<dd>Ringbuffer concerned.</dd>
+<dt><code class="docutils literal"><span class="pre">size_t</span> <span class="pre">idx</span></code></dt>
+<dd>Packet index as returned by <a class="reference internal" href="#c.dvb_ringbuffer_pkt_next" title="dvb_ringbuffer_pkt_next"><code class="xref c c-func docutils literal"><span class="pre">dvb_ringbuffer_pkt_next()</span></code></a>.</dd>
+<dt><code class="docutils literal"><span class="pre">int</span> <span class="pre">offset</span></code></dt>
+<dd>Offset into packet to read from.</dd>
+<dt><code class="docutils literal"><span class="pre">u8</span> <span class="pre">__user</span> <span class="pre">*</span> <span class="pre">buf</span></code></dt>
+<dd>Destination buffer for data.</dd>
+<dt><code class="docutils literal"><span class="pre">size_t</span> <span class="pre">len</span></code></dt>
+<dd>Size of destination buffer.</dd>
+</dl>
+<p><strong>Return</strong></p>
+<p>Number of bytes read, or -EFAULT.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">unlike <a class="reference internal" href="#c.dvb_ringbuffer_read" title="dvb_ringbuffer_read"><code class="xref c c-func docutils literal"><span class="pre">dvb_ringbuffer_read()</span></code></a>, this does <strong>NOT</strong> update the read pointer
+in the ringbuffer. You must use <a class="reference internal" href="#c.dvb_ringbuffer_pkt_dispose" title="dvb_ringbuffer_pkt_dispose"><code class="xref c c-func docutils literal"><span class="pre">dvb_ringbuffer_pkt_dispose()</span></code></a> to mark a
+packet as no longer required.</p>
+</div>
+<dl class="function">
+<dt id="c.dvb_ringbuffer_pkt_read">
+ssize_t <code class="descname">dvb_ringbuffer_pkt_read</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_ringbuffer" title="dvb_ringbuffer">dvb_ringbuffer</a> *<em>&nbsp;rbuf</em>, size_t<em>&nbsp;idx</em>, int<em>&nbsp;offset</em>, u8 *<em>&nbsp;buf</em>, size_t<em>&nbsp;len</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_ringbuffer_pkt_read" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read from a packet in the ringbuffer.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_ringbuffer</span> <span class="pre">*</span> <span class="pre">rbuf</span></code></dt>
+<dd>Ringbuffer concerned.</dd>
+<dt><code class="docutils literal"><span class="pre">size_t</span> <span class="pre">idx</span></code></dt>
+<dd>Packet index as returned by <a class="reference internal" href="#c.dvb_ringbuffer_pkt_next" title="dvb_ringbuffer_pkt_next"><code class="xref c c-func docutils literal"><span class="pre">dvb_ringbuffer_pkt_next()</span></code></a>.</dd>
+<dt><code class="docutils literal"><span class="pre">int</span> <span class="pre">offset</span></code></dt>
+<dd>Offset into packet to read from.</dd>
+<dt><code class="docutils literal"><span class="pre">u8</span> <span class="pre">*</span> <span class="pre">buf</span></code></dt>
+<dd>Destination buffer for data.</dd>
+<dt><code class="docutils literal"><span class="pre">size_t</span> <span class="pre">len</span></code></dt>
+<dd>Size of destination buffer.</dd>
+</dl>
+<p><strong>Note</strong></p>
+<p>unlike <a class="reference internal" href="#c.dvb_ringbuffer_read_user" title="dvb_ringbuffer_read_user"><code class="xref c c-func docutils literal"><span class="pre">dvb_ringbuffer_read_user()</span></code></a>, this DOES update the read pointer
+in the ringbuffer.</p>
+<p><strong>Return</strong></p>
+<p>Number of bytes read, or -EFAULT.</p>
+<dl class="function">
+<dt id="c.dvb_ringbuffer_pkt_dispose">
+void <code class="descname">dvb_ringbuffer_pkt_dispose</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_ringbuffer" title="dvb_ringbuffer">dvb_ringbuffer</a> *<em>&nbsp;rbuf</em>, size_t<em>&nbsp;idx</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_ringbuffer_pkt_dispose" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dispose of a packet in the ring buffer.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_ringbuffer</span> <span class="pre">*</span> <span class="pre">rbuf</span></code></dt>
+<dd>Ring buffer concerned.</dd>
+<dt><code class="docutils literal"><span class="pre">size_t</span> <span class="pre">idx</span></code></dt>
+<dd>Packet index as returned by <a class="reference internal" href="#c.dvb_ringbuffer_pkt_next" title="dvb_ringbuffer_pkt_next"><code class="xref c c-func docutils literal"><span class="pre">dvb_ringbuffer_pkt_next()</span></code></a>.</dd>
+</dl>
+<dl class="function">
+<dt id="c.dvb_ringbuffer_pkt_next">
+ssize_t <code class="descname">dvb_ringbuffer_pkt_next</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_ringbuffer" title="dvb_ringbuffer">dvb_ringbuffer</a> *<em>&nbsp;rbuf</em>, size_t<em>&nbsp;idx</em>, size_t *<em>&nbsp;pktlen</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_ringbuffer_pkt_next" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the index of the next packet in a ringbuffer.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_ringbuffer</span> <span class="pre">*</span> <span class="pre">rbuf</span></code></dt>
+<dd>Ringbuffer concerned.</dd>
+<dt><code class="docutils literal"><span class="pre">size_t</span> <span class="pre">idx</span></code></dt>
+<dd>Previous packet index, or -1 to return the first packet index.</dd>
+<dt><code class="docutils literal"><span class="pre">size_t</span> <span class="pre">*</span> <span class="pre">pktlen</span></code></dt>
+<dd>On success, will be updated to contain the length of the packet
+in bytes.
+returns Packet index (if &gt;=0), or -1 if no packets available.</dd>
+</dl>
+</div>
+<div class="section" id="digital-tv-frontend-kabi">
+<h1>5. Digital TV Frontend kABI<a class="headerlink" href="#digital-tv-frontend-kabi" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="digital-tv-frontend">
+<h2>5.1. Digital TV Frontend<a class="headerlink" href="#digital-tv-frontend" title="Permalink to this headline">¶</a></h2>
+<p>The Digital TV Frontend kABI defines a driver-internal interface for
+registering low-level, hardware specific driver to a hardware independent
+frontend layer. It is only of interest for Digital TV device driver writers.
+The header file for this API is named <code class="docutils literal"><span class="pre">dvb_frontend.h</span></code> and located in
+<code class="docutils literal"><span class="pre">drivers/media/dvb-core</span></code>.</p>
+<div class="section" id="demodulator-driver">
+<h3>5.1.1. Demodulator driver<a class="headerlink" href="#demodulator-driver" title="Permalink to this headline">¶</a></h3>
+<p>The demodulator driver is responsible to talk with the decoding part of the
+hardware. Such driver should implement <a class="reference internal" href="#c.dvb_frontend_ops" title="dvb_frontend_ops"><code class="xref c c-type docutils literal"><span class="pre">dvb_frontend_ops</span></code></a>, with
+tells what type of digital TV standards are supported, and points to a
+series of functions that allow the DVB core to command the hardware via
+the code under <code class="docutils literal"><span class="pre">drivers/media/dvb-core/dvb_frontend.c</span></code>.</p>
+<p>A typical example of such struct in a driver <code class="docutils literal"><span class="pre">foo</span></code> is:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>static struct dvb_frontend_ops foo_ops = {
+        .delsys = { SYS_DVBT, SYS_DVBT2, SYS_DVBC_ANNEX_A },
+        .info = {
+                .name   = &quot;foo DVB-T/T2/C driver&quot;,
+                .caps = FE_CAN_FEC_1_2 |
+                        FE_CAN_FEC_2_3 |
+                        FE_CAN_FEC_3_4 |
+                        FE_CAN_FEC_5_6 |
+                        FE_CAN_FEC_7_8 |
+                        FE_CAN_FEC_AUTO |
+                        FE_CAN_QPSK |
+                        FE_CAN_QAM_16 |
+                        FE_CAN_QAM_32 |
+                        FE_CAN_QAM_64 |
+                        FE_CAN_QAM_128 |
+                        FE_CAN_QAM_256 |
+                        FE_CAN_QAM_AUTO |
+                        FE_CAN_TRANSMISSION_MODE_AUTO |
+                        FE_CAN_GUARD_INTERVAL_AUTO |
+                        FE_CAN_HIERARCHY_AUTO |
+                        FE_CAN_MUTE_TS |
+                        FE_CAN_2G_MODULATION,
+                .frequency_min = 42000000, /* Hz */
+                .frequency_max = 1002000000, /* Hz */
+                .symbol_rate_min = 870000,
+                .symbol_rate_max = 11700000
+        },
+        .init = foo_init,
+        .sleep = foo_sleep,
+        .release = foo_release,
+        .set_frontend = foo_set_frontend,
+        .get_frontend = foo_get_frontend,
+        .read_status = foo_get_status_and_stats,
+        .tune = foo_tune,
+        .i2c_gate_ctrl = foo_i2c_gate_ctrl,
+        .get_frontend_algo = foo_get_algo,
+};
+</pre></div>
+</div>
+<p>A typical example of such struct in a driver <code class="docutils literal"><span class="pre">bar</span></code> meant to be used on
+Satellite TV reception is:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>static const struct dvb_frontend_ops bar_ops = {
+        .delsys = { SYS_DVBS, SYS_DVBS2 },
+        .info = {
+                .name           = &quot;Bar DVB-S/S2 demodulator&quot;,
+                .frequency_min  = 500000, /* KHz */
+                .frequency_max  = 2500000, /* KHz */
+                .frequency_stepsize     = 0,
+                .symbol_rate_min = 1000000,
+                .symbol_rate_max = 45000000,
+                .symbol_rate_tolerance = 500,
+                .caps = FE_CAN_INVERSION_AUTO |
+                        FE_CAN_FEC_AUTO |
+                        FE_CAN_QPSK,
+        },
+        .init = bar_init,
+        .sleep = bar_sleep,
+        .release = bar_release,
+        .set_frontend = bar_set_frontend,
+        .get_frontend = bar_get_frontend,
+        .read_status = bar_get_status_and_stats,
+        .i2c_gate_ctrl = bar_i2c_gate_ctrl,
+        .get_frontend_algo = bar_get_algo,
+        .tune = bar_tune,
+
+        /* Satellite-specific */
+        .diseqc_send_master_cmd = bar_send_diseqc_msg,
+        .diseqc_send_burst = bar_send_burst,
+        .set_tone = bar_set_tone,
+        .set_voltage = bar_set_voltage,
+};
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<ol class="last arabic simple">
+<li>For satellite digital TV standards (DVB-S, DVB-S2, ISDB-S), the
+frequencies are specified in kHz, while, for terrestrial and cable
+standards, they&#8217;re specified in Hz. Due to that, if the same frontend
+supports both types, you&#8217;ll need to have two separate
+<a class="reference internal" href="#c.dvb_frontend_ops" title="dvb_frontend_ops"><code class="xref c c-type docutils literal"><span class="pre">dvb_frontend_ops</span></code></a> structures, one for each standard.</li>
+<li>The <code class="docutils literal"><span class="pre">.i2c_gate_ctrl</span></code> field is present only when the hardware has
+allows controlling an I2C gate (either directly of via some GPIO pin),
+in order to remove the tuner from the I2C bus after a channel is
+tuned.</li>
+<li>All new drivers should implement the
+<a class="reference internal" href="#dvbv5-stats"><span class="std std-ref">DVBv5 statistics</span></a> via <code class="docutils literal"><span class="pre">.read_status</span></code>.
+Yet, there are a number of callbacks meant to get statistics for
+signal strength, S/N and UCB. Those are there to provide backward
+compatibility with legacy applications that don&#8217;t support the DVBv5
+API. Implementing those callbacks are optional. Those callbacks may be
+removed in the future, after we have all existing drivers supporting
+DVBv5 stats.</li>
+<li>Other callbacks are required for satellite TV standards, in order to
+control LNBf and DiSEqC: <code class="docutils literal"><span class="pre">.diseqc_send_master_cmd</span></code>,
+<code class="docutils literal"><span class="pre">.diseqc_send_burst</span></code>, <code class="docutils literal"><span class="pre">.set_tone</span></code>, <code class="docutils literal"><span class="pre">.set_voltage</span></code>.</li>
+</ol>
+</div>
+<p>The <code class="docutils literal"><span class="pre">drivers/media/dvb-core/dvb_frontend.c</span></code> has a kernel thread with is
+responsible for tuning the device. It supports multiple algoritms to
+detect a channel, as defined at enum <a class="reference internal" href="#c.dvbfe_algo" title="dvbfe_algo"><code class="xref c c-func docutils literal"><span class="pre">dvbfe_algo()</span></code></a>.</p>
+<p>The algorithm to be used is obtained via <code class="docutils literal"><span class="pre">.get_frontend_algo</span></code>. If the driver
+doesn&#8217;t fill its field at struct <a class="reference internal" href="#c.dvb_frontend_ops" title="dvb_frontend_ops"><code class="xref c c-type docutils literal"><span class="pre">dvb_frontend_ops</span></code></a>, it will default to
+<code class="docutils literal"><span class="pre">DVBFE_ALGO_SW</span></code>, meaning that the dvb-core will do a zigzag when tuning,
+e. g. it will try first to use the specified center frequency <code class="docutils literal"><span class="pre">f</span></code>,
+then, it will do <code class="docutils literal"><span class="pre">f</span></code> + Δ, <code class="docutils literal"><span class="pre">f</span></code> - Δ, <code class="docutils literal"><span class="pre">f</span></code> + 2 x Δ,
+<code class="docutils literal"><span class="pre">f</span></code> - 2 x Δ and so on.</p>
+<p>If the hardware has internally a some sort of zigzag algorithm, you should
+define a <code class="docutils literal"><span class="pre">.get_frontend_algo</span></code> function that would return <code class="docutils literal"><span class="pre">DVBFE_ALGO_HW</span></code>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The core frontend support also supports
+a third type (<code class="docutils literal"><span class="pre">DVBFE_ALGO_CUSTOM</span></code>), in order to allow the driver to
+define its own hardware-assisted algorithm. Very few hardware need to
+use it nowadays. Using <code class="docutils literal"><span class="pre">DVBFE_ALGO_CUSTOM</span></code> require to provide other
+function callbacks at struct <a class="reference internal" href="#c.dvb_frontend_ops" title="dvb_frontend_ops"><code class="xref c c-type docutils literal"><span class="pre">dvb_frontend_ops</span></code></a>.</p>
+</div>
+</div>
+<div class="section" id="attaching-frontend-driver-to-the-bridge-driver">
+<h3>5.1.2. Attaching frontend driver to the bridge driver<a class="headerlink" href="#attaching-frontend-driver-to-the-bridge-driver" title="Permalink to this headline">¶</a></h3>
+<p>Before using the Digital TV frontend core, the bridge driver should attach
+the frontend demod, tuner and SEC devices and call
+<a class="reference internal" href="#c.dvb_register_frontend" title="dvb_register_frontend"><code class="xref c c-func docutils literal"><span class="pre">dvb_register_frontend()</span></code></a>,
+in order to register the new frontend at the subsystem. At device
+detach/removal, the bridge driver should call
+<a class="reference internal" href="#c.dvb_unregister_frontend" title="dvb_unregister_frontend"><code class="xref c c-func docutils literal"><span class="pre">dvb_unregister_frontend()</span></code></a> to
+remove the frontend from the core and then <a class="reference internal" href="#c.dvb_frontend_detach" title="dvb_frontend_detach"><code class="xref c c-func docutils literal"><span class="pre">dvb_frontend_detach()</span></code></a>
+to free the memory allocated by the frontend drivers.</p>
+<p>The drivers should also call <a class="reference internal" href="#c.dvb_frontend_suspend" title="dvb_frontend_suspend"><code class="xref c c-func docutils literal"><span class="pre">dvb_frontend_suspend()</span></code></a> as part of
+their handler for the <a class="reference internal" href="../../driver-api/infrastructure.html#c.device_driver" title="device_driver"><code class="xref c c-type docutils literal"><span class="pre">device_driver</span></code></a>.<code class="docutils literal"><span class="pre">suspend()</span></code>, and
+<a class="reference internal" href="#c.dvb_frontend_resume" title="dvb_frontend_resume"><code class="xref c c-func docutils literal"><span class="pre">dvb_frontend_resume()</span></code></a> as
+part of their handler for <a class="reference internal" href="../../driver-api/infrastructure.html#c.device_driver" title="device_driver"><code class="xref c c-type docutils literal"><span class="pre">device_driver</span></code></a>.<code class="docutils literal"><span class="pre">resume()</span></code>.</p>
+<p>A few other optional functions are provided to handle some special cases.</p>
+</div>
+</div>
+<div class="section" id="digital-tv-frontend-statistics">
+<span id="dvbv5-stats"></span><h2>5.2. Digital TV Frontend statistics<a class="headerlink" href="#digital-tv-frontend-statistics" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="introduction">
+<h3>5.2.1. Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h3>
+<p>Digital TV frontends provide a range of
+<a class="reference internal" href="../uapi/dvb/frontend-stat-properties.html#frontend-stat-properties"><span class="std std-ref">statistics</span></a> meant to help tuning the device
+and measuring the quality of service.</p>
+<p>For each statistics measurement, the driver should set the type of scale used,
+or <code class="docutils literal"><span class="pre">FE_SCALE_NOT_AVAILABLE</span></code> if the statistics is not available on a given
+time. Drivers should also provide the number of statistics for each type.
+that&#8217;s usually 1 for most video standards <a class="footnote-reference" href="#f2" id="id2">[2]</a>.</p>
+<p>Drivers should initialize each statistic counters with length and
+scale at its init code. For example, if the frontend provides signal
+strength, it should have, on its init code:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>struct dtv_frontend_properties *c = &amp;state-&gt;fe.dtv_property_cache;
+
+c-&gt;strength.len = 1;
+c-&gt;strength.stat[0].scale = FE_SCALE_NOT_AVAILABLE;
+</pre></div>
+</div>
+<p>And, when the statistics got updated, set the scale:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>c-&gt;strength.stat[0].scale = FE_SCALE_DECIBEL;
+c-&gt;strength.stat[0].uvalue = strength;
+</pre></div>
+</div>
+<table class="docutils footnote" frame="void" id="f2" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[2]</a></td><td><p class="first">For ISDB-T, it may provide both a global statistics and a per-layer
+set of statistics. On such cases, len should be equal to 4. The first
+value corresponds to the global stat; the other ones to each layer, e. g.:</p>
+<ul class="last simple">
+<li>c-&gt;cnr.stat[0] for global S/N carrier ratio,</li>
+<li>c-&gt;cnr.stat[1] for Layer A S/N carrier ratio,</li>
+<li>c-&gt;cnr.stat[2] for layer B S/N carrier ratio,</li>
+<li>c-&gt;cnr.stat[3] for layer C S/N carrier ratio.</li>
+</ul>
+</td></tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Please prefer to use <code class="docutils literal"><span class="pre">FE_SCALE_DECIBEL</span></code> instead of
+<code class="docutils literal"><span class="pre">FE_SCALE_RELATIVE</span></code> for signal strength and CNR measurements.</p>
+</div>
+</div>
+<div class="section" id="groups-of-statistics">
+<h3>5.2.2. Groups of statistics<a class="headerlink" href="#groups-of-statistics" title="Permalink to this headline">¶</a></h3>
+<p>There are several groups of statistics currently supported:</p>
+<dl class="docutils">
+<dt>Signal strength (<a class="reference internal" href="../uapi/dvb/frontend-stat-properties.html#dtv-stat-signal-strength"><span class="std std-ref">DTV_STAT_SIGNAL_STRENGTH</span></a>)</dt>
+<dd><ul class="first simple">
+<li>Measures the signal strength level at the analog part of the tuner or
+demod.</li>
+<li>Typically obtained from the gain applied to the tuner and/or frontend
+in order to detect the carrier. When no carrier is detected, the gain is
+at the maximum value (so, strength is on its minimal).</li>
+<li>As the gain is visible through the set of registers that adjust the gain,
+typically, this statistics is always available <a class="footnote-reference" href="#f3" id="id3">[3]</a>.</li>
+<li>Drivers should try to make it available all the times, as this statistics
+can be used when adjusting an antenna position and to check for troubles
+at the cabling.</li>
+</ul>
+<table class="last docutils footnote" frame="void" id="f3" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id3">[3]</a></td><td>On a few devices, the gain keeps floating if no carrier.
+On such devices, strength report should check first if carrier is
+detected at the tuner (<code class="docutils literal"><span class="pre">FE_HAS_CARRIER</span></code>, see <a class="reference internal" href="../uapi/dvb/fe-read-status.html#c.fe_status" title="fe_status"><code class="xref c c-type docutils literal"><span class="pre">fe_status</span></code></a>),
+and otherwise return the lowest possible value.</td></tr>
+</tbody>
+</table>
+</dd>
+<dt>Carrier Signal to Noise ratio (<a class="reference internal" href="../uapi/dvb/frontend-stat-properties.html#dtv-stat-cnr"><span class="std std-ref">DTV_STAT_CNR</span></a>)</dt>
+<dd><ul class="first last">
+<li><p class="first">Signal to Noise ratio for the main carrier.</p>
+</li>
+<li><p class="first">Signal to Noise measurement depends on the device. On some hardware, is
+available when the main carrier is detected. On those hardware, CNR
+measurement usually comes from the tuner (e. g. after <code class="docutils literal"><span class="pre">FE_HAS_CARRIER</span></code>,
+see <a class="reference internal" href="../uapi/dvb/fe-read-status.html#c.fe_status" title="fe_status"><code class="xref c c-type docutils literal"><span class="pre">fe_status</span></code></a>).</p>
+<p>On other devices, it requires inner FEC decoding,
+as the frontend measures it indirectly from other parameters (e. g. after
+<code class="docutils literal"><span class="pre">FE_HAS_VITERBI</span></code>, see <a class="reference internal" href="../uapi/dvb/fe-read-status.html#c.fe_status" title="fe_status"><code class="xref c c-type docutils literal"><span class="pre">fe_status</span></code></a>).</p>
+<p>Having it available after inner FEC is more common.</p>
+</li>
+</ul>
+</dd>
+<dt>Bit counts post-FEC (<a class="reference internal" href="../uapi/dvb/frontend-stat-properties.html#dtv-stat-post-error-bit-count"><span class="std std-ref">DTV_STAT_POST_ERROR_BIT_COUNT</span></a> and <a class="reference internal" href="../uapi/dvb/frontend-stat-properties.html#dtv-stat-post-total-bit-count"><span class="std std-ref">DTV_STAT_POST_TOTAL_BIT_COUNT</span></a>)</dt>
+<dd><ul class="first last simple">
+<li>Those counters measure the number of bits and bit errors errors after
+the forward error correction (FEC) on the inner coding block
+(after Viterbi, LDPC or other inner code).</li>
+<li>Due to its nature, those statistics depend on full coding lock
+(e. g. after <code class="docutils literal"><span class="pre">FE_HAS_SYNC</span></code> or after <code class="docutils literal"><span class="pre">FE_HAS_LOCK</span></code>,
+see <a class="reference internal" href="../uapi/dvb/fe-read-status.html#c.fe_status" title="fe_status"><code class="xref c c-type docutils literal"><span class="pre">fe_status</span></code></a>).</li>
+</ul>
+</dd>
+<dt>Bit counts pre-FEC (<a class="reference internal" href="../uapi/dvb/frontend-stat-properties.html#dtv-stat-pre-error-bit-count"><span class="std std-ref">DTV_STAT_PRE_ERROR_BIT_COUNT</span></a> and <a class="reference internal" href="../uapi/dvb/frontend-stat-properties.html#dtv-stat-pre-total-bit-count"><span class="std std-ref">DTV_STAT_PRE_TOTAL_BIT_COUNT</span></a>)</dt>
+<dd><ul class="first last simple">
+<li>Those counters measure the number of bits and bit errors errors before
+the forward error correction (FEC) on the inner coding block
+(before Viterbi, LDPC or other inner code).</li>
+<li>Not all frontends provide this kind of statistics.</li>
+<li>Due to its nature, those statistics depend on inner coding lock (e. g.
+after <code class="docutils literal"><span class="pre">FE_HAS_VITERBI</span></code>, see <a class="reference internal" href="../uapi/dvb/fe-read-status.html#c.fe_status" title="fe_status"><code class="xref c c-type docutils literal"><span class="pre">fe_status</span></code></a>).</li>
+</ul>
+</dd>
+<dt>Block counts (<a class="reference internal" href="../uapi/dvb/frontend-stat-properties.html#dtv-stat-error-block-count"><span class="std std-ref">DTV_STAT_ERROR_BLOCK_COUNT</span></a> and <a class="reference internal" href="../uapi/dvb/frontend-stat-properties.html#dtv-stat-total-block-count"><span class="std std-ref">DTV-STAT_TOTAL_BLOCK_COUNT</span></a>)</dt>
+<dd><ul class="first last simple">
+<li>Those counters measure the number of blocks and block errors errors after
+the forward error correction (FEC) on the inner coding block
+(before Viterbi, LDPC or other inner code).</li>
+<li>Due to its nature, those statistics depend on full coding lock
+(e. g. after <code class="docutils literal"><span class="pre">FE_HAS_SYNC</span></code> or after
+<code class="docutils literal"><span class="pre">FE_HAS_LOCK</span></code>, see <a class="reference internal" href="../uapi/dvb/fe-read-status.html#c.fe_status" title="fe_status"><code class="xref c c-type docutils literal"><span class="pre">fe_status</span></code></a>).</li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">All counters should be monotonically increased as they&#8217;re
+collected from the hardware.</p>
+</div>
+<p>A typical example of the logic that handle status and statistics is:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>static int foo_get_status_and_stats(struct dvb_frontend *fe)
+{
+        struct foo_state *state = fe-&gt;demodulator_priv;
+        struct dtv_frontend_properties *c = &amp;fe-&gt;dtv_property_cache;
+
+        int rc;
+        enum fe_status *status;
+
+        /* Both status and strength are always available */
+        rc = foo_read_status(fe, &amp;status);
+        if (rc &lt; 0)
+                return rc;
+
+        rc = foo_read_strength(fe);
+        if (rc &lt; 0)
+                return rc;
+
+        /* Check if CNR is available */
+        if (!(fe-&gt;status &amp; FE_HAS_CARRIER))
+                return 0;
+
+        rc = foo_read_cnr(fe);
+        if (rc &lt; 0)
+                return rc;
+
+        /* Check if pre-BER stats are available */
+        if (!(fe-&gt;status &amp; FE_HAS_VITERBI))
+                return 0;
+
+        rc = foo_get_pre_ber(fe);
+        if (rc &lt; 0)
+                return rc;
+
+        /* Check if post-BER stats are available */
+        if (!(fe-&gt;status &amp; FE_HAS_SYNC))
+                return 0;
+
+        rc = foo_get_post_ber(fe);
+        if (rc &lt; 0)
+                return rc;
+}
+
+static const struct dvb_frontend_ops ops = {
+        /* ... */
+        .read_status = foo_get_status_and_stats,
+};
+</pre></div>
+</div>
+</div>
+<div class="section" id="statistics-collect">
+<h3>5.2.3. Statistics collect<a class="headerlink" href="#statistics-collect" title="Permalink to this headline">¶</a></h3>
+<p>On almost all frontend hardware, the bit and byte counts are stored by
+the hardware after a certain amount of time or after the total bit/block
+counter reaches a certain value (usually programable), for example, on
+every 1000 ms or after receiving 1,000,000 bits.</p>
+<p>So, if you read the registers too soon, you&#8217;ll end by reading the same
+value as in the previous reading, causing the monotonic value to be
+incremented too often.</p>
+<p>Drivers should take the responsibility to avoid too often reads. That
+can be done using two approaches:</p>
+<div class="section" id="if-the-driver-have-a-bit-that-indicates-when-a-collected-data-is-ready">
+<h4>5.2.3.1. if the driver have a bit that indicates when a collected data is ready<a class="headerlink" href="#if-the-driver-have-a-bit-that-indicates-when-a-collected-data-is-ready" title="Permalink to this headline">¶</a></h4>
+<p>Driver should check such bit before making the statistics available.</p>
+<p>An example of such behavior can be found at this code snippet (adapted
+from mb86a20s driver&#8217;s logic):</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>static int foo_get_pre_ber(struct dvb_frontend *fe)
+{
+        struct foo_state *state = fe-&gt;demodulator_priv;
+        struct dtv_frontend_properties *c = &amp;fe-&gt;dtv_property_cache;
+        int rc, bit_error;
+
+        /* Check if the BER measures are already available */
+        rc = foo_read_u8(state, 0x54);
+        if (rc &lt; 0)
+                return rc;
+
+        if (!rc)
+                return 0;
+
+        /* Read Bit Error Count */
+        bit_error = foo_read_u32(state, 0x55);
+        if (bit_error &lt; 0)
+                return bit_error;
+
+        /* Read Total Bit Count */
+        rc = foo_read_u32(state, 0x51);
+        if (rc &lt; 0)
+                return rc;
+
+        c-&gt;pre_bit_error.stat[0].scale = FE_SCALE_COUNTER;
+        c-&gt;pre_bit_error.stat[0].uvalue += bit_error;
+        c-&gt;pre_bit_count.stat[0].scale = FE_SCALE_COUNTER;
+        c-&gt;pre_bit_count.stat[0].uvalue += rc;
+
+        return 0;
+}
+</pre></div>
+</div>
+</div>
+<div class="section" id="if-the-driver-doesn-t-provide-a-statistics-available-check-bit">
+<h4>5.2.3.2. If the driver doesn&#8217;t provide a statistics available check bit<a class="headerlink" href="#if-the-driver-doesn-t-provide-a-statistics-available-check-bit" title="Permalink to this headline">¶</a></h4>
+<p>A few devices, however, may not provide a way to check if the stats are
+available (or the way to check it is unknown). They may not even provide
+a way to directly read the total number of bits or blocks.</p>
+<p>On those devices, the driver need to ensure that it won&#8217;t be reading from
+the register too often and/or estimate the total number of bits/blocks.</p>
+<p>On such drivers, a typical routine to get statistics would be like
+(adapted from dib8000 driver&#8217;s logic):</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>struct foo_state {
+        /* ... */
+
+        unsigned long per_jiffies_stats;
+}
+
+static int foo_get_pre_ber(struct dvb_frontend *fe)
+{
+        struct foo_state *state = fe-&gt;demodulator_priv;
+        struct dtv_frontend_properties *c = &amp;fe-&gt;dtv_property_cache;
+        int rc, bit_error;
+        u64 bits;
+
+        /* Check if time for stats was elapsed */
+        if (!time_after(jiffies, state-&gt;per_jiffies_stats))
+                return 0;
+
+        /* Next stat should be collected in 1000 ms */
+        state-&gt;per_jiffies_stats = jiffies + msecs_to_jiffies(1000);
+
+        /* Read Bit Error Count */
+        bit_error = foo_read_u32(state, 0x55);
+        if (bit_error &lt; 0)
+                return bit_error;
+
+        /*
+         * On this particular frontend, there&#39;s no register that
+         * would provide the number of bits per 1000ms sample. So,
+         * some function would calculate it based on DTV properties
+         */
+        bits = get_number_of_bits_per_1000ms(fe);
+
+        c-&gt;pre_bit_error.stat[0].scale = FE_SCALE_COUNTER;
+        c-&gt;pre_bit_error.stat[0].uvalue += bit_error;
+        c-&gt;pre_bit_count.stat[0].scale = FE_SCALE_COUNTER;
+        c-&gt;pre_bit_count.stat[0].uvalue += bits;
+
+        return 0;
+}
+</pre></div>
+</div>
+<p>Please notice that, on both cases, we&#8217;re getting the statistics using the
+<a class="reference internal" href="#c.dvb_frontend_ops" title="dvb_frontend_ops"><code class="xref c c-type docutils literal"><span class="pre">dvb_frontend_ops</span></code></a> <code class="docutils literal"><span class="pre">.read_status</span></code> callback. The rationale is that
+the frontend core will automatically call this function periodically
+(usually, 3 times per second, when the frontend is locked).</p>
+<p>That warrants that we won&#8217;t miss to collect a counter and increment the
+monotonic stats at the right time.</p>
+</div>
+</div>
+</div>
+<div class="section" id="digital-tv-frontend-functions-and-types">
+<h2>5.3. Digital TV Frontend functions and types<a class="headerlink" href="#digital-tv-frontend-functions-and-types" title="Permalink to this headline">¶</a></h2>
+<dl class="type">
+<dt id="c.dvb_frontend_tune_settings">
+struct <code class="descname">dvb_frontend_tune_settings</code><a class="headerlink" href="#c.dvb_frontend_tune_settings" title="Permalink to this definition">¶</a></dt>
+<dd><p>parameters to adjust frontend tuning</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>struct dvb_frontend_tune_settings {
+  int min_delay_ms;
+  int step_size;
+  int max_drift;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">min_delay_ms</span></code></dt>
+<dd>minimum delay for tuning, in ms</dd>
+<dt><code class="docutils literal"><span class="pre">step_size</span></code></dt>
+<dd>step size between two consecutive frequencies</dd>
+<dt><code class="docutils literal"><span class="pre">max_drift</span></code></dt>
+<dd>maximum drift</dd>
+</dl>
+<p><strong>NOTE</strong></p>
+<p>step_size is in Hz, for terrestrial/cable or kHz for satellite</p>
+<dl class="type">
+<dt id="c.dvb_tuner_info">
+struct <code class="descname">dvb_tuner_info</code><a class="headerlink" href="#c.dvb_tuner_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Frontend name and min/max ranges/bandwidths</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>struct dvb_tuner_info {
+  char name;
+  u32 frequency_min;
+  u32 frequency_max;
+  u32 frequency_step;
+  u32 bandwidth_min;
+  u32 bandwidth_max;
+  u32 bandwidth_step;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">name</span></code></dt>
+<dd>name of the Frontend</dd>
+<dt><code class="docutils literal"><span class="pre">frequency_min</span></code></dt>
+<dd>minimal frequency supported</dd>
+<dt><code class="docutils literal"><span class="pre">frequency_max</span></code></dt>
+<dd>maximum frequency supported</dd>
+<dt><code class="docutils literal"><span class="pre">frequency_step</span></code></dt>
+<dd>frequency step</dd>
+<dt><code class="docutils literal"><span class="pre">bandwidth_min</span></code></dt>
+<dd>minimal frontend bandwidth supported</dd>
+<dt><code class="docutils literal"><span class="pre">bandwidth_max</span></code></dt>
+<dd>maximum frontend bandwidth supported</dd>
+<dt><code class="docutils literal"><span class="pre">bandwidth_step</span></code></dt>
+<dd>frontend bandwidth step</dd>
+</dl>
+<p><strong>NOTE</strong></p>
+<p>frequency parameters are in Hz, for terrestrial/cable or kHz for
+satellite.</p>
+<dl class="type">
+<dt id="c.analog_parameters">
+struct <code class="descname">analog_parameters</code><a class="headerlink" href="#c.analog_parameters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parameters to tune into an analog/radio channel</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>struct analog_parameters {
+  unsigned int frequency;
+  unsigned int mode;
+  unsigned int audmode;
+  u64 std;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">frequency</span></code></dt>
+<dd>Frequency used by analog TV tuner (either in 62.5 kHz step,
+for TV, or 62.5 Hz for radio)</dd>
+<dt><code class="docutils literal"><span class="pre">mode</span></code></dt>
+<dd>Tuner mode, as defined on enum v4l2_tuner_type</dd>
+<dt><code class="docutils literal"><span class="pre">audmode</span></code></dt>
+<dd>Audio mode as defined for the rxsubchans field at videodev2.h,
+e. g. V4L2_TUNER_MODE_*</dd>
+<dt><code class="docutils literal"><span class="pre">std</span></code></dt>
+<dd>TV standard bitmap as defined at videodev2.h, e. g. V4L2_STD_*</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Hybrid tuners should be supported by both V4L2 and DVB APIs. This
+struct contains the data that are used by the V4L2 side. To avoid
+dependencies from V4L2 headers, all enums here are declared as integers.</p>
+<dl class="type">
+<dt id="c.dvbfe_algo">
+enum <code class="descname">dvbfe_algo</code><a class="headerlink" href="#c.dvbfe_algo" title="Permalink to this definition">¶</a></dt>
+<dd><p>defines the algorithm used to tune into a channel</p>
+</dd></dl>
+
+<p><strong>Constants</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">DVBFE_ALGO_HW</span></code></dt>
+<dd>Hardware Algorithm -
+Devices that support this algorithm do everything in hardware
+and no software support is needed to handle them.
+Requesting these devices to LOCK is the only thing required,
+device is supposed to do everything in the hardware.</dd>
+<dt><code class="docutils literal"><span class="pre">DVBFE_ALGO_SW</span></code></dt>
+<dd>Software Algorithm -
+These are dumb devices, that require software to do everything</dd>
+<dt><code class="docutils literal"><span class="pre">DVBFE_ALGO_CUSTOM</span></code></dt>
+<dd>Customizable Agorithm -
+Devices having this algorithm can be customized to have specific
+algorithms in the frontend driver, rather than simply doing a
+software zig-zag. In this case the zigzag maybe hardware assisted
+or it maybe completely done in hardware. In all cases, usage of
+this algorithm, in conjunction with the search and track
+callbacks, utilizes the driver specific algorithm.</dd>
+<dt><code class="docutils literal"><span class="pre">DVBFE_ALGO_RECOVERY</span></code></dt>
+<dd>Recovery Algorithm -
+These devices have AUTO recovery capabilities from LOCK failure</dd>
+</dl>
+<dl class="type">
+<dt id="c.dvbfe_search">
+enum <code class="descname">dvbfe_search</code><a class="headerlink" href="#c.dvbfe_search" title="Permalink to this definition">¶</a></dt>
+<dd><p>search callback possible return status</p>
+</dd></dl>
+
+<p><strong>Constants</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">DVBFE_ALGO_SEARCH_SUCCESS</span></code></dt>
+<dd>The frontend search algorithm completed and returned successfully</dd>
+<dt><code class="docutils literal"><span class="pre">DVBFE_ALGO_SEARCH_ASLEEP</span></code></dt>
+<dd>The frontend search algorithm is sleeping</dd>
+<dt><code class="docutils literal"><span class="pre">DVBFE_ALGO_SEARCH_FAILED</span></code></dt>
+<dd>The frontend search for a signal failed</dd>
+<dt><code class="docutils literal"><span class="pre">DVBFE_ALGO_SEARCH_INVALID</span></code></dt>
+<dd>The frontend search algorith was probably supplied with invalid
+parameters and the search is an invalid one</dd>
+<dt><code class="docutils literal"><span class="pre">DVBFE_ALGO_SEARCH_AGAIN</span></code></dt>
+<dd>The frontend search algorithm was requested to search again</dd>
+<dt><code class="docutils literal"><span class="pre">DVBFE_ALGO_SEARCH_ERROR</span></code></dt>
+<dd>The frontend search algorithm failed due to some error</dd>
+</dl>
+<dl class="type">
+<dt id="c.dvb_tuner_ops">
+struct <code class="descname">dvb_tuner_ops</code><a class="headerlink" href="#c.dvb_tuner_ops" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tuner information and callbacks</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>struct dvb_tuner_ops {
+  struct dvb_tuner_info info;
+  void (* release) (struct dvb_frontend *fe);
+  int (* init) (struct dvb_frontend *fe);
+  int (* sleep) (struct dvb_frontend *fe);
+  int (* suspend) (struct dvb_frontend *fe);
+  int (* resume) (struct dvb_frontend *fe);
+  int (* set_params) (struct dvb_frontend *fe);
+  int (* set_analog_params) (struct dvb_frontend *fe, struct analog_parameters *p);
+  int (* set_config) (struct dvb_frontend *fe, void *priv_cfg);
+  int (* get_frequency) (struct dvb_frontend *fe, u32 *frequency);
+  int (* get_bandwidth) (struct dvb_frontend *fe, u32 *bandwidth);
+  int (* get_if_frequency) (struct dvb_frontend *fe, u32 *frequency);
+#define TUNER_STATUS_LOCKED 1
+#define TUNER_STATUS_STEREO 2
+  int (* get_status) (struct dvb_frontend *fe, u32 *status);
+  int (* get_rf_strength) (struct dvb_frontend *fe, u16 *strength);
+  int (* get_afc) (struct dvb_frontend *fe, s32 *afc);
+  int (* calc_regs) (struct dvb_frontend *fe, u8 *buf, int buf_len);
+  int (* set_frequency) (struct dvb_frontend *fe, u32 frequency);
+  int (* set_bandwidth) (struct dvb_frontend *fe, u32 bandwidth);
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">info</span></code></dt>
+<dd>embedded struct dvb_tuner_info with tuner properties</dd>
+<dt><code class="docutils literal"><span class="pre">release</span></code></dt>
+<dd>callback function called when frontend is dettached.
+drivers should free any allocated memory.</dd>
+<dt><code class="docutils literal"><span class="pre">init</span></code></dt>
+<dd>callback function used to initialize the tuner device.</dd>
+<dt><code class="docutils literal"><span class="pre">sleep</span></code></dt>
+<dd>callback function used to put the tuner to sleep.</dd>
+<dt><code class="docutils literal"><span class="pre">suspend</span></code></dt>
+<dd>callback function used to inform that the Kernel will
+suspend.</dd>
+<dt><code class="docutils literal"><span class="pre">resume</span></code></dt>
+<dd>callback function used to inform that the Kernel is
+resuming from suspend.</dd>
+<dt><code class="docutils literal"><span class="pre">set_params</span></code></dt>
+<dd>callback function used to inform the tuner to tune
+into a digital TV channel. The properties to be used
+are stored at <strong>dvb_frontend</strong>.dtv_property_cache;. The
+tuner demod can change the parameters to reflect the
+changes needed for the channel to be tuned, and
+update statistics. This is the recommended way to set
+the tuner parameters and should be used on newer
+drivers.</dd>
+<dt><code class="docutils literal"><span class="pre">set_analog_params</span></code></dt>
+<dd>callback function used to tune into an analog TV
+channel on hybrid tuners. It passes <strong>analog_parameters</strong>;
+to the driver.</dd>
+<dt><code class="docutils literal"><span class="pre">set_config</span></code></dt>
+<dd>callback function used to send some tuner-specific
+parameters.</dd>
+<dt><code class="docutils literal"><span class="pre">get_frequency</span></code></dt>
+<dd>get the actual tuned frequency</dd>
+<dt><code class="docutils literal"><span class="pre">get_bandwidth</span></code></dt>
+<dd>get the bandwitdh used by the low pass filters</dd>
+<dt><code class="docutils literal"><span class="pre">get_if_frequency</span></code></dt>
+<dd>get the Intermediate Frequency, in Hz. For baseband,
+should return 0.</dd>
+<dt><code class="docutils literal"><span class="pre">get_status</span></code></dt>
+<dd>returns the frontend lock status</dd>
+<dt><code class="docutils literal"><span class="pre">get_rf_strength</span></code></dt>
+<dd>returns the RF signal strengh. Used mostly to support
+analog TV and radio. Digital TV should report, instead,
+via DVBv5 API (<strong>dvb_frontend</strong>.dtv_property_cache;).</dd>
+<dt><code class="docutils literal"><span class="pre">get_afc</span></code></dt>
+<dd>Used only by analog TV core. Reports the frequency
+drift due to AFC.</dd>
+<dt><code class="docutils literal"><span class="pre">calc_regs</span></code></dt>
+<dd>callback function used to pass register data settings
+for simple tuners.  Shouldn&#8217;t be used on newer drivers.</dd>
+<dt><code class="docutils literal"><span class="pre">set_frequency</span></code></dt>
+<dd>Set a new frequency. Shouldn&#8217;t be used on newer drivers.</dd>
+<dt><code class="docutils literal"><span class="pre">set_bandwidth</span></code></dt>
+<dd>Set a new frequency. Shouldn&#8217;t be used on newer drivers.</dd>
+</dl>
+<p><strong>NOTE</strong></p>
+<p>frequencies used on get_frequency and set_frequency are in Hz for
+terrestrial/cable or kHz for satellite.</p>
+<dl class="type">
+<dt id="c.analog_demod_info">
+struct <code class="descname">analog_demod_info</code><a class="headerlink" href="#c.analog_demod_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>Information struct for analog TV part of the demod</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>struct analog_demod_info {
+  char * name;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">name</span></code></dt>
+<dd>Name of the analog TV demodulator</dd>
+</dl>
+<dl class="type">
+<dt id="c.analog_demod_ops">
+struct <code class="descname">analog_demod_ops</code><a class="headerlink" href="#c.analog_demod_ops" title="Permalink to this definition">¶</a></dt>
+<dd><p>Demodulation information and callbacks for analog TV and radio</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>struct analog_demod_ops {
+  struct analog_demod_info info;
+  void (* set_params) (struct dvb_frontend *fe,struct analog_parameters *params);
+  int (* has_signal) (struct dvb_frontend *fe, u16 *signal);
+  int (* get_afc) (struct dvb_frontend *fe, s32 *afc);
+  void (* tuner_status) (struct dvb_frontend *fe);
+  void (* standby) (struct dvb_frontend *fe);
+  void (* release) (struct dvb_frontend *fe);
+  int (* i2c_gate_ctrl) (struct dvb_frontend *fe, int enable);
+  int (* set_config) (struct dvb_frontend *fe, void *priv_cfg);
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">info</span></code></dt>
+<dd>pointer to struct analog_demod_info</dd>
+<dt><code class="docutils literal"><span class="pre">set_params</span></code></dt>
+<dd>callback function used to inform the demod to set the
+demodulator parameters needed to decode an analog or
+radio channel. The properties are passed via
+struct <strong>analog_params</strong>;.</dd>
+<dt><code class="docutils literal"><span class="pre">has_signal</span></code></dt>
+<dd>returns 0xffff if has signal, or 0 if it doesn&#8217;t.</dd>
+<dt><code class="docutils literal"><span class="pre">get_afc</span></code></dt>
+<dd>Used only by analog TV core. Reports the frequency
+drift due to AFC.</dd>
+<dt><code class="docutils literal"><span class="pre">tuner_status</span></code></dt>
+<dd>callback function that returns tuner status bits, e. g.
+TUNER_STATUS_LOCKED and TUNER_STATUS_STEREO.</dd>
+<dt><code class="docutils literal"><span class="pre">standby</span></code></dt>
+<dd>set the tuner to standby mode.</dd>
+<dt><code class="docutils literal"><span class="pre">release</span></code></dt>
+<dd>callback function called when frontend is dettached.
+drivers should free any allocated memory.</dd>
+<dt><code class="docutils literal"><span class="pre">i2c_gate_ctrl</span></code></dt>
+<dd>controls the I2C gate. Newer drivers should use I2C
+mux support instead.</dd>
+<dt><code class="docutils literal"><span class="pre">set_config</span></code></dt>
+<dd>callback function used to send some tuner-specific
+parameters.</dd>
+</dl>
+<dl class="type">
+<dt id="c.dvb_frontend_ops">
+struct <code class="descname">dvb_frontend_ops</code><a class="headerlink" href="#c.dvb_frontend_ops" title="Permalink to this definition">¶</a></dt>
+<dd><p>Demodulation information and callbacks for ditialt TV</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>struct dvb_frontend_ops {
+  struct dvb_frontend_info info;
+  u8 delsys;
+  void (* detach) (struct dvb_frontend *fe);
+  void (* release) (struct dvb_frontend* fe);
+  void (* release_sec) (struct dvb_frontend* fe);
+  int (* init) (struct dvb_frontend* fe);
+  int (* sleep) (struct dvb_frontend* fe);
+  int (* write) (struct dvb_frontend* fe, const u8 buf[], int len);
+  int (* tune) (struct dvb_frontend* fe,bool re_tune,unsigned int mode_flags,unsigned int *delay,enum fe_status *status);
+  enum dvbfe_algo (* get_frontend_algo) (struct dvb_frontend *fe);
+  int (* set_frontend) (struct dvb_frontend *fe);
+  int (* get_tune_settings) (struct dvb_frontend* fe, struct dvb_frontend_tune_settings* settings);
+  int (* get_frontend) (struct dvb_frontend *fe,struct dtv_frontend_properties *props);
+  int (* read_status) (struct dvb_frontend *fe, enum fe_status *status);
+  int (* read_ber) (struct dvb_frontend* fe, u32* ber);
+  int (* read_signal_strength) (struct dvb_frontend* fe, u16* strength);
+  int (* read_snr) (struct dvb_frontend* fe, u16* snr);
+  int (* read_ucblocks) (struct dvb_frontend* fe, u32* ucblocks);
+  int (* diseqc_reset_overload) (struct dvb_frontend* fe);
+  int (* diseqc_send_master_cmd) (struct dvb_frontend* fe, struct dvb_diseqc_master_cmd* cmd);
+  int (* diseqc_recv_slave_reply) (struct dvb_frontend* fe, struct dvb_diseqc_slave_reply* reply);
+  int (* diseqc_send_burst) (struct dvb_frontend *fe,enum fe_sec_mini_cmd minicmd);
+  int (* set_tone) (struct dvb_frontend *fe, enum fe_sec_tone_mode tone);
+  int (* set_voltage) (struct dvb_frontend *fe,enum fe_sec_voltage voltage);
+  int (* enable_high_lnb_voltage) (struct dvb_frontend* fe, long arg);
+  int (* dishnetwork_send_legacy_command) (struct dvb_frontend* fe, unsigned long cmd);
+  int (* i2c_gate_ctrl) (struct dvb_frontend* fe, int enable);
+  int (* ts_bus_ctrl) (struct dvb_frontend* fe, int acquire);
+  int (* set_lna) (struct dvb_frontend *);
+  enum dvbfe_search (* search) (struct dvb_frontend *fe);
+  struct dvb_tuner_ops tuner_ops;
+  struct analog_demod_ops analog_ops;
+  int (* set_property) (struct dvb_frontend* fe, struct dtv_property* tvp);
+  int (* get_property) (struct dvb_frontend* fe, struct dtv_property* tvp);
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">info</span></code></dt>
+<dd>embedded struct dvb_tuner_info with tuner properties</dd>
+<dt><code class="docutils literal"><span class="pre">delsys</span></code></dt>
+<dd>Delivery systems supported by the frontend</dd>
+<dt><code class="docutils literal"><span class="pre">detach</span></code></dt>
+<dd>callback function called when frontend is detached.
+drivers should clean up, but not yet free the struct
+dvb_frontend allocation.</dd>
+<dt><code class="docutils literal"><span class="pre">release</span></code></dt>
+<dd>callback function called when frontend is ready to be
+freed.
+drivers should free any allocated memory.</dd>
+<dt><code class="docutils literal"><span class="pre">release_sec</span></code></dt>
+<dd>callback function requesting that the Satelite Equipment
+Control (SEC) driver to release and free any memory
+allocated by the driver.</dd>
+<dt><code class="docutils literal"><span class="pre">init</span></code></dt>
+<dd>callback function used to initialize the tuner device.</dd>
+<dt><code class="docutils literal"><span class="pre">sleep</span></code></dt>
+<dd>callback function used to put the tuner to sleep.</dd>
+<dt><code class="docutils literal"><span class="pre">write</span></code></dt>
+<dd>callback function used by some demod legacy drivers to
+allow other drivers to write data into their registers.
+Should not be used on new drivers.</dd>
+<dt><code class="docutils literal"><span class="pre">tune</span></code></dt>
+<dd>callback function used by demod drivers that use
+<strong>DVBFE_ALGO_HW</strong>; to tune into a frequency.</dd>
+<dt><code class="docutils literal"><span class="pre">get_frontend_algo</span></code></dt>
+<dd>returns the desired hardware algorithm.</dd>
+<dt><code class="docutils literal"><span class="pre">set_frontend</span></code></dt>
+<dd>callback function used to inform the demod to set the
+parameters for demodulating a digital TV channel.
+The properties to be used are stored at
+<strong>dvb_frontend</strong>.dtv_property_cache;. The demod can change
+the parameters to reflect the changes needed for the
+channel to be decoded, and update statistics.</dd>
+<dt><code class="docutils literal"><span class="pre">get_tune_settings</span></code></dt>
+<dd>callback function</dd>
+<dt><code class="docutils literal"><span class="pre">get_frontend</span></code></dt>
+<dd>callback function used to inform the parameters
+actuall in use. The properties to be used are stored at
+<strong>dvb_frontend</strong>.dtv_property_cache; and update
+statistics. Please notice that it should not return
+an error code if the statistics are not available
+because the demog is not locked.</dd>
+<dt><code class="docutils literal"><span class="pre">read_status</span></code></dt>
+<dd>returns the locking status of the frontend.</dd>
+<dt><code class="docutils literal"><span class="pre">read_ber</span></code></dt>
+<dd>legacy callback function to return the bit error rate.
+Newer drivers should provide such info via DVBv5 API,
+e. g. <strong>set_frontend</strong>;/<strong>get_frontend</strong>;, implementing this
+callback only if DVBv3 API compatibility is wanted.</dd>
+<dt><code class="docutils literal"><span class="pre">read_signal_strength</span></code></dt>
+<dd>legacy callback function to return the signal
+strength. Newer drivers should provide such info via
+DVBv5 API, e. g. <strong>set_frontend</strong>;/<strong>get_frontend</strong>;,
+implementing this callback only if DVBv3 API
+compatibility is wanted.</dd>
+<dt><code class="docutils literal"><span class="pre">read_snr</span></code></dt>
+<dd>legacy callback function to return the Signal/Noise
+rate. Newer drivers should provide such info via
+DVBv5 API, e. g. <strong>set_frontend</strong>;/<strong>get_frontend</strong>;,
+implementing this callback only if DVBv3 API
+compatibility is wanted.</dd>
+<dt><code class="docutils literal"><span class="pre">read_ucblocks</span></code></dt>
+<dd>legacy callback function to return the Uncorrected Error
+Blocks. Newer drivers should provide such info via
+DVBv5 API, e. g. <strong>set_frontend</strong>;/<strong>get_frontend</strong>;,
+implementing this callback only if DVBv3 API
+compatibility is wanted.</dd>
+<dt><code class="docutils literal"><span class="pre">diseqc_reset_overload</span></code></dt>
+<dd>callback function to implement the
+FE_DISEQC_RESET_OVERLOAD ioctl (only Satellite)</dd>
+<dt><code class="docutils literal"><span class="pre">diseqc_send_master_cmd</span></code></dt>
+<dd>callback function to implement the
+FE_DISEQC_SEND_MASTER_CMD ioctl (only Satellite).</dd>
+<dt><code class="docutils literal"><span class="pre">diseqc_recv_slave_reply</span></code></dt>
+<dd>callback function to implement the
+FE_DISEQC_RECV_SLAVE_REPLY ioctl (only Satellite)</dd>
+<dt><code class="docutils literal"><span class="pre">diseqc_send_burst</span></code></dt>
+<dd>callback function to implement the
+FE_DISEQC_SEND_BURST ioctl (only Satellite).</dd>
+<dt><code class="docutils literal"><span class="pre">set_tone</span></code></dt>
+<dd>callback function to implement the
+FE_SET_TONE ioctl (only Satellite).</dd>
+<dt><code class="docutils literal"><span class="pre">set_voltage</span></code></dt>
+<dd>callback function to implement the
+FE_SET_VOLTAGE ioctl (only Satellite).</dd>
+<dt><code class="docutils literal"><span class="pre">enable_high_lnb_voltage</span></code></dt>
+<dd>callback function to implement the
+FE_ENABLE_HIGH_LNB_VOLTAGE ioctl (only Satellite).</dd>
+<dt><code class="docutils literal"><span class="pre">dishnetwork_send_legacy_command</span></code></dt>
+<dd>callback function to implement the
+FE_DISHNETWORK_SEND_LEGACY_CMD ioctl (only Satellite).
+Drivers should not use this, except when the DVB
+core emulation fails to provide proper support (e.g.
+if <strong>set_voltage</strong> takes more than 8ms to work), and
+when backward compatibility with this legacy API is
+required.</dd>
+<dt><code class="docutils literal"><span class="pre">i2c_gate_ctrl</span></code></dt>
+<dd>controls the I2C gate. Newer drivers should use I2C
+mux support instead.</dd>
+<dt><code class="docutils literal"><span class="pre">ts_bus_ctrl</span></code></dt>
+<dd>callback function used to take control of the TS bus.</dd>
+<dt><code class="docutils literal"><span class="pre">set_lna</span></code></dt>
+<dd>callback function to power on/off/auto the LNA.</dd>
+<dt><code class="docutils literal"><span class="pre">search</span></code></dt>
+<dd>callback function used on some custom algo search algos.</dd>
+<dt><code class="docutils literal"><span class="pre">tuner_ops</span></code></dt>
+<dd>pointer to struct dvb_tuner_ops</dd>
+<dt><code class="docutils literal"><span class="pre">analog_ops</span></code></dt>
+<dd>pointer to struct analog_demod_ops</dd>
+<dt><code class="docutils literal"><span class="pre">set_property</span></code></dt>
+<dd>callback function to allow the frontend to validade
+incoming properties. Should not be used on new drivers.</dd>
+<dt><code class="docutils literal"><span class="pre">get_property</span></code></dt>
+<dd>callback function to allow the frontend to override
+outcoming properties. Should not be used on new drivers.</dd>
+</dl>
+<dl class="type">
+<dt id="c.dtv_frontend_properties">
+struct <code class="descname">dtv_frontend_properties</code><a class="headerlink" href="#c.dtv_frontend_properties" title="Permalink to this definition">¶</a></dt>
+<dd><p>contains a list of properties that are specific to a digital TV standard.</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>struct dtv_frontend_properties {
+  u32 frequency;
+  enum fe_modulation modulation;
+  enum fe_sec_voltage voltage;
+  enum fe_sec_tone_mode sectone;
+  enum fe_spectral_inversion inversion;
+  enum fe_code_rate fec_inner;
+  enum fe_transmit_mode transmission_mode;
+  u32 bandwidth_hz;
+  enum fe_guard_interval guard_interval;
+  enum fe_hierarchy hierarchy;
+  u32 symbol_rate;
+  enum fe_code_rate code_rate_HP;
+  enum fe_code_rate code_rate_LP;
+  enum fe_pilot pilot;
+  enum fe_rolloff rolloff;
+  enum fe_delivery_system delivery_system;
+  enum fe_interleaving interleaving;
+  u8 isdbt_partial_reception;
+  u8 isdbt_sb_mode;
+  u8 isdbt_sb_subchannel;
+  u32 isdbt_sb_segment_idx;
+  u32 isdbt_sb_segment_count;
+  u8 isdbt_layer_enabled;
+  struct layer;
+  u32 stream_id;
+  u8 atscmh_fic_ver;
+  u8 atscmh_parade_id;
+  u8 atscmh_nog;
+  u8 atscmh_tnog;
+  u8 atscmh_sgn;
+  u8 atscmh_prc;
+  u8 atscmh_rs_frame_mode;
+  u8 atscmh_rs_frame_ensemble;
+  u8 atscmh_rs_code_mode_pri;
+  u8 atscmh_rs_code_mode_sec;
+  u8 atscmh_sccc_block_mode;
+  u8 atscmh_sccc_code_mode_a;
+  u8 atscmh_sccc_code_mode_b;
+  u8 atscmh_sccc_code_mode_c;
+  u8 atscmh_sccc_code_mode_d;
+  u32 lna;
+  struct dtv_fe_stats strength;
+  struct dtv_fe_stats cnr;
+  struct dtv_fe_stats pre_bit_error;
+  struct dtv_fe_stats pre_bit_count;
+  struct dtv_fe_stats post_bit_error;
+  struct dtv_fe_stats post_bit_count;
+  struct dtv_fe_stats block_error;
+  struct dtv_fe_stats block_count;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">frequency</span></code></dt>
+<dd>frequency in Hz for terrestrial/cable or in kHz for
+Satellite</dd>
+<dt><code class="docutils literal"><span class="pre">modulation</span></code></dt>
+<dd>Frontend modulation type</dd>
+<dt><code class="docutils literal"><span class="pre">voltage</span></code></dt>
+<dd>SEC voltage (only Satellite)</dd>
+<dt><code class="docutils literal"><span class="pre">sectone</span></code></dt>
+<dd>SEC tone mode (only Satellite)</dd>
+<dt><code class="docutils literal"><span class="pre">inversion</span></code></dt>
+<dd>Spectral inversion</dd>
+<dt><code class="docutils literal"><span class="pre">fec_inner</span></code></dt>
+<dd>Forward error correction inner Code Rate</dd>
+<dt><code class="docutils literal"><span class="pre">transmission_mode</span></code></dt>
+<dd>Transmission Mode</dd>
+<dt><code class="docutils literal"><span class="pre">bandwidth_hz</span></code></dt>
+<dd>Bandwidth, in Hz. A zero value means that userspace
+wants to autodetect.</dd>
+<dt><code class="docutils literal"><span class="pre">guard_interval</span></code></dt>
+<dd>Guard Interval</dd>
+<dt><code class="docutils literal"><span class="pre">hierarchy</span></code></dt>
+<dd>Hierarchy</dd>
+<dt><code class="docutils literal"><span class="pre">symbol_rate</span></code></dt>
+<dd>Symbol Rate</dd>
+<dt><code class="docutils literal"><span class="pre">code_rate_HP</span></code></dt>
+<dd>high priority stream code rate</dd>
+<dt><code class="docutils literal"><span class="pre">code_rate_LP</span></code></dt>
+<dd>low priority stream code rate</dd>
+<dt><code class="docutils literal"><span class="pre">pilot</span></code></dt>
+<dd>Enable/disable/autodetect pilot tones</dd>
+<dt><code class="docutils literal"><span class="pre">rolloff</span></code></dt>
+<dd>Rolloff factor (alpha)</dd>
+<dt><code class="docutils literal"><span class="pre">delivery_system</span></code></dt>
+<dd>FE delivery system (e. g. digital TV standard)</dd>
+<dt><code class="docutils literal"><span class="pre">interleaving</span></code></dt>
+<dd>interleaving</dd>
+<dt><code class="docutils literal"><span class="pre">isdbt_partial_reception</span></code></dt>
+<dd>ISDB-T partial reception (only ISDB standard)</dd>
+<dt><code class="docutils literal"><span class="pre">isdbt_sb_mode</span></code></dt>
+<dd>ISDB-T Sound Broadcast (SB) mode (only ISDB standard)</dd>
+<dt><code class="docutils literal"><span class="pre">isdbt_sb_subchannel</span></code></dt>
+<dd>ISDB-T SB subchannel (only ISDB standard)</dd>
+<dt><code class="docutils literal"><span class="pre">isdbt_sb_segment_idx</span></code></dt>
+<dd>ISDB-T SB segment index (only ISDB standard)</dd>
+<dt><code class="docutils literal"><span class="pre">isdbt_sb_segment_count</span></code></dt>
+<dd>ISDB-T SB segment count (only ISDB standard)</dd>
+<dt><code class="docutils literal"><span class="pre">isdbt_layer_enabled</span></code></dt>
+<dd>ISDB Layer enabled (only ISDB standard)</dd>
+<dt><code class="docutils literal"><span class="pre">layer</span></code></dt>
+<dd>per layer interleaving.</dd>
+<dt><code class="docutils literal"><span class="pre">stream_id</span></code></dt>
+<dd>If different than zero, enable substream filtering, if
+hardware supports (DVB-S2 and DVB-T2).</dd>
+<dt><code class="docutils literal"><span class="pre">atscmh_fic_ver</span></code></dt>
+<dd>Version number of the FIC (Fast Information Channel)
+signaling data (only ATSC-M/H)</dd>
+<dt><code class="docutils literal"><span class="pre">atscmh_parade_id</span></code></dt>
+<dd>Parade identification number (only ATSC-M/H)</dd>
+<dt><code class="docutils literal"><span class="pre">atscmh_nog</span></code></dt>
+<dd>Number of MH groups per MH subframe for a designated
+parade (only ATSC-M/H)</dd>
+<dt><code class="docutils literal"><span class="pre">atscmh_tnog</span></code></dt>
+<dd>Total number of MH groups including all MH groups
+belonging to all MH parades in one MH subframe
+(only ATSC-M/H)</dd>
+<dt><code class="docutils literal"><span class="pre">atscmh_sgn</span></code></dt>
+<dd>Start group number (only ATSC-M/H)</dd>
+<dt><code class="docutils literal"><span class="pre">atscmh_prc</span></code></dt>
+<dd>Parade repetition cycle (only ATSC-M/H)</dd>
+<dt><code class="docutils literal"><span class="pre">atscmh_rs_frame_mode</span></code></dt>
+<dd>Reed Solomon (RS) frame mode (only ATSC-M/H)</dd>
+<dt><code class="docutils literal"><span class="pre">atscmh_rs_frame_ensemble</span></code></dt>
+<dd>RS frame ensemble (only ATSC-M/H)</dd>
+<dt><code class="docutils literal"><span class="pre">atscmh_rs_code_mode_pri</span></code></dt>
+<dd>RS code mode pri (only ATSC-M/H)</dd>
+<dt><code class="docutils literal"><span class="pre">atscmh_rs_code_mode_sec</span></code></dt>
+<dd>RS code mode sec (only ATSC-M/H)</dd>
+<dt><code class="docutils literal"><span class="pre">atscmh_sccc_block_mode</span></code></dt>
+<dd>Series Concatenated Convolutional Code (SCCC)
+Block Mode (only ATSC-M/H)</dd>
+<dt><code class="docutils literal"><span class="pre">atscmh_sccc_code_mode_a</span></code></dt>
+<dd>SCCC code mode A (only ATSC-M/H)</dd>
+<dt><code class="docutils literal"><span class="pre">atscmh_sccc_code_mode_b</span></code></dt>
+<dd>SCCC code mode B (only ATSC-M/H)</dd>
+<dt><code class="docutils literal"><span class="pre">atscmh_sccc_code_mode_c</span></code></dt>
+<dd>SCCC code mode C (only ATSC-M/H)</dd>
+<dt><code class="docutils literal"><span class="pre">atscmh_sccc_code_mode_d</span></code></dt>
+<dd>SCCC code mode D (only ATSC-M/H)</dd>
+<dt><code class="docutils literal"><span class="pre">lna</span></code></dt>
+<dd>Power ON/OFF/AUTO the Linear Now-noise Amplifier (LNA)</dd>
+<dt><code class="docutils literal"><span class="pre">strength</span></code></dt>
+<dd>DVBv5 API statistics: Signal Strength</dd>
+<dt><code class="docutils literal"><span class="pre">cnr</span></code></dt>
+<dd>DVBv5 API statistics: Signal to Noise ratio of the
+(main) carrier</dd>
+<dt><code class="docutils literal"><span class="pre">pre_bit_error</span></code></dt>
+<dd>DVBv5 API statistics: pre-Viterbi bit error count</dd>
+<dt><code class="docutils literal"><span class="pre">pre_bit_count</span></code></dt>
+<dd>DVBv5 API statistics: pre-Viterbi bit count</dd>
+<dt><code class="docutils literal"><span class="pre">post_bit_error</span></code></dt>
+<dd>DVBv5 API statistics: post-Viterbi bit error count</dd>
+<dt><code class="docutils literal"><span class="pre">post_bit_count</span></code></dt>
+<dd>DVBv5 API statistics: post-Viterbi bit count</dd>
+<dt><code class="docutils literal"><span class="pre">block_error</span></code></dt>
+<dd>DVBv5 API statistics: block error count</dd>
+<dt><code class="docutils literal"><span class="pre">block_count</span></code></dt>
+<dd>DVBv5 API statistics: block count</dd>
+</dl>
+<p><strong>NOTE</strong></p>
+<p>derivated statistics like Uncorrected Error blocks (UCE) are
+calculated on userspace.</p>
+<p>Only a subset of the properties are needed for a given delivery system.
+For more info, consult the media_api.html with the documentation of the
+Userspace API.</p>
+<dl class="type">
+<dt id="c.dvb_frontend">
+struct <code class="descname">dvb_frontend</code><a class="headerlink" href="#c.dvb_frontend" title="Permalink to this definition">¶</a></dt>
+<dd><p>Frontend structure to be used on drivers.</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>struct dvb_frontend {
+  struct kref refcount;
+  struct dvb_frontend_ops ops;
+  struct dvb_adapter * dvb;
+  void * demodulator_priv;
+  void * tuner_priv;
+  void * frontend_priv;
+  void * sec_priv;
+  void * analog_demod_priv;
+  struct dtv_frontend_properties dtv_property_cache;
+#define DVB_FRONTEND_COMPONENT_TUNER 0
+#define DVB_FRONTEND_COMPONENT_DEMOD 1
+  int (* callback) (void *adapter_priv, int component, int cmd, int arg);
+  int id;
+  unsigned int exit;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">refcount</span></code></dt>
+<dd>refcount to keep track of struct dvb_frontend
+references</dd>
+<dt><code class="docutils literal"><span class="pre">ops</span></code></dt>
+<dd>embedded struct dvb_frontend_ops</dd>
+<dt><code class="docutils literal"><span class="pre">dvb</span></code></dt>
+<dd>pointer to struct dvb_adapter</dd>
+<dt><code class="docutils literal"><span class="pre">demodulator_priv</span></code></dt>
+<dd>demod private data</dd>
+<dt><code class="docutils literal"><span class="pre">tuner_priv</span></code></dt>
+<dd>tuner private data</dd>
+<dt><code class="docutils literal"><span class="pre">frontend_priv</span></code></dt>
+<dd>frontend private data</dd>
+<dt><code class="docutils literal"><span class="pre">sec_priv</span></code></dt>
+<dd>SEC private data</dd>
+<dt><code class="docutils literal"><span class="pre">analog_demod_priv</span></code></dt>
+<dd>Analog demod private data</dd>
+<dt><code class="docutils literal"><span class="pre">dtv_property_cache</span></code></dt>
+<dd>embedded struct dtv_frontend_properties</dd>
+<dt><code class="docutils literal"><span class="pre">callback</span></code></dt>
+<dd>callback function used on some drivers to call
+either the tuner or the demodulator.</dd>
+<dt><code class="docutils literal"><span class="pre">id</span></code></dt>
+<dd>Frontend ID</dd>
+<dt><code class="docutils literal"><span class="pre">exit</span></code></dt>
+<dd>Used to inform the DVB core that the frontend
+thread should exit (usually, means that the hardware
+got disconnected.</dd>
+</dl>
+<dl class="function">
+<dt id="c.dvb_register_frontend">
+int <code class="descname">dvb_register_frontend</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_adapter" title="dvb_adapter">dvb_adapter</a> *<em>&nbsp;dvb</em>, struct <a class="reference internal" href="#c.dvb_frontend" title="dvb_frontend">dvb_frontend</a> *<em>&nbsp;fe</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_register_frontend" title="Permalink to this definition">¶</a></dt>
+<dd><p>Registers a DVB frontend at the adapter</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_adapter</span> <span class="pre">*</span> <span class="pre">dvb</span></code></dt>
+<dd>pointer to the dvb adapter</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_frontend</span> <span class="pre">*</span> <span class="pre">fe</span></code></dt>
+<dd>pointer to the frontend struct</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Allocate and initialize the private data needed by the frontend core to
+manage the frontend and calls <a class="reference internal" href="#c.dvb_register_device" title="dvb_register_device"><code class="xref c c-func docutils literal"><span class="pre">dvb_register_device()</span></code></a> to register a new
+frontend. It also cleans the property cache that stores the frontend
+parameters and selects the first available delivery system.</p>
+<dl class="function">
+<dt id="c.dvb_unregister_frontend">
+int <code class="descname">dvb_unregister_frontend</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_frontend" title="dvb_frontend">dvb_frontend</a> *<em>&nbsp;fe</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_unregister_frontend" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unregisters a DVB frontend</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_frontend</span> <span class="pre">*</span> <span class="pre">fe</span></code></dt>
+<dd>pointer to the frontend struct</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Stops the frontend kthread, calls <a class="reference internal" href="#c.dvb_unregister_device" title="dvb_unregister_device"><code class="xref c c-func docutils literal"><span class="pre">dvb_unregister_device()</span></code></a> and frees the
+private frontend data allocated by <a class="reference internal" href="#c.dvb_register_frontend" title="dvb_register_frontend"><code class="xref c c-func docutils literal"><span class="pre">dvb_register_frontend()</span></code></a>.</p>
+<p><strong>NOTE</strong></p>
+<p>This function doesn&#8217;t frees the memory allocated by the demod,
+by the SEC driver and by the tuner. In order to free it, an explicit call to
+<a class="reference internal" href="#c.dvb_frontend_detach" title="dvb_frontend_detach"><code class="xref c c-func docutils literal"><span class="pre">dvb_frontend_detach()</span></code></a> is needed, after calling this function.</p>
+<dl class="function">
+<dt id="c.dvb_frontend_detach">
+void <code class="descname">dvb_frontend_detach</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_frontend" title="dvb_frontend">dvb_frontend</a> *<em>&nbsp;fe</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_frontend_detach" title="Permalink to this definition">¶</a></dt>
+<dd><p>Detaches and frees frontend specific data</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_frontend</span> <span class="pre">*</span> <span class="pre">fe</span></code></dt>
+<dd>pointer to the frontend struct</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This function should be called after <a class="reference internal" href="#c.dvb_unregister_frontend" title="dvb_unregister_frontend"><code class="xref c c-func docutils literal"><span class="pre">dvb_unregister_frontend()</span></code></a>. It
+calls the SEC, tuner and demod release functions:
+<a class="reference internal" href="#c.dvb_frontend_ops" title="dvb_frontend_ops"><code class="xref c c-type docutils literal"><span class="pre">dvb_frontend_ops.release_sec</span></code></a>, <a class="reference internal" href="#c.dvb_frontend_ops" title="dvb_frontend_ops"><code class="xref c c-type docutils literal"><span class="pre">dvb_frontend_ops.tuner_ops</span></code></a>.release,
+<a class="reference internal" href="#c.dvb_frontend_ops" title="dvb_frontend_ops"><code class="xref c c-type docutils literal"><span class="pre">dvb_frontend_ops.analog_ops</span></code></a>.release and <a class="reference internal" href="#c.dvb_frontend_ops" title="dvb_frontend_ops"><code class="xref c c-type docutils literal"><span class="pre">dvb_frontend_ops.release</span></code></a>.</p>
+<p>If the driver is compiled with CONFIG_MEDIA_ATTACH, it also decreases
+the module reference count, needed to allow userspace to remove the
+previously used DVB frontend modules.</p>
+<dl class="function">
+<dt id="c.dvb_frontend_suspend">
+int <code class="descname">dvb_frontend_suspend</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_frontend" title="dvb_frontend">dvb_frontend</a> *<em>&nbsp;fe</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_frontend_suspend" title="Permalink to this definition">¶</a></dt>
+<dd><p>Suspends a Digital TV frontend</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_frontend</span> <span class="pre">*</span> <span class="pre">fe</span></code></dt>
+<dd>pointer to the frontend struct</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This function prepares a Digital TV frontend to suspend.</p>
+<p>In order to prepare the tuner to suspend, if
+<a class="reference internal" href="#c.dvb_frontend_ops" title="dvb_frontend_ops"><code class="xref c c-type docutils literal"><span class="pre">dvb_frontend_ops.tuner_ops</span></code></a>.suspend() is available, it calls it. Otherwise,
+it will call <a class="reference internal" href="#c.dvb_frontend_ops" title="dvb_frontend_ops"><code class="xref c c-type docutils literal"><span class="pre">dvb_frontend_ops.tuner_ops</span></code></a>.sleep(), if available.</p>
+<p>It will also call <a class="reference internal" href="#c.dvb_frontend_ops" title="dvb_frontend_ops"><code class="xref c c-type docutils literal"><span class="pre">dvb_frontend_ops.sleep</span></code></a>() to put the demod to suspend.</p>
+<p>The drivers should also call dvb_frontend_suspend() as part of their
+handler for the <a class="reference internal" href="../../driver-api/infrastructure.html#c.device_driver" title="device_driver"><code class="xref c c-type docutils literal"><span class="pre">device_driver.suspend</span></code></a>().</p>
+<dl class="function">
+<dt id="c.dvb_frontend_resume">
+int <code class="descname">dvb_frontend_resume</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_frontend" title="dvb_frontend">dvb_frontend</a> *<em>&nbsp;fe</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_frontend_resume" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resumes a Digital TV frontend</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_frontend</span> <span class="pre">*</span> <span class="pre">fe</span></code></dt>
+<dd>pointer to the frontend struct</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This function resumes the usual operation of the tuner after resume.</p>
+<p>In order to resume the frontend, it calls the demod <a class="reference internal" href="#c.dvb_frontend_ops" title="dvb_frontend_ops"><code class="xref c c-type docutils literal"><span class="pre">dvb_frontend_ops.init</span></code></a>().</p>
+<p>If <a class="reference internal" href="#c.dvb_frontend_ops" title="dvb_frontend_ops"><code class="xref c c-type docutils literal"><span class="pre">dvb_frontend_ops.tuner_ops</span></code></a>.resume() is available, It, it calls it.
+Otherwise,t will call <a class="reference internal" href="#c.dvb_frontend_ops" title="dvb_frontend_ops"><code class="xref c c-type docutils literal"><span class="pre">dvb_frontend_ops.tuner_ops</span></code></a>.init(), if available.</p>
+<p>Once tuner and demods are resumed, it will enforce that the SEC voltage and
+tone are restored to their previous values and wake up the frontend&#8217;s
+kthread in order to retune the frontend.</p>
+<p>The drivers should also call <a class="reference internal" href="#c.dvb_frontend_resume" title="dvb_frontend_resume"><code class="xref c c-func docutils literal"><span class="pre">dvb_frontend_resume()</span></code></a> as part of their
+handler for the <a class="reference internal" href="../../driver-api/infrastructure.html#c.device_driver" title="device_driver"><code class="xref c c-type docutils literal"><span class="pre">device_driver.resume</span></code></a>().</p>
+<dl class="function">
+<dt id="c.dvb_frontend_reinitialise">
+void <code class="descname">dvb_frontend_reinitialise</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_frontend" title="dvb_frontend">dvb_frontend</a> *<em>&nbsp;fe</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_frontend_reinitialise" title="Permalink to this definition">¶</a></dt>
+<dd><p>forces a reinitialisation at the frontend</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_frontend</span> <span class="pre">*</span> <span class="pre">fe</span></code></dt>
+<dd>pointer to the frontend struct</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Calls <a class="reference internal" href="#c.dvb_frontend_ops" title="dvb_frontend_ops"><code class="xref c c-type docutils literal"><span class="pre">dvb_frontend_ops.init</span></code></a>() and <a class="reference internal" href="#c.dvb_frontend_ops" title="dvb_frontend_ops"><code class="xref c c-type docutils literal"><span class="pre">dvb_frontend_ops.tuner_ops</span></code></a>.init(),
+and resets SEC tone and voltage (for Satellite systems).</p>
+<p><strong>NOTE</strong></p>
+<p>Currently, this function is used only by one driver (budget-av).
+It seems to be due to address some special issue with that specific
+frontend.</p>
+<dl class="function">
+<dt id="c.dvb_frontend_sleep_until">
+void <code class="descname">dvb_frontend_sleep_until</code><span class="sig-paren">(</span>ktime_t *<em>&nbsp;waketime</em>, u32<em>&nbsp;add_usec</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_frontend_sleep_until" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sleep for the amount of time given by add_usec parameter</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">ktime_t</span> <span class="pre">*</span> <span class="pre">waketime</span></code></dt>
+<dd>pointer to a struct ktime_t</dd>
+<dt><code class="docutils literal"><span class="pre">u32</span> <span class="pre">add_usec</span></code></dt>
+<dd>time to sleep, in microseconds</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This function is used to measure the time required for the
+<code class="docutils literal"><span class="pre">FE_DISHNETWORK_SEND_LEGACY_CMD</span></code> ioctl to work. It needs to be as precise
+as possible, as it affects the detection of the dish tone command at the
+satellite subsystem.</p>
+<p>Its used internally by the DVB frontend core, in order to emulate
+<code class="docutils literal"><span class="pre">FE_DISHNETWORK_SEND_LEGACY_CMD</span></code> using the <a class="reference internal" href="#c.dvb_frontend_ops" title="dvb_frontend_ops"><code class="xref c c-type docutils literal"><span class="pre">dvb_frontend_ops.set_voltage</span></code></a>()
+callback.</p>
+<p><strong>NOTE</strong></p>
+<p>it should not be used at the drivers, as the emulation for the
+legacy callback is provided by the Kernel. The only situation where this
+should be at the drivers is when there are some bugs at the hardware that
+would prevent the core emulation to work. On such cases, the driver would
+be writing a <a class="reference internal" href="#c.dvb_frontend_ops" title="dvb_frontend_ops"><code class="xref c c-type docutils literal"><span class="pre">dvb_frontend_ops.dishnetwork_send_legacy_command</span></code></a>() and
+calling this function directly.</p>
+</div>
+</div>
+<div class="section" id="digital-tv-demux-kabi">
+<h1>6. Digital TV Demux kABI<a class="headerlink" href="#digital-tv-demux-kabi" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="digital-tv-demux">
+<h2>6.1. Digital TV Demux<a class="headerlink" href="#digital-tv-demux" title="Permalink to this headline">¶</a></h2>
+<p>The Kernel Digital TV Demux kABI defines a driver-internal interface for
+registering low-level, hardware specific driver to a hardware independent
+demux layer. It is only of interest for Digital TV device driver writers.
+The header file for this kABI is named demux.h and located in
+drivers/media/dvb-core.</p>
+<p>The demux kABI should be implemented for each demux in the system. It is
+used to select the TS source of a demux and to manage the demux resources.
+When the demux client allocates a resource via the demux kABI, it receives
+a pointer to the kABI of that resource.</p>
+<p>Each demux receives its TS input from a DVB front-end or from memory, as
+set via this demux kABI. In a system with more than one front-end, the kABI
+can be used to select one of the DVB front-ends as a TS source for a demux,
+unless this is fixed in the HW platform.</p>
+<p>The demux kABI only controls front-ends regarding to their connections with
+demuxes; the kABI used to set the other front-end parameters, such as
+tuning, are devined via the Digital TV Frontend kABI.</p>
+<p>The functions that implement the abstract interface demux should be defined
+static or module private and registered to the Demux core for external
+access. It is not necessary to implement every function in the struct
+&amp;dmx_demux. For example, a demux interface might support Section filtering,
+but not PES filtering. The kABI client is expected to check the value of any
+function pointer before calling the function: the value of <code class="docutils literal"><span class="pre">NULL</span></code> means
+that the function is not available.</p>
+<p>Whenever the functions of the demux API modify shared data, the
+possibilities of lost update and race condition problems should be
+addressed, e.g. by protecting parts of code with mutexes.</p>
+<p>Note that functions called from a bottom half context must not sleep.
+Even a simple memory allocation without using <code class="docutils literal"><span class="pre">GFP_ATOMIC</span></code> can result in a
+kernel thread being put to sleep if swapping is needed. For example, the
+Linux Kernel calls the functions of a network device interface from a
+bottom half context. Thus, if a demux kABI function is called from network
+device code, the function must not sleep.</p>
+</div>
+</div>
+<div class="section" id="demux-callback-api">
+<h1>7. Demux Callback API<a class="headerlink" href="#demux-callback-api" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="demux-callback">
+<h2>7.1. Demux Callback<a class="headerlink" href="#demux-callback" title="Permalink to this headline">¶</a></h2>
+<p>This kernel-space API comprises the callback functions that deliver filtered
+data to the demux client. Unlike the other DVB kABIs, these functions are
+provided by the client and called from the demux code.</p>
+<p>The function pointers of this abstract interface are not packed into a
+structure as in the other demux APIs, because the callback functions are
+registered and used independent of each other. As an example, it is possible
+for the API client to provide several callback functions for receiving TS
+packets and no callbacks for PES packets or sections.</p>
+<p>The functions that implement the callback API need not be re-entrant: when
+a demux driver calls one of these functions, the driver is not allowed to
+call the function again before the original call returns. If a callback is
+triggered by a hardware interrupt, it is recommended to use the Linux
+bottom half mechanism or start a tasklet instead of making the callback
+function call directly from a hardware interrupt.</p>
+<p>This mechanism is implemented by <a class="reference internal" href="#c.dmx_ts_cb" title="dmx_ts_cb"><code class="xref c c-func docutils literal"><span class="pre">dmx_ts_cb()</span></code></a> and <a class="reference internal" href="#c.dmx_section_cb" title="dmx_section_cb"><code class="xref c c-func docutils literal"><span class="pre">dmx_section_cb()</span></code></a>
+callbacks.</p>
+<dl class="type">
+<dt id="c.ts_filter_type">
+enum <code class="descname">ts_filter_type</code><a class="headerlink" href="#c.ts_filter_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>filter type bitmap for dmx_ts_feed.set()</p>
+</dd></dl>
+
+<p><strong>Constants</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">TS_PACKET</span></code></dt>
+<dd>Send TS packets (188 bytes) to callback (default).</dd>
+<dt><code class="docutils literal"><span class="pre">TS_PAYLOAD_ONLY</span></code></dt>
+<dd>In case TS_PACKET is set, only send the TS payload
+(&lt;=184 bytes per packet) to callback</dd>
+<dt><code class="docutils literal"><span class="pre">TS_DECODER</span></code></dt>
+<dd>Send stream to built-in decoder (if present).</dd>
+<dt><code class="docutils literal"><span class="pre">TS_DEMUX</span></code></dt>
+<dd>In case TS_PACKET is set, send the TS to the demux
+device, not to the dvr device</dd>
+</dl>
+<dl class="type">
+<dt id="c.dmx_ts_feed">
+struct <code class="descname">dmx_ts_feed</code><a class="headerlink" href="#c.dmx_ts_feed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Structure that contains a TS feed filter</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>struct dmx_ts_feed {
+  int is_filtering;
+  struct dmx_demux * parent;
+  void * priv;
+  int (* set) (struct dmx_ts_feed *feed,u16 pid,int type,enum dmx_ts_pes pes_type,ktime_t timeout);
+  int (* start_filtering) (struct dmx_ts_feed *feed);
+  int (* stop_filtering) (struct dmx_ts_feed *feed);
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">is_filtering</span></code></dt>
+<dd>Set to non-zero when filtering in progress</dd>
+<dt><code class="docutils literal"><span class="pre">parent</span></code></dt>
+<dd>pointer to struct dmx_demux</dd>
+<dt><code class="docutils literal"><span class="pre">priv</span></code></dt>
+<dd>pointer to private data of the API client</dd>
+<dt><code class="docutils literal"><span class="pre">set</span></code></dt>
+<dd>sets the TS filter</dd>
+<dt><code class="docutils literal"><span class="pre">start_filtering</span></code></dt>
+<dd>starts TS filtering</dd>
+<dt><code class="docutils literal"><span class="pre">stop_filtering</span></code></dt>
+<dd>stops TS filtering</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>A TS feed is typically mapped to a hardware PID filter on the demux chip.
+Using this API, the client can set the filtering properties to start/stop
+filtering TS packets on a particular TS feed.</p>
+<dl class="type">
+<dt id="c.dmx_section_filter">
+struct <code class="descname">dmx_section_filter</code><a class="headerlink" href="#c.dmx_section_filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Structure that describes a section filter</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>struct dmx_section_filter {
+  u8 filter_value;
+  u8 filter_mask;
+  u8 filter_mode;
+  struct dmx_section_feed * parent;
+  void * priv;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">filter_value</span></code></dt>
+<dd>Contains up to 16 bytes (128 bits) of the TS section header
+that will be matched by the section filter</dd>
+<dt><code class="docutils literal"><span class="pre">filter_mask</span></code></dt>
+<dd>Contains a 16 bytes (128 bits) filter mask with the bits
+specified by <strong>filter_value</strong> that will be used on the filter
+match logic.</dd>
+<dt><code class="docutils literal"><span class="pre">filter_mode</span></code></dt>
+<dd>Contains a 16 bytes (128 bits) filter mode.</dd>
+<dt><code class="docutils literal"><span class="pre">parent</span></code></dt>
+<dd>Pointer to struct dmx_section_feed.</dd>
+<dt><code class="docutils literal"><span class="pre">priv</span></code></dt>
+<dd>Pointer to private data of the API client.</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>The <strong>filter_mask</strong> controls which bits of <strong>filter_value</strong> are compared with
+the section headers/payload. On a binary value of 1 in filter_mask, the
+corresponding bits are compared. The filter only accepts sections that are
+equal to filter_value in all the tested bit positions.</p>
+<dl class="type">
+<dt id="c.dmx_section_feed">
+struct <code class="descname">dmx_section_feed</code><a class="headerlink" href="#c.dmx_section_feed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Structure that contains a section feed filter</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>struct dmx_section_feed {
+  int is_filtering;
+  struct dmx_demux * parent;
+  void * priv;
+  int check_crc;
+  int (* set) (struct dmx_section_feed *feed,u16 pid,int check_crc);
+  int (* allocate_filter) (struct dmx_section_feed *feed,struct dmx_section_filter **filter);
+  int (* release_filter) (struct dmx_section_feed *feed,struct dmx_section_filter *filter);
+  int (* start_filtering) (struct dmx_section_feed *feed);
+  int (* stop_filtering) (struct dmx_section_feed *feed);
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">is_filtering</span></code></dt>
+<dd>Set to non-zero when filtering in progress</dd>
+<dt><code class="docutils literal"><span class="pre">parent</span></code></dt>
+<dd>pointer to struct dmx_demux</dd>
+<dt><code class="docutils literal"><span class="pre">priv</span></code></dt>
+<dd>pointer to private data of the API client</dd>
+<dt><code class="docutils literal"><span class="pre">check_crc</span></code></dt>
+<dd>If non-zero, check the CRC values of filtered sections.</dd>
+<dt><code class="docutils literal"><span class="pre">set</span></code></dt>
+<dd>sets the section filter</dd>
+<dt><code class="docutils literal"><span class="pre">allocate_filter</span></code></dt>
+<dd>This function is used to allocate a section filter on
+the demux. It should only be called when no filtering
+is in progress on this section feed. If a filter cannot
+be allocated, the function fails with -ENOSPC.</dd>
+<dt><code class="docutils literal"><span class="pre">release_filter</span></code></dt>
+<dd>This function releases all the resources of a
+previously allocated section filter. The function
+should not be called while filtering is in progress
+on this section feed. After calling this function,
+the caller should not try to dereference the filter
+pointer.</dd>
+<dt><code class="docutils literal"><span class="pre">start_filtering</span></code></dt>
+<dd>starts section filtering</dd>
+<dt><code class="docutils literal"><span class="pre">stop_filtering</span></code></dt>
+<dd>stops section filtering</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>A TS feed is typically mapped to a hardware PID filter on the demux chip.
+Using this API, the client can set the filtering properties to start/stop
+filtering TS packets on a particular TS feed.</p>
+<dl class="type">
+<dt id="c.dmx_ts_cb">
+<code class="descname">dmx_ts_cb</code><a class="headerlink" href="#c.dmx_ts_cb" title="Permalink to this definition">¶</a></dt>
+<dd><p><strong>Typedef</strong>: DVB demux TS filter callback function prototype</p>
+</dd></dl>
+
+<p><strong>Syntax</strong></p>
+<blockquote>
+<div><code class="docutils literal"><span class="pre">int</span> <span class="pre">dmx_ts_cb</span> <span class="pre">(const</span> <span class="pre">u8</span> <span class="pre">*</span> <span class="pre">buffer1,</span> <span class="pre">size_t</span> <span class="pre">buffer1_length,</span> <span class="pre">const</span> <span class="pre">u8</span> <span class="pre">*</span> <span class="pre">buffer2,</span> <span class="pre">size_t</span> <span class="pre">buffer2_length,</span> <span class="pre">struct</span> <span class="pre">dmx_ts_feed</span> <span class="pre">*</span> <span class="pre">source);</span></code></div></blockquote>
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">const</span> <span class="pre">u8</span> <span class="pre">*</span> <span class="pre">buffer1</span></code></dt>
+<dd>Pointer to the start of the filtered TS packets.</dd>
+<dt><code class="docutils literal"><span class="pre">size_t</span> <span class="pre">buffer1_length</span></code></dt>
+<dd>Length of the TS data in buffer1.</dd>
+<dt><code class="docutils literal"><span class="pre">const</span> <span class="pre">u8</span> <span class="pre">*</span> <span class="pre">buffer2</span></code></dt>
+<dd>Pointer to the tail of the filtered TS packets, or NULL.</dd>
+<dt><code class="docutils literal"><span class="pre">size_t</span> <span class="pre">buffer2_length</span></code></dt>
+<dd>Length of the TS data in buffer2.</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dmx_ts_feed</span> <span class="pre">*</span> <span class="pre">source</span></code></dt>
+<dd>Indicates which TS feed is the source of the callback.</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This function callback prototype, provided by the client of the demux API,
+is called from the demux code. The function is only called when filtering
+on a TS feed has been enabled using the start_filtering() function at
+the <a class="reference internal" href="#c.dmx_demux" title="dmx_demux"><code class="xref c c-type docutils literal"><span class="pre">dmx_demux</span></code></a>.
+Any TS packets that match the filter settings are copied to a circular
+buffer. The filtered TS packets are delivered to the client using this
+callback function.
+It is expected that the <strong>buffer1</strong> and <strong>buffer2</strong> callback parameters point to
+addresses within the circular buffer, but other implementations are also
+possible. Note that the called party should not try to free the memory
+the <strong>buffer1</strong> and <strong>buffer2</strong> parameters point to.</p>
+<p>When this function is called, the <strong>buffer1</strong> parameter typically points to
+the start of the first undelivered TS packet within a circular buffer.
+The <strong>buffer2</strong> buffer parameter is normally NULL, except when the received
+TS packets have crossed the last address of the circular buffer and
+”wrapped” to the beginning of the buffer. In the latter case the <strong>buffer1</strong>
+parameter would contain an address within the circular buffer, while the
+<strong>buffer2</strong> parameter would contain the first address of the circular buffer.
+The number of bytes delivered with this function (i.e. <strong>buffer1_length</strong> +
+<strong>buffer2_length</strong>) is usually equal to the value of callback_length parameter
+given in the <code class="xref c c-func docutils literal"><span class="pre">set()</span></code> function, with one exception: if a timeout occurs before
+receiving callback_length bytes of TS data, any undelivered packets are
+immediately delivered to the client by calling this function. The timeout
+duration is controlled by the <code class="xref c c-func docutils literal"><span class="pre">set()</span></code> function in the TS Feed API.</p>
+<p>If a TS packet is received with errors that could not be fixed by the
+TS-level forward error correction (FEC), the Transport_error_indicator
+flag of the TS packet header should be set. The TS packet should not be
+discarded, as the error can possibly be corrected by a higher layer
+protocol. If the called party is slow in processing the callback, it
+is possible that the circular buffer eventually fills up. If this happens,
+the demux driver should discard any TS packets received while the buffer
+is full and return -EOVERFLOW.</p>
+<p>The type of data returned to the callback can be selected by the
+<a class="reference internal" href="#c.dmx_ts_feed" title="dmx_ts_feed"><code class="xref c c-type docutils literal"><span class="pre">dmx_ts_feed</span></code></a>.**set** function. The type parameter decides if the raw
+TS packet (TS_PACKET) or just the payload (TS_PACKET|TS_PAYLOAD_ONLY)
+should be returned. If additionally the TS_DECODER bit is set the stream
+will also be sent to the hardware MPEG decoder.</p>
+<p><strong>Return</strong></p>
+<ul class="simple">
+<li>0, on success;</li>
+<li>-EOVERFLOW, on buffer overflow.</li>
+</ul>
+<dl class="type">
+<dt id="c.dmx_section_cb">
+<code class="descname">dmx_section_cb</code><a class="headerlink" href="#c.dmx_section_cb" title="Permalink to this definition">¶</a></dt>
+<dd><p><strong>Typedef</strong>: DVB demux TS filter callback function prototype</p>
+</dd></dl>
+
+<p><strong>Syntax</strong></p>
+<blockquote>
+<div><code class="docutils literal"><span class="pre">int</span> <span class="pre">dmx_section_cb</span> <span class="pre">(const</span> <span class="pre">u8</span> <span class="pre">*</span> <span class="pre">buffer1,</span> <span class="pre">size_t</span> <span class="pre">buffer1_len,</span> <span class="pre">const</span> <span class="pre">u8</span> <span class="pre">*</span> <span class="pre">buffer2,</span> <span class="pre">size_t</span> <span class="pre">buffer2_len,</span> <span class="pre">struct</span> <span class="pre">dmx_section_filter</span> <span class="pre">*</span> <span class="pre">source);</span></code></div></blockquote>
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">const</span> <span class="pre">u8</span> <span class="pre">*</span> <span class="pre">buffer1</span></code></dt>
+<dd>Pointer to the start of the filtered section, e.g.
+within the circular buffer of the demux driver.</dd>
+<dt><code class="docutils literal"><span class="pre">size_t</span> <span class="pre">buffer1_len</span></code></dt>
+<dd>Length of the filtered section data in <strong>buffer1</strong>,
+including headers and CRC.</dd>
+<dt><code class="docutils literal"><span class="pre">const</span> <span class="pre">u8</span> <span class="pre">*</span> <span class="pre">buffer2</span></code></dt>
+<dd>Pointer to the tail of the filtered section data,
+or NULL. Useful to handle the wrapping of a
+circular buffer.</dd>
+<dt><code class="docutils literal"><span class="pre">size_t</span> <span class="pre">buffer2_len</span></code></dt>
+<dd>Length of the filtered section data in <strong>buffer2</strong>,
+including headers and CRC.</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dmx_section_filter</span> <span class="pre">*</span> <span class="pre">source</span></code></dt>
+<dd>Indicates which section feed is the source of the
+callback.</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This function callback prototype, provided by the client of the demux API,
+is called from the demux code. The function is only called when
+filtering of sections has been enabled using the function
+<a class="reference internal" href="#c.dmx_ts_feed" title="dmx_ts_feed"><code class="xref c c-type docutils literal"><span class="pre">dmx_ts_feed</span></code></a>.**start_filtering**. When the demux driver has received a
+complete section that matches at least one section filter, the client
+is notified via this callback function. Normally this function is called
+for each received section; however, it is also possible to deliver
+multiple sections with one callback, for example when the system load
+is high. If an error occurs while receiving a section, this
+function should be called with the corresponding error type set in the
+success field, whether or not there is data to deliver. The Section Feed
+implementation should maintain a circular buffer for received sections.
+However, this is not necessary if the Section Feed API is implemented as
+a client of the TS Feed API, because the TS Feed implementation then
+buffers the received data. The size of the circular buffer can be
+configured using the <a class="reference internal" href="#c.dmx_ts_feed" title="dmx_ts_feed"><code class="xref c c-type docutils literal"><span class="pre">dmx_ts_feed</span></code></a>.**set** function in the Section Feed API.
+If there is no room in the circular buffer when a new section is received,
+the section must be discarded. If this happens, the value of the success
+parameter should be DMX_OVERRUN_ERROR on the next callback.</p>
+<dl class="type">
+<dt id="c.dmx_frontend_source">
+enum <code class="descname">dmx_frontend_source</code><a class="headerlink" href="#c.dmx_frontend_source" title="Permalink to this definition">¶</a></dt>
+<dd><p>Used to identify the type of frontend</p>
+</dd></dl>
+
+<p><strong>Constants</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">DMX_MEMORY_FE</span></code></dt>
+<dd>The source of the demux is memory. It means that
+the MPEG-TS to be filtered comes from userspace,
+via <a class="reference internal" href="../uapi/dvb/video-fwrite.html#c.write" title="write"><code class="xref c c-func docutils literal"><span class="pre">write()</span></code></a> syscall.</dd>
+<dt><code class="docutils literal"><span class="pre">DMX_FRONTEND_0</span></code></dt>
+<dd>The source of the demux is a frontend connected
+to the demux.</dd>
+</dl>
+<dl class="type">
+<dt id="c.dmx_frontend">
+struct <code class="descname">dmx_frontend</code><a class="headerlink" href="#c.dmx_frontend" title="Permalink to this definition">¶</a></dt>
+<dd><p>Structure that lists the frontends associated with a demux</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>struct dmx_frontend {
+  struct list_head connectivity_list;
+  enum dmx_frontend_source source;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">connectivity_list</span></code></dt>
+<dd>List of front-ends that can be connected to a
+particular demux;</dd>
+<dt><code class="docutils literal"><span class="pre">source</span></code></dt>
+<dd>Type of the frontend.</dd>
+</dl>
+<p><strong>Description</strong></p>
+<dl class="docutils">
+<dt>FIXME: this structure should likely be replaced soon by some</dt>
+<dd>media-controller based logic.</dd>
+</dl>
+<dl class="type">
+<dt id="c.dmx_demux_caps">
+enum <code class="descname">dmx_demux_caps</code><a class="headerlink" href="#c.dmx_demux_caps" title="Permalink to this definition">¶</a></dt>
+<dd><p>MPEG-2 TS Demux capabilities bitmap</p>
+</dd></dl>
+
+<p><strong>Constants</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">DMX_TS_FILTERING</span></code></dt>
+<dd>set if TS filtering is supported;</dd>
+<dt><code class="docutils literal"><span class="pre">DMX_SECTION_FILTERING</span></code></dt>
+<dd>set if section filtering is supported;</dd>
+<dt><code class="docutils literal"><span class="pre">DMX_MEMORY_BASED_FILTERING</span></code></dt>
+<dd>set if <a class="reference internal" href="../uapi/dvb/video-fwrite.html#c.write" title="write"><code class="xref c c-func docutils literal"><span class="pre">write()</span></code></a> available.</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Those flags are OR&#8217;ed in the <a class="reference internal" href="#c.dmx_demux" title="dmx_demux"><code class="xref c c-type docutils literal"><span class="pre">dmx_demux.capabilities</span></code></a> field</p>
+<dl class="function">
+<dt id="c.DMX_FE_ENTRY">
+<code class="descname">DMX_FE_ENTRY</code><span class="sig-paren">(</span><em>list</em><span class="sig-paren">)</span><a class="headerlink" href="#c.DMX_FE_ENTRY" title="Permalink to this definition">¶</a></dt>
+<dd><p>Casts elements in the list of registered front-ends from the generic type struct list_head to the type * struct dmx_frontend</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">list</span></code></dt>
+<dd>list of struct dmx_frontend</dd>
+</dl>
+<dl class="type">
+<dt id="c.dmx_demux">
+struct <code class="descname">dmx_demux</code><a class="headerlink" href="#c.dmx_demux" title="Permalink to this definition">¶</a></dt>
+<dd><p>Structure that contains the demux capabilities and callbacks.</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>struct dmx_demux {
+  enum dmx_demux_caps capabilities;
+  struct dmx_frontend * frontend;
+  void * priv;
+  int (* open) (struct dmx_demux *demux);
+  int (* close) (struct dmx_demux *demux);
+  int (* write) (struct dmx_demux *demux, const char __user *buf,size_t count);
+  int (* allocate_ts_feed) (struct dmx_demux *demux,struct dmx_ts_feed **feed,dmx_ts_cb callback);
+  int (* release_ts_feed) (struct dmx_demux *demux,struct dmx_ts_feed *feed);
+  int (* allocate_section_feed) (struct dmx_demux *demux,struct dmx_section_feed **feed,dmx_section_cb callback);
+  int (* release_section_feed) (struct dmx_demux *demux,struct dmx_section_feed *feed);
+  int (* add_frontend) (struct dmx_demux *demux,struct dmx_frontend *frontend);
+  int (* remove_frontend) (struct dmx_demux *demux,struct dmx_frontend *frontend);
+  struct list_head *(* get_frontends) (struct dmx_demux *demux);
+  int (* connect_frontend) (struct dmx_demux *demux,struct dmx_frontend *frontend);
+  int (* disconnect_frontend) (struct dmx_demux *demux);
+  int (* get_pes_pids) (struct dmx_demux *demux, u16 *pids);
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">capabilities</span></code></dt>
+<dd>Bitfield of capability flags.</dd>
+<dt><code class="docutils literal"><span class="pre">frontend</span></code></dt>
+<dd>Front-end connected to the demux</dd>
+<dt><code class="docutils literal"><span class="pre">priv</span></code></dt>
+<dd>Pointer to private data of the API client</dd>
+<dt><code class="docutils literal"><span class="pre">open</span></code></dt>
+<dd>This function reserves the demux for use by the caller and, if
+necessary, initializes the demux. When the demux is no longer needed,
+the function <strong>close</strong> should be called. It should be possible for
+multiple clients to access the demux at the same time. Thus, the
+function implementation should increment the demux usage count when
+<strong>open</strong> is called and decrement it when <strong>close</strong> is called.
+The <strong>demux</strong> function parameter contains a pointer to the demux API and
+instance data.
+It returns:
+0 on success;
+-EUSERS, if maximum usage count was reached;
+-EINVAL, on bad parameter.</dd>
+<dt><code class="docutils literal"><span class="pre">close</span></code></dt>
+<dd>This function reserves the demux for use by the caller and, if
+necessary, initializes the demux. When the demux is no longer needed,
+the function <strong>close</strong> should be called. It should be possible for
+multiple clients to access the demux at the same time. Thus, the
+function implementation should increment the demux usage count when
+<strong>open</strong> is called and decrement it when <strong>close</strong> is called.
+The <strong>demux</strong> function parameter contains a pointer to the demux API and
+instance data.
+It returns:
+0 on success;
+-ENODEV, if demux was not in use (e. g. no users);
+-EINVAL, on bad parameter.</dd>
+<dt><code class="docutils literal"><span class="pre">write</span></code></dt>
+<dd>This function provides the demux driver with a memory buffer
+containing TS packets. Instead of receiving TS packets from the DVB
+front-end, the demux driver software will read packets from memory.
+Any clients of this demux with active TS, PES or Section filters will
+receive filtered data via the Demux callback API (see 0). The function
+returns when all the data in the buffer has been consumed by the demux.
+Demux hardware typically cannot read TS from memory. If this is the
+case, memory-based filtering has to be implemented entirely in software.
+The <strong>demux</strong> function parameter contains a pointer to the demux API and
+instance data.
+The <strong>buf</strong> function parameter contains a pointer to the TS data in
+kernel-space memory.
+The <strong>count</strong> function parameter contains the length of the TS data.
+It returns:
+0 on success;
+-ERESTARTSYS, if mutex lock was interrupted;
+-EINTR, if a signal handling is pending;
+-ENODEV, if demux was removed;
+-EINVAL, on bad parameter.</dd>
+<dt><code class="docutils literal"><span class="pre">allocate_ts_feed</span></code></dt>
+<dd>Allocates a new TS feed, which is used to filter the TS
+packets carrying a certain PID. The TS feed normally corresponds to a
+hardware PID filter on the demux chip.
+The <strong>demux</strong> function parameter contains a pointer to the demux API and
+instance data.
+The <strong>feed</strong> function parameter contains a pointer to the TS feed API and
+instance data.
+The <strong>callback</strong> function parameter contains a pointer to the callback
+function for passing received TS packet.
+It returns:
+0 on success;
+-ERESTARTSYS, if mutex lock was interrupted;
+-EBUSY, if no more TS feeds is available;
+-EINVAL, on bad parameter.</dd>
+<dt><code class="docutils literal"><span class="pre">release_ts_feed</span></code></dt>
+<dd>Releases the resources allocated with <strong>allocate_ts_feed</strong>.
+Any filtering in progress on the TS feed should be stopped before
+calling this function.
+The <strong>demux</strong> function parameter contains a pointer to the demux API and
+instance data.
+The <strong>feed</strong> function parameter contains a pointer to the TS feed API and
+instance data.
+It returns:
+0 on success;
+-EINVAL on bad parameter.</dd>
+<dt><code class="docutils literal"><span class="pre">allocate_section_feed</span></code></dt>
+<dd>Allocates a new section feed, i.e. a demux resource
+for filtering and receiving sections. On platforms with hardware
+support for section filtering, a section feed is directly mapped to
+the demux HW. On other platforms, TS packets are first PID filtered in
+hardware and a hardware section filter then emulated in software. The
+caller obtains an API pointer of type dmx_section_feed_t as an out
+parameter. Using this API the caller can set filtering parameters and
+start receiving sections.
+The <strong>demux</strong> function parameter contains a pointer to the demux API and
+instance data.
+The <strong>feed</strong> function parameter contains a pointer to the TS feed API and
+instance data.
+The <strong>callback</strong> function parameter contains a pointer to the callback
+function for passing received TS packet.
+It returns:
+0 on success;
+-EBUSY, if no more TS feeds is available;
+-EINVAL, on bad parameter.</dd>
+<dt><code class="docutils literal"><span class="pre">release_section_feed</span></code></dt>
+<dd>Releases the resources allocated with
+<strong>allocate_section_feed</strong>, including allocated filters. Any filtering in
+progress on the section feed should be stopped before calling this
+function.
+The <strong>demux</strong> function parameter contains a pointer to the demux API and
+instance data.
+The <strong>feed</strong> function parameter contains a pointer to the TS feed API and
+instance data.
+It returns:
+0 on success;
+-EINVAL, on bad parameter.</dd>
+<dt><code class="docutils literal"><span class="pre">add_frontend</span></code></dt>
+<dd>Registers a connectivity between a demux and a front-end,
+i.e., indicates that the demux can be connected via a call to
+<strong>connect_frontend</strong> to use the given front-end as a TS source. The
+client of this function has to allocate dynamic or static memory for
+the frontend structure and initialize its fields before calling this
+function. This function is normally called during the driver
+initialization. The caller must not free the memory of the frontend
+struct before successfully calling <strong>remove_frontend</strong>.
+The <strong>demux</strong> function parameter contains a pointer to the demux API and
+instance data.
+The <strong>frontend</strong> function parameter contains a pointer to the front-end
+instance data.
+It returns:
+0 on success;
+-EINVAL, on bad parameter.</dd>
+<dt><code class="docutils literal"><span class="pre">remove_frontend</span></code></dt>
+<dd>Indicates that the given front-end, registered by a call
+to <strong>add_frontend</strong>, can no longer be connected as a TS source by this
+demux. The function should be called when a front-end driver or a demux
+driver is removed from the system. If the front-end is in use, the
+function fails with the return value of -EBUSY. After successfully
+calling this function, the caller can free the memory of the frontend
+struct if it was dynamically allocated before the <strong>add_frontend</strong>
+operation.
+The <strong>demux</strong> function parameter contains a pointer to the demux API and
+instance data.
+The <strong>frontend</strong> function parameter contains a pointer to the front-end
+instance data.
+It returns:
+0 on success;
+-ENODEV, if the front-end was not found,
+-EINVAL, on bad parameter.</dd>
+<dt><code class="docutils literal"><span class="pre">get_frontends</span></code></dt>
+<dd>Provides the APIs of the front-ends that have been
+registered for this demux. Any of the front-ends obtained with this
+call can be used as a parameter for <strong>connect_frontend</strong>. The include
+file demux.h contains the macro <a class="reference internal" href="#c.DMX_FE_ENTRY" title="DMX_FE_ENTRY"><code class="xref c c-func docutils literal"><span class="pre">DMX_FE_ENTRY()</span></code></a> for converting an
+element of the generic type struct <code class="xref c c-type docutils literal"><span class="pre">list_head</span></code> * to the type
+struct <a class="reference internal" href="#c.dmx_frontend" title="dmx_frontend"><code class="xref c c-type docutils literal"><span class="pre">dmx_frontend</span></code></a> <em>. The caller must not free the memory of any of
+the elements obtained via this function call.
+The **demux*</em> function parameter contains a pointer to the demux API and
+instance data.
+It returns a struct list_head pointer to the list of front-end
+interfaces, or NULL in the case of an empty list.</dd>
+<dt><code class="docutils literal"><span class="pre">connect_frontend</span></code></dt>
+<dd>Connects the TS output of the front-end to the input of
+the demux. A demux can only be connected to a front-end registered to
+the demux with the function <strong>add_frontend</strong>. It may or may not be
+possible to connect multiple demuxes to the same front-end, depending
+on the capabilities of the HW platform. When not used, the front-end
+should be released by calling <strong>disconnect_frontend</strong>.
+The <strong>demux</strong> function parameter contains a pointer to the demux API and
+instance data.
+The <strong>frontend</strong> function parameter contains a pointer to the front-end
+instance data.
+It returns:
+0 on success;
+-EINVAL, on bad parameter.</dd>
+<dt><code class="docutils literal"><span class="pre">disconnect_frontend</span></code></dt>
+<dd>Disconnects the demux and a front-end previously
+connected by a <strong>connect_frontend</strong> call.
+The <strong>demux</strong> function parameter contains a pointer to the demux API and
+instance data.
+It returns:
+0 on success;
+-EINVAL on bad parameter.</dd>
+<dt><code class="docutils literal"><span class="pre">get_pes_pids</span></code></dt>
+<dd>Get the PIDs for DMX_PES_AUDIO0, DMX_PES_VIDEO0,
+DMX_PES_TELETEXT0, DMX_PES_SUBTITLE0 and DMX_PES_PCR0.
+The <strong>demux</strong> function parameter contains a pointer to the demux API and
+instance data.
+The <strong>pids</strong> function parameter contains an array with five u16 elements
+where the PIDs will be stored.
+It returns:
+0 on success;
+-EINVAL on bad parameter.</dd>
+</dl>
+</div>
+</div>
+<div class="section" id="digital-tv-conditional-access-kabi">
+<h1>8. Digital TV Conditional Access kABI<a class="headerlink" href="#digital-tv-conditional-access-kabi" title="Permalink to this headline">¶</a></h1>
+<dl class="type">
+<dt id="c.dvb_ca_en50221">
+struct <code class="descname">dvb_ca_en50221</code><a class="headerlink" href="#c.dvb_ca_en50221" title="Permalink to this definition">¶</a></dt>
+<dd><p>Structure describing a CA interface</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>struct dvb_ca_en50221 {
+  struct module * owner;
+  int (* read_attribute_mem) (struct dvb_ca_en50221 *ca,int slot, int address);
+  int (* write_attribute_mem) (struct dvb_ca_en50221 *ca,int slot, int address, u8 value);
+  int (* read_cam_control) (struct dvb_ca_en50221 *ca,int slot, u8 address);
+  int (* write_cam_control) (struct dvb_ca_en50221 *ca,int slot, u8 address, u8 value);
+  int (* read_data) (struct dvb_ca_en50221 *ca,int slot, u8 *ebuf, int ecount);
+  int (* write_data) (struct dvb_ca_en50221 *ca,int slot, u8 *ebuf, int ecount);
+  int (* slot_reset) (struct dvb_ca_en50221 *ca, int slot);
+  int (* slot_shutdown) (struct dvb_ca_en50221 *ca, int slot);
+  int (* slot_ts_enable) (struct dvb_ca_en50221 *ca, int slot);
+  int (* poll_slot_status) (struct dvb_ca_en50221 *ca, int slot, int open);
+  void * data;
+  void * private;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">owner</span></code></dt>
+<dd>the module owning this structure</dd>
+<dt><code class="docutils literal"><span class="pre">read_attribute_mem</span></code></dt>
+<dd>function for reading attribute memory on the CAM</dd>
+<dt><code class="docutils literal"><span class="pre">write_attribute_mem</span></code></dt>
+<dd>function for writing attribute memory on the CAM</dd>
+<dt><code class="docutils literal"><span class="pre">read_cam_control</span></code></dt>
+<dd>function for reading the control interface on the CAM</dd>
+<dt><code class="docutils literal"><span class="pre">write_cam_control</span></code></dt>
+<dd>function for reading the control interface on the CAM</dd>
+<dt><code class="docutils literal"><span class="pre">read_data</span></code></dt>
+<dd>function for reading data (block mode)</dd>
+<dt><code class="docutils literal"><span class="pre">write_data</span></code></dt>
+<dd>function for writing data (block mode)</dd>
+<dt><code class="docutils literal"><span class="pre">slot_reset</span></code></dt>
+<dd>function to reset the CAM slot</dd>
+<dt><code class="docutils literal"><span class="pre">slot_shutdown</span></code></dt>
+<dd>function to shutdown a CAM slot</dd>
+<dt><code class="docutils literal"><span class="pre">slot_ts_enable</span></code></dt>
+<dd>function to enable the Transport Stream on a CAM slot</dd>
+<dt><code class="docutils literal"><span class="pre">poll_slot_status</span></code></dt>
+<dd>function to poll slot status. Only necessary if
+DVB_CA_FLAG_EN50221_IRQ_CAMCHANGE is not set.</dd>
+<dt><code class="docutils literal"><span class="pre">data</span></code></dt>
+<dd>private data, used by caller.</dd>
+<dt><code class="docutils literal"><span class="pre">private</span></code></dt>
+<dd>Opaque data used by the dvb_ca core. Do not modify!</dd>
+</dl>
+<p><strong>NOTE</strong></p>
+<p>the read_*, write_* and poll_slot_status functions will be
+called for different slots concurrently and need to use locks where
+and if appropriate. There will be no concurrent access to one slot.</p>
+<dl class="function">
+<dt id="c.dvb_ca_en50221_camchange_irq">
+void <code class="descname">dvb_ca_en50221_camchange_irq</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_ca_en50221" title="dvb_ca_en50221">dvb_ca_en50221</a> *<em>&nbsp;pubca</em>, int<em>&nbsp;slot</em>, int<em>&nbsp;change_type</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_ca_en50221_camchange_irq" title="Permalink to this definition">¶</a></dt>
+<dd><p>A CAMCHANGE IRQ has occurred.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_ca_en50221</span> <span class="pre">*</span> <span class="pre">pubca</span></code></dt>
+<dd>CA instance.</dd>
+<dt><code class="docutils literal"><span class="pre">int</span> <span class="pre">slot</span></code></dt>
+<dd>Slot concerned.</dd>
+<dt><code class="docutils literal"><span class="pre">int</span> <span class="pre">change_type</span></code></dt>
+<dd>One of the DVB_CA_CAMCHANGE_* values</dd>
+</dl>
+<dl class="function">
+<dt id="c.dvb_ca_en50221_camready_irq">
+void <code class="descname">dvb_ca_en50221_camready_irq</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_ca_en50221" title="dvb_ca_en50221">dvb_ca_en50221</a> *<em>&nbsp;pubca</em>, int<em>&nbsp;slot</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_ca_en50221_camready_irq" title="Permalink to this definition">¶</a></dt>
+<dd><p>A CAMREADY IRQ has occurred.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_ca_en50221</span> <span class="pre">*</span> <span class="pre">pubca</span></code></dt>
+<dd>CA instance.</dd>
+<dt><code class="docutils literal"><span class="pre">int</span> <span class="pre">slot</span></code></dt>
+<dd>Slot concerned.</dd>
+</dl>
+<dl class="function">
+<dt id="c.dvb_ca_en50221_frda_irq">
+void <code class="descname">dvb_ca_en50221_frda_irq</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_ca_en50221" title="dvb_ca_en50221">dvb_ca_en50221</a> *<em>&nbsp;ca</em>, int<em>&nbsp;slot</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_ca_en50221_frda_irq" title="Permalink to this definition">¶</a></dt>
+<dd><p>An FR or a DA IRQ has occurred.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_ca_en50221</span> <span class="pre">*</span> <span class="pre">ca</span></code></dt>
+<dd>CA instance.</dd>
+<dt><code class="docutils literal"><span class="pre">int</span> <span class="pre">slot</span></code></dt>
+<dd>Slot concerned.</dd>
+</dl>
+<dl class="function">
+<dt id="c.dvb_ca_en50221_init">
+int <code class="descname">dvb_ca_en50221_init</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_adapter" title="dvb_adapter">dvb_adapter</a> *<em>&nbsp;dvb_adapter</em>, struct <a class="reference internal" href="#c.dvb_ca_en50221" title="dvb_ca_en50221">dvb_ca_en50221</a> *<em>&nbsp;ca</em>, int<em>&nbsp;flags</em>, int<em>&nbsp;slot_count</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_ca_en50221_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialise a new DVB CA device.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_adapter</span> <span class="pre">*</span> <span class="pre">dvb_adapter</span></code></dt>
+<dd>DVB adapter to attach the new CA device to.</dd>
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_ca_en50221</span> <span class="pre">*</span> <span class="pre">ca</span></code></dt>
+<dd>The dvb_ca instance.</dd>
+<dt><code class="docutils literal"><span class="pre">int</span> <span class="pre">flags</span></code></dt>
+<dd>Flags describing the CA device (DVB_CA_EN50221_FLAG_*).</dd>
+<dt><code class="docutils literal"><span class="pre">int</span> <span class="pre">slot_count</span></code></dt>
+<dd>Number of slots supported.</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p><strong>return</strong> 0 on success, nonzero on failure</p>
+<dl class="function">
+<dt id="c.dvb_ca_en50221_release">
+void <code class="descname">dvb_ca_en50221_release</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.dvb_ca_en50221" title="dvb_ca_en50221">dvb_ca_en50221</a> *<em>&nbsp;ca</em><span class="sig-paren">)</span><a class="headerlink" href="#c.dvb_ca_en50221_release" title="Permalink to this definition">¶</a></dt>
+<dd><p>Release a DVB CA device.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">struct</span> <span class="pre">dvb_ca_en50221</span> <span class="pre">*</span> <span class="pre">ca</span></code></dt>
+<dd>The associated dvb_ca instance.</dd>
+</dl>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="rc-core.html" class="btn btn-neutral float-right" title="9. Remote Controller devices" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="v4l2-tveeprom.html" class="btn btn-neutral" title="1.25. Hauppauge TV EEPROM functions and data structures" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'4.13.0-rc5+',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
