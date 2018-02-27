@@ -1,0 +1,658 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Dynamic debug &mdash; The Linux Kernel 4.16.0-rc1+ documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="The Linux Kernel 4.16.0-rc1+ documentation" href="../index.html"/>
+        <link rel="up" title="The Linux kernel user’s and administrator’s guide" href="index.html"/>
+        <link rel="next" title="Explaining the dreaded “No init found.” boot hang message" href="init.html"/>
+        <link rel="prev" title="Ramoops oops/panic logger" href="ramoops.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                4.16.0-rc1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/license-rules.html">Linux kernel licensing rules</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">The Linux kernel user’s and administrator’s guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="README.html">Linux kernel release 4.x &lt;http://kernel.org/&gt;</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel-parameters.html">The kernel’s command-line parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devices.html">Linux allocated devices (4.x+ version)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reporting-bugs.html">Reporting bugs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="security-bugs.html">Security bugs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bug-hunting.html">Bug hunting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bug-bisect.html">Bisecting a bug</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tainted-kernels.html">Tainted kernels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ramoops.html">Ramoops oops/panic logger</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Dynamic debug</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#controlling-dynamic-debug-behaviour">Controlling dynamic debug Behaviour</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#viewing-dynamic-debug-behaviour">Viewing Dynamic Debug Behaviour</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#command-language-reference">Command Language Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#debug-messages-during-boot-process">Debug messages during Boot Process</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#debug-messages-at-module-initialization-time">Debug Messages at Module Initialization Time</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#examples">Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="init.html">Explaining the dreaded “No init found.” boot hang message</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sysfs-rules.html">Rules on how to access information in sysfs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="initrd.html">Using the initial RAM disk (initrd)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="serial-console.html">Linux Serial Console</a></li>
+<li class="toctree-l2"><a class="reference internal" href="braille-console.html">Linux Braille Console</a></li>
+<li class="toctree-l2"><a class="reference internal" href="parport.html">Parport</a></li>
+<li class="toctree-l2"><a class="reference internal" href="md.html">RAID arrays</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-signing.html">Kernel module signing facility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sysrq.html">Linux Magic System Request Key Hacks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="unicode.html">Unicode support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vga-softcursor.html">Software cursor for VGA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="binfmt-misc.html">Kernel Support for miscellaneous (your favourite) Binary Formats v1.1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mono.html">Mono(tm) Binary Kernel Support for Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="java.html">Java(tm) Binary Kernel Support for Linux v1.03</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ras.html">Reliability, Availability and Serviceability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pm/index.html">Power Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="thunderbolt.html">Thunderbolt</a></li>
+<li class="toctree-l2"><a class="reference internal" href="LSM/index.html">Linux Security Module Usage</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../media/index.html">Linux Media Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Linux Filesystems API</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/ko_KR/index.html">Korean translations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/zh_CN/index.html">Chinese translations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/ja_JP/index.html">Japanese translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">The Linux kernel user’s and administrator’s guide</a> &raquo;</li>
+        
+      <li>Dynamic debug</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/admin-guide/dynamic-debug-howto.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="dynamic-debug">
+<h1>Dynamic debug<a class="headerlink" href="#dynamic-debug" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>This document describes how to use the dynamic debug (dyndbg) feature.</p>
+<p>Dynamic debug is designed to allow you to dynamically enable/disable
+kernel code to obtain additional kernel information.  Currently, if
+<code class="docutils literal"><span class="pre">CONFIG_DYNAMIC_DEBUG</span></code> is set, then all <code class="docutils literal"><span class="pre">pr_debug()</span></code>/<code class="docutils literal"><span class="pre">dev_dbg()</span></code> and
+<code class="docutils literal"><span class="pre">print_hex_dump_debug()</span></code>/<code class="docutils literal"><span class="pre">print_hex_dump_bytes()</span></code> calls can be dynamically
+enabled per-callsite.</p>
+<p>If <code class="docutils literal"><span class="pre">CONFIG_DYNAMIC_DEBUG</span></code> is not set, <code class="docutils literal"><span class="pre">print_hex_dump_debug()</span></code> is just
+shortcut for <code class="docutils literal"><span class="pre">print_hex_dump(KERN_DEBUG)</span></code>.</p>
+<p>For <code class="docutils literal"><span class="pre">print_hex_dump_debug()</span></code>/<code class="docutils literal"><span class="pre">print_hex_dump_bytes()</span></code>, format string is
+its <code class="docutils literal"><span class="pre">prefix_str</span></code> argument, if it is constant string; or <code class="docutils literal"><span class="pre">hexdump</span></code>
+in case <code class="docutils literal"><span class="pre">prefix_str</span></code> is built dynamically.</p>
+<p>Dynamic debug has even more useful features:</p>
+<blockquote>
+<div><ul class="simple">
+<li>Simple query language allows turning on and off debugging
+statements by matching any combination of 0 or 1 of:<ul>
+<li>source filename</li>
+<li>function name</li>
+<li>line number (including ranges of line numbers)</li>
+<li>module name</li>
+<li>format string</li>
+</ul>
+</li>
+<li>Provides a debugfs control file: <code class="docutils literal"><span class="pre">&lt;debugfs&gt;/dynamic_debug/control</span></code>
+which can be read to display the complete list of known debug
+statements, to help guide you</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="controlling-dynamic-debug-behaviour">
+<h2>Controlling dynamic debug Behaviour<a class="headerlink" href="#controlling-dynamic-debug-behaviour" title="Permalink to this headline">¶</a></h2>
+<p>The behaviour of <code class="docutils literal"><span class="pre">pr_debug()</span></code>/<code class="docutils literal"><span class="pre">dev_dbg()</span></code> are controlled via writing to a
+control file in the ‘debugfs’ filesystem. Thus, you must first mount
+the debugfs filesystem, in order to make use of this feature.
+Subsequently, we refer to the control file as:
+<code class="docutils literal"><span class="pre">&lt;debugfs&gt;/dynamic_debug/control</span></code>. For example, if you want to enable
+printing from source file <code class="docutils literal"><span class="pre">svcsock.c</span></code>, line 1603 you simply do:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>nullarbor:~ # echo &#39;file svcsock.c line 1603 +p&#39; &gt;
+                              &lt;debugfs&gt;/dynamic_debug/control
+</pre></div>
+</div>
+<p>If you make a mistake with the syntax, the write will fail thus:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>nullarbor:~ # echo &#39;file svcsock.c wtf 1 +p&#39; &gt;
+                              &lt;debugfs&gt;/dynamic_debug/control
+-bash: echo: write error: Invalid argument
+</pre></div>
+</div>
+</div>
+<div class="section" id="viewing-dynamic-debug-behaviour">
+<h2>Viewing Dynamic Debug Behaviour<a class="headerlink" href="#viewing-dynamic-debug-behaviour" title="Permalink to this headline">¶</a></h2>
+<p>You can view the currently configured behaviour of all the debug
+statements via:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>nullarbor:~ # cat &lt;debugfs&gt;/dynamic_debug/control
+# filename:lineno [module]function flags format
+/usr/src/packages/BUILD/sgi-enhancednfs-1.4/default/net/sunrpc/svc_rdma.c:323 [svcxprt_rdma]svc_rdma_cleanup =_ &quot;SVCRDMA Module Removed, deregister RPC RDMA transport\012&quot;
+/usr/src/packages/BUILD/sgi-enhancednfs-1.4/default/net/sunrpc/svc_rdma.c:341 [svcxprt_rdma]svc_rdma_init =_ &quot;\011max_inline       : %d\012&quot;
+/usr/src/packages/BUILD/sgi-enhancednfs-1.4/default/net/sunrpc/svc_rdma.c:340 [svcxprt_rdma]svc_rdma_init =_ &quot;\011sq_depth         : %d\012&quot;
+/usr/src/packages/BUILD/sgi-enhancednfs-1.4/default/net/sunrpc/svc_rdma.c:338 [svcxprt_rdma]svc_rdma_init =_ &quot;\011max_requests     : %d\012&quot;
+...
+</pre></div>
+</div>
+<p>You can also apply standard Unix text manipulation filters to this
+data, e.g.:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>nullarbor:~ # grep -i rdma &lt;debugfs&gt;/dynamic_debug/control  | wc -l
+62
+
+nullarbor:~ # grep -i tcp &lt;debugfs&gt;/dynamic_debug/control | wc -l
+42
+</pre></div>
+</div>
+<p>The third column shows the currently enabled flags for each debug
+statement callsite (see below for definitions of the flags).  The
+default value, with no flags enabled, is <code class="docutils literal"><span class="pre">=_</span></code>.  So you can view all
+the debug statement callsites with any non-default flags:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>nullarbor:~ # awk &#39;$3 != &quot;=_&quot;&#39; &lt;debugfs&gt;/dynamic_debug/control
+# filename:lineno [module]function flags format
+/usr/src/packages/BUILD/sgi-enhancednfs-1.4/default/net/sunrpc/svcsock.c:1603 [sunrpc]svc_send p &quot;svc_process: st_sendto returned %d\012&quot;
+</pre></div>
+</div>
+</div>
+<div class="section" id="command-language-reference">
+<h2>Command Language Reference<a class="headerlink" href="#command-language-reference" title="Permalink to this headline">¶</a></h2>
+<p>At the lexical level, a command comprises a sequence of words separated
+by spaces or tabs.  So these are all equivalent:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>nullarbor:~ # echo -n &#39;file svcsock.c line 1603 +p&#39; &gt;
+                              &lt;debugfs&gt;/dynamic_debug/control
+nullarbor:~ # echo -n &#39;  file   svcsock.c     line  1603 +p  &#39; &gt;
+                              &lt;debugfs&gt;/dynamic_debug/control
+nullarbor:~ # echo -n &#39;file svcsock.c line 1603 +p&#39; &gt;
+                              &lt;debugfs&gt;/dynamic_debug/control
+</pre></div>
+</div>
+<p>Command submissions are bounded by a write() system call.
+Multiple commands can be written together, separated by <code class="docutils literal"><span class="pre">;</span></code> or <code class="docutils literal"><span class="pre">\n</span></code>:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>~# echo &quot;func pnpacpi_get_resources +p; func pnp_assign_mem +p&quot; \
+   &gt; &lt;debugfs&gt;/dynamic_debug/control
+</pre></div>
+</div>
+<p>If your query set is big, you can batch them too:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>~# cat query-batch-file &gt; &lt;debugfs&gt;/dynamic_debug/control
+</pre></div>
+</div>
+<p>A another way is to use wildcard. The match rule support <code class="docutils literal"><span class="pre">*</span></code> (matches
+zero or more characters) and <code class="docutils literal"><span class="pre">?</span></code> (matches exactly one character).For
+example, you can match all usb drivers:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>~# echo &quot;file drivers/usb/* +p&quot; &gt; &lt;debugfs&gt;/dynamic_debug/control
+</pre></div>
+</div>
+<p>At the syntactical level, a command comprises a sequence of match
+specifications, followed by a flags change specification:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>command ::= match-spec* flags-spec
+</pre></div>
+</div>
+<p>The match-spec’s are used to choose a subset of the known pr_debug()
+callsites to which to apply the flags-spec.  Think of them as a query
+with implicit ANDs between each pair.  Note that an empty list of
+match-specs will select all debug statement callsites.</p>
+<p>A match specification comprises a keyword, which controls the
+attribute of the callsite to be compared, and a value to compare
+against.  Possible keywords are::</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>match-spec ::= &#39;func&#39; string |
+               &#39;file&#39; string |
+               &#39;module&#39; string |
+               &#39;format&#39; string |
+               &#39;line&#39; line-range
+
+line-range ::= lineno |
+               &#39;-&#39;lineno |
+               lineno&#39;-&#39; |
+               lineno&#39;-&#39;lineno
+
+lineno ::= unsigned-int
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><code class="docutils literal"><span class="pre">line-range</span></code> cannot contain space, e.g.
+“1-30” is valid range but “1 - 30” is not.</p>
+</div>
+<p>The meanings of each keyword are:</p>
+<dl class="docutils">
+<dt>func</dt>
+<dd><p class="first">The given string is compared against the function name
+of each callsite.  Example:</p>
+<div class="last highlight-none"><div class="highlight"><pre><span></span>func svc_tcp_accept
+</pre></div>
+</div>
+</dd>
+<dt>file</dt>
+<dd><p class="first">The given string is compared against either the full pathname, the
+src-root relative pathname, or the basename of the source file of
+each callsite.  Examples:</p>
+<div class="last highlight-none"><div class="highlight"><pre><span></span>file svcsock.c
+file kernel/freezer.c
+file /usr/src/packages/BUILD/sgi-enhancednfs-1.4/default/net/sunrpc/svcsock.c
+</pre></div>
+</div>
+</dd>
+<dt>module</dt>
+<dd><p class="first">The given string is compared against the module name
+of each callsite.  The module name is the string as
+seen in <code class="docutils literal"><span class="pre">lsmod</span></code>, i.e. without the directory or the <code class="docutils literal"><span class="pre">.ko</span></code>
+suffix and with <code class="docutils literal"><span class="pre">-</span></code> changed to <code class="docutils literal"><span class="pre">_</span></code>.  Examples:</p>
+<div class="last highlight-none"><div class="highlight"><pre><span></span>module sunrpc
+module nfsd
+</pre></div>
+</div>
+</dd>
+<dt>format</dt>
+<dd><p class="first">The given string is searched for in the dynamic debug format
+string.  Note that the string does not need to match the
+entire format, only some part.  Whitespace and other
+special characters can be escaped using C octal character
+escape <code class="docutils literal"><span class="pre">\ooo</span></code> notation, e.g. the space character is <code class="docutils literal"><span class="pre">\040</span></code>.
+Alternatively, the string can be enclosed in double quote
+characters (<code class="docutils literal"><span class="pre">&quot;</span></code>) or single quote characters (<code class="docutils literal"><span class="pre">'</span></code>).
+Examples:</p>
+<div class="last highlight-none"><div class="highlight"><pre><span></span>format svcrdma:         // many of the NFS/RDMA server pr_debugs
+format readahead        // some pr_debugs in the readahead cache
+format nfsd:\040SETATTR // one way to match a format with whitespace
+format &quot;nfsd: SETATTR&quot;  // a neater way to match a format with whitespace
+format &#39;nfsd: SETATTR&#39;  // yet another way to match a format with whitespace
+</pre></div>
+</div>
+</dd>
+<dt>line</dt>
+<dd><p class="first">The given line number or range of line numbers is compared
+against the line number of each <code class="docutils literal"><span class="pre">pr_debug()</span></code> callsite.  A single
+line number matches the callsite line number exactly.  A
+range of line numbers matches any callsite between the first
+and last line number inclusive.  An empty first number means
+the first line in the file, an empty last line number means the
+last line number in the file.  Examples:</p>
+<div class="last highlight-none"><div class="highlight"><pre><span></span>line 1603           // exactly line 1603
+line 1600-1605      // the six lines from line 1600 to line 1605
+line -1605          // the 1605 lines from line 1 to line 1605
+line 1600-          // all lines from line 1600 to the end of the file
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>The flags specification comprises a change operation followed
+by one or more flag characters.  The change operation is one
+of the characters:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>-    remove the given flags
++    add the given flags
+=    set the flags to the given flags
+</pre></div>
+</div>
+<p>The flags are:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>p    enables the pr_debug() callsite.
+f    Include the function name in the printed message
+l    Include line number in the printed message
+m    Include module name in the printed message
+t    Include thread ID in messages not generated from interrupt context
+_    No flags are set. (Or&#39;d with others on input)
+</pre></div>
+</div>
+<p>For <code class="docutils literal"><span class="pre">print_hex_dump_debug()</span></code> and <code class="docutils literal"><span class="pre">print_hex_dump_bytes()</span></code>, only <code class="docutils literal"><span class="pre">p</span></code> flag
+have meaning, other flags ignored.</p>
+<p>For display, the flags are preceded by <code class="docutils literal"><span class="pre">=</span></code>
+(mnemonic: what the flags are currently equal to).</p>
+<p>Note the regexp <code class="docutils literal"><span class="pre">^[-+=][flmpt_]+$</span></code> matches a flags specification.
+To clear all flags at once, use <code class="docutils literal"><span class="pre">=_</span></code> or <code class="docutils literal"><span class="pre">-flmpt</span></code>.</p>
+</div>
+<div class="section" id="debug-messages-during-boot-process">
+<h2>Debug messages during Boot Process<a class="headerlink" href="#debug-messages-during-boot-process" title="Permalink to this headline">¶</a></h2>
+<p>To activate debug messages for core code and built-in modules during
+the boot process, even before userspace and debugfs exists, use
+<code class="docutils literal"><span class="pre">dyndbg=&quot;QUERY&quot;</span></code>, <code class="docutils literal"><span class="pre">module.dyndbg=&quot;QUERY&quot;</span></code>, or <code class="docutils literal"><span class="pre">ddebug_query=&quot;QUERY&quot;</span></code>
+(<code class="docutils literal"><span class="pre">ddebug_query</span></code> is obsoleted by <code class="docutils literal"><span class="pre">dyndbg</span></code>, and deprecated).  QUERY follows
+the syntax described above, but must not exceed 1023 characters.  Your
+bootloader may impose lower limits.</p>
+<p>These <code class="docutils literal"><span class="pre">dyndbg</span></code> params are processed just after the ddebug tables are
+processed, as part of the arch_initcall.  Thus you can enable debug
+messages in all code run after this arch_initcall via this boot
+parameter.</p>
+<p>On an x86 system for example ACPI enablement is a subsys_initcall and:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>dyndbg=&quot;file ec.c +p&quot;
+</pre></div>
+</div>
+<p>will show early Embedded Controller transactions during ACPI setup if
+your machine (typically a laptop) has an Embedded Controller.
+PCI (or other devices) initialization also is a hot candidate for using
+this boot parameter for debugging purposes.</p>
+<p>If <code class="docutils literal"><span class="pre">foo</span></code> module is not built-in, <code class="docutils literal"><span class="pre">foo.dyndbg</span></code> will still be processed at
+boot time, without effect, but will be reprocessed when module is
+loaded later. <code class="docutils literal"><span class="pre">dyndbg_query=</span></code> and bare <code class="docutils literal"><span class="pre">dyndbg=</span></code> are only processed at
+boot.</p>
+</div>
+<div class="section" id="debug-messages-at-module-initialization-time">
+<h2>Debug Messages at Module Initialization Time<a class="headerlink" href="#debug-messages-at-module-initialization-time" title="Permalink to this headline">¶</a></h2>
+<p>When <code class="docutils literal"><span class="pre">modprobe</span> <span class="pre">foo</span></code> is called, modprobe scans <code class="docutils literal"><span class="pre">/proc/cmdline</span></code> for
+<code class="docutils literal"><span class="pre">foo.params</span></code>, strips <code class="docutils literal"><span class="pre">foo.</span></code>, and passes them to the kernel along with
+params given in modprobe args or <code class="docutils literal"><span class="pre">/etc/modprob.d/*.conf</span></code> files,
+in the following order:</p>
+<ol class="arabic">
+<li><p class="first">parameters given via <code class="docutils literal"><span class="pre">/etc/modprobe.d/*.conf</span></code>:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>options foo dyndbg=+pt
+options foo dyndbg # defaults to +p
+</pre></div>
+</div>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">foo.dyndbg</span></code> as given in boot args, <code class="docutils literal"><span class="pre">foo.</span></code> is stripped and passed:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>foo.dyndbg=&quot; func bar +p; func buz +mp&quot;
+</pre></div>
+</div>
+</li>
+<li><p class="first">args to modprobe:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>modprobe foo dyndbg==pmf # override previous settings
+</pre></div>
+</div>
+</li>
+</ol>
+<p>These <code class="docutils literal"><span class="pre">dyndbg</span></code> queries are applied in order, with last having final say.
+This allows boot args to override or modify those from <code class="docutils literal"><span class="pre">/etc/modprobe.d</span></code>
+(sensible, since 1 is system wide, 2 is kernel or boot specific), and
+modprobe args to override both.</p>
+<p>In the <code class="docutils literal"><span class="pre">foo.dyndbg=&quot;QUERY&quot;</span></code> form, the query must exclude <code class="docutils literal"><span class="pre">module</span> <span class="pre">foo</span></code>.
+<code class="docutils literal"><span class="pre">foo</span></code> is extracted from the param-name, and applied to each query in
+<code class="docutils literal"><span class="pre">QUERY</span></code>, and only 1 match-spec of each type is allowed.</p>
+<p>The <code class="docutils literal"><span class="pre">dyndbg</span></code> option is a “fake” module parameter, which means:</p>
+<ul class="simple">
+<li>modules do not need to define it explicitly</li>
+<li>every module gets it tacitly, whether they use pr_debug or not</li>
+<li>it doesn’t appear in <code class="docutils literal"><span class="pre">/sys/module/$module/parameters/</span></code>
+To see it, grep the control file, or inspect <code class="docutils literal"><span class="pre">/proc/cmdline.</span></code></li>
+</ul>
+<p>For <code class="docutils literal"><span class="pre">CONFIG_DYNAMIC_DEBUG</span></code> kernels, any settings given at boot-time (or
+enabled by <code class="docutils literal"><span class="pre">-DDEBUG</span></code> flag during compilation) can be disabled later via
+the sysfs interface if the debug messages are no longer needed:</p>
+<div class="highlight-none"><div class="highlight"><pre><span></span>echo &quot;module module_name -p&quot; &gt; &lt;debugfs&gt;/dynamic_debug/control
+</pre></div>
+</div>
+</div>
+<div class="section" id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-none"><div class="highlight"><pre><span></span>// enable the message at line 1603 of file svcsock.c
+nullarbor:~ # echo -n &#39;file svcsock.c line 1603 +p&#39; &gt;
+                              &lt;debugfs&gt;/dynamic_debug/control
+
+// enable all the messages in file svcsock.c
+nullarbor:~ # echo -n &#39;file svcsock.c +p&#39; &gt;
+                              &lt;debugfs&gt;/dynamic_debug/control
+
+// enable all the messages in the NFS server module
+nullarbor:~ # echo -n &#39;module nfsd +p&#39; &gt;
+                              &lt;debugfs&gt;/dynamic_debug/control
+
+// enable all 12 messages in the function svc_process()
+nullarbor:~ # echo -n &#39;func svc_process +p&#39; &gt;
+                              &lt;debugfs&gt;/dynamic_debug/control
+
+// disable all 12 messages in the function svc_process()
+nullarbor:~ # echo -n &#39;func svc_process -p&#39; &gt;
+                              &lt;debugfs&gt;/dynamic_debug/control
+
+// enable messages for NFS calls READ, READLINK, READDIR and READDIR+.
+nullarbor:~ # echo -n &#39;format &quot;nfsd: READ&quot; +p&#39; &gt;
+                              &lt;debugfs&gt;/dynamic_debug/control
+
+// enable messages in files of which the paths include string &quot;usb&quot;
+nullarbor:~ # echo -n &#39;*usb* +p&#39; &gt; &lt;debugfs&gt;/dynamic_debug/control
+
+// enable all messages
+nullarbor:~ # echo -n &#39;+p&#39; &gt; &lt;debugfs&gt;/dynamic_debug/control
+
+// add module, function to all enabled messages
+nullarbor:~ # echo -n &#39;+mf&#39; &gt; &lt;debugfs&gt;/dynamic_debug/control
+
+// boot-args example, with newlines and comments for readability
+Kernel command line: ...
+  // see whats going on in dyndbg=value processing
+  dynamic_debug.verbose=1
+  // enable pr_debugs in 2 builtins, #cmt is stripped
+  dyndbg=&quot;module params +p #cmt ; module sys +p&quot;
+  // enable pr_debugs in 2 functions in a module loaded later
+  pc87360.dyndbg=&quot;func pc87360_init_device +p; func pc87360_find +p&quot;
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="init.html" class="btn btn-neutral float-right" title="Explaining the dreaded “No init found.” boot hang message" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="ramoops.html" class="btn btn-neutral" title="Ramoops oops/panic logger" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'4.16.0-rc1+',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

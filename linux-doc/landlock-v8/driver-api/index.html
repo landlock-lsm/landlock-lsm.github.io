@@ -1,0 +1,588 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>The Linux driver implementer’s API guide &mdash; The Linux Kernel 4.16.0-rc1+ documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  
+
+  
+    <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+  
+
+  
+        <link rel="index" title="Index"
+              href="../genindex.html"/>
+        <link rel="search" title="Search" href="../search.html"/>
+    <link rel="top" title="The Linux Kernel 4.16.0-rc1+ documentation" href="../index.html"/>
+        <link rel="next" title="Driver Basics" href="basics.html"/>
+        <link rel="prev" title="Creating Pull Requests" href="../maintainer/pull-requests.html"/> 
+
+  
+  <script src="../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                4.16.0-rc1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/license-rules.html">Linux kernel licensing rules</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">The Linux driver implementer’s API guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="basics.html">Driver Basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="infrastructure.html">Device drivers infrastructure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pm/index.html">Device Power Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="device-io.html">Bus-Independent Device Accesses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dma-buf.html">Buffer Sharing and Synchronization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="device_link.html">Device links</a></li>
+<li class="toctree-l2"><a class="reference internal" href="message-based.html">Message-based devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sound.html">Sound Devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="frame-buffer.html">Frame Buffer Library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="regulator.html">Voltage and current regulator API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input.html">Input Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usb/index.html">Linux USB API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pci.html">PCI Support Library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pci.html#pci-hotplug-support-library">PCI Hotplug Support Library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spi.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="i2c.html">I<sup>2</sup>C and SMBus Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hsi.html">High Speed Synchronous Serial Interface (HSI)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="edac.html">Error Detection And Correction (EDAC) Devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scsi.html">SCSI Interfaces Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="libata.html">libATA Developer’s Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mtdnand.html">MTD NAND Driver Programming Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="miscellaneous.html">Parallel Port Devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="miscellaneous.html#x50-uart-driver">16x50 UART Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="miscellaneous.html#pulse-width-modulation-pwm">Pulse-Width Modulation (PWM)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="w1.html">W1: Dallas’ 1-wire bus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rapidio.html">RapidIO Subsystem Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="s390-drivers.html">Writing s390 channel device drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vme.html">VME Device Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="80211/index.html">Linux 802.11 Driver Developer’s Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="uio-howto.html">The Userspace I/O HOWTO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="firmware/index.html">Linux Firmware API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pinctl.html">PINCTRL (PIN CONTROL) subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gpio.html">General Purpose Input/Output (GPIO)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="misc_devices.html">Miscellaneous Devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dmaengine/index.html">DMAEngine documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="slimbus.html">Linux kernel SLIMbus support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="soundwire/index.html">SoundWire Documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../media/index.html">Linux Media Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Linux Filesystems API</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/ko_KR/index.html">Korean translations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/zh_CN/index.html">Chinese translations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/ja_JP/index.html">Japanese translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>The Linux driver implementer’s API guide</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/driver-api/index.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="the-linux-driver-implementer-s-api-guide">
+<h1>The Linux driver implementer’s API guide<a class="headerlink" href="#the-linux-driver-implementer-s-api-guide" title="Permalink to this headline">¶</a></h1>
+<p>The kernel offers a wide variety of interfaces to support the development
+of device drivers.  This document is an only somewhat organized collection
+of some of those interfaces — it will hopefully get better over time!  The
+available subsections can be seen below.</p>
+<p class="toc-title">Table of contents</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="basics.html">Driver Basics</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="basics.html#driver-entry-and-exit-points">Driver Entry and Exit points</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basics.html#driver-device-table">Driver device table</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basics.html#delaying-scheduling-and-timer-routines">Delaying, scheduling, and timer routines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basics.html#wait-queues-and-wake-events">Wait queues and Wake events</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basics.html#high-resolution-timers">High-resolution timers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basics.html#workqueues-and-kevents">Workqueues and Kevents</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basics.html#internal-functions">Internal Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basics.html#reference-counting">Reference counting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basics.html#atomics">Atomics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basics.html#kernel-objects-manipulation">Kernel objects manipulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basics.html#kernel-utility-functions">Kernel utility functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="basics.html#device-resource-management">Device Resource Management</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="infrastructure.html">Device drivers infrastructure</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="infrastructure.html#the-basic-device-driver-model-structures">The Basic Device Driver-Model Structures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="infrastructure.html#device-drivers-base">Device Drivers Base</a></li>
+<li class="toctree-l2"><a class="reference internal" href="infrastructure.html#device-drivers-dma-management">Device Drivers DMA Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="infrastructure.html#device-drivers-pnp-support">Device drivers PnP support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="infrastructure.html#userspace-io-devices">Userspace IO devices</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pm/index.html">Device Power Management</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pm/devices.html">Device Power Management Basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pm/notifiers.html">Suspend/Hibernation Notifiers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pm/types.html">Device Power Management Data Types</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="device-io.html">Bus-Independent Device Accesses</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="device-io.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="device-io.html#memory-mapped-io">Memory Mapped IO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="device-io.html#port-space-accesses">Port Space Accesses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="device-io.html#public-functions-provided">Public Functions Provided</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="dma-buf.html">Buffer Sharing and Synchronization</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dma-buf.html#shared-dma-buffers">Shared DMA Buffers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dma-buf.html#reservation-objects">Reservation Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dma-buf.html#dma-fences">DMA Fences</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="device_link.html">Device links</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="device_link.html#usage">Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="device_link.html#limitations">Limitations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="device_link.html#examples">Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="device_link.html#alternatives">Alternatives</a></li>
+<li class="toctree-l2"><a class="reference internal" href="device_link.html#implementation">Implementation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="device_link.html#state-machine">State machine</a></li>
+<li class="toctree-l2"><a class="reference internal" href="device_link.html#api">API</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="message-based.html">Message-based devices</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="message-based.html#fusion-message-devices">Fusion message devices</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="sound.html">Sound Devices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="frame-buffer.html">Frame Buffer Library</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="frame-buffer.html#frame-buffer-memory">Frame Buffer Memory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="frame-buffer.html#frame-buffer-colormap">Frame Buffer Colormap</a></li>
+<li class="toctree-l2"><a class="reference internal" href="frame-buffer.html#frame-buffer-video-mode-database">Frame Buffer Video Mode Database</a></li>
+<li class="toctree-l2"><a class="reference internal" href="frame-buffer.html#frame-buffer-macintosh-video-mode-database">Frame Buffer Macintosh Video Mode Database</a></li>
+<li class="toctree-l2"><a class="reference internal" href="frame-buffer.html#frame-buffer-fonts">Frame Buffer Fonts</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="regulator.html">Voltage and current regulator API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="regulator.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="regulator.html#consumer-driver-interface">Consumer driver interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="regulator.html#regulator-driver-interface">Regulator driver interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="regulator.html#machine-interface">Machine interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="regulator.html#api-reference">API reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="iio/index.html">Industrial I/O</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="iio/intro.html">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iio/core.html">Core elements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iio/buffers.html">Buffers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iio/triggers.html">Triggers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iio/triggered-buffers.html">Triggered Buffers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iio/hw-consumer.html">HW consumer</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="input.html">Input Subsystem</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="input.html#input-core">Input core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input.html#multitouch-library">Multitouch Library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input.html#polled-input-devices">Polled input devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input.html#matrix-keyboards-keypads">Matrix keyboards/keypads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="input.html#sparse-keymap-support">Sparse keymap support</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="usb/index.html">Linux USB API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="usb/usb.html">The Linux-USB Host Side API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usb/gadget.html">USB Gadget API for Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usb/anchors.html">USB Anchors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usb/bulk-streams.html">USB bulk streams</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usb/callbacks.html">USB core callbacks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usb/dma.html">USB DMA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usb/URB.html">USB Request Block (URB)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usb/power-management.html">Power Management for USB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usb/hotplug.html">USB hotplugging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usb/persist.html">USB device persistence during system suspend</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usb/error-codes.html">USB Error codes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usb/writing_usb_driver.html">Writing USB Device Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usb/dwc3.html">Synopsys DesignWare Core SuperSpeed USB 3.0 Controller</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usb/writing_musb_glue_layer.html">Writing a MUSB Glue Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usb/typec.html">USB Type-C connector class</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usb/usb3-debug-port.html">USB3 debug port</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pci.html">PCI Support Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="pci.html#pci-hotplug-support-library">PCI Hotplug Support Library</a></li>
+<li class="toctree-l1"><a class="reference internal" href="spi.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="i2c.html">I<sup>2</sup>C and SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="hsi.html">High Speed Synchronous Serial Interface (HSI)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="hsi.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hsi.html#hsi-subsystem-in-linux">HSI Subsystem in Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hsi.html#hsi-char-device">hsi-char Device</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hsi.html#the-kernel-hsi-api">The kernel HSI API</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="edac.html">Error Detection And Correction (EDAC) Devices</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="edac.html#main-concepts-used-at-the-edac-subsystem">Main Concepts used at the EDAC subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="edac.html#memory-controllers">Memory Controllers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="edac.html#pci-controllers">PCI Controllers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="edac.html#edac-blocks">EDAC Blocks</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="scsi.html">SCSI Interfaces Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="scsi.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scsi.html#scsi-upper-layer">SCSI upper layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scsi.html#scsi-mid-layer">SCSI mid layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="scsi.html#scsi-lower-layer">SCSI lower layer</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="libata.html">libATA Developer’s Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="libata.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="libata.html#libata-driver-api">libata Driver API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="libata.html#error-handling">Error handling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="libata.html#libata-library">libata Library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="libata.html#libata-core-internals">libata Core Internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="libata.html#libata-scsi-translation-emulation">libata SCSI translation/emulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="libata.html#ata-errors-and-exceptions">ATA errors and exceptions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="libata.html#ata-piix-internals">ata_piix Internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="libata.html#sata-sil-internals">sata_sil Internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="libata.html#thanks">Thanks</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="mtdnand.html">MTD NAND Driver Programming Interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="mtdnand.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mtdnand.html#known-bugs-and-assumptions">Known Bugs And Assumptions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mtdnand.html#documentation-hints">Documentation hints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mtdnand.html#basic-board-driver">Basic board driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mtdnand.html#advanced-board-driver-functions">Advanced board driver functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mtdnand.html#filesystem-support">Filesystem support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mtdnand.html#tools">Tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mtdnand.html#constants">Constants</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mtdnand.html#structures">Structures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mtdnand.html#public-functions-provided">Public Functions Provided</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mtdnand.html#internal-functions-provided">Internal Functions Provided</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mtdnand.html#credits">Credits</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="miscellaneous.html">Parallel Port Devices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="miscellaneous.html#x50-uart-driver">16x50 UART Driver</a></li>
+<li class="toctree-l1"><a class="reference internal" href="miscellaneous.html#pulse-width-modulation-pwm">Pulse-Width Modulation (PWM)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="w1.html">W1: Dallas’ 1-wire bus</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="w1.html#w1-api-internal-to-the-kernel">W1 API internal to the kernel</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="rapidio.html">RapidIO Subsystem Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="rapidio.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rapidio.html#known-bugs-and-limitations">Known Bugs and Limitations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rapidio.html#rapidio-driver-interface">RapidIO driver interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rapidio.html#internals">Internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rapidio.html#credits">Credits</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="s390-drivers.html">Writing s390 channel device drivers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="s390-drivers.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="s390-drivers.html#the-css-bus">The css bus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="s390-drivers.html#the-ccw-bus">The ccw bus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="s390-drivers.html#the-ccwgroup-bus">The ccwgroup bus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="s390-drivers.html#generic-interfaces">Generic interfaces</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="vme.html">VME Device Drivers</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="vme.html#driver-registration">Driver registration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vme.html#resource-management">Resource management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vme.html#master-windows">Master windows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vme.html#slave-windows">Slave windows</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vme.html#dma-channels">DMA channels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vme.html#interrupts">Interrupts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vme.html#location-monitors">Location monitors</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vme.html#slot-detection">Slot Detection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vme.html#bus-detection">Bus Detection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vme.html#vme-api">VME API</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="80211/index.html">Linux 802.11 Driver Developer’s Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="80211/introduction.html">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="80211/cfg80211.html">cfg80211 subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="80211/mac80211.html">mac80211 subsystem (basics)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="80211/mac80211-advanced.html">mac80211 subsystem (advanced)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="uio-howto.html">The Userspace I/O HOWTO</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="uio-howto.html#about-this-document">About this document</a></li>
+<li class="toctree-l2"><a class="reference internal" href="uio-howto.html#about-uio">About UIO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="uio-howto.html#writing-your-own-kernel-module">Writing your own kernel module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="uio-howto.html#writing-a-driver-in-userspace">Writing a driver in userspace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="uio-howto.html#generic-pci-uio-driver">Generic PCI UIO driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="uio-howto.html#generic-hyper-v-uio-driver">Generic Hyper-V UIO driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="uio-howto.html#further-information">Further information</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="firmware/index.html">Linux Firmware API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="firmware/introduction.html">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="firmware/core.html">Firmware API core features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="firmware/request_firmware.html">request_firmware API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="firmware/other_interfaces.html">Other Firmware Interfaces</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="pinctl.html">PINCTRL (PIN CONTROL) subsystem</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="pinctl.html#top-level-interface">Top-level interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pinctl.html#pin-groups">Pin groups</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pinctl.html#pin-configuration">Pin configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pinctl.html#interaction-with-the-gpio-subsystem">Interaction with the GPIO subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pinctl.html#pinmux-interfaces">PINMUX interfaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pinctl.html#what-is-pinmuxing">What is pinmuxing?</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pinctl.html#pinmux-conventions">Pinmux conventions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pinctl.html#pinmux-drivers">Pinmux drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pinctl.html#pin-control-interaction-with-the-gpio-subsystem">Pin control interaction with the GPIO subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pinctl.html#gpio-mode-pitfalls">GPIO mode pitfalls</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pinctl.html#board-machine-configuration">Board/machine configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pinctl.html#complex-mappings">Complex mappings</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pinctl.html#pin-control-requests-from-drivers">Pin control requests from drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pinctl.html#drivers-needing-both-pin-control-and-gpios">Drivers needing both pin control and GPIOs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pinctl.html#system-pin-control-hogging">System pin control hogging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pinctl.html#runtime-pinmuxing">Runtime pinmuxing</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="gpio.html">General Purpose Input/Output (GPIO)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="gpio.html#core">Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gpio.html#legacy-api">Legacy API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gpio.html#acpi-support">ACPI support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gpio.html#device-tree-support">Device tree support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gpio.html#device-managed-api">Device-managed API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gpio.html#sysfs-helpers">sysfs helpers</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="misc_devices.html">Miscellaneous Devices</a></li>
+<li class="toctree-l1"><a class="reference internal" href="dmaengine/index.html">DMAEngine documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="dmaengine/index.html#id1">DMAEngine documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dmaengine/index.html#dmaengine-client-documentation">DMAEngine client documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dmaengine/index.html#dma-test-documentation">DMA Test documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dmaengine/index.html#pxa-dma-documentation">PXA DMA documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="slimbus.html">Linux kernel SLIMbus support</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="slimbus.html#overview">Overview</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="soundwire/index.html">SoundWire Documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="soundwire/summary.html">SoundWire Subsystem Summary</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+           <div class="articleComments">
+            
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="basics.html" class="btn btn-neutral float-right" title="Driver Basics" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../maintainer/pull-requests.html" class="btn btn-neutral" title="Creating Pull Requests" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../',
+            VERSION:'4.16.0-rc1+',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
+        };
+    </script>
+      <script type="text/javascript" src="../_static/jquery.js"></script>
+      <script type="text/javascript" src="../_static/underscore.js"></script>
+      <script type="text/javascript" src="../_static/doctools.js"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>
