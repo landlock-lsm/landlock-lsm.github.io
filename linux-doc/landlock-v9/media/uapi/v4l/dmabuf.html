@@ -1,0 +1,429 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>3.4. Streaming I/O (DMA buffer importing) &mdash; The Linux Kernel 5.2.0-rc5+ documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="3.5. Asynchronous I/O" href="async.html" />
+    <link rel="prev" title="3.3. Streaming I/O (User Pointers)" href="userp.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.2.0-rc5
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Linux Media Subsystem Documentation</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../../media_uapi.html">Linux Media Infrastructure userspace API</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../../intro.html">Introduction</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="v4l2.html">Part I - Video for Linux API</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="common.html">1. Common API Elements</a></li>
+<li class="toctree-l4"><a class="reference internal" href="pixfmt.html">2. Image Formats</a></li>
+<li class="toctree-l4 current"><a class="reference internal" href="io.html">3. Input/Output</a></li>
+<li class="toctree-l4"><a class="reference internal" href="devices.html">4. Interfaces</a></li>
+<li class="toctree-l4"><a class="reference internal" href="libv4l.html">5. Libv4l Userspace Library</a></li>
+<li class="toctree-l4"><a class="reference internal" href="compat.html">6. Changes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="user-func.html">7. Function Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="common-defs.html">8. Common definitions for V4L2 and V4L2 subdev interfaces</a></li>
+<li class="toctree-l4"><a class="reference internal" href="videodev.html">9. Video For Linux Two Header File</a></li>
+<li class="toctree-l4"><a class="reference internal" href="capture-example.html">10. Video Capture Example</a></li>
+<li class="toctree-l4"><a class="reference internal" href="v4l2grab-example.html">11. Video Grabber example using libv4l</a></li>
+<li class="toctree-l4"><a class="reference internal" href="biblio.html">12. References</a></li>
+<li class="toctree-l4"><a class="reference internal" href="v4l2.html#revision-and-copyright">Revision and Copyright</a></li>
+<li class="toctree-l4"><a class="reference internal" href="v4l2.html#revision-history">Revision History</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../dvb/dvbapi.html">Part II - Digital TV API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../rc/remote_controllers.html">Part III - Remote Controller API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../mediactl/media-controller.html">Part IV - Media Controller API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cec/cec-api.html">Part V - Consumer Electronics Control API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../gen-errors.html">Generic Error Codes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../fdl-appendix.html">GNU Free Documentation License</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../media_kapi.html">Media subsystem kernel internal API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../dvb-drivers/index.html">Linux Digital TV driver-specific documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../v4l-drivers/index.html">Video4Linux (V4L)  driver-specific documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../cec-drivers/index.html">CEC driver-specific documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../x86/index.html">x86-specific Documentation</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Linux Media Subsystem Documentation</a> &raquo;</li>
+        
+          <li><a href="../../media_uapi.html">Linux Media Infrastructure userspace API</a> &raquo;</li>
+        
+          <li><a href="v4l2.html">Part I - Video for Linux API</a> &raquo;</li>
+        
+          <li><a href="io.html">3. Input/Output</a> &raquo;</li>
+        
+      <li>3.4. Streaming I/O (DMA buffer importing)</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../../_sources/media/uapi/v4l/dmabuf.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="streaming-i-o-dma-buffer-importing">
+<span id="dmabuf"></span><h1>3.4. Streaming I/O (DMA buffer importing)<a class="headerlink" href="#streaming-i-o-dma-buffer-importing" title="Permalink to this headline">¶</a></h1>
+<p>The DMABUF framework provides a generic method for sharing buffers
+between multiple devices. Device drivers that support DMABUF can export
+a DMA buffer to userspace as a file descriptor (known as the exporter
+role), import a DMA buffer from userspace using a file descriptor
+previously exported for a different or the same device (known as the
+importer role), or both. This section describes the DMABUF importer role
+API in V4L2.</p>
+<p>Refer to <a class="reference internal" href="vidioc-expbuf.html#vidioc-expbuf"><span class="std std-ref">DMABUF exporting</span></a> for details about
+exporting V4L2 buffers as DMABUF file descriptors.</p>
+<p>Input and output devices support the streaming I/O method when the
+<code class="docutils literal notranslate"><span class="pre">V4L2_CAP_STREAMING</span></code> flag in the <code class="docutils literal notranslate"><span class="pre">capabilities</span></code> field of struct
+<a class="reference internal" href="vidioc-querycap.html#c.v4l2_capability" title="v4l2_capability"><code class="xref c c-type docutils literal notranslate"><span class="pre">v4l2_capability</span></code></a> returned by the
+<a class="reference internal" href="vidioc-querycap.html#vidioc-querycap"><span class="std std-ref">VIDIOC_QUERYCAP</span></a> ioctl is set. Whether
+importing DMA buffers through DMABUF file descriptors is supported is
+determined by calling the <a class="reference internal" href="vidioc-reqbufs.html#vidioc-reqbufs"><span class="std std-ref">VIDIOC_REQBUFS</span></a>
+ioctl with the memory type set to <code class="docutils literal notranslate"><span class="pre">V4L2_MEMORY_DMABUF</span></code>.</p>
+<p>This I/O method is dedicated to sharing DMA buffers between different
+devices, which may be V4L devices or other video-related devices (e.g.
+DRM). Buffers (planes) are allocated by a driver on behalf of an
+application. Next, these buffers are exported to the application as file
+descriptors using an API which is specific for an allocator driver. Only
+such file descriptor are exchanged. The descriptors and meta-information
+are passed in struct <a class="reference internal" href="buffer.html#c.v4l2_buffer" title="v4l2_buffer"><code class="xref c c-type docutils literal notranslate"><span class="pre">v4l2_buffer</span></code></a> (or in struct
+<a class="reference internal" href="buffer.html#c.v4l2_plane" title="v4l2_plane"><code class="xref c c-type docutils literal notranslate"><span class="pre">v4l2_plane</span></code></a> in the multi-planar API case). The
+driver must be switched into DMABUF I/O mode by calling the
+<a class="reference internal" href="vidioc-reqbufs.html#vidioc-reqbufs"><span class="std std-ref">VIDIOC_REQBUFS</span></a> with the desired buffer type.</p>
+<div class="section" id="example-initiating-streaming-i-o-with-dmabuf-file-descriptors">
+<h2>3.4.1. Example: Initiating streaming I/O with DMABUF file descriptors<a class="headerlink" href="#example-initiating-streaming-i-o-with-dmabuf-file-descriptors" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">struct</span> <span class="n">v4l2_requestbuffers</span> <span class="n">reqbuf</span><span class="p">;</span>
+
+<span class="n">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">reqbuf</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span> <span class="p">(</span><span class="n">reqbuf</span><span class="p">));</span>
+<span class="n">reqbuf</span><span class="p">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">V4L2_BUF_TYPE_VIDEO_CAPTURE</span><span class="p">;</span>
+<span class="n">reqbuf</span><span class="p">.</span><span class="n">memory</span> <span class="o">=</span> <span class="n">V4L2_MEMORY_DMABUF</span><span class="p">;</span>
+<span class="n">reqbuf</span><span class="p">.</span><span class="n">count</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+
+<span class="k">if</span> <span class="p">(</span><span class="n">ioctl</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">VIDIOC_REQBUFS</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">reqbuf</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">errno</span> <span class="o">==</span> <span class="n">EINVAL</span><span class="p">)</span>
+        <span class="n">printf</span><span class="p">(</span><span class="s">&quot;Video capturing or DMABUF streaming is not supported</span><span class="se">\\</span><span class="s">n&quot;</span><span class="p">);</span>
+    <span class="k">else</span>
+        <span class="nf">perror</span><span class="p">(</span><span class="s">&quot;VIDIOC_REQBUFS&quot;</span><span class="p">);</span>
+
+    <span class="n">exit</span><span class="p">(</span><span class="n">EXIT_FAILURE</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The buffer (plane) file descriptor is passed on the fly with the
+<a class="reference internal" href="vidioc-qbuf.html#vidioc-qbuf"><span class="std std-ref">VIDIOC_QBUF</span></a> ioctl. In case of multiplanar
+buffers, every plane can be associated with a different DMABUF
+descriptor. Although buffers are commonly cycled, applications can pass
+a different DMABUF descriptor at each <a class="reference internal" href="vidioc-qbuf.html#vidioc-qbuf"><span class="std std-ref">VIDIOC_QBUF</span></a> call.</p>
+</div>
+<div class="section" id="example-queueing-dmabuf-using-single-plane-api">
+<h2>3.4.2. Example: Queueing DMABUF using single plane API<a class="headerlink" href="#example-queueing-dmabuf-using-single-plane-api" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span> <span class="nf">buffer_queue</span><span class="p">(</span><span class="kt">int</span> <span class="n">v4lfd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">index</span><span class="p">,</span> <span class="kt">int</span> <span class="n">dmafd</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="n">v4l2_buffer</span> <span class="n">buf</span><span class="p">;</span>
+
+    <span class="n">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">buf</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span> <span class="n">buf</span><span class="p">);</span>
+    <span class="n">buf</span><span class="p">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">V4L2_BUF_TYPE_VIDEO_CAPTURE</span><span class="p">;</span>
+    <span class="n">buf</span><span class="p">.</span><span class="n">memory</span> <span class="o">=</span> <span class="n">V4L2_MEMORY_DMABUF</span><span class="p">;</span>
+    <span class="n">buf</span><span class="p">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">index</span><span class="p">;</span>
+    <span class="n">buf</span><span class="p">.</span><span class="n">m</span><span class="p">.</span><span class="n">fd</span> <span class="o">=</span> <span class="n">dmafd</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">ioctl</span><span class="p">(</span><span class="n">v4lfd</span><span class="p">,</span> <span class="n">VIDIOC_QBUF</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">buf</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">perror</span><span class="p">(</span><span class="s">&quot;VIDIOC_QBUF&quot;</span><span class="p">);</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="example-3-6-queueing-dmabuf-using-multi-plane-api">
+<h2>3.4.3. Example 3.6. Queueing DMABUF using multi plane API<a class="headerlink" href="#example-3-6-queueing-dmabuf-using-multi-plane-api" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span> <span class="nf">buffer_queue_mp</span><span class="p">(</span><span class="kt">int</span> <span class="n">v4lfd</span><span class="p">,</span> <span class="kt">int</span> <span class="n">index</span><span class="p">,</span> <span class="kt">int</span> <span class="n">dmafd</span><span class="p">[],</span> <span class="kt">int</span> <span class="n">n_planes</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="n">v4l2_buffer</span> <span class="n">buf</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="n">v4l2_plane</span> <span class="n">planes</span><span class="p">[</span><span class="n">VIDEO_MAX_PLANES</span><span class="p">];</span>
+    <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+
+    <span class="n">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">buf</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span> <span class="n">buf</span><span class="p">);</span>
+    <span class="n">buf</span><span class="p">.</span><span class="n">type</span> <span class="o">=</span> <span class="n">V4L2_BUF_TYPE_VIDEO_CAPTURE_MPLANE</span><span class="p">;</span>
+    <span class="n">buf</span><span class="p">.</span><span class="n">memory</span> <span class="o">=</span> <span class="n">V4L2_MEMORY_DMABUF</span><span class="p">;</span>
+    <span class="n">buf</span><span class="p">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">index</span><span class="p">;</span>
+    <span class="n">buf</span><span class="p">.</span><span class="n">m</span><span class="p">.</span><span class="n">planes</span> <span class="o">=</span> <span class="n">planes</span><span class="p">;</span>
+    <span class="n">buf</span><span class="p">.</span><span class="n">length</span> <span class="o">=</span> <span class="n">n_planes</span><span class="p">;</span>
+
+    <span class="n">memset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">planes</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span> <span class="n">planes</span><span class="p">);</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">n_planes</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
+        <span class="n">buf</span><span class="p">.</span><span class="n">m</span><span class="p">.</span><span class="n">planes</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">m</span><span class="p">.</span><span class="n">fd</span> <span class="o">=</span> <span class="n">dmafd</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">ioctl</span><span class="p">(</span><span class="n">v4lfd</span><span class="p">,</span> <span class="n">VIDIOC_QBUF</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">buf</span><span class="p">)</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">perror</span><span class="p">(</span><span class="s">&quot;VIDIOC_QBUF&quot;</span><span class="p">);</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Captured or displayed buffers are dequeued with the
+<a class="reference internal" href="vidioc-qbuf.html#vidioc-qbuf"><span class="std std-ref">VIDIOC_DQBUF</span></a> ioctl. The driver can unlock the
+buffer at any time between the completion of the DMA and this ioctl. The
+memory is also unlocked when
+<a class="reference internal" href="vidioc-streamon.html#vidioc-streamon"><span class="std std-ref">VIDIOC_STREAMOFF</span></a> is called,
+<a class="reference internal" href="vidioc-reqbufs.html#vidioc-reqbufs"><span class="std std-ref">VIDIOC_REQBUFS</span></a>, or when the device is closed.</p>
+<p>For capturing applications it is customary to enqueue a number of empty
+buffers, to start capturing and enter the read loop. Here the
+application waits until a filled buffer can be dequeued, and re-enqueues
+the buffer when the data is no longer needed. Output applications fill
+and enqueue buffers, when enough buffers are stacked up output is
+started. In the write loop, when the application runs out of free
+buffers it must wait until an empty buffer can be dequeued and reused.
+Two methods exist to suspend execution of the application until one or
+more buffers can be dequeued. By default <a class="reference internal" href="vidioc-qbuf.html#vidioc-qbuf"><span class="std std-ref">VIDIOC_DQBUF</span></a> blocks when no buffer is in the outgoing queue. When the
+<code class="docutils literal notranslate"><span class="pre">O_NONBLOCK</span></code> flag was given to the <a class="reference internal" href="func-open.html#func-open"><span class="std std-ref">open()</span></a> function,
+<a class="reference internal" href="vidioc-qbuf.html#vidioc-qbuf"><span class="std std-ref">VIDIOC_DQBUF</span></a> returns immediately with an <code class="docutils literal notranslate"><span class="pre">EAGAIN</span></code>
+error code when no buffer is available. The
+<a class="reference internal" href="func-select.html#func-select"><span class="std std-ref">select()</span></a> and <a class="reference internal" href="func-poll.html#func-poll"><span class="std std-ref">poll()</span></a>
+functions are always available.</p>
+<p>To start and stop capturing or displaying applications call the
+<a class="reference internal" href="vidioc-streamon.html#vidioc-streamon"><span class="std std-ref">VIDIOC_STREAMON</span></a> and
+<a class="reference internal" href="vidioc-streamon.html#vidioc-streamon"><span class="std std-ref">VIDIOC_STREAMOFF</span></a> ioctls.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><a class="reference internal" href="vidioc-streamon.html#vidioc-streamon"><span class="std std-ref">VIDIOC_STREAMOFF</span></a> removes all buffers from
+both queues and unlocks all buffers as a side effect. Since there is no
+notion of doing anything “now” on a multitasking system, if an
+application needs to synchronize with another event it should examine
+the struct <a class="reference internal" href="buffer.html#c.v4l2_buffer" title="v4l2_buffer"><code class="xref c c-type docutils literal notranslate"><span class="pre">v4l2_buffer</span></code></a> <code class="docutils literal notranslate"><span class="pre">timestamp</span></code> of captured or
+outputted buffers.</p>
+</div>
+<p>Drivers implementing DMABUF importing I/O must support the
+<a class="reference internal" href="vidioc-reqbufs.html#vidioc-reqbufs"><span class="std std-ref">VIDIOC_REQBUFS</span></a>, <a class="reference internal" href="vidioc-qbuf.html#vidioc-qbuf"><span class="std std-ref">VIDIOC_QBUF</span></a>,
+<a class="reference internal" href="vidioc-qbuf.html#vidioc-qbuf"><span class="std std-ref">VIDIOC_DQBUF</span></a>, <a class="reference internal" href="vidioc-streamon.html#vidioc-streamon"><span class="std std-ref">VIDIOC_STREAMON</span></a> and <a class="reference internal" href="vidioc-streamon.html#vidioc-streamon"><span class="std std-ref">VIDIOC_STREAMOFF</span></a> ioctls,
+and the <a class="reference internal" href="func-select.html#func-select"><span class="std std-ref">select()</span></a> and <a class="reference internal" href="func-poll.html#func-poll"><span class="std std-ref">poll()</span></a>
+functions.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="async.html" class="btn btn-neutral float-right" title="3.5. Asynchronous I/O" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="userp.html" class="btn btn-neutral float-left" title="3.3. Streaming I/O (User Pointers)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

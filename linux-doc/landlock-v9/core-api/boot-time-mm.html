@@ -1,0 +1,1445 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Boot time memory management &mdash; The Linux Kernel 5.2.0-rc5+ documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Memory hotplug" href="memory-hotplug.html" />
+    <link rel="prev" title="ktime accessors" href="timekeeping.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.2.0-rc5
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Core API Documentation</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#core-utilities">Core utilities</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="kernel-api.html">The Linux Kernel API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="assoc_array.html">Generic Associative Array Implementation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="atomic_ops.html">Semantics and Behavior of Atomic and Bitmask Operations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cachetlb.html">Cache and TLB Flushing Under Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="refcount-vs-atomic.html">refcount_t API compared to atomic_t</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cpu_hotplug.html">CPU hotplug in the Kernel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="idr.html">ID Allocation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="local_ops.html">Semantics and Behavior of Local Atomic Operations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="workqueue.html">Concurrency Managed Workqueue (cmwq)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="genericirq.html">Linux generic IRQ handling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xarray.html">XArray</a></li>
+<li class="toctree-l3"><a class="reference internal" href="librs.html">Reed-Solomon Library Programming Interface</a></li>
+<li class="toctree-l3"><a class="reference internal" href="genalloc.html">The genalloc/genpool subsystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="errseq.html">The errseq_t datatype</a></li>
+<li class="toctree-l3"><a class="reference internal" href="printk-formats.html">How to get printk format specifiers right</a></li>
+<li class="toctree-l3"><a class="reference internal" href="circular-buffers.html">Circular Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generic-radix-tree.html">Generic radix trees/sparse arrays</a></li>
+<li class="toctree-l3"><a class="reference internal" href="memory-allocation.html">Memory Allocation Guide</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mm-api.html">Memory Management APIs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gfp_mask-from-fs-io.html">GFP masks used from FS/IO context</a></li>
+<li class="toctree-l3"><a class="reference internal" href="timekeeping.html">ktime accessors</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Boot time memory management</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#memblock-overview">Memblock Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#functions-and-structures">Functions and structures</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="memory-hotplug.html">Memory hotplug</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#interfaces-for-kernel-debugging">Interfaces for kernel debugging</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../media/index.html">Linux Media Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Core API Documentation</a> &raquo;</li>
+        
+      <li>Boot time memory management</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/core-api/boot-time-mm.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="boot-time-memory-management">
+<h1>Boot time memory management<a class="headerlink" href="#boot-time-memory-management" title="Permalink to this headline">¶</a></h1>
+<p>Early system initialization cannot use “normal” memory management
+simply because it is not set up yet. But there is still need to
+allocate memory for various data structures, for instance for the
+physical page allocator.</p>
+<p>A specialized allocator called <code class="docutils literal notranslate"><span class="pre">memblock</span></code> performs the
+boot time memory management. The architecture specific initialization
+must set it up in <code class="xref c c-func docutils literal notranslate"><span class="pre">setup_arch()</span></code> and tear it down in
+<code class="xref c c-func docutils literal notranslate"><span class="pre">mem_init()</span></code> functions.</p>
+<p>Once the early memory management is available it offers a variety of
+functions and macros for memory allocations. The allocation request
+may be directed to the first (and probably the only) node or to a
+particular node in a NUMA system. There are API variants that panic
+when an allocation fails and those that don’t.</p>
+<p>Memblock also offers a variety of APIs that control its own behaviour.</p>
+<div class="section" id="memblock-overview">
+<h2>Memblock Overview<a class="headerlink" href="#memblock-overview" title="Permalink to this headline">¶</a></h2>
+<p>Memblock is a method of managing memory regions during the early
+boot period when the usual kernel memory allocators are not up and
+running.</p>
+<p>Memblock views the system memory as collections of contiguous
+regions. There are several types of these collections:</p>
+<ul class="simple">
+<li><code class="docutils literal notranslate"><span class="pre">memory</span></code> - describes the physical memory available to the
+kernel; this may differ from the actual physical memory installed
+in the system, for instance when the memory is restricted with
+<code class="docutils literal notranslate"><span class="pre">mem=</span></code> command line parameter</li>
+<li><code class="docutils literal notranslate"><span class="pre">reserved</span></code> - describes the regions that were allocated</li>
+<li><code class="docutils literal notranslate"><span class="pre">physmap</span></code> - describes the actual physical memory regardless of
+the possible restrictions; the <code class="docutils literal notranslate"><span class="pre">physmap</span></code> type is only available
+on some architectures.</li>
+</ul>
+<p>Each region is represented by <code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">memblock_region</span></code> that
+defines the region extents, its attributes and NUMA node id on NUMA
+systems. Every memory type is described by the <code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span>
+<span class="pre">memblock_type</span></code> which contains an array of memory regions along with
+the allocator metadata. The memory types are nicely wrapped with
+<code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">memblock</span></code>. This structure is statically initialzed
+at build time. The region arrays for the “memory” and “reserved”
+types are initially sized to <code class="docutils literal notranslate"><span class="pre">INIT_MEMBLOCK_REGIONS</span></code> and for the
+“physmap” type to <code class="docutils literal notranslate"><span class="pre">INIT_PHYSMEM_REGIONS</span></code>.
+The <code class="xref c c-func docutils literal notranslate"><span class="pre">memblock_allow_resize()</span></code> enables automatic resizing of
+the region arrays during addition of new regions. This feature
+should be used with care so that memory allocated for the region
+array will not overlap with areas that should be reserved, for
+example initrd.</p>
+<p>The early architecture setup should tell memblock what the physical
+memory layout is by using <a class="reference internal" href="#c.memblock_add" title="memblock_add"><code class="xref c c-func docutils literal notranslate"><span class="pre">memblock_add()</span></code></a> or
+<a class="reference internal" href="#c.memblock_add_node" title="memblock_add_node"><code class="xref c c-func docutils literal notranslate"><span class="pre">memblock_add_node()</span></code></a> functions. The first function does not
+assign the region to a NUMA node and it is appropriate for UMA
+systems. Yet, it is possible to use it on NUMA systems as well and
+assign the region to a NUMA node later in the setup process using
+<a class="reference internal" href="#c.memblock_set_node" title="memblock_set_node"><code class="xref c c-func docutils literal notranslate"><span class="pre">memblock_set_node()</span></code></a>. The <a class="reference internal" href="#c.memblock_add_node" title="memblock_add_node"><code class="xref c c-func docutils literal notranslate"><span class="pre">memblock_add_node()</span></code></a>
+performs such an assignment directly.</p>
+<p>Once memblock is setup the memory can be allocated using one of the
+API variants:</p>
+<ul class="simple">
+<li><code class="xref c c-func docutils literal notranslate"><span class="pre">memblock_phys_alloc*()</span></code> - these functions return the
+<strong>physical</strong> address of the allocated memory</li>
+<li><code class="xref c c-func docutils literal notranslate"><span class="pre">memblock_alloc*()</span></code> - these functions return the <strong>virtual</strong>
+address of the allocated memory.</li>
+</ul>
+<p>Note, that both API variants use implict assumptions about allowed
+memory ranges and the fallback methods. Consult the documentation
+of <a class="reference internal" href="#c.memblock_alloc_internal" title="memblock_alloc_internal"><code class="xref c c-func docutils literal notranslate"><span class="pre">memblock_alloc_internal()</span></code></a> and
+<a class="reference internal" href="#c.memblock_alloc_range_nid" title="memblock_alloc_range_nid"><code class="xref c c-func docutils literal notranslate"><span class="pre">memblock_alloc_range_nid()</span></code></a> functions for more elaboarte
+description.</p>
+<p>As the system boot progresses, the architecture specific
+<code class="xref c c-func docutils literal notranslate"><span class="pre">mem_init()</span></code> function frees all the memory to the buddy page
+allocator.</p>
+<p>Unless an architecure enables <code class="docutils literal notranslate"><span class="pre">CONFIG_ARCH_KEEP_MEMBLOCK</span></code>, the
+memblock data structures will be discarded after the system
+initialization compltes.</p>
+</div>
+<div class="section" id="functions-and-structures">
+<h2>Functions and structures<a class="headerlink" href="#functions-and-structures" title="Permalink to this headline">¶</a></h2>
+<p>Here is the description of memblock data structures, functions and
+macros. Some of them are actually internal, but since they are
+documented it would be silly to omit them. Besides, reading the
+descriptions for the internal functions can help to understand what
+really happens under the hood.</p>
+<dl class="type">
+<dt id="c.memblock_flags">
+enum <code class="descname">memblock_flags</code><a class="headerlink" href="#c.memblock_flags" title="Permalink to this definition">¶</a></dt>
+<dd><p>definition of memory region attributes</p>
+</dd></dl>
+
+<p><strong>Constants</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">MEMBLOCK_NONE</span></code></dt>
+<dd>no special request</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">MEMBLOCK_HOTPLUG</span></code></dt>
+<dd>hotpluggable region</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">MEMBLOCK_MIRROR</span></code></dt>
+<dd>mirrored region</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">MEMBLOCK_NOMAP</span></code></dt>
+<dd>don’t add to kernel direct mapping</dd>
+</dl>
+<dl class="type">
+<dt id="c.memblock_region">
+struct <code class="descname">memblock_region</code><a class="headerlink" href="#c.memblock_region" title="Permalink to this definition">¶</a></dt>
+<dd><p>represents a memory region</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct memblock_region {
+  phys_addr_t base;
+  phys_addr_t size;
+  enum memblock_flags flags;
+#ifdef CONFIG_HAVE_MEMBLOCK_NODE_MAP;
+  int nid;
+#endif;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">base</span></code></dt>
+<dd>physical address of the region</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">size</span></code></dt>
+<dd>size of the region</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">flags</span></code></dt>
+<dd>memory region attributes</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">nid</span></code></dt>
+<dd>NUMA node id</dd>
+</dl>
+<dl class="type">
+<dt id="c.memblock_type">
+struct <code class="descname">memblock_type</code><a class="headerlink" href="#c.memblock_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>collection of memory regions of certain type</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct memblock_type {
+  unsigned long cnt;
+  unsigned long max;
+  phys_addr_t total_size;
+  struct memblock_region *regions;
+  char *name;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">cnt</span></code></dt>
+<dd>number of regions</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">max</span></code></dt>
+<dd>size of the allocated array</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">total_size</span></code></dt>
+<dd>size of all regions</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">regions</span></code></dt>
+<dd>array of regions</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">name</span></code></dt>
+<dd>the memory type symbolic name</dd>
+</dl>
+<dl class="type">
+<dt id="c.memblock">
+struct <code class="descname">memblock</code><a class="headerlink" href="#c.memblock" title="Permalink to this definition">¶</a></dt>
+<dd><p>memblock allocator metadata</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct memblock {
+  bool bottom_up;
+  phys_addr_t current_limit;
+  struct memblock_type memory;
+  struct memblock_type reserved;
+#ifdef CONFIG_HAVE_MEMBLOCK_PHYS_MAP;
+  struct memblock_type physmem;
+#endif;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">bottom_up</span></code></dt>
+<dd>is bottom up direction?</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">current_limit</span></code></dt>
+<dd>physical address of the current allocation limit</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">memory</span></code></dt>
+<dd>usabe memory regions</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">reserved</span></code></dt>
+<dd>reserved memory regions</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">physmem</span></code></dt>
+<dd>all physical memory</dd>
+</dl>
+<dl class="function">
+<dt id="c.for_each_mem_range">
+<code class="descname">for_each_mem_range</code><span class="sig-paren">(</span><em>i</em>, <em>type_a</em>, <em>type_b</em>, <em>nid</em>, <em>flags</em>, <em>p_start</em>, <em>p_end</em>, <em>p_nid</em><span class="sig-paren">)</span><a class="headerlink" href="#c.for_each_mem_range" title="Permalink to this definition">¶</a></dt>
+<dd><p>iterate through memblock areas from type_a and not included in type_b. Or just type_a if type_b is NULL.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">i</span></code></dt>
+<dd>u64 used as loop variable</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">type_a</span></code></dt>
+<dd>ptr to memblock_type to iterate</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">type_b</span></code></dt>
+<dd>ptr to memblock_type which excludes from the iteration</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">nid</span></code></dt>
+<dd>node selector, <code class="docutils literal notranslate"><span class="pre">NUMA_NO_NODE</span></code> for all nodes</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">flags</span></code></dt>
+<dd>pick from blocks based on memory attributes</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">p_start</span></code></dt>
+<dd>ptr to phys_addr_t for start address of the range, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+<dt><code class="docutils literal notranslate"><span class="pre">p_end</span></code></dt>
+<dd>ptr to phys_addr_t for end address of the range, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+<dt><code class="docutils literal notranslate"><span class="pre">p_nid</span></code></dt>
+<dd>ptr to int for nid of the range, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+</dl>
+<dl class="function">
+<dt id="c.for_each_mem_range_rev">
+<code class="descname">for_each_mem_range_rev</code><span class="sig-paren">(</span><em>i</em>, <em>type_a</em>, <em>type_b</em>, <em>nid</em>, <em>flags</em>, <em>p_start</em>, <em>p_end</em>, <em>p_nid</em><span class="sig-paren">)</span><a class="headerlink" href="#c.for_each_mem_range_rev" title="Permalink to this definition">¶</a></dt>
+<dd><p>reverse iterate through memblock areas from type_a and not included in type_b. Or just type_a if type_b is NULL.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">i</span></code></dt>
+<dd>u64 used as loop variable</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">type_a</span></code></dt>
+<dd>ptr to memblock_type to iterate</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">type_b</span></code></dt>
+<dd>ptr to memblock_type which excludes from the iteration</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">nid</span></code></dt>
+<dd>node selector, <code class="docutils literal notranslate"><span class="pre">NUMA_NO_NODE</span></code> for all nodes</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">flags</span></code></dt>
+<dd>pick from blocks based on memory attributes</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">p_start</span></code></dt>
+<dd>ptr to phys_addr_t for start address of the range, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+<dt><code class="docutils literal notranslate"><span class="pre">p_end</span></code></dt>
+<dd>ptr to phys_addr_t for end address of the range, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+<dt><code class="docutils literal notranslate"><span class="pre">p_nid</span></code></dt>
+<dd>ptr to int for nid of the range, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+</dl>
+<dl class="function">
+<dt id="c.for_each_reserved_mem_region">
+<code class="descname">for_each_reserved_mem_region</code><span class="sig-paren">(</span><em>i</em>, <em>p_start</em>, <em>p_end</em><span class="sig-paren">)</span><a class="headerlink" href="#c.for_each_reserved_mem_region" title="Permalink to this definition">¶</a></dt>
+<dd><p>iterate over all reserved memblock areas</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">i</span></code></dt>
+<dd>u64 used as loop variable</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">p_start</span></code></dt>
+<dd>ptr to phys_addr_t for start address of the range, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+<dt><code class="docutils literal notranslate"><span class="pre">p_end</span></code></dt>
+<dd>ptr to phys_addr_t for end address of the range, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Walks over reserved areas of memblock. Available as soon as memblock
+is initialized.</p>
+<dl class="function">
+<dt id="c.for_each_mem_pfn_range">
+<code class="descname">for_each_mem_pfn_range</code><span class="sig-paren">(</span><em>i</em>, <em>nid</em>, <em>p_start</em>, <em>p_end</em>, <em>p_nid</em><span class="sig-paren">)</span><a class="headerlink" href="#c.for_each_mem_pfn_range" title="Permalink to this definition">¶</a></dt>
+<dd><p>early memory pfn range iterator</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">i</span></code></dt>
+<dd>an integer used as loop variable</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">nid</span></code></dt>
+<dd>node selector, <code class="docutils literal notranslate"><span class="pre">MAX_NUMNODES</span></code> for all nodes</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">p_start</span></code></dt>
+<dd>ptr to ulong for start pfn of the range, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+<dt><code class="docutils literal notranslate"><span class="pre">p_end</span></code></dt>
+<dd>ptr to ulong for end pfn of the range, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+<dt><code class="docutils literal notranslate"><span class="pre">p_nid</span></code></dt>
+<dd>ptr to int for nid of the range, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Walks over configured memory ranges.</p>
+<dl class="function">
+<dt id="c.for_each_free_mem_pfn_range_in_zone">
+<code class="descname">for_each_free_mem_pfn_range_in_zone</code><span class="sig-paren">(</span><em>i</em>, <em>zone</em>, <em>p_start</em>, <em>p_end</em><span class="sig-paren">)</span><a class="headerlink" href="#c.for_each_free_mem_pfn_range_in_zone" title="Permalink to this definition">¶</a></dt>
+<dd><p>iterate through zone specific free memblock areas</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">i</span></code></dt>
+<dd>u64 used as loop variable</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">zone</span></code></dt>
+<dd>zone in which all of the memory blocks reside</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">p_start</span></code></dt>
+<dd>ptr to phys_addr_t for start address of the range, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+<dt><code class="docutils literal notranslate"><span class="pre">p_end</span></code></dt>
+<dd>ptr to phys_addr_t for end address of the range, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Walks over free (memory &amp;&amp; !reserved) areas of memblock in a specific
+zone. Available once memblock and an empty zone is initialized. The main
+assumption is that the zone start, end, and pgdat have been associated.
+This way we can use the zone to determine NUMA node, and if a given part
+of the memblock is valid for the zone.</p>
+<dl class="function">
+<dt id="c.for_each_free_mem_pfn_range_in_zone_from">
+<code class="descname">for_each_free_mem_pfn_range_in_zone_from</code><span class="sig-paren">(</span><em>i</em>, <em>zone</em>, <em>p_start</em>, <em>p_end</em><span class="sig-paren">)</span><a class="headerlink" href="#c.for_each_free_mem_pfn_range_in_zone_from" title="Permalink to this definition">¶</a></dt>
+<dd><p>iterate through zone specific free memblock areas from a given point</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">i</span></code></dt>
+<dd>u64 used as loop variable</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">zone</span></code></dt>
+<dd>zone in which all of the memory blocks reside</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">p_start</span></code></dt>
+<dd>ptr to phys_addr_t for start address of the range, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+<dt><code class="docutils literal notranslate"><span class="pre">p_end</span></code></dt>
+<dd>ptr to phys_addr_t for end address of the range, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Walks over free (memory &amp;&amp; !reserved) areas of memblock in a specific
+zone, continuing from current position. Available as soon as memblock is
+initialized.</p>
+<dl class="function">
+<dt id="c.for_each_free_mem_range">
+<code class="descname">for_each_free_mem_range</code><span class="sig-paren">(</span><em>i</em>, <em>nid</em>, <em>flags</em>, <em>p_start</em>, <em>p_end</em>, <em>p_nid</em><span class="sig-paren">)</span><a class="headerlink" href="#c.for_each_free_mem_range" title="Permalink to this definition">¶</a></dt>
+<dd><p>iterate through free memblock areas</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">i</span></code></dt>
+<dd>u64 used as loop variable</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">nid</span></code></dt>
+<dd>node selector, <code class="docutils literal notranslate"><span class="pre">NUMA_NO_NODE</span></code> for all nodes</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">flags</span></code></dt>
+<dd>pick from blocks based on memory attributes</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">p_start</span></code></dt>
+<dd>ptr to phys_addr_t for start address of the range, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+<dt><code class="docutils literal notranslate"><span class="pre">p_end</span></code></dt>
+<dd>ptr to phys_addr_t for end address of the range, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+<dt><code class="docutils literal notranslate"><span class="pre">p_nid</span></code></dt>
+<dd>ptr to int for nid of the range, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Walks over free (memory &amp;&amp; !reserved) areas of memblock.  Available as
+soon as memblock is initialized.</p>
+<dl class="function">
+<dt id="c.for_each_free_mem_range_reverse">
+<code class="descname">for_each_free_mem_range_reverse</code><span class="sig-paren">(</span><em>i</em>, <em>nid</em>, <em>flags</em>, <em>p_start</em>, <em>p_end</em>, <em>p_nid</em><span class="sig-paren">)</span><a class="headerlink" href="#c.for_each_free_mem_range_reverse" title="Permalink to this definition">¶</a></dt>
+<dd><p>rev-iterate through free memblock areas</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">i</span></code></dt>
+<dd>u64 used as loop variable</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">nid</span></code></dt>
+<dd>node selector, <code class="docutils literal notranslate"><span class="pre">NUMA_NO_NODE</span></code> for all nodes</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">flags</span></code></dt>
+<dd>pick from blocks based on memory attributes</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">p_start</span></code></dt>
+<dd>ptr to phys_addr_t for start address of the range, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+<dt><code class="docutils literal notranslate"><span class="pre">p_end</span></code></dt>
+<dd>ptr to phys_addr_t for end address of the range, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+<dt><code class="docutils literal notranslate"><span class="pre">p_nid</span></code></dt>
+<dd>ptr to int for nid of the range, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Walks over free (memory &amp;&amp; !reserved) areas of memblock in reverse
+order.  Available as soon as memblock is initialized.</p>
+<dl class="function">
+<dt id="c.memblock_set_current_limit">
+void <code class="descname">memblock_set_current_limit</code><span class="sig-paren">(</span>phys_addr_t<em>&nbsp;limit</em><span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_set_current_limit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the current allocation limit to allow limiting allocations to what is currently accessible during boot</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">limit</span></code></dt>
+<dd>New limit value (physical address)</dd>
+</dl>
+<dl class="function">
+<dt id="c.memblock_region_memory_base_pfn">
+unsigned long <code class="descname">memblock_region_memory_base_pfn</code><span class="sig-paren">(</span>const struct <a class="reference internal" href="#c.memblock_region" title="memblock_region">memblock_region</a> *<em>&nbsp;reg</em><span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_region_memory_base_pfn" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the lowest pfn of the memory region</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">const</span> <span class="pre">struct</span> <span class="pre">memblock_region</span> <span class="pre">*</span> <span class="pre">reg</span></code></dt>
+<dd>memblock_region structure</dd>
+</dl>
+<p><strong>Return</strong></p>
+<p>the lowest pfn intersecting with the memory region</p>
+<dl class="function">
+<dt id="c.memblock_region_memory_end_pfn">
+unsigned long <code class="descname">memblock_region_memory_end_pfn</code><span class="sig-paren">(</span>const struct <a class="reference internal" href="#c.memblock_region" title="memblock_region">memblock_region</a> *<em>&nbsp;reg</em><span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_region_memory_end_pfn" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the end pfn of the memory region</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">const</span> <span class="pre">struct</span> <span class="pre">memblock_region</span> <span class="pre">*</span> <span class="pre">reg</span></code></dt>
+<dd>memblock_region structure</dd>
+</dl>
+<p><strong>Return</strong></p>
+<p>the end_pfn of the reserved region</p>
+<dl class="function">
+<dt id="c.memblock_region_reserved_base_pfn">
+unsigned long <code class="descname">memblock_region_reserved_base_pfn</code><span class="sig-paren">(</span>const struct <a class="reference internal" href="#c.memblock_region" title="memblock_region">memblock_region</a> *<em>&nbsp;reg</em><span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_region_reserved_base_pfn" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the lowest pfn of the reserved region</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">const</span> <span class="pre">struct</span> <span class="pre">memblock_region</span> <span class="pre">*</span> <span class="pre">reg</span></code></dt>
+<dd>memblock_region structure</dd>
+</dl>
+<p><strong>Return</strong></p>
+<p>the lowest pfn intersecting with the reserved region</p>
+<dl class="function">
+<dt id="c.memblock_region_reserved_end_pfn">
+unsigned long <code class="descname">memblock_region_reserved_end_pfn</code><span class="sig-paren">(</span>const struct <a class="reference internal" href="#c.memblock_region" title="memblock_region">memblock_region</a> *<em>&nbsp;reg</em><span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_region_reserved_end_pfn" title="Permalink to this definition">¶</a></dt>
+<dd><p>get the end pfn of the reserved region</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">const</span> <span class="pre">struct</span> <span class="pre">memblock_region</span> <span class="pre">*</span> <span class="pre">reg</span></code></dt>
+<dd>memblock_region structure</dd>
+</dl>
+<p><strong>Return</strong></p>
+<p>the end_pfn of the reserved region</p>
+<dl class="function">
+<dt id="c.__memblock_find_range_bottom_up">
+phys_addr_t __init_memblock <code class="descname">__memblock_find_range_bottom_up</code><span class="sig-paren">(</span>phys_addr_t<em>&nbsp;start</em>, phys_addr_t<em>&nbsp;end</em>, phys_addr_t<em>&nbsp;size</em>, phys_addr_t<em>&nbsp;align</em>, int<em>&nbsp;nid</em>, enum <a class="reference internal" href="#c.memblock_flags" title="memblock_flags">memblock_flags</a><em>&nbsp;flags</em><span class="sig-paren">)</span><a class="headerlink" href="#c.__memblock_find_range_bottom_up" title="Permalink to this definition">¶</a></dt>
+<dd><p>find free area utility in bottom-up</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">start</span></code></dt>
+<dd>start of candidate range</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">end</span></code></dt>
+<dd>end of candidate range, can be <code class="docutils literal notranslate"><span class="pre">MEMBLOCK_ALLOC_ANYWHERE</span></code> or
+<code class="docutils literal notranslate"><span class="pre">MEMBLOCK_ALLOC_ACCESSIBLE</span></code></dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">size</span></code></dt>
+<dd>size of free area to find</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">align</span></code></dt>
+<dd>alignment of free area to find</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">nid</span></code></dt>
+<dd>nid of the free area to find, <code class="docutils literal notranslate"><span class="pre">NUMA_NO_NODE</span></code> for any node</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">enum</span> <span class="pre">memblock_flags</span> <span class="pre">flags</span></code></dt>
+<dd>pick from blocks based on memory attributes</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Utility called from <a class="reference internal" href="#c.memblock_find_in_range_node" title="memblock_find_in_range_node"><code class="xref c c-func docutils literal notranslate"><span class="pre">memblock_find_in_range_node()</span></code></a>, find free area bottom-up.</p>
+<p><strong>Return</strong></p>
+<p>Found address on success, 0 on failure.</p>
+<dl class="function">
+<dt id="c.__memblock_find_range_top_down">
+phys_addr_t __init_memblock <code class="descname">__memblock_find_range_top_down</code><span class="sig-paren">(</span>phys_addr_t<em>&nbsp;start</em>, phys_addr_t<em>&nbsp;end</em>, phys_addr_t<em>&nbsp;size</em>, phys_addr_t<em>&nbsp;align</em>, int<em>&nbsp;nid</em>, enum <a class="reference internal" href="#c.memblock_flags" title="memblock_flags">memblock_flags</a><em>&nbsp;flags</em><span class="sig-paren">)</span><a class="headerlink" href="#c.__memblock_find_range_top_down" title="Permalink to this definition">¶</a></dt>
+<dd><p>find free area utility, in top-down</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">start</span></code></dt>
+<dd>start of candidate range</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">end</span></code></dt>
+<dd>end of candidate range, can be <code class="docutils literal notranslate"><span class="pre">MEMBLOCK_ALLOC_ANYWHERE</span></code> or
+<code class="docutils literal notranslate"><span class="pre">MEMBLOCK_ALLOC_ACCESSIBLE</span></code></dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">size</span></code></dt>
+<dd>size of free area to find</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">align</span></code></dt>
+<dd>alignment of free area to find</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">nid</span></code></dt>
+<dd>nid of the free area to find, <code class="docutils literal notranslate"><span class="pre">NUMA_NO_NODE</span></code> for any node</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">enum</span> <span class="pre">memblock_flags</span> <span class="pre">flags</span></code></dt>
+<dd>pick from blocks based on memory attributes</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Utility called from <a class="reference internal" href="#c.memblock_find_in_range_node" title="memblock_find_in_range_node"><code class="xref c c-func docutils literal notranslate"><span class="pre">memblock_find_in_range_node()</span></code></a>, find free area top-down.</p>
+<p><strong>Return</strong></p>
+<p>Found address on success, 0 on failure.</p>
+<dl class="function">
+<dt id="c.memblock_find_in_range_node">
+phys_addr_t __init_memblock <code class="descname">memblock_find_in_range_node</code><span class="sig-paren">(</span>phys_addr_t<em>&nbsp;size</em>, phys_addr_t<em>&nbsp;align</em>, phys_addr_t<em>&nbsp;start</em>, phys_addr_t<em>&nbsp;end</em>, int<em>&nbsp;nid</em>, enum <a class="reference internal" href="#c.memblock_flags" title="memblock_flags">memblock_flags</a><em>&nbsp;flags</em><span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_find_in_range_node" title="Permalink to this definition">¶</a></dt>
+<dd><p>find free area in given range and node</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">size</span></code></dt>
+<dd>size of free area to find</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">align</span></code></dt>
+<dd>alignment of free area to find</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">start</span></code></dt>
+<dd>start of candidate range</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">end</span></code></dt>
+<dd>end of candidate range, can be <code class="docutils literal notranslate"><span class="pre">MEMBLOCK_ALLOC_ANYWHERE</span></code> or
+<code class="docutils literal notranslate"><span class="pre">MEMBLOCK_ALLOC_ACCESSIBLE</span></code></dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">nid</span></code></dt>
+<dd>nid of the free area to find, <code class="docutils literal notranslate"><span class="pre">NUMA_NO_NODE</span></code> for any node</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">enum</span> <span class="pre">memblock_flags</span> <span class="pre">flags</span></code></dt>
+<dd>pick from blocks based on memory attributes</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Find <strong>size</strong> free area aligned to <strong>align</strong> in the specified range and node.</p>
+<p>When allocation direction is bottom-up, the <strong>start</strong> should be greater
+than the end of the kernel image. Otherwise, it will be trimmed. The
+reason is that we want the bottom-up allocation just near the kernel
+image so it is highly likely that the allocated memory and the kernel
+will reside in the same node.</p>
+<p>If bottom-up allocation failed, will try to allocate memory top-down.</p>
+<p><strong>Return</strong></p>
+<p>Found address on success, 0 on failure.</p>
+<dl class="function">
+<dt id="c.memblock_find_in_range">
+phys_addr_t __init_memblock <code class="descname">memblock_find_in_range</code><span class="sig-paren">(</span>phys_addr_t<em>&nbsp;start</em>, phys_addr_t<em>&nbsp;end</em>, phys_addr_t<em>&nbsp;size</em>, phys_addr_t<em>&nbsp;align</em><span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_find_in_range" title="Permalink to this definition">¶</a></dt>
+<dd><p>find free area in given range</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">start</span></code></dt>
+<dd>start of candidate range</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">end</span></code></dt>
+<dd>end of candidate range, can be <code class="docutils literal notranslate"><span class="pre">MEMBLOCK_ALLOC_ANYWHERE</span></code> or
+<code class="docutils literal notranslate"><span class="pre">MEMBLOCK_ALLOC_ACCESSIBLE</span></code></dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">size</span></code></dt>
+<dd>size of free area to find</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">align</span></code></dt>
+<dd>alignment of free area to find</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Find <strong>size</strong> free area aligned to <strong>align</strong> in the specified range.</p>
+<p><strong>Return</strong></p>
+<p>Found address on success, 0 on failure.</p>
+<dl class="function">
+<dt id="c.memblock_discard">
+void <code class="descname">memblock_discard</code><span class="sig-paren">(</span>void<span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_discard" title="Permalink to this definition">¶</a></dt>
+<dd><p>discard memory and reserved arrays if they were allocated</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">void</span></code></dt>
+<dd>no arguments</dd>
+</dl>
+<dl class="function">
+<dt id="c.memblock_double_array">
+int __init_memblock <code class="descname">memblock_double_array</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.memblock_type" title="memblock_type">memblock_type</a> *<em>&nbsp;type</em>, phys_addr_t<em>&nbsp;new_area_start</em>, phys_addr_t<em>&nbsp;new_area_size</em><span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_double_array" title="Permalink to this definition">¶</a></dt>
+<dd><p>double the size of the memblock regions array</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">memblock_type</span> <span class="pre">*</span> <span class="pre">type</span></code></dt>
+<dd>memblock type of the regions array being doubled</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">new_area_start</span></code></dt>
+<dd>starting address of memory range to avoid overlap with</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">new_area_size</span></code></dt>
+<dd>size of memory range to avoid overlap with</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Double the size of the <strong>type</strong> regions array. If memblock is being used to
+allocate memory for a new reserved regions array and there is a previously
+allocated memory range [<strong>new_area_start</strong>, <strong>new_area_start</strong> + <strong>new_area_size</strong>]
+waiting to be reserved, ensure the memory used by the new array does
+not overlap.</p>
+<p><strong>Return</strong></p>
+<p>0 on success, -1 on failure.</p>
+<dl class="function">
+<dt id="c.memblock_merge_regions">
+void __init_memblock <code class="descname">memblock_merge_regions</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.memblock_type" title="memblock_type">memblock_type</a> *<em>&nbsp;type</em><span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_merge_regions" title="Permalink to this definition">¶</a></dt>
+<dd><p>merge neighboring compatible regions</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">memblock_type</span> <span class="pre">*</span> <span class="pre">type</span></code></dt>
+<dd>memblock type to scan</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Scan <strong>type</strong> and merge neighboring compatible regions.</p>
+<dl class="function">
+<dt id="c.memblock_insert_region">
+void __init_memblock <code class="descname">memblock_insert_region</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.memblock_type" title="memblock_type">memblock_type</a> *<em>&nbsp;type</em>, int<em>&nbsp;idx</em>, phys_addr_t<em>&nbsp;base</em>, phys_addr_t<em>&nbsp;size</em>, int<em>&nbsp;nid</em>, enum <a class="reference internal" href="#c.memblock_flags" title="memblock_flags">memblock_flags</a><em>&nbsp;flags</em><span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_insert_region" title="Permalink to this definition">¶</a></dt>
+<dd><p>insert new memblock region</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">memblock_type</span> <span class="pre">*</span> <span class="pre">type</span></code></dt>
+<dd>memblock type to insert into</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">idx</span></code></dt>
+<dd>index for the insertion point</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">base</span></code></dt>
+<dd>base address of the new region</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">size</span></code></dt>
+<dd>size of the new region</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">nid</span></code></dt>
+<dd>node id of the new region</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">enum</span> <span class="pre">memblock_flags</span> <span class="pre">flags</span></code></dt>
+<dd>flags of the new region</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Insert new memblock region [<strong>base</strong>, <strong>base</strong> + <strong>size</strong>) into <strong>type</strong> at <strong>idx</strong>.
+<strong>type</strong> must already have extra room to accommodate the new region.</p>
+<dl class="function">
+<dt id="c.memblock_add_range">
+int __init_memblock <code class="descname">memblock_add_range</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.memblock_type" title="memblock_type">memblock_type</a> *<em>&nbsp;type</em>, phys_addr_t<em>&nbsp;base</em>, phys_addr_t<em>&nbsp;size</em>, int<em>&nbsp;nid</em>, enum <a class="reference internal" href="#c.memblock_flags" title="memblock_flags">memblock_flags</a><em>&nbsp;flags</em><span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_add_range" title="Permalink to this definition">¶</a></dt>
+<dd><p>add new memblock region</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">memblock_type</span> <span class="pre">*</span> <span class="pre">type</span></code></dt>
+<dd>memblock type to add new region into</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">base</span></code></dt>
+<dd>base address of the new region</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">size</span></code></dt>
+<dd>size of the new region</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">nid</span></code></dt>
+<dd>nid of the new region</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">enum</span> <span class="pre">memblock_flags</span> <span class="pre">flags</span></code></dt>
+<dd>flags of the new region</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Add new memblock region [<strong>base</strong>, <strong>base</strong> + <strong>size</strong>) into <strong>type</strong>.  The new region
+is allowed to overlap with existing ones - overlaps don’t affect already
+existing regions.  <strong>type</strong> is guaranteed to be minimal (all neighbouring
+compatible regions are merged) after the addition.</p>
+<p><strong>Return</strong></p>
+<p>0 on success, -errno on failure.</p>
+<dl class="function">
+<dt id="c.memblock_add_node">
+int __init_memblock <code class="descname">memblock_add_node</code><span class="sig-paren">(</span>phys_addr_t<em>&nbsp;base</em>, phys_addr_t<em>&nbsp;size</em>, int<em>&nbsp;nid</em><span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_add_node" title="Permalink to this definition">¶</a></dt>
+<dd><p>add new memblock region within a NUMA node</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">base</span></code></dt>
+<dd>base address of the new region</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">size</span></code></dt>
+<dd>size of the new region</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">nid</span></code></dt>
+<dd>nid of the new region</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Add new memblock region [<strong>base</strong>, <strong>base</strong> + <strong>size</strong>) to the “memory”
+type. See <a class="reference internal" href="#c.memblock_add_range" title="memblock_add_range"><code class="xref c c-func docutils literal notranslate"><span class="pre">memblock_add_range()</span></code></a> description for mode details</p>
+<p><strong>Return</strong></p>
+<p>0 on success, -errno on failure.</p>
+<dl class="function">
+<dt id="c.memblock_add">
+int __init_memblock <code class="descname">memblock_add</code><span class="sig-paren">(</span>phys_addr_t<em>&nbsp;base</em>, phys_addr_t<em>&nbsp;size</em><span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_add" title="Permalink to this definition">¶</a></dt>
+<dd><p>add new memblock region</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">base</span></code></dt>
+<dd>base address of the new region</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">size</span></code></dt>
+<dd>size of the new region</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Add new memblock region [<strong>base</strong>, <strong>base</strong> + <strong>size</strong>) to the “memory”
+type. See <a class="reference internal" href="#c.memblock_add_range" title="memblock_add_range"><code class="xref c c-func docutils literal notranslate"><span class="pre">memblock_add_range()</span></code></a> description for mode details</p>
+<p><strong>Return</strong></p>
+<p>0 on success, -errno on failure.</p>
+<dl class="function">
+<dt id="c.memblock_isolate_range">
+int __init_memblock <code class="descname">memblock_isolate_range</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.memblock_type" title="memblock_type">memblock_type</a> *<em>&nbsp;type</em>, phys_addr_t<em>&nbsp;base</em>, phys_addr_t<em>&nbsp;size</em>, int *<em>&nbsp;start_rgn</em>, int *<em>&nbsp;end_rgn</em><span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_isolate_range" title="Permalink to this definition">¶</a></dt>
+<dd><p>isolate given range into disjoint memblocks</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">memblock_type</span> <span class="pre">*</span> <span class="pre">type</span></code></dt>
+<dd>memblock type to isolate range for</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">base</span></code></dt>
+<dd>base of range to isolate</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">size</span></code></dt>
+<dd>size of range to isolate</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">*</span> <span class="pre">start_rgn</span></code></dt>
+<dd>out parameter for the start of isolated region</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">*</span> <span class="pre">end_rgn</span></code></dt>
+<dd>out parameter for the end of isolated region</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Walk <strong>type</strong> and ensure that regions don’t cross the boundaries defined by
+[<strong>base</strong>, <strong>base</strong> + <strong>size</strong>).  Crossing regions are split at the boundaries,
+which may create at most two more regions.  The index of the first
+region inside the range is returned in <strong>*start_rgn</strong> and end in <strong>*end_rgn</strong>.</p>
+<p><strong>Return</strong></p>
+<p>0 on success, -errno on failure.</p>
+<dl class="function">
+<dt id="c.memblock_free">
+int __init_memblock <code class="descname">memblock_free</code><span class="sig-paren">(</span>phys_addr_t<em>&nbsp;base</em>, phys_addr_t<em>&nbsp;size</em><span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_free" title="Permalink to this definition">¶</a></dt>
+<dd><p>free boot memory block</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">base</span></code></dt>
+<dd>phys starting address of the  boot memory block</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">size</span></code></dt>
+<dd>size of the boot memory block in bytes</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Free boot memory block previously allocated by <code class="xref c c-func docutils literal notranslate"><span class="pre">memblock_alloc_xx()</span></code> API.
+The freeing memory will not be released to the buddy allocator.</p>
+<dl class="function">
+<dt id="c.memblock_setclr_flag">
+int __init_memblock <code class="descname">memblock_setclr_flag</code><span class="sig-paren">(</span>phys_addr_t<em>&nbsp;base</em>, phys_addr_t<em>&nbsp;size</em>, int<em>&nbsp;set</em>, int<em>&nbsp;flag</em><span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_setclr_flag" title="Permalink to this definition">¶</a></dt>
+<dd><p>set or clear flag for a memory region</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">base</span></code></dt>
+<dd>base address of the region</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">size</span></code></dt>
+<dd>size of the region</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">set</span></code></dt>
+<dd>set or clear the flag</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">flag</span></code></dt>
+<dd>the flag to udpate</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This function isolates region [<strong>base</strong>, <strong>base</strong> + <strong>size</strong>), and sets/clears flag</p>
+<p><strong>Return</strong></p>
+<p>0 on success, -errno on failure.</p>
+<dl class="function">
+<dt id="c.memblock_mark_hotplug">
+int __init_memblock <code class="descname">memblock_mark_hotplug</code><span class="sig-paren">(</span>phys_addr_t<em>&nbsp;base</em>, phys_addr_t<em>&nbsp;size</em><span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_mark_hotplug" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mark hotpluggable memory with flag MEMBLOCK_HOTPLUG.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">base</span></code></dt>
+<dd>the base phys addr of the region</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">size</span></code></dt>
+<dd>the size of the region</dd>
+</dl>
+<p><strong>Return</strong></p>
+<p>0 on success, -errno on failure.</p>
+<dl class="function">
+<dt id="c.memblock_clear_hotplug">
+int __init_memblock <code class="descname">memblock_clear_hotplug</code><span class="sig-paren">(</span>phys_addr_t<em>&nbsp;base</em>, phys_addr_t<em>&nbsp;size</em><span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_clear_hotplug" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clear flag MEMBLOCK_HOTPLUG for a specified region.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">base</span></code></dt>
+<dd>the base phys addr of the region</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">size</span></code></dt>
+<dd>the size of the region</dd>
+</dl>
+<p><strong>Return</strong></p>
+<p>0 on success, -errno on failure.</p>
+<dl class="function">
+<dt id="c.memblock_mark_mirror">
+int __init_memblock <code class="descname">memblock_mark_mirror</code><span class="sig-paren">(</span>phys_addr_t<em>&nbsp;base</em>, phys_addr_t<em>&nbsp;size</em><span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_mark_mirror" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mark mirrored memory with flag MEMBLOCK_MIRROR.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">base</span></code></dt>
+<dd>the base phys addr of the region</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">size</span></code></dt>
+<dd>the size of the region</dd>
+</dl>
+<p><strong>Return</strong></p>
+<p>0 on success, -errno on failure.</p>
+<dl class="function">
+<dt id="c.memblock_mark_nomap">
+int __init_memblock <code class="descname">memblock_mark_nomap</code><span class="sig-paren">(</span>phys_addr_t<em>&nbsp;base</em>, phys_addr_t<em>&nbsp;size</em><span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_mark_nomap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mark a memory region with flag MEMBLOCK_NOMAP.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">base</span></code></dt>
+<dd>the base phys addr of the region</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">size</span></code></dt>
+<dd>the size of the region</dd>
+</dl>
+<p><strong>Return</strong></p>
+<p>0 on success, -errno on failure.</p>
+<dl class="function">
+<dt id="c.memblock_clear_nomap">
+int __init_memblock <code class="descname">memblock_clear_nomap</code><span class="sig-paren">(</span>phys_addr_t<em>&nbsp;base</em>, phys_addr_t<em>&nbsp;size</em><span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_clear_nomap" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clear flag MEMBLOCK_NOMAP for a specified region.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">base</span></code></dt>
+<dd>the base phys addr of the region</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">size</span></code></dt>
+<dd>the size of the region</dd>
+</dl>
+<p><strong>Return</strong></p>
+<p>0 on success, -errno on failure.</p>
+<dl class="function">
+<dt id="c.__next_reserved_mem_region">
+void __init_memblock <code class="descname">__next_reserved_mem_region</code><span class="sig-paren">(</span>u64 *<em>&nbsp;idx</em>, phys_addr_t *<em>&nbsp;out_start</em>, phys_addr_t *<em>&nbsp;out_end</em><span class="sig-paren">)</span><a class="headerlink" href="#c.__next_reserved_mem_region" title="Permalink to this definition">¶</a></dt>
+<dd><p>next function for <code class="xref c c-func docutils literal notranslate"><span class="pre">for_each_reserved_region()</span></code></p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">u64</span> <span class="pre">*</span> <span class="pre">idx</span></code></dt>
+<dd>pointer to u64 loop variable</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">*</span> <span class="pre">out_start</span></code></dt>
+<dd>ptr to phys_addr_t for start address of the region, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">*</span> <span class="pre">out_end</span></code></dt>
+<dd>ptr to phys_addr_t for end address of the region, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Iterate over all reserved memory regions.</p>
+<dl class="function">
+<dt id="c.__next_mem_range">
+void __init_memblock <code class="descname">__next_mem_range</code><span class="sig-paren">(</span>u64 *<em>&nbsp;idx</em>, int<em>&nbsp;nid</em>, enum <a class="reference internal" href="#c.memblock_flags" title="memblock_flags">memblock_flags</a><em>&nbsp;flags</em>, struct <a class="reference internal" href="#c.memblock_type" title="memblock_type">memblock_type</a> *<em>&nbsp;type_a</em>, struct <a class="reference internal" href="#c.memblock_type" title="memblock_type">memblock_type</a> *<em>&nbsp;type_b</em>, phys_addr_t *<em>&nbsp;out_start</em>, phys_addr_t *<em>&nbsp;out_end</em>, int *<em>&nbsp;out_nid</em><span class="sig-paren">)</span><a class="headerlink" href="#c.__next_mem_range" title="Permalink to this definition">¶</a></dt>
+<dd><p>next function for <a class="reference internal" href="#c.for_each_free_mem_range" title="for_each_free_mem_range"><code class="xref c c-func docutils literal notranslate"><span class="pre">for_each_free_mem_range()</span></code></a> etc.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">u64</span> <span class="pre">*</span> <span class="pre">idx</span></code></dt>
+<dd>pointer to u64 loop variable</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">nid</span></code></dt>
+<dd>node selector, <code class="docutils literal notranslate"><span class="pre">NUMA_NO_NODE</span></code> for all nodes</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">enum</span> <span class="pre">memblock_flags</span> <span class="pre">flags</span></code></dt>
+<dd>pick from blocks based on memory attributes</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">memblock_type</span> <span class="pre">*</span> <span class="pre">type_a</span></code></dt>
+<dd>pointer to memblock_type from where the range is taken</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">memblock_type</span> <span class="pre">*</span> <span class="pre">type_b</span></code></dt>
+<dd>pointer to memblock_type which excludes memory from being taken</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">*</span> <span class="pre">out_start</span></code></dt>
+<dd>ptr to phys_addr_t for start address of the range, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">*</span> <span class="pre">out_end</span></code></dt>
+<dd>ptr to phys_addr_t for end address of the range, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">*</span> <span class="pre">out_nid</span></code></dt>
+<dd>ptr to int for nid of the range, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Find the first area from <strong>*idx</strong> which matches <strong>nid</strong>, fill the out
+parameters, and update <strong>*idx</strong> for the next iteration.  The lower 32bit of
+<strong>*idx</strong> contains index into type_a and the upper 32bit indexes the
+areas before each region in type_b.  For example, if type_b regions
+look like the following,</p>
+<blockquote>
+<div>0:[0-16), 1:[32-48), 2:[128-130)</div></blockquote>
+<p>The upper 32bit indexes the following regions.</p>
+<blockquote>
+<div>0:[0-0), 1:[16-32), 2:[48-128), 3:[130-MAX)</div></blockquote>
+<p>As both region arrays are sorted, the function advances the two indices
+in lockstep and returns each intersection.</p>
+<dl class="function">
+<dt id="c.__next_mem_range_rev">
+void __init_memblock <code class="descname">__next_mem_range_rev</code><span class="sig-paren">(</span>u64 *<em>&nbsp;idx</em>, int<em>&nbsp;nid</em>, enum <a class="reference internal" href="#c.memblock_flags" title="memblock_flags">memblock_flags</a><em>&nbsp;flags</em>, struct <a class="reference internal" href="#c.memblock_type" title="memblock_type">memblock_type</a> *<em>&nbsp;type_a</em>, struct <a class="reference internal" href="#c.memblock_type" title="memblock_type">memblock_type</a> *<em>&nbsp;type_b</em>, phys_addr_t *<em>&nbsp;out_start</em>, phys_addr_t *<em>&nbsp;out_end</em>, int *<em>&nbsp;out_nid</em><span class="sig-paren">)</span><a class="headerlink" href="#c.__next_mem_range_rev" title="Permalink to this definition">¶</a></dt>
+<dd><p>generic next function for for_each_*:c:func:<cite>_range_rev()</cite></p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">u64</span> <span class="pre">*</span> <span class="pre">idx</span></code></dt>
+<dd>pointer to u64 loop variable</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">nid</span></code></dt>
+<dd>node selector, <code class="docutils literal notranslate"><span class="pre">NUMA_NO_NODE</span></code> for all nodes</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">enum</span> <span class="pre">memblock_flags</span> <span class="pre">flags</span></code></dt>
+<dd>pick from blocks based on memory attributes</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">memblock_type</span> <span class="pre">*</span> <span class="pre">type_a</span></code></dt>
+<dd>pointer to memblock_type from where the range is taken</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">memblock_type</span> <span class="pre">*</span> <span class="pre">type_b</span></code></dt>
+<dd>pointer to memblock_type which excludes memory from being taken</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">*</span> <span class="pre">out_start</span></code></dt>
+<dd>ptr to phys_addr_t for start address of the range, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">*</span> <span class="pre">out_end</span></code></dt>
+<dd>ptr to phys_addr_t for end address of the range, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">*</span> <span class="pre">out_nid</span></code></dt>
+<dd>ptr to int for nid of the range, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Finds the next range from type_a which is not marked as unsuitable
+in type_b.</p>
+<p>Reverse of <a class="reference internal" href="#c.__next_mem_range" title="__next_mem_range"><code class="xref c c-func docutils literal notranslate"><span class="pre">__next_mem_range()</span></code></a>.</p>
+<dl class="function">
+<dt id="c.memblock_set_node">
+int __init_memblock <code class="descname">memblock_set_node</code><span class="sig-paren">(</span>phys_addr_t<em>&nbsp;base</em>, phys_addr_t<em>&nbsp;size</em>, struct <a class="reference internal" href="#c.memblock_type" title="memblock_type">memblock_type</a> *<em>&nbsp;type</em>, int<em>&nbsp;nid</em><span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_set_node" title="Permalink to this definition">¶</a></dt>
+<dd><p>set node ID on memblock regions</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">base</span></code></dt>
+<dd>base of area to set node ID for</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">size</span></code></dt>
+<dd>size of area to set node ID for</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">memblock_type</span> <span class="pre">*</span> <span class="pre">type</span></code></dt>
+<dd>memblock type to set node ID for</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">nid</span></code></dt>
+<dd>node ID to set</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Set the nid of memblock <strong>type</strong> regions in [<strong>base</strong>, <strong>base</strong> + <strong>size</strong>) to <strong>nid</strong>.
+Regions which cross the area boundaries are split as necessary.</p>
+<p><strong>Return</strong></p>
+<p>0 on success, -errno on failure.</p>
+<dl class="function">
+<dt id="c.__next_mem_pfn_range_in_zone">
+void __init_memblock <code class="descname">__next_mem_pfn_range_in_zone</code><span class="sig-paren">(</span>u64 *<em>&nbsp;idx</em>, struct zone *<em>&nbsp;zone</em>, unsigned long *<em>&nbsp;out_spfn</em>, unsigned long *<em>&nbsp;out_epfn</em><span class="sig-paren">)</span><a class="headerlink" href="#c.__next_mem_pfn_range_in_zone" title="Permalink to this definition">¶</a></dt>
+<dd><p>iterator for for_each_*:c:func:<cite>_range_in_zone()</cite></p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">u64</span> <span class="pre">*</span> <span class="pre">idx</span></code></dt>
+<dd>pointer to u64 loop variable</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">zone</span> <span class="pre">*</span> <span class="pre">zone</span></code></dt>
+<dd>zone in which all of the memory blocks reside</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">unsigned</span> <span class="pre">long</span> <span class="pre">*</span> <span class="pre">out_spfn</span></code></dt>
+<dd>ptr to ulong for start pfn of the range, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+<dt><code class="docutils literal notranslate"><span class="pre">unsigned</span> <span class="pre">long</span> <span class="pre">*</span> <span class="pre">out_epfn</span></code></dt>
+<dd>ptr to ulong for end pfn of the range, can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code></dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This function is meant to be a zone/pfn specific wrapper for the
+for_each_mem_range type iterators. Specifically they are used in the
+deferred memory init routines and as such we were duplicating much of
+this logic throughout the code. So instead of having it in multiple
+locations it seemed like it would make more sense to centralize this to
+one new iterator that does everything they need.</p>
+<dl class="function">
+<dt id="c.memblock_alloc_range_nid">
+phys_addr_t <code class="descname">memblock_alloc_range_nid</code><span class="sig-paren">(</span>phys_addr_t<em>&nbsp;size</em>, phys_addr_t<em>&nbsp;align</em>, phys_addr_t<em>&nbsp;start</em>, phys_addr_t<em>&nbsp;end</em>, int<em>&nbsp;nid</em><span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_alloc_range_nid" title="Permalink to this definition">¶</a></dt>
+<dd><p>allocate boot memory block</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">size</span></code></dt>
+<dd>size of memory block to be allocated in bytes</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">align</span></code></dt>
+<dd>alignment of the region and block’s size</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">start</span></code></dt>
+<dd>the lower bound of the memory region to allocate (phys address)</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">end</span></code></dt>
+<dd>the upper bound of the memory region to allocate (phys address)</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">nid</span></code></dt>
+<dd>nid of the free area to find, <code class="docutils literal notranslate"><span class="pre">NUMA_NO_NODE</span></code> for any node</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>The allocation is performed from memory region limited by
+memblock.current_limit if <strong>max_addr</strong> == <code class="docutils literal notranslate"><span class="pre">MEMBLOCK_ALLOC_ACCESSIBLE</span></code>.</p>
+<p>If the specified node can not hold the requested memory the
+allocation falls back to any node in the system</p>
+<p>For systems with memory mirroring, the allocation is attempted first
+from the regions with mirroring enabled and then retried from any
+memory region.</p>
+<p>In addition, function sets the min_count to 0 using kmemleak_alloc_phys for
+allocated boot memory block, so that it is never reported as leaks.</p>
+<p><strong>Return</strong></p>
+<p>Physical address of allocated memory block on success, <code class="docutils literal notranslate"><span class="pre">0</span></code> on failure.</p>
+<dl class="function">
+<dt id="c.memblock_phys_alloc_range">
+phys_addr_t <code class="descname">memblock_phys_alloc_range</code><span class="sig-paren">(</span>phys_addr_t<em>&nbsp;size</em>, phys_addr_t<em>&nbsp;align</em>, phys_addr_t<em>&nbsp;start</em>, phys_addr_t<em>&nbsp;end</em><span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_phys_alloc_range" title="Permalink to this definition">¶</a></dt>
+<dd><p>allocate a memory block inside specified range</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">size</span></code></dt>
+<dd>size of memory block to be allocated in bytes</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">align</span></code></dt>
+<dd>alignment of the region and block’s size</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">start</span></code></dt>
+<dd>the lower bound of the memory region to allocate (physical address)</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">end</span></code></dt>
+<dd>the upper bound of the memory region to allocate (physical address)</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Allocate <strong>size</strong> bytes in the between <strong>start</strong> and <strong>end</strong>.</p>
+<p><strong>Return</strong></p>
+<p>physical address of the allocated memory block on success,
+<code class="docutils literal notranslate"><span class="pre">0</span></code> on failure.</p>
+<dl class="function">
+<dt id="c.memblock_phys_alloc_try_nid">
+phys_addr_t <code class="descname">memblock_phys_alloc_try_nid</code><span class="sig-paren">(</span>phys_addr_t<em>&nbsp;size</em>, phys_addr_t<em>&nbsp;align</em>, int<em>&nbsp;nid</em><span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_phys_alloc_try_nid" title="Permalink to this definition">¶</a></dt>
+<dd><p>allocate a memory block from specified MUMA node</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">size</span></code></dt>
+<dd>size of memory block to be allocated in bytes</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">align</span></code></dt>
+<dd>alignment of the region and block’s size</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">nid</span></code></dt>
+<dd>nid of the free area to find, <code class="docutils literal notranslate"><span class="pre">NUMA_NO_NODE</span></code> for any node</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Allocates memory block from the specified NUMA node. If the node
+has no available memory, attempts to allocated from any node in the
+system.</p>
+<p><strong>Return</strong></p>
+<p>physical address of the allocated memory block on success,
+<code class="docutils literal notranslate"><span class="pre">0</span></code> on failure.</p>
+<dl class="function">
+<dt id="c.memblock_alloc_internal">
+void * <code class="descname">memblock_alloc_internal</code><span class="sig-paren">(</span>phys_addr_t<em>&nbsp;size</em>, phys_addr_t<em>&nbsp;align</em>, phys_addr_t<em>&nbsp;min_addr</em>, phys_addr_t<em>&nbsp;max_addr</em>, int<em>&nbsp;nid</em><span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_alloc_internal" title="Permalink to this definition">¶</a></dt>
+<dd><p>allocate boot memory block</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">size</span></code></dt>
+<dd>size of memory block to be allocated in bytes</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">align</span></code></dt>
+<dd>alignment of the region and block’s size</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">min_addr</span></code></dt>
+<dd>the lower bound of the memory region to allocate (phys address)</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">max_addr</span></code></dt>
+<dd>the upper bound of the memory region to allocate (phys address)</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">nid</span></code></dt>
+<dd>nid of the free area to find, <code class="docutils literal notranslate"><span class="pre">NUMA_NO_NODE</span></code> for any node</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Allocates memory block using <a class="reference internal" href="#c.memblock_alloc_range_nid" title="memblock_alloc_range_nid"><code class="xref c c-func docutils literal notranslate"><span class="pre">memblock_alloc_range_nid()</span></code></a> and
+converts the returned physical address to virtual.</p>
+<p>The <strong>min_addr</strong> limit is dropped if it can not be satisfied and the allocation
+will fall back to memory below <strong>min_addr</strong>. Other constraints, such
+as node and mirrored memory will be handled again in
+<a class="reference internal" href="#c.memblock_alloc_range_nid" title="memblock_alloc_range_nid"><code class="xref c c-func docutils literal notranslate"><span class="pre">memblock_alloc_range_nid()</span></code></a>.</p>
+<p><strong>Return</strong></p>
+<p>Virtual address of allocated memory block on success, NULL on failure.</p>
+<dl class="function">
+<dt id="c.memblock_alloc_try_nid_raw">
+void * <code class="descname">memblock_alloc_try_nid_raw</code><span class="sig-paren">(</span>phys_addr_t<em>&nbsp;size</em>, phys_addr_t<em>&nbsp;align</em>, phys_addr_t<em>&nbsp;min_addr</em>, phys_addr_t<em>&nbsp;max_addr</em>, int<em>&nbsp;nid</em><span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_alloc_try_nid_raw" title="Permalink to this definition">¶</a></dt>
+<dd><p>allocate boot memory block without zeroing memory and without panicking</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">size</span></code></dt>
+<dd>size of memory block to be allocated in bytes</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">align</span></code></dt>
+<dd>alignment of the region and block’s size</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">min_addr</span></code></dt>
+<dd>the lower bound of the memory region from where the allocation
+is preferred (phys address)</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">max_addr</span></code></dt>
+<dd>the upper bound of the memory region from where the allocation
+is preferred (phys address), or <code class="docutils literal notranslate"><span class="pre">MEMBLOCK_ALLOC_ACCESSIBLE</span></code> to
+allocate only from memory limited by memblock.current_limit value</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">nid</span></code></dt>
+<dd>nid of the free area to find, <code class="docutils literal notranslate"><span class="pre">NUMA_NO_NODE</span></code> for any node</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Public function, provides additional debug information (including caller
+info), if enabled. Does not zero allocated memory, does not panic if request
+cannot be satisfied.</p>
+<p><strong>Return</strong></p>
+<p>Virtual address of allocated memory block on success, NULL on failure.</p>
+<dl class="function">
+<dt id="c.memblock_alloc_try_nid">
+void * <code class="descname">memblock_alloc_try_nid</code><span class="sig-paren">(</span>phys_addr_t<em>&nbsp;size</em>, phys_addr_t<em>&nbsp;align</em>, phys_addr_t<em>&nbsp;min_addr</em>, phys_addr_t<em>&nbsp;max_addr</em>, int<em>&nbsp;nid</em><span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_alloc_try_nid" title="Permalink to this definition">¶</a></dt>
+<dd><p>allocate boot memory block</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">size</span></code></dt>
+<dd>size of memory block to be allocated in bytes</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">align</span></code></dt>
+<dd>alignment of the region and block’s size</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">min_addr</span></code></dt>
+<dd>the lower bound of the memory region from where the allocation
+is preferred (phys address)</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">max_addr</span></code></dt>
+<dd>the upper bound of the memory region from where the allocation
+is preferred (phys address), or <code class="docutils literal notranslate"><span class="pre">MEMBLOCK_ALLOC_ACCESSIBLE</span></code> to
+allocate only from memory limited by memblock.current_limit value</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">nid</span></code></dt>
+<dd>nid of the free area to find, <code class="docutils literal notranslate"><span class="pre">NUMA_NO_NODE</span></code> for any node</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Public function, provides additional debug information (including caller
+info), if enabled. This function zeroes the allocated memory.</p>
+<p><strong>Return</strong></p>
+<p>Virtual address of allocated memory block on success, NULL on failure.</p>
+<dl class="function">
+<dt id="c.__memblock_free_late">
+void <code class="descname">__memblock_free_late</code><span class="sig-paren">(</span>phys_addr_t<em>&nbsp;base</em>, phys_addr_t<em>&nbsp;size</em><span class="sig-paren">)</span><a class="headerlink" href="#c.__memblock_free_late" title="Permalink to this definition">¶</a></dt>
+<dd><p>free pages directly to buddy allocator</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">base</span></code></dt>
+<dd>phys starting address of the  boot memory block</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">size</span></code></dt>
+<dd>size of the boot memory block in bytes</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This is only useful when the memblock allocator has already been torn
+down, but we are still initializing the system.  Pages are released directly
+to the buddy allocator.</p>
+<dl class="function">
+<dt id="c.memblock_is_region_memory">
+bool __init_memblock <code class="descname">memblock_is_region_memory</code><span class="sig-paren">(</span>phys_addr_t<em>&nbsp;base</em>, phys_addr_t<em>&nbsp;size</em><span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_is_region_memory" title="Permalink to this definition">¶</a></dt>
+<dd><p>check if a region is a subset of memory</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">base</span></code></dt>
+<dd>base of region to check</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">size</span></code></dt>
+<dd>size of region to check</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Check if the region [<strong>base</strong>, <strong>base</strong> + <strong>size</strong>) is a subset of a memory block.</p>
+<p><strong>Return</strong></p>
+<p>0 if false, non-zero if true</p>
+<dl class="function">
+<dt id="c.memblock_is_region_reserved">
+bool __init_memblock <code class="descname">memblock_is_region_reserved</code><span class="sig-paren">(</span>phys_addr_t<em>&nbsp;base</em>, phys_addr_t<em>&nbsp;size</em><span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_is_region_reserved" title="Permalink to this definition">¶</a></dt>
+<dd><p>check if a region intersects reserved memory</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">base</span></code></dt>
+<dd>base of region to check</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">phys_addr_t</span> <span class="pre">size</span></code></dt>
+<dd>size of region to check</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Check if the region [<strong>base</strong>, <strong>base</strong> + <strong>size</strong>) intersects a reserved
+memory block.</p>
+<p><strong>Return</strong></p>
+<p>True if they intersect, false if not.</p>
+<dl class="function">
+<dt id="c.memblock_free_all">
+unsigned long <code class="descname">memblock_free_all</code><span class="sig-paren">(</span>void<span class="sig-paren">)</span><a class="headerlink" href="#c.memblock_free_all" title="Permalink to this definition">¶</a></dt>
+<dd><p>release free pages to the buddy allocator</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">void</span></code></dt>
+<dd>no arguments</dd>
+</dl>
+<p><strong>Return</strong></p>
+<p>the number of pages actually released.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="memory-hotplug.html" class="btn btn-neutral float-right" title="Memory hotplug" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="timekeeping.html" class="btn btn-neutral float-left" title="ktime accessors" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

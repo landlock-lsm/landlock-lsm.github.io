@@ -1,0 +1,1504 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Using kgdb, kdb and the kernel debugger internals &mdash; The Linux Kernel 5.2.0-rc5+ documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Linux Kernel Selftests" href="kselftest.html" />
+    <link rel="prev" title="Debugging kernel and modules via gdb" href="gdb-kernel-debugging.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.2.0-rc5
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Development tools for the kernel</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="coccinelle.html">Coccinelle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sparse.html">Sparse</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kcov.html">kcov: code coverage for fuzzing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gcov.html">Using gcov with the Linux kernel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kasan.html">The Kernel Address Sanitizer (KASAN)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ubsan.html">The Undefined Behavior Sanitizer - UBSAN</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kmemleak.html">Kernel Memory Leak Detector</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gdb-kernel-debugging.html">Debugging kernel and modules via gdb</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Using kgdb, kdb and the kernel debugger internals</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#compiling-a-kernel">Compiling a kernel</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#kernel-config-options-for-kgdb">Kernel config options for kgdb</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#kernel-config-options-for-kdb">Kernel config options for kdb</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#kernel-debugger-boot-arguments">Kernel Debugger Boot Arguments</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#kernel-parameter-kgdboc">Kernel parameter: kgdboc</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#kernel-parameter-kgdbwait">Kernel parameter: <code class="docutils literal notranslate"><span class="pre">kgdbwait</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#kernel-parameter-kgdbcon">Kernel parameter: <code class="docutils literal notranslate"><span class="pre">kgdbcon</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#run-time-parameter-kgdbreboot">Run time parameter: <code class="docutils literal notranslate"><span class="pre">kgdbreboot</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#kernel-parameter-nokaslr">Kernel parameter: <code class="docutils literal notranslate"><span class="pre">nokaslr</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#using-kdb">Using kdb</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#quick-start-for-kdb-on-a-serial-port">Quick start for kdb on a serial port</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#quick-start-for-kdb-using-a-keyboard-connected-console">Quick start for kdb using a keyboard connected console</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#using-kgdb-gdb">Using kgdb / gdb</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#connecting-with-gdb-to-a-serial-port">Connecting with gdb to a serial port</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#kgdb-and-kdb-interoperability">kgdb and kdb interoperability</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#switching-between-kdb-and-kgdb">Switching between kdb and kgdb</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#running-kdb-commands-from-gdb">Running kdb commands from gdb</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#kgdb-test-suite">kgdb Test Suite</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#kernel-debugger-internals">Kernel Debugger Internals</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#architecture-specifics">Architecture Specifics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#kgdboc-internals">kgdboc internals</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#credits">Credits</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="kselftest.html">Linux Kernel Selftests</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../media/index.html">Linux Media Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Development tools for the kernel</a> &raquo;</li>
+        
+      <li>Using kgdb, kdb and the kernel debugger internals</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/dev-tools/kgdb.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="using-kgdb-kdb-and-the-kernel-debugger-internals">
+<h1>Using kgdb, kdb and the kernel debugger internals<a class="headerlink" href="#using-kgdb-kdb-and-the-kernel-debugger-internals" title="Permalink to this headline">¶</a></h1>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Author:</th><td class="field-body">Jason Wessel</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>The kernel has two different debugger front ends (kdb and kgdb) which
+interface to the debug core. It is possible to use either of the
+debugger front ends and dynamically transition between them if you
+configure the kernel properly at compile and runtime.</p>
+<p>Kdb is simplistic shell-style interface which you can use on a system
+console with a keyboard or serial console. You can use it to inspect
+memory, registers, process lists, dmesg, and even set breakpoints to
+stop in a certain location. Kdb is not a source level debugger, although
+you can set breakpoints and execute some basic kernel run control. Kdb
+is mainly aimed at doing some analysis to aid in development or
+diagnosing kernel problems. You can access some symbols by name in
+kernel built-ins or in kernel modules if the code was built with
+<code class="docutils literal notranslate"><span class="pre">CONFIG_KALLSYMS</span></code>.</p>
+<p>Kgdb is intended to be used as a source level debugger for the Linux
+kernel. It is used along with gdb to debug a Linux kernel. The
+expectation is that gdb can be used to “break in” to the kernel to
+inspect memory, variables and look through call stack information
+similar to the way an application developer would use gdb to debug an
+application. It is possible to place breakpoints in kernel code and
+perform some limited execution stepping.</p>
+<p>Two machines are required for using kgdb. One of these machines is a
+development machine and the other is the target machine. The kernel to
+be debugged runs on the target machine. The development machine runs an
+instance of gdb against the vmlinux file which contains the symbols (not
+a boot image such as bzImage, zImage, uImage…). In gdb the developer
+specifies the connection parameters and connects to kgdb. The type of
+connection a developer makes with gdb depends on the availability of
+kgdb I/O modules compiled as built-ins or loadable kernel modules in the
+test machine’s kernel.</p>
+</div>
+<div class="section" id="compiling-a-kernel">
+<h2>Compiling a kernel<a class="headerlink" href="#compiling-a-kernel" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>In order to enable compilation of kdb, you must first enable kgdb.</li>
+<li>The kgdb test compile options are described in the kgdb test suite
+chapter.</li>
+</ul>
+<div class="section" id="kernel-config-options-for-kgdb">
+<h3>Kernel config options for kgdb<a class="headerlink" href="#kernel-config-options-for-kgdb" title="Permalink to this headline">¶</a></h3>
+<p>To enable <code class="docutils literal notranslate"><span class="pre">CONFIG_KGDB</span></code> you should look under
+<span class="menuselection">Kernel hacking ‣ Kernel debugging</span> and select
+<span class="menuselection">KGDB: kernel debugger</span>.</p>
+<p>While it is not a hard requirement that you have symbols in your vmlinux
+file, gdb tends not to be very useful without the symbolic data, so you
+will want to turn on <code class="docutils literal notranslate"><span class="pre">CONFIG_DEBUG_INFO</span></code> which is called
+<span class="menuselection">Compile the kernel with debug info</span> in the config menu.</p>
+<p>It is advised, but not required, that you turn on the
+<code class="docutils literal notranslate"><span class="pre">CONFIG_FRAME_POINTER</span></code> kernel option which is called <span class="menuselection">Compile
+the kernel with frame pointers</span> in the config menu. This option inserts code
+to into the compiled executable which saves the frame information in
+registers or on the stack at different points which allows a debugger
+such as gdb to more accurately construct stack back traces while
+debugging the kernel.</p>
+<p>If the architecture that you are using supports the kernel option
+<code class="docutils literal notranslate"><span class="pre">CONFIG_STRICT_KERNEL_RWX</span></code>, you should consider turning it off. This
+option will prevent the use of software breakpoints because it marks
+certain regions of the kernel’s memory space as read-only. If kgdb
+supports it for the architecture you are using, you can use hardware
+breakpoints if you desire to run with the <code class="docutils literal notranslate"><span class="pre">CONFIG_STRICT_KERNEL_RWX</span></code>
+option turned on, else you need to turn off this option.</p>
+<p>Next you should choose one of more I/O drivers to interconnect debugging
+host and debugged target. Early boot debugging requires a KGDB I/O
+driver that supports early debugging and the driver must be built into
+the kernel directly. Kgdb I/O driver configuration takes place via
+kernel or module parameters which you can learn more about in the in the
+section that describes the parameter kgdboc.</p>
+<p>Here is an example set of <code class="docutils literal notranslate"><span class="pre">.config</span></code> symbols to enable or disable for kgdb:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># CONFIG_STRICT_KERNEL_RWX is not set
+CONFIG_FRAME_POINTER=y
+CONFIG_KGDB=y
+CONFIG_KGDB_SERIAL_CONSOLE=y
+</pre></div>
+</div>
+</div>
+<div class="section" id="kernel-config-options-for-kdb">
+<h3>Kernel config options for kdb<a class="headerlink" href="#kernel-config-options-for-kdb" title="Permalink to this headline">¶</a></h3>
+<p>Kdb is quite a bit more complex than the simple gdbstub sitting on top
+of the kernel’s debug core. Kdb must implement a shell, and also adds
+some helper functions in other parts of the kernel, responsible for
+printing out interesting data such as what you would see if you ran
+<code class="docutils literal notranslate"><span class="pre">lsmod</span></code>, or <code class="docutils literal notranslate"><span class="pre">ps</span></code>. In order to build kdb into the kernel you follow the
+same steps as you would for kgdb.</p>
+<p>The main config option for kdb is <code class="docutils literal notranslate"><span class="pre">CONFIG_KGDB_KDB</span></code> which is called
+<span class="menuselection">KGDB_KDB: include kdb frontend for kgdb</span> in the config menu.
+In theory you would have already also selected an I/O driver such as the
+<code class="docutils literal notranslate"><span class="pre">CONFIG_KGDB_SERIAL_CONSOLE</span></code> interface if you plan on using kdb on a
+serial port, when you were configuring kgdb.</p>
+<p>If you want to use a PS/2-style keyboard with kdb, you would select
+<code class="docutils literal notranslate"><span class="pre">CONFIG_KDB_KEYBOARD</span></code> which is called <span class="menuselection">KGDB_KDB: keyboard as
+input device</span> in the config menu. The <code class="docutils literal notranslate"><span class="pre">CONFIG_KDB_KEYBOARD</span></code> option is not
+used for anything in the gdb interface to kgdb. The <code class="docutils literal notranslate"><span class="pre">CONFIG_KDB_KEYBOARD</span></code>
+option only works with kdb.</p>
+<p>Here is an example set of <code class="docutils literal notranslate"><span class="pre">.config</span></code> symbols to enable/disable kdb:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># CONFIG_STRICT_KERNEL_RWX is not set
+CONFIG_FRAME_POINTER=y
+CONFIG_KGDB=y
+CONFIG_KGDB_SERIAL_CONSOLE=y
+CONFIG_KGDB_KDB=y
+CONFIG_KDB_KEYBOARD=y
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="kernel-debugger-boot-arguments">
+<h2>Kernel Debugger Boot Arguments<a class="headerlink" href="#kernel-debugger-boot-arguments" title="Permalink to this headline">¶</a></h2>
+<p>This section describes the various runtime kernel parameters that affect
+the configuration of the kernel debugger. The following chapter covers
+using kdb and kgdb as well as providing some examples of the
+configuration parameters.</p>
+<div class="section" id="kernel-parameter-kgdboc">
+<h3>Kernel parameter: kgdboc<a class="headerlink" href="#kernel-parameter-kgdboc" title="Permalink to this headline">¶</a></h3>
+<p>The kgdboc driver was originally an abbreviation meant to stand for
+“kgdb over console”. Today it is the primary mechanism to configure how
+to communicate from gdb to kgdb as well as the devices you want to use
+to interact with the kdb shell.</p>
+<p>For kgdb/gdb, kgdboc is designed to work with a single serial port. It
+is intended to cover the circumstance where you want to use a serial
+console as your primary console as well as using it to perform kernel
+debugging. It is also possible to use kgdb on a serial port which is not
+designated as a system console. Kgdboc may be configured as a kernel
+built-in or a kernel loadable module. You can only make use of
+<code class="docutils literal notranslate"><span class="pre">kgdbwait</span></code> and early debugging if you build kgdboc into the kernel as
+a built-in.</p>
+<p>Optionally you can elect to activate kms (Kernel Mode Setting)
+integration. When you use kms with kgdboc and you have a video driver
+that has atomic mode setting hooks, it is possible to enter the debugger
+on the graphics console. When the kernel execution is resumed, the
+previous graphics mode will be restored. This integration can serve as a
+useful tool to aid in diagnosing crashes or doing analysis of memory
+with kdb while allowing the full graphics console applications to run.</p>
+<div class="section" id="kgdboc-arguments">
+<h4>kgdboc arguments<a class="headerlink" href="#kgdboc-arguments" title="Permalink to this headline">¶</a></h4>
+<p>Usage:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>kgdboc=[kms][[,]kbd][[,]serial_device][,baud]
+</pre></div>
+</div>
+<p>The order listed above must be observed if you use any of the optional
+configurations together.</p>
+<p>Abbreviations:</p>
+<ul class="simple">
+<li>kms = Kernel Mode Setting</li>
+<li>kbd = Keyboard</li>
+</ul>
+<p>You can configure kgdboc to use the keyboard, and/or a serial device
+depending on if you are using kdb and/or kgdb, in one of the following
+scenarios. The order listed above must be observed if you use any of the
+optional configurations together. Using kms + only gdb is generally not
+a useful combination.</p>
+<div class="section" id="using-loadable-module-or-built-in">
+<h5>Using loadable module or built-in<a class="headerlink" href="#using-loadable-module-or-built-in" title="Permalink to this headline">¶</a></h5>
+<ol class="arabic">
+<li><p class="first">As a kernel built-in:</p>
+<p>Use the kernel boot argument:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>kgdboc=&lt;tty-device&gt;,[baud]
+</pre></div>
+</div>
+</li>
+<li><p class="first">As a kernel loadable module:</p>
+<p>Use the command:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>modprobe kgdboc kgdboc=&lt;tty-device&gt;,[baud]
+</pre></div>
+</div>
+<p>Here are two examples of how you might format the kgdboc string. The
+first is for an x86 target using the first serial port. The second
+example is for the ARM Versatile AB using the second serial port.</p>
+<ol class="arabic simple">
+<li><code class="docutils literal notranslate"><span class="pre">kgdboc=ttyS0,115200</span></code></li>
+<li><code class="docutils literal notranslate"><span class="pre">kgdboc=ttyAMA1,115200</span></code></li>
+</ol>
+</li>
+</ol>
+</div>
+<div class="section" id="configure-kgdboc-at-runtime-with-sysfs">
+<h5>Configure kgdboc at runtime with sysfs<a class="headerlink" href="#configure-kgdboc-at-runtime-with-sysfs" title="Permalink to this headline">¶</a></h5>
+<p>At run time you can enable or disable kgdboc by echoing a parameters
+into the sysfs. Here are two examples:</p>
+<ol class="arabic">
+<li><p class="first">Enable kgdboc on ttyS0:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>echo ttyS0 &gt; /sys/module/kgdboc/parameters/kgdboc
+</pre></div>
+</div>
+</li>
+<li><p class="first">Disable kgdboc:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>echo &quot;&quot; &gt; /sys/module/kgdboc/parameters/kgdboc
+</pre></div>
+</div>
+</li>
+</ol>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">You do not need to specify the baud if you are configuring the
+console on tty which is already configured or open.</p>
+</div>
+</div>
+<div class="section" id="more-examples">
+<h5>More examples<a class="headerlink" href="#more-examples" title="Permalink to this headline">¶</a></h5>
+<p>You can configure kgdboc to use the keyboard, and/or a serial device
+depending on if you are using kdb and/or kgdb, in one of the following
+scenarios.</p>
+<ol class="arabic">
+<li><p class="first">kdb and kgdb over only a serial port:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>kgdboc=&lt;serial_device&gt;[,baud]
+</pre></div>
+</div>
+<p>Example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>kgdboc=ttyS0,115200
+</pre></div>
+</div>
+</li>
+<li><p class="first">kdb and kgdb with keyboard and a serial port:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>kgdboc=kbd,&lt;serial_device&gt;[,baud]
+</pre></div>
+</div>
+<p>Example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>kgdboc=kbd,ttyS0,115200
+</pre></div>
+</div>
+</li>
+<li><p class="first">kdb with a keyboard:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>kgdboc=kbd
+</pre></div>
+</div>
+</li>
+<li><p class="first">kdb with kernel mode setting:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>kgdboc=kms,kbd
+</pre></div>
+</div>
+</li>
+<li><p class="first">kdb with kernel mode setting and kgdb over a serial port:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>kgdboc=kms,kbd,ttyS0,115200
+</pre></div>
+</div>
+</li>
+</ol>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Kgdboc does not support interrupting the target via the gdb remote
+protocol. You must manually send a <kbd class="kbd docutils literal notranslate">SysRq-G</kbd> unless you have a proxy
+that splits console output to a terminal program. A console proxy has a
+separate TCP port for the debugger and a separate TCP port for the
+“human” console. The proxy can take care of sending the <kbd class="kbd docutils literal notranslate">SysRq-G</kbd>
+for you.</p>
+</div>
+<p>When using kgdboc with no debugger proxy, you can end up connecting the
+debugger at one of two entry points. If an exception occurs after you
+have loaded kgdboc, a message should print on the console stating it is
+waiting for the debugger. In this case you disconnect your terminal
+program and then connect the debugger in its place. If you want to
+interrupt the target system and forcibly enter a debug session you have
+to issue a <kbd class="kbd docutils literal notranslate">Sysrq</kbd> sequence and then type the letter <kbd class="kbd docutils literal notranslate">g</kbd>. Then you
+disconnect the terminal session and connect gdb. Your options if you
+don’t like this are to hack gdb to send the <kbd class="kbd docutils literal notranslate">SysRq-G</kbd> for you as well as
+on the initial connect, or to use a debugger proxy that allows an
+unmodified gdb to do the debugging.</p>
+</div>
+</div>
+</div>
+<div class="section" id="kernel-parameter-kgdbwait">
+<h3>Kernel parameter: <code class="docutils literal notranslate"><span class="pre">kgdbwait</span></code><a class="headerlink" href="#kernel-parameter-kgdbwait" title="Permalink to this headline">¶</a></h3>
+<p>The Kernel command line option <code class="docutils literal notranslate"><span class="pre">kgdbwait</span></code> makes kgdb wait for a
+debugger connection during booting of a kernel. You can only use this
+option if you compiled a kgdb I/O driver into the kernel and you
+specified the I/O driver configuration as a kernel command line option.
+The kgdbwait parameter should always follow the configuration parameter
+for the kgdb I/O driver in the kernel command line else the I/O driver
+will not be configured prior to asking the kernel to use it to wait.</p>
+<p>The kernel will stop and wait as early as the I/O driver and
+architecture allows when you use this option. If you build the kgdb I/O
+driver as a loadable kernel module kgdbwait will not do anything.</p>
+</div>
+<div class="section" id="kernel-parameter-kgdbcon">
+<h3>Kernel parameter: <code class="docutils literal notranslate"><span class="pre">kgdbcon</span></code><a class="headerlink" href="#kernel-parameter-kgdbcon" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">kgdbcon</span></code> feature allows you to see <a class="reference internal" href="../driver-api/basics.html#c.printk" title="printk"><code class="xref c c-func docutils literal notranslate"><span class="pre">printk()</span></code></a> messages inside gdb
+while gdb is connected to the kernel. Kdb does not make use of the kgdbcon
+feature.</p>
+<p>Kgdb supports using the gdb serial protocol to send console messages to
+the debugger when the debugger is connected and running. There are two
+ways to activate this feature.</p>
+<ol class="arabic">
+<li><p class="first">Activate with the kernel command line option:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>kgdbcon
+</pre></div>
+</div>
+</li>
+<li><p class="first">Use sysfs before configuring an I/O driver:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>echo 1 &gt; /sys/module/kgdb/parameters/kgdb_use_con
+</pre></div>
+</div>
+</li>
+</ol>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If you do this after you configure the kgdb I/O driver, the
+setting will not take effect until the next point the I/O is
+reconfigured.</p>
+</div>
+<div class="admonition important">
+<p class="first admonition-title">Important</p>
+<p>You cannot use kgdboc + kgdbcon on a tty that is an
+active system console. An example of incorrect usage is:</p>
+<div class="last highlight-none notranslate"><div class="highlight"><pre><span></span>console=ttyS0,115200 kgdboc=ttyS0 kgdbcon
+</pre></div>
+</div>
+</div>
+<p>It is possible to use this option with kgdboc on a tty that is not a
+system console.</p>
+</div>
+<div class="section" id="run-time-parameter-kgdbreboot">
+<h3>Run time parameter: <code class="docutils literal notranslate"><span class="pre">kgdbreboot</span></code><a class="headerlink" href="#run-time-parameter-kgdbreboot" title="Permalink to this headline">¶</a></h3>
+<p>The kgdbreboot feature allows you to change how the debugger deals with
+the reboot notification. You have 3 choices for the behavior. The
+default behavior is always set to 0.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="5%" />
+<col width="53%" />
+<col width="42%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>1</td>
+<td><code class="docutils literal notranslate"><span class="pre">echo</span> <span class="pre">-1</span> <span class="pre">&gt;</span> <span class="pre">/sys/module/debug_core/parameters/kgdbreboot</span></code></td>
+<td>Ignore the reboot notification entirely.</td>
+</tr>
+<tr class="row-even"><td>2</td>
+<td><code class="docutils literal notranslate"><span class="pre">echo</span> <span class="pre">0</span> <span class="pre">&gt;</span> <span class="pre">/sys/module/debug_core/parameters/kgdbreboot</span></code></td>
+<td>Send the detach message to any attached debugger client.</td>
+</tr>
+<tr class="row-odd"><td>3</td>
+<td><code class="docutils literal notranslate"><span class="pre">echo</span> <span class="pre">1</span> <span class="pre">&gt;</span> <span class="pre">/sys/module/debug_core/parameters/kgdbreboot</span></code></td>
+<td>Enter the debugger on reboot notify.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="kernel-parameter-nokaslr">
+<h3>Kernel parameter: <code class="docutils literal notranslate"><span class="pre">nokaslr</span></code><a class="headerlink" href="#kernel-parameter-nokaslr" title="Permalink to this headline">¶</a></h3>
+<p>If the architecture that you are using enable KASLR by default,
+you should consider turning it off.  KASLR randomizes the
+virtual address where the kernel image is mapped and confuse
+gdb which resolve kernel symbol address from symbol table
+of vmlinux.</p>
+</div>
+</div>
+<div class="section" id="using-kdb">
+<h2>Using kdb<a class="headerlink" href="#using-kdb" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="quick-start-for-kdb-on-a-serial-port">
+<h3>Quick start for kdb on a serial port<a class="headerlink" href="#quick-start-for-kdb-on-a-serial-port" title="Permalink to this headline">¶</a></h3>
+<p>This is a quick example of how to use kdb.</p>
+<ol class="arabic">
+<li><p class="first">Configure kgdboc at boot using kernel parameters:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>console=ttyS0,115200 kgdboc=ttyS0,115200 nokaslr
+</pre></div>
+</div>
+<p>OR</p>
+<p>Configure kgdboc after the kernel has booted; assuming you are using
+a serial port console:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>echo ttyS0 &gt; /sys/module/kgdboc/parameters/kgdboc
+</pre></div>
+</div>
+</li>
+<li><p class="first">Enter the kernel debugger manually or by waiting for an oops or
+fault. There are several ways you can enter the kernel debugger
+manually; all involve using the <kbd class="kbd docutils literal notranslate">SysRq-G</kbd>, which means you must have
+enabled <code class="docutils literal notranslate"><span class="pre">CONFIG_MAGIC_SysRq=y</span></code> in your kernel config.</p>
+<ul>
+<li><p class="first">When logged in as root or with a super user session you can run:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>echo g &gt; /proc/sysrq-trigger
+</pre></div>
+</div>
+</li>
+<li><p class="first">Example using minicom 2.2</p>
+<p>Press: <kbd class="kbd docutils literal notranslate">CTRL-A</kbd> <kbd class="kbd docutils literal notranslate">f</kbd> <kbd class="kbd docutils literal notranslate">g</kbd></p>
+</li>
+<li><p class="first">When you have telneted to a terminal server that supports sending
+a remote break</p>
+<p>Press: <kbd class="kbd docutils literal notranslate">CTRL-]</kbd></p>
+<p>Type in: <code class="docutils literal notranslate"><span class="pre">send</span> <span class="pre">break</span></code></p>
+<p>Press: <kbd class="kbd docutils literal notranslate">Enter</kbd> <kbd class="kbd docutils literal notranslate">g</kbd></p>
+</li>
+</ul>
+</li>
+<li><p class="first">From the kdb prompt you can run the <code class="docutils literal notranslate"><span class="pre">help</span></code> command to see a complete
+list of the commands that are available.</p>
+<p>Some useful commands in kdb include:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="86%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">lsmod</span></code></td>
+<td>Shows where kernel modules are loaded</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">ps</span></code></td>
+<td>Displays only the active processes</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">ps</span> <span class="pre">A</span></code></td>
+<td>Shows all the processes</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">summary</span></code></td>
+<td>Shows kernel version info and memory usage</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">bt</span></code></td>
+<td>Get a backtrace of the current process using <code class="xref c c-func docutils literal notranslate"><span class="pre">dump_stack()</span></code></td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal notranslate"><span class="pre">dmesg</span></code></td>
+<td>View the kernel syslog buffer</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal notranslate"><span class="pre">go</span></code></td>
+<td>Continue the system</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li><p class="first">When you are done using kdb you need to consider rebooting the system
+or using the <code class="docutils literal notranslate"><span class="pre">go</span></code> command to resuming normal kernel execution. If you
+have paused the kernel for a lengthy period of time, applications
+that rely on timely networking or anything to do with real wall clock
+time could be adversely affected, so you should take this into
+consideration when using the kernel debugger.</p>
+</li>
+</ol>
+</div>
+<div class="section" id="quick-start-for-kdb-using-a-keyboard-connected-console">
+<h3>Quick start for kdb using a keyboard connected console<a class="headerlink" href="#quick-start-for-kdb-using-a-keyboard-connected-console" title="Permalink to this headline">¶</a></h3>
+<p>This is a quick example of how to use kdb with a keyboard.</p>
+<ol class="arabic">
+<li><p class="first">Configure kgdboc at boot using kernel parameters:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>kgdboc=kbd
+</pre></div>
+</div>
+<p>OR</p>
+<p>Configure kgdboc after the kernel has booted:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>echo kbd &gt; /sys/module/kgdboc/parameters/kgdboc
+</pre></div>
+</div>
+</li>
+<li><p class="first">Enter the kernel debugger manually or by waiting for an oops or
+fault. There are several ways you can enter the kernel debugger
+manually; all involve using the <kbd class="kbd docutils literal notranslate">SysRq-G</kbd>, which means you must have
+enabled <code class="docutils literal notranslate"><span class="pre">CONFIG_MAGIC_SysRq=y</span></code> in your kernel config.</p>
+<ul>
+<li><p class="first">When logged in as root or with a super user session you can run:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>echo g &gt; /proc/sysrq-trigger
+</pre></div>
+</div>
+</li>
+<li><p class="first">Example using a laptop keyboard:</p>
+<p>Press and hold down: <kbd class="kbd docutils literal notranslate">Alt</kbd></p>
+<p>Press and hold down: <kbd class="kbd docutils literal notranslate">Fn</kbd></p>
+<p>Press and release the key with the label: <kbd class="kbd docutils literal notranslate">SysRq</kbd></p>
+<p>Release: <kbd class="kbd docutils literal notranslate">Fn</kbd></p>
+<p>Press and release: <kbd class="kbd docutils literal notranslate">g</kbd></p>
+<p>Release: <kbd class="kbd docutils literal notranslate">Alt</kbd></p>
+</li>
+<li><p class="first">Example using a PS/2 101-key keyboard</p>
+<p>Press and hold down: <kbd class="kbd docutils literal notranslate">Alt</kbd></p>
+<p>Press and release the key with the label: <kbd class="kbd docutils literal notranslate">SysRq</kbd></p>
+<p>Press and release: <kbd class="kbd docutils literal notranslate">g</kbd></p>
+<p>Release: <kbd class="kbd docutils literal notranslate">Alt</kbd></p>
+</li>
+</ul>
+</li>
+<li><p class="first">Now type in a kdb command such as <code class="docutils literal notranslate"><span class="pre">help</span></code>, <code class="docutils literal notranslate"><span class="pre">dmesg</span></code>, <code class="docutils literal notranslate"><span class="pre">bt</span></code> or <code class="docutils literal notranslate"><span class="pre">go</span></code> to
+continue kernel execution.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="section" id="using-kgdb-gdb">
+<h2>Using kgdb / gdb<a class="headerlink" href="#using-kgdb-gdb" title="Permalink to this headline">¶</a></h2>
+<p>In order to use kgdb you must activate it by passing configuration
+information to one of the kgdb I/O drivers. If you do not pass any
+configuration information kgdb will not do anything at all. Kgdb will
+only actively hook up to the kernel trap hooks if a kgdb I/O driver is
+loaded and configured. If you unconfigure a kgdb I/O driver, kgdb will
+unregister all the kernel hook points.</p>
+<p>All kgdb I/O drivers can be reconfigured at run time, if
+<code class="docutils literal notranslate"><span class="pre">CONFIG_SYSFS</span></code> and <code class="docutils literal notranslate"><span class="pre">CONFIG_MODULES</span></code> are enabled, by echo’ing a new
+config string to <code class="docutils literal notranslate"><span class="pre">/sys/module/&lt;driver&gt;/parameter/&lt;option&gt;</span></code>. The driver
+can be unconfigured by passing an empty string. You cannot change the
+configuration while the debugger is attached. Make sure to detach the
+debugger with the <code class="docutils literal notranslate"><span class="pre">detach</span></code> command prior to trying to unconfigure a
+kgdb I/O driver.</p>
+<div class="section" id="connecting-with-gdb-to-a-serial-port">
+<h3>Connecting with gdb to a serial port<a class="headerlink" href="#connecting-with-gdb-to-a-serial-port" title="Permalink to this headline">¶</a></h3>
+<ol class="arabic">
+<li><p class="first">Configure kgdboc</p>
+<p>Configure kgdboc at boot using kernel parameters:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>kgdboc=ttyS0,115200
+</pre></div>
+</div>
+<p>OR</p>
+<p>Configure kgdboc after the kernel has booted:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>echo ttyS0 &gt; /sys/module/kgdboc/parameters/kgdboc
+</pre></div>
+</div>
+</li>
+<li><p class="first">Stop kernel execution (break into the debugger)</p>
+<p>In order to connect to gdb via kgdboc, the kernel must first be
+stopped. There are several ways to stop the kernel which include
+using kgdbwait as a boot argument, via a <kbd class="kbd docutils literal notranslate">SysRq-G</kbd>, or running the
+kernel until it takes an exception where it waits for the debugger to
+attach.</p>
+<ul>
+<li><p class="first">When logged in as root or with a super user session you can run:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>echo g &gt; /proc/sysrq-trigger
+</pre></div>
+</div>
+</li>
+<li><p class="first">Example using minicom 2.2</p>
+<p>Press: <kbd class="kbd docutils literal notranslate">CTRL-A</kbd> <kbd class="kbd docutils literal notranslate">f</kbd> <kbd class="kbd docutils literal notranslate">g</kbd></p>
+</li>
+<li><p class="first">When you have telneted to a terminal server that supports sending
+a remote break</p>
+<p>Press: <kbd class="kbd docutils literal notranslate">CTRL-]</kbd></p>
+<p>Type in: <code class="docutils literal notranslate"><span class="pre">send</span> <span class="pre">break</span></code></p>
+<p>Press: <kbd class="kbd docutils literal notranslate">Enter</kbd> <kbd class="kbd docutils literal notranslate">g</kbd></p>
+</li>
+</ul>
+</li>
+<li><p class="first">Connect from gdb</p>
+<p>Example (using a directly connected port):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% gdb ./vmlinux
+(gdb) set remotebaud 115200
+(gdb) target remote /dev/ttyS0
+</pre></div>
+</div>
+<p>Example (kgdb to a terminal server on TCP port 2012):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>% gdb ./vmlinux
+(gdb) target remote 192.168.2.2:2012
+</pre></div>
+</div>
+<p>Once connected, you can debug a kernel the way you would debug an
+application program.</p>
+<p>If you are having problems connecting or something is going seriously
+wrong while debugging, it will most often be the case that you want
+to enable gdb to be verbose about its target communications. You do
+this prior to issuing the <code class="docutils literal notranslate"><span class="pre">target</span> <span class="pre">remote</span></code> command by typing in:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>set debug remote 1
+</pre></div>
+</div>
+</li>
+</ol>
+<p>Remember if you continue in gdb, and need to “break in” again, you need
+to issue an other <kbd class="kbd docutils literal notranslate">SysRq-G</kbd>. It is easy to create a simple entry point by
+putting a breakpoint at <code class="docutils literal notranslate"><span class="pre">sys_sync</span></code> and then you can run <code class="docutils literal notranslate"><span class="pre">sync</span></code> from a
+shell or script to break into the debugger.</p>
+</div>
+</div>
+<div class="section" id="kgdb-and-kdb-interoperability">
+<h2>kgdb and kdb interoperability<a class="headerlink" href="#kgdb-and-kdb-interoperability" title="Permalink to this headline">¶</a></h2>
+<p>It is possible to transition between kdb and kgdb dynamically. The debug
+core will remember which you used the last time and automatically start
+in the same mode.</p>
+<div class="section" id="switching-between-kdb-and-kgdb">
+<h3>Switching between kdb and kgdb<a class="headerlink" href="#switching-between-kdb-and-kgdb" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="switching-from-kgdb-to-kdb">
+<h4>Switching from kgdb to kdb<a class="headerlink" href="#switching-from-kgdb-to-kdb" title="Permalink to this headline">¶</a></h4>
+<p>There are two ways to switch from kgdb to kdb: you can use gdb to issue
+a maintenance packet, or you can blindly type the command <code class="docutils literal notranslate"><span class="pre">$3#33</span></code>.
+Whenever the kernel debugger stops in kgdb mode it will print the
+message <code class="docutils literal notranslate"><span class="pre">KGDB</span> <span class="pre">or</span> <span class="pre">$3#33</span> <span class="pre">for</span> <span class="pre">KDB</span></code>. It is important to note that you have
+to type the sequence correctly in one pass. You cannot type a backspace
+or delete because kgdb will interpret that as part of the debug stream.</p>
+<ol class="arabic">
+<li><p class="first">Change from kgdb to kdb by blindly typing:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$3#33
+</pre></div>
+</div>
+</li>
+<li><p class="first">Change from kgdb to kdb with gdb:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>maintenance packet 3
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>Now you must kill gdb. Typically you press <kbd class="kbd docutils literal notranslate">CTRL-Z</kbd> and issue
+the command:</p>
+<div class="last highlight-none notranslate"><div class="highlight"><pre><span></span>kill -9 %
+</pre></div>
+</div>
+</div>
+</li>
+</ol>
+</div>
+<div class="section" id="change-from-kdb-to-kgdb">
+<h4>Change from kdb to kgdb<a class="headerlink" href="#change-from-kdb-to-kgdb" title="Permalink to this headline">¶</a></h4>
+<p>There are two ways you can change from kdb to kgdb. You can manually
+enter kgdb mode by issuing the kgdb command from the kdb shell prompt,
+or you can connect gdb while the kdb shell prompt is active. The kdb
+shell looks for the typical first commands that gdb would issue with the
+gdb remote protocol and if it sees one of those commands it
+automatically changes into kgdb mode.</p>
+<ol class="arabic">
+<li><p class="first">From kdb issue the command:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>kgdb
+</pre></div>
+</div>
+<p>Now disconnect your terminal program and connect gdb in its place</p>
+</li>
+<li><p class="first">At the kdb prompt, disconnect the terminal program and connect gdb in
+its place.</p>
+</li>
+</ol>
+</div>
+</div>
+<div class="section" id="running-kdb-commands-from-gdb">
+<h3>Running kdb commands from gdb<a class="headerlink" href="#running-kdb-commands-from-gdb" title="Permalink to this headline">¶</a></h3>
+<p>It is possible to run a limited set of kdb commands from gdb, using the
+gdb monitor command. You don’t want to execute any of the run control or
+breakpoint operations, because it can disrupt the state of the kernel
+debugger. You should be using gdb for breakpoints and run control
+operations if you have gdb connected. The more useful commands to run
+are things like lsmod, dmesg, ps or possibly some of the memory
+information commands. To see all the kdb commands you can run
+<code class="docutils literal notranslate"><span class="pre">monitor</span> <span class="pre">help</span></code>.</p>
+<p>Example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(gdb) monitor ps
+1 idle process (state I) and
+27 sleeping system daemon (state M) processes suppressed,
+use &#39;ps A&#39; to see all.
+Task Addr       Pid   Parent [*] cpu State Thread     Command
+
+0xc78291d0        1        0  0    0   S  0xc7829404  init
+0xc7954150      942        1  0    0   S  0xc7954384  dropbear
+0xc78789c0      944        1  0    0   S  0xc7878bf4  sh
+(gdb)
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="kgdb-test-suite">
+<h2>kgdb Test Suite<a class="headerlink" href="#kgdb-test-suite" title="Permalink to this headline">¶</a></h2>
+<p>When kgdb is enabled in the kernel config you can also elect to enable
+the config parameter <code class="docutils literal notranslate"><span class="pre">KGDB_TESTS</span></code>. Turning this on will enable a special
+kgdb I/O module which is designed to test the kgdb internal functions.</p>
+<p>The kgdb tests are mainly intended for developers to test the kgdb
+internals as well as a tool for developing a new kgdb architecture
+specific implementation. These tests are not really for end users of the
+Linux kernel. The primary source of documentation would be to look in
+the <code class="docutils literal notranslate"><span class="pre">drivers/misc/kgdbts.c</span></code> file.</p>
+<p>The kgdb test suite can also be configured at compile time to run the
+core set of tests by setting the kernel config parameter
+<code class="docutils literal notranslate"><span class="pre">KGDB_TESTS_ON_BOOT</span></code>. This particular option is aimed at automated
+regression testing and does not require modifying the kernel boot config
+arguments. If this is turned on, the kgdb test suite can be disabled by
+specifying <code class="docutils literal notranslate"><span class="pre">kgdbts=</span></code> as a kernel boot argument.</p>
+</div>
+<div class="section" id="kernel-debugger-internals">
+<h2>Kernel Debugger Internals<a class="headerlink" href="#kernel-debugger-internals" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="architecture-specifics">
+<h3>Architecture Specifics<a class="headerlink" href="#architecture-specifics" title="Permalink to this headline">¶</a></h3>
+<p>The kernel debugger is organized into a number of components:</p>
+<ol class="arabic">
+<li><p class="first">The debug core</p>
+<p>The debug core is found in <code class="docutils literal notranslate"><span class="pre">kernel/debugger/debug_core.c</span></code>. It
+contains:</p>
+<ul>
+<li><p class="first">A generic OS exception handler which includes sync’ing the
+processors into a stopped state on an multi-CPU system.</p>
+</li>
+<li><p class="first">The API to talk to the kgdb I/O drivers</p>
+</li>
+<li><p class="first">The API to make calls to the arch-specific kgdb implementation</p>
+</li>
+<li><p class="first">The logic to perform safe memory reads and writes to memory while
+using the debugger</p>
+</li>
+<li><p class="first">A full implementation for software breakpoints unless overridden
+by the arch</p>
+</li>
+<li><p class="first">The API to invoke either the kdb or kgdb frontend to the debug
+core.</p>
+</li>
+<li><p class="first">The structures and callback API for atomic kernel mode setting.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">kgdboc is where the kms callbacks are invoked.</p>
+</div>
+</li>
+</ul>
+</li>
+<li><p class="first">kgdb arch-specific implementation</p>
+<p>This implementation is generally found in <code class="docutils literal notranslate"><span class="pre">arch/*/kernel/kgdb.c</span></code>. As
+an example, <code class="docutils literal notranslate"><span class="pre">arch/x86/kernel/kgdb.c</span></code> contains the specifics to
+implement HW breakpoint as well as the initialization to dynamically
+register and unregister for the trap handlers on this architecture.
+The arch-specific portion implements:</p>
+<ul class="simple">
+<li>contains an arch-specific trap catcher which invokes
+<code class="xref c c-func docutils literal notranslate"><span class="pre">kgdb_handle_exception()</span></code> to start kgdb about doing its work</li>
+<li>translation to and from gdb specific packet format to <code class="xref c c-type docutils literal notranslate"><span class="pre">pt_regs</span></code></li>
+<li>Registration and unregistration of architecture specific trap
+hooks</li>
+<li>Any special exception handling and cleanup</li>
+<li>NMI exception handling and cleanup</li>
+<li>(optional) HW breakpoints</li>
+</ul>
+</li>
+<li><p class="first">gdbstub frontend (aka kgdb)</p>
+<p>The gdbstub is located in <code class="docutils literal notranslate"><span class="pre">kernel/debug/gdbstub.c</span></code>. It contains:</p>
+<ul class="simple">
+<li>All the logic to implement the gdb serial protocol</li>
+</ul>
+</li>
+<li><p class="first">kdb frontend</p>
+<p>The kdb debugger shell is broken down into a number of components.
+The kdb core is located in kernel/debug/kdb. There are a number of
+helper functions in some of the other kernel components to make it
+possible for kdb to examine and report information about the kernel
+without taking locks that could cause a kernel deadlock. The kdb core
+contains implements the following functionality.</p>
+<ul class="simple">
+<li>A simple shell</li>
+<li>The kdb core command set</li>
+<li>A registration API to register additional kdb shell commands.<ul>
+<li>A good example of a self-contained kdb module is the <code class="docutils literal notranslate"><span class="pre">ftdump</span></code>
+command for dumping the ftrace buffer. See:
+<code class="docutils literal notranslate"><span class="pre">kernel/trace/trace_kdb.c</span></code></li>
+<li>For an example of how to dynamically register a new kdb command
+you can build the kdb_hello.ko kernel module from
+<code class="docutils literal notranslate"><span class="pre">samples/kdb/kdb_hello.c</span></code>. To build this example you can set
+<code class="docutils literal notranslate"><span class="pre">CONFIG_SAMPLES=y</span></code> and <code class="docutils literal notranslate"><span class="pre">CONFIG_SAMPLE_KDB=m</span></code> in your kernel
+config. Later run <code class="docutils literal notranslate"><span class="pre">modprobe</span> <span class="pre">kdb_hello</span></code> and the next time you
+enter the kdb shell, you can run the <code class="docutils literal notranslate"><span class="pre">hello</span></code> command.</li>
+</ul>
+</li>
+<li>The implementation for <code class="xref c c-func docutils literal notranslate"><span class="pre">kdb_printf()</span></code> which emits messages directly
+to I/O drivers, bypassing the kernel log.</li>
+<li>SW / HW breakpoint management for the kdb shell</li>
+</ul>
+</li>
+<li><p class="first">kgdb I/O driver</p>
+<p>Each kgdb I/O driver has to provide an implementation for the
+following:</p>
+<ul class="simple">
+<li>configuration via built-in or module</li>
+<li>dynamic configuration and kgdb hook registration calls</li>
+<li>read and write character interface</li>
+<li>A cleanup handler for unconfiguring from the kgdb core</li>
+<li>(optional) Early debug methodology</li>
+</ul>
+<p>Any given kgdb I/O driver has to operate very closely with the
+hardware and must do it in such a way that does not enable interrupts
+or change other parts of the system context without completely
+restoring them. The kgdb core will repeatedly “poll” a kgdb I/O
+driver for characters when it needs input. The I/O driver is expected
+to return immediately if there is no data available. Doing so allows
+for the future possibility to touch watchdog hardware in such a way
+as to have a target system not reset when these are enabled.</p>
+</li>
+</ol>
+<p>If you are intent on adding kgdb architecture specific support for a new
+architecture, the architecture should define <code class="docutils literal notranslate"><span class="pre">HAVE_ARCH_KGDB</span></code> in the
+architecture specific Kconfig file. This will enable kgdb for the
+architecture, and at that point you must create an architecture specific
+kgdb implementation.</p>
+<p>There are a few flags which must be set on every architecture in their
+<code class="docutils literal notranslate"><span class="pre">asm/kgdb.h</span></code> file. These are:</p>
+<ul class="simple">
+<li><dl class="first docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">NUMREGBYTES</span></code>:</dt>
+<dd>The size in bytes of all of the registers, so that we
+can ensure they will all fit into a packet.</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">BUFMAX</span></code>:</dt>
+<dd>The size in bytes of the buffer GDB will read into. This must
+be larger than NUMREGBYTES.</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">CACHE_FLUSH_IS_SAFE</span></code>:</dt>
+<dd>Set to 1 if it is always safe to call
+flush_cache_range or flush_icache_range. On some architectures,
+these functions may not be safe to call on SMP since we keep other
+CPUs in a holding pattern.</dd>
+</dl>
+</li>
+</ul>
+<p>There are also the following functions for the common backend, found in
+<code class="docutils literal notranslate"><span class="pre">kernel/kgdb.c</span></code>, that must be supplied by the architecture-specific
+backend unless marked as (optional), in which case a default function
+maybe used if the architecture does not need to provide a specific
+implementation.</p>
+<dl class="function">
+<dt id="c.kgdb_skipexception">
+int <code class="descname">kgdb_skipexception</code><span class="sig-paren">(</span>int<em>&nbsp;exception</em>, struct pt_regs *<em>&nbsp;regs</em><span class="sig-paren">)</span><a class="headerlink" href="#c.kgdb_skipexception" title="Permalink to this definition">¶</a></dt>
+<dd><p>(optional) exit kgdb_handle_exception early</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">exception</span></code></dt>
+<dd>Exception vector number</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">pt_regs</span> <span class="pre">*</span> <span class="pre">regs</span></code></dt>
+<dd>Current <code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">pt_regs</span></code>.</dd>
+</dl>
+<p><strong>Description</strong></p>
+<blockquote>
+<div>On some architectures it is required to skip a breakpoint
+exception when it occurs after a breakpoint has been removed.
+This can be implemented in the architecture specific portion of kgdb.</div></blockquote>
+<dl class="function">
+<dt id="c.kgdb_breakpoint">
+void <code class="descname">kgdb_breakpoint</code><span class="sig-paren">(</span>void<span class="sig-paren">)</span><a class="headerlink" href="#c.kgdb_breakpoint" title="Permalink to this definition">¶</a></dt>
+<dd><p>compiled in breakpoint</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">void</span></code></dt>
+<dd>no arguments</dd>
+</dl>
+<p><strong>Description</strong></p>
+<blockquote>
+<div>This will be implemented as a static inline per architecture.  This
+function is called by the kgdb core to execute an architecture
+specific trap to cause kgdb to enter the exception processing.</div></blockquote>
+<dl class="function">
+<dt id="c.kgdb_arch_init">
+int <code class="descname">kgdb_arch_init</code><span class="sig-paren">(</span>void<span class="sig-paren">)</span><a class="headerlink" href="#c.kgdb_arch_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform any architecture specific initalization.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">void</span></code></dt>
+<dd>no arguments</dd>
+</dl>
+<p><strong>Description</strong></p>
+<blockquote>
+<div>This function will handle the initalization of any architecture
+specific callbacks.</div></blockquote>
+<dl class="function">
+<dt id="c.kgdb_arch_exit">
+void <code class="descname">kgdb_arch_exit</code><span class="sig-paren">(</span>void<span class="sig-paren">)</span><a class="headerlink" href="#c.kgdb_arch_exit" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform any architecture specific uninitalization.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">void</span></code></dt>
+<dd>no arguments</dd>
+</dl>
+<p><strong>Description</strong></p>
+<blockquote>
+<div>This function will handle the uninitalization of any architecture
+specific callbacks, for dynamic registration and unregistration.</div></blockquote>
+<dl class="function">
+<dt id="c.pt_regs_to_gdb_regs">
+void <code class="descname">pt_regs_to_gdb_regs</code><span class="sig-paren">(</span>unsigned long *<em>&nbsp;gdb_regs</em>, struct pt_regs *<em>&nbsp;regs</em><span class="sig-paren">)</span><a class="headerlink" href="#c.pt_regs_to_gdb_regs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert ptrace regs to GDB regs</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">unsigned</span> <span class="pre">long</span> <span class="pre">*</span> <span class="pre">gdb_regs</span></code></dt>
+<dd>A pointer to hold the registers in the order GDB wants.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">pt_regs</span> <span class="pre">*</span> <span class="pre">regs</span></code></dt>
+<dd>The <code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">pt_regs</span></code> of the current process.</dd>
+</dl>
+<p><strong>Description</strong></p>
+<blockquote>
+<div>Convert the pt_regs in <strong>regs</strong> into the format for registers that
+GDB expects, stored in <strong>gdb_regs</strong>.</div></blockquote>
+<dl class="function">
+<dt id="c.sleeping_thread_to_gdb_regs">
+void <code class="descname">sleeping_thread_to_gdb_regs</code><span class="sig-paren">(</span>unsigned long *<em>&nbsp;gdb_regs</em>, struct task_struct *<em>&nbsp;p</em><span class="sig-paren">)</span><a class="headerlink" href="#c.sleeping_thread_to_gdb_regs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert ptrace regs to GDB regs</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">unsigned</span> <span class="pre">long</span> <span class="pre">*</span> <span class="pre">gdb_regs</span></code></dt>
+<dd>A pointer to hold the registers in the order GDB wants.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">task_struct</span> <span class="pre">*</span> <span class="pre">p</span></code></dt>
+<dd>The <code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">task_struct</span></code> of the desired process.</dd>
+</dl>
+<p><strong>Description</strong></p>
+<blockquote>
+<div>Convert the register values of the sleeping process in <strong>p</strong> to
+the format that GDB expects.
+This function is called when kgdb does not have access to the
+<code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">pt_regs</span></code> and therefore it should fill the gdb registers
+<strong>gdb_regs</strong> with what has been saved in <code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">thread_struct</span></code>
+thread field during switch_to.</div></blockquote>
+<dl class="function">
+<dt id="c.gdb_regs_to_pt_regs">
+void <code class="descname">gdb_regs_to_pt_regs</code><span class="sig-paren">(</span>unsigned long *<em>&nbsp;gdb_regs</em>, struct pt_regs *<em>&nbsp;regs</em><span class="sig-paren">)</span><a class="headerlink" href="#c.gdb_regs_to_pt_regs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert GDB regs to ptrace regs.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">unsigned</span> <span class="pre">long</span> <span class="pre">*</span> <span class="pre">gdb_regs</span></code></dt>
+<dd>A pointer to hold the registers we’ve received from GDB.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">pt_regs</span> <span class="pre">*</span> <span class="pre">regs</span></code></dt>
+<dd>A pointer to a <code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">pt_regs</span></code> to hold these values in.</dd>
+</dl>
+<p><strong>Description</strong></p>
+<blockquote>
+<div>Convert the GDB regs in <strong>gdb_regs</strong> into the pt_regs, and store them
+in <strong>regs</strong>.</div></blockquote>
+<dl class="function">
+<dt id="c.kgdb_arch_handle_exception">
+int <code class="descname">kgdb_arch_handle_exception</code><span class="sig-paren">(</span>int<em>&nbsp;vector</em>, int<em>&nbsp;signo</em>, int<em>&nbsp;err_code</em>, char *<em>&nbsp;remcom_in_buffer</em>, char *<em>&nbsp;remcom_out_buffer</em>, struct pt_regs *<em>&nbsp;regs</em><span class="sig-paren">)</span><a class="headerlink" href="#c.kgdb_arch_handle_exception" title="Permalink to this definition">¶</a></dt>
+<dd><p>Handle architecture specific GDB packets.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">vector</span></code></dt>
+<dd>The error vector of the exception that happened.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">signo</span></code></dt>
+<dd>The signal number of the exception that happened.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">err_code</span></code></dt>
+<dd>The error code of the exception that happened.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">char</span> <span class="pre">*</span> <span class="pre">remcom_in_buffer</span></code></dt>
+<dd>The buffer of the packet we have read.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">char</span> <span class="pre">*</span> <span class="pre">remcom_out_buffer</span></code></dt>
+<dd>The buffer of <code class="docutils literal notranslate"><span class="pre">BUFMAX</span></code> bytes to write a packet into.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">pt_regs</span> <span class="pre">*</span> <span class="pre">regs</span></code></dt>
+<dd>The <code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">pt_regs</span></code> of the current process.</dd>
+</dl>
+<p><strong>Description</strong></p>
+<blockquote>
+<div>This function MUST handle the ‘c’ and ‘s’ command packets,
+as well packets to set / remove a hardware breakpoint, if used.
+If there are additional packets which the hardware needs to handle,
+they are handled here.  The code should return -1 if it wants to
+process more packets, and a <code class="docutils literal notranslate"><span class="pre">0</span></code> or <code class="docutils literal notranslate"><span class="pre">1</span></code> if it wants to exit from the
+kgdb callback.</div></blockquote>
+<dl class="function">
+<dt id="c.kgdb_call_nmi_hook">
+void <code class="descname">kgdb_call_nmi_hook</code><span class="sig-paren">(</span>void *<em>&nbsp;ignored</em><span class="sig-paren">)</span><a class="headerlink" href="#c.kgdb_call_nmi_hook" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call <code class="xref c c-func docutils literal notranslate"><span class="pre">kgdb_nmicallback()</span></code> on the current CPU</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">void</span> <span class="pre">*</span> <span class="pre">ignored</span></code></dt>
+<dd>This parameter is only here to match the prototype.</dd>
+</dl>
+<p><strong>Description</strong></p>
+<blockquote>
+<div>If you’re using the default implementation of <a class="reference internal" href="#c.kgdb_roundup_cpus" title="kgdb_roundup_cpus"><code class="xref c c-func docutils literal notranslate"><span class="pre">kgdb_roundup_cpus()</span></code></a>
+this function will be called per CPU.  If you don’t implement
+<a class="reference internal" href="#c.kgdb_call_nmi_hook" title="kgdb_call_nmi_hook"><code class="xref c c-func docutils literal notranslate"><span class="pre">kgdb_call_nmi_hook()</span></code></a> a default will be used.</div></blockquote>
+<dl class="function">
+<dt id="c.kgdb_roundup_cpus">
+void <code class="descname">kgdb_roundup_cpus</code><span class="sig-paren">(</span>void<span class="sig-paren">)</span><a class="headerlink" href="#c.kgdb_roundup_cpus" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get other CPUs into a holding pattern</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">void</span></code></dt>
+<dd>no arguments</dd>
+</dl>
+<p><strong>Description</strong></p>
+<blockquote>
+<div><p>On SMP systems, we need to get the attention of the other CPUs
+and get them into a known state.  This should do what is needed
+to get the other CPUs to call <code class="xref c c-func docutils literal notranslate"><span class="pre">kgdb_wait()</span></code>. Note that on some arches,
+the NMI approach is not used for rounding up all the CPUs.  Normally
+those architectures can just not implement this and get the default.</p>
+<p>On non-SMP systems, this is not called.</p>
+</div></blockquote>
+<dl class="function">
+<dt id="c.kgdb_arch_set_pc">
+void <code class="descname">kgdb_arch_set_pc</code><span class="sig-paren">(</span>struct pt_regs *<em>&nbsp;regs</em>, unsigned long<em>&nbsp;pc</em><span class="sig-paren">)</span><a class="headerlink" href="#c.kgdb_arch_set_pc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generic call back to the program counter</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">pt_regs</span> <span class="pre">*</span> <span class="pre">regs</span></code></dt>
+<dd>Current <code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">pt_regs</span></code>.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">unsigned</span> <span class="pre">long</span> <span class="pre">pc</span></code></dt>
+<dd>The new value for the program counter</dd>
+</dl>
+<p><strong>Description</strong></p>
+<blockquote>
+<div>This function handles updating the program counter and requires an
+architecture specific implementation.</div></blockquote>
+<dl class="function">
+<dt id="c.kgdb_arch_late">
+void <code class="descname">kgdb_arch_late</code><span class="sig-paren">(</span>void<span class="sig-paren">)</span><a class="headerlink" href="#c.kgdb_arch_late" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform any architecture specific initalization.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">void</span></code></dt>
+<dd>no arguments</dd>
+</dl>
+<p><strong>Description</strong></p>
+<blockquote>
+<div>This function will handle the late initalization of any
+architecture specific callbacks.  This is an optional function for
+handling things like late initialization of hw breakpoints.  The
+default implementation does nothing.</div></blockquote>
+<dl class="type">
+<dt id="c.kgdb_arch">
+struct <code class="descname">kgdb_arch</code><a class="headerlink" href="#c.kgdb_arch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Describe architecture specific values.</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct kgdb_arch {
+  unsigned char           gdb_bpt_instr[BREAK_INSTR_SIZE];
+  unsigned long           flags;
+  int (*set_breakpoint)(unsigned long, char *);
+  int (*remove_breakpoint)(unsigned long, char *);
+  int (*set_hw_breakpoint)(unsigned long, int, enum kgdb_bptype);
+  int (*remove_hw_breakpoint)(unsigned long, int, enum kgdb_bptype);
+  void (*disable_hw_break)(struct pt_regs *regs);
+  void (*remove_all_hw_break)(void);
+  void (*correct_hw_break)(void);
+  void (*enable_nmi)(bool on);
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">gdb_bpt_instr</span></code></dt>
+<dd>The instruction to trigger a breakpoint.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">flags</span></code></dt>
+<dd>Flags for the breakpoint, currently just <code class="docutils literal notranslate"><span class="pre">KGDB_HW_BREAKPOINT</span></code>.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">set_breakpoint</span></code></dt>
+<dd>Allow an architecture to specify how to set a software
+breakpoint.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">remove_breakpoint</span></code></dt>
+<dd>Allow an architecture to specify how to remove a
+software breakpoint.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">set_hw_breakpoint</span></code></dt>
+<dd>Allow an architecture to specify how to set a hardware
+breakpoint.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">remove_hw_breakpoint</span></code></dt>
+<dd>Allow an architecture to specify how to remove a
+hardware breakpoint.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">disable_hw_break</span></code></dt>
+<dd>Allow an architecture to specify how to disable
+hardware breakpoints for a single cpu.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">remove_all_hw_break</span></code></dt>
+<dd>Allow an architecture to specify how to remove all
+hardware breakpoints.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">correct_hw_break</span></code></dt>
+<dd>Allow an architecture to specify how to correct the
+hardware debug registers.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">enable_nmi</span></code></dt>
+<dd>Manage NMI-triggered entry to KGDB</dd>
+</dl>
+<dl class="type">
+<dt id="c.kgdb_io">
+struct <code class="descname">kgdb_io</code><a class="headerlink" href="#c.kgdb_io" title="Permalink to this definition">¶</a></dt>
+<dd><p>Describe the interface for an I/O driver to talk with KGDB.</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct kgdb_io {
+  const char              *name;
+  int (*read_char) (void);
+  void (*write_char) (u8);
+  void (*flush) (void);
+  int (*init) (void);
+  void (*pre_exception) (void);
+  void (*post_exception) (void);
+  int is_console;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">name</span></code></dt>
+<dd>Name of the I/O driver.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">read_char</span></code></dt>
+<dd>Pointer to a function that will return one char.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">write_char</span></code></dt>
+<dd>Pointer to a function that will write one char.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">flush</span></code></dt>
+<dd>Pointer to a function that will flush any pending writes.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">init</span></code></dt>
+<dd>Pointer to a function that will initialize the device.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">pre_exception</span></code></dt>
+<dd>Pointer to a function that will do any prep work for
+the I/O driver.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">post_exception</span></code></dt>
+<dd>Pointer to a function that will do any cleanup work
+for the I/O driver.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">is_console</span></code></dt>
+<dd>1 if the end device is a console 0 if the I/O device is
+not a console</dd>
+</dl>
+</div>
+<div class="section" id="kgdboc-internals">
+<h3>kgdboc internals<a class="headerlink" href="#kgdboc-internals" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="kgdboc-and-uarts">
+<h4>kgdboc and uarts<a class="headerlink" href="#kgdboc-and-uarts" title="Permalink to this headline">¶</a></h4>
+<p>The kgdboc driver is actually a very thin driver that relies on the
+underlying low level to the hardware driver having “polling hooks” to
+which the tty driver is attached. In the initial implementation of
+kgdboc the serial_core was changed to expose a low level UART hook for
+doing polled mode reading and writing of a single character while in an
+atomic context. When kgdb makes an I/O request to the debugger, kgdboc
+invokes a callback in the serial core which in turn uses the callback in
+the UART driver.</p>
+<p>When using kgdboc with a UART, the UART driver must implement two
+callbacks in the <code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">uart_ops</span></code>.
+Example from <code class="docutils literal notranslate"><span class="pre">drivers/8250.c</span></code>:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>#ifdef CONFIG_CONSOLE_POLL
+    .poll_get_char = serial8250_get_poll_char,
+    .poll_put_char = serial8250_put_poll_char,
+#endif
+</pre></div>
+</div>
+<p>Any implementation specifics around creating a polling driver use the
+<code class="docutils literal notranslate"><span class="pre">#ifdef</span> <span class="pre">CONFIG_CONSOLE_POLL</span></code>, as shown above. Keep in mind that
+polling hooks have to be implemented in such a way that they can be
+called from an atomic context and have to restore the state of the UART
+chip on return such that the system can return to normal when the
+debugger detaches. You need to be very careful with any kind of lock you
+consider, because failing here is most likely going to mean pressing the
+reset button.</p>
+</div>
+<div class="section" id="kgdboc-and-keyboards">
+<h4>kgdboc and keyboards<a class="headerlink" href="#kgdboc-and-keyboards" title="Permalink to this headline">¶</a></h4>
+<p>The kgdboc driver contains logic to configure communications with an
+attached keyboard. The keyboard infrastructure is only compiled into the
+kernel when <code class="docutils literal notranslate"><span class="pre">CONFIG_KDB_KEYBOARD=y</span></code> is set in the kernel configuration.</p>
+<p>The core polled keyboard driver driver for PS/2 type keyboards is in
+<code class="docutils literal notranslate"><span class="pre">drivers/char/kdb_keyboard.c</span></code>. This driver is hooked into the debug core
+when kgdboc populates the callback in the array called
+<code class="xref c c-type docutils literal notranslate"><span class="pre">kdb_poll_funcs[]</span></code>. The <code class="xref c c-func docutils literal notranslate"><span class="pre">kdb_get_kbd_char()</span></code> is the top-level
+function which polls hardware for single character input.</p>
+</div>
+<div class="section" id="kgdboc-and-kms">
+<h4>kgdboc and kms<a class="headerlink" href="#kgdboc-and-kms" title="Permalink to this headline">¶</a></h4>
+<p>The kgdboc driver contains logic to request the graphics display to
+switch to a text context when you are using <code class="docutils literal notranslate"><span class="pre">kgdboc=kms,kbd</span></code>, provided
+that you have a video driver which has a frame buffer console and atomic
+kernel mode setting support.</p>
+<p>Every time the kernel debugger is entered it calls
+<code class="xref c c-func docutils literal notranslate"><span class="pre">kgdboc_pre_exp_handler()</span></code> which in turn calls <code class="xref c c-func docutils literal notranslate"><span class="pre">con_debug_enter()</span></code>
+in the virtual console layer. On resuming kernel execution, the kernel
+debugger calls <code class="xref c c-func docutils literal notranslate"><span class="pre">kgdboc_post_exp_handler()</span></code> which in turn calls
+<code class="xref c c-func docutils literal notranslate"><span class="pre">con_debug_leave()</span></code>.</p>
+<p>Any video driver that wants to be compatible with the kernel debugger
+and the atomic kms callbacks must implement the <code class="docutils literal notranslate"><span class="pre">mode_set_base_atomic</span></code>,
+<code class="docutils literal notranslate"><span class="pre">fb_debug_enter</span></code> and <code class="docutils literal notranslate"><span class="pre">fb_debug_leave</span> <span class="pre">operations</span></code>. For the
+<code class="docutils literal notranslate"><span class="pre">fb_debug_enter</span></code> and <code class="docutils literal notranslate"><span class="pre">fb_debug_leave</span></code> the option exists to use the
+generic drm fb helper functions or implement something custom for the
+hardware. The following example shows the initialization of the
+.mode_set_base_atomic operation in
+drivers/gpu/drm/i915/intel_display.c:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>static const struct drm_crtc_helper_funcs intel_helper_funcs = {
+[...]
+        .mode_set_base_atomic = intel_pipe_set_base_atomic,
+[...]
+};
+</pre></div>
+</div>
+<p>Here is an example of how the i915 driver initializes the
+fb_debug_enter and fb_debug_leave functions to use the generic drm
+helpers in <code class="docutils literal notranslate"><span class="pre">drivers/gpu/drm/i915/intel_fb.c</span></code>:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>static struct fb_ops intelfb_ops = {
+[...]
+       .fb_debug_enter = drm_fb_helper_debug_enter,
+       .fb_debug_leave = drm_fb_helper_debug_leave,
+[...]
+};
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="credits">
+<h2>Credits<a class="headerlink" href="#credits" title="Permalink to this headline">¶</a></h2>
+<p>The following people have contributed to this document:</p>
+<ol class="arabic simple">
+<li>Amit Kale &lt;<a class="reference external" href="mailto:amitkale&#37;&#52;&#48;linsyssoft&#46;com">amitkale<span>&#64;</span>linsyssoft<span>&#46;</span>com</a>&gt;</li>
+<li>Tom Rini &lt;<a class="reference external" href="mailto:trini&#37;&#52;&#48;kernel&#46;crashing&#46;org">trini<span>&#64;</span>kernel<span>&#46;</span>crashing<span>&#46;</span>org</a>&gt;</li>
+</ol>
+<p>In March 2008 this document was completely rewritten by:</p>
+<ul class="simple">
+<li>Jason Wessel &lt;<a class="reference external" href="mailto:jason&#46;wessel&#37;&#52;&#48;windriver&#46;com">jason<span>&#46;</span>wessel<span>&#64;</span>windriver<span>&#46;</span>com</a>&gt;</li>
+</ul>
+<p>In Jan 2010 this document was updated to include kdb.</p>
+<ul class="simple">
+<li>Jason Wessel &lt;<a class="reference external" href="mailto:jason&#46;wessel&#37;&#52;&#48;windriver&#46;com">jason<span>&#46;</span>wessel<span>&#64;</span>windriver<span>&#46;</span>com</a>&gt;</li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="kselftest.html" class="btn btn-neutral float-right" title="Linux Kernel Selftests" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="gdb-kernel-debugging.html" class="btn btn-neutral float-left" title="Debugging kernel and modules via gdb" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

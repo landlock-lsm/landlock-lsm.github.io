@@ -1,0 +1,2797 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Advanced Linux Sound Architecture - Driver Configuration guide &mdash; The Linux Kernel 5.2.0-rc5+ documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="HD-Audio" href="hd-audio/index.html" />
+    <link rel="prev" title="Creating codec to codec dai link for ALSA dapm" href="soc/codec-to-codec.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.2.0-rc5
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../media/index.html">Linux Media Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Linux Sound Subsystem Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="kernel-api/index.html">ALSA Kernel API Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="designs/index.html">Designs and Implementations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="soc/index.html">ALSA SoC Layer</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Advanced Linux Sound Architecture - Driver Configuration guide</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#kernel-configuration">Kernel Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-parameters">Module parameters</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd">Module snd</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-pcm-oss">Module snd-pcm-oss</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-rawmidi">Module snd-rawmidi</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#common-parameters-for-top-sound-card-modules">Common parameters for top sound card modules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-adlib">Module snd-adlib</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-ad1816a">Module snd-ad1816a</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-ad1848">Module snd-ad1848</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-ad1889">Module snd-ad1889</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-ali5451">Module snd-ali5451</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-als100">Module snd-als100</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-als300">Module snd-als300</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-als4000">Module snd-als4000</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-asihpi">Module snd-asihpi</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-atiixp">Module snd-atiixp</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-atiixp-modem">Module snd-atiixp-modem</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-au8810-snd-au8820-snd-au8830">Module snd-au8810, snd-au8820, snd-au8830</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-azt1605">Module snd-azt1605</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-azt2316">Module snd-azt2316</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-aw2">Module snd-aw2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-azt2320">Module snd-azt2320</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-azt3328">Module snd-azt3328</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-bt87x">Module snd-bt87x</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-ca0106">Module snd-ca0106</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-cmi8330">Module snd-cmi8330</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-cmipci">Module snd-cmipci</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-cs4231">Module snd-cs4231</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-cs4236">Module snd-cs4236</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-cs4281">Module snd-cs4281</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-cs46xx">Module snd-cs46xx</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-cs5530">Module snd-cs5530</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-cs5535audio">Module snd-cs5535audio</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-ctxfi">Module snd-ctxfi</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-darla20">Module snd-darla20</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-darla24">Module snd-darla24</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-dt019x">Module snd-dt019x</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-dummy">Module snd-dummy</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-echo3g">Module snd-echo3g</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-emu10k1">Module snd-emu10k1</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-emu10k1x">Module snd-emu10k1x</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-ens1370">Module snd-ens1370</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-ens1371">Module snd-ens1371</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-es1688">Module snd-es1688</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-es18xx">Module snd-es18xx</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-es1938">Module snd-es1938</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-es1968">Module snd-es1968</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-fm801">Module snd-fm801</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-gina20">Module snd-gina20</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-gina24">Module snd-gina24</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-gusclassic">Module snd-gusclassic</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-gusextreme">Module snd-gusextreme</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-gusmax">Module snd-gusmax</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-hda-intel">Module snd-hda-intel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-hdsp">Module snd-hdsp</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-hdspm">Module snd-hdspm</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-ice1712">Module snd-ice1712</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-ice1724">Module snd-ice1724</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-indigo">Module snd-indigo</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-indigodj">Module snd-indigodj</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-indigoio">Module snd-indigoio</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-intel8x0">Module snd-intel8x0</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-intel8x0m">Module snd-intel8x0m</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-interwave">Module snd-interwave</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-interwave-stb">Module snd-interwave-stb</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-jazz16">Module snd-jazz16</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-korg1212">Module snd-korg1212</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-layla20">Module snd-layla20</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-layla24">Module snd-layla24</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-lola">Module snd-lola</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-lx6464es">Module snd-lx6464es</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-maestro3">Module snd-maestro3</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-mia">Module snd-mia</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-miro">Module snd-miro</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-mixart">Module snd-mixart</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-mona">Module snd-mona</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-mpu401">Module snd-mpu401</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-msnd-classic">Module snd-msnd-classic</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-msnd-pinnacle">Module snd-msnd-pinnacle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-mtpav">Module snd-mtpav</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-mts64">Module snd-mts64</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-nm256">Module snd-nm256</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-opl3sa2">Module snd-opl3sa2</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-opti92x-ad1848">Module snd-opti92x-ad1848</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-opti92x-cs4231">Module snd-opti92x-cs4231</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-opti93x">Module snd-opti93x</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-oxygen">Module snd-oxygen</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-pcsp">Module snd-pcsp</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-pcxhr">Module snd-pcxhr</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-portman2x4">Module snd-portman2x4</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-powermac-on-ppc-only">Module snd-powermac (on ppc only)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-pxa2xx-ac97-on-arm-only">Module snd-pxa2xx-ac97 (on arm only)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-riptide">Module snd-riptide</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-rme32">Module snd-rme32</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-rme96">Module snd-rme96</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-rme9652">Module snd-rme9652</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-sa11xx-uda1341-on-arm-only">Module snd-sa11xx-uda1341 (on arm only)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-sb8">Module snd-sb8</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-sb16-and-snd-sbawe">Module snd-sb16 and snd-sbawe</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-sc6000">Module snd-sc6000</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-sscape">Module snd-sscape</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-sun-amd7930-on-sparc-only">Module snd-sun-amd7930 (on sparc only)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-sun-cs4231-on-sparc-only">Module snd-sun-cs4231 (on sparc only)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-sun-dbri-on-sparc-only">Module snd-sun-dbri (on sparc only)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-wavefront">Module snd-wavefront</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-sonicvibes">Module snd-sonicvibes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-serial-u16550">Module snd-serial-u16550</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-trident">Module snd-trident</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-ua101">Module snd-ua101</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-usb-audio">Module snd-usb-audio</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-usb-caiaq">Module snd-usb-caiaq</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-usb-usx2y">Module snd-usb-usx2y</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-via82xx">Module snd-via82xx</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-via82xx-modem">Module snd-via82xx-modem</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-virmidi">Module snd-virmidi</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-virtuoso">Module snd-virtuoso</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-vx222">Module snd-vx222</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-vxpocket">Module snd-vxpocket</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-ymfpci">Module snd-ymfpci</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-snd-pdaudiocf">Module snd-pdaudiocf</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#ac97-quirk-option">AC97 Quirk Option</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#configuring-non-isapnp-cards">Configuring Non-ISAPNP Cards</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-autoloading-support">Module Autoloading Support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#alsa-pcm-devices-to-oss-devices-mapping">ALSA PCM devices to OSS devices mapping</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#proc-interfaces-proc-asound">Proc interfaces (/proc/asound)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#proc-asound-card-pcm-cp-oss">/proc/asound/card#/pcm#[cp]/oss</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#early-buffer-allocation">Early Buffer Allocation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#links-and-addresses">Links and Addresses</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="hd-audio/index.html">HD-Audio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cards/index.html">Card-Specific Information</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Linux Sound Subsystem Documentation</a> &raquo;</li>
+        
+      <li>Advanced Linux Sound Architecture - Driver Configuration guide</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/sound/alsa-configuration.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="advanced-linux-sound-architecture-driver-configuration-guide">
+<h1>Advanced Linux Sound Architecture - Driver Configuration guide<a class="headerlink" href="#advanced-linux-sound-architecture-driver-configuration-guide" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="kernel-configuration">
+<h2>Kernel Configuration<a class="headerlink" href="#kernel-configuration" title="Permalink to this headline">¶</a></h2>
+<p>To enable ALSA support you need at least to build the kernel with
+primary sound card support (<code class="docutils literal notranslate"><span class="pre">CONFIG_SOUND</span></code>).  Since ALSA can emulate
+OSS, you don’t have to choose any of the OSS modules.</p>
+<p>Enable “OSS API emulation” (<code class="docutils literal notranslate"><span class="pre">CONFIG_SND_OSSEMUL</span></code>) and both OSS mixer
+and PCM supports if you want to run OSS applications with ALSA.</p>
+<p>If you want to support the WaveTable functionality on cards such as
+SB Live! then you need to enable “Sequencer support”
+(<code class="docutils literal notranslate"><span class="pre">CONFIG_SND_SEQUENCER</span></code>).</p>
+<p>To make ALSA debug messages more verbose, enable the “Verbose printk”
+and “Debug” options.  To check for memory leaks, turn on “Debug memory”
+too.  “Debug detection” will add checks for the detection of cards.</p>
+<p>Please note that all the ALSA ISA drivers support the Linux isapnp API
+(if the card supports ISA PnP).  You don’t need to configure the cards
+using isapnptools.</p>
+</div>
+<div class="section" id="module-parameters">
+<h2>Module parameters<a class="headerlink" href="#module-parameters" title="Permalink to this headline">¶</a></h2>
+<p>The user can load modules with options. If the module supports more than
+one card and you have more than one card of the same type then you can
+specify multiple values for the option separated by commas.</p>
+<div class="section" id="module-snd">
+<h3>Module snd<a class="headerlink" href="#module-snd" title="Permalink to this headline">¶</a></h3>
+<p>The core ALSA module.  It is used by all ALSA card drivers.
+It takes the following options which have global effects.</p>
+<dl class="docutils">
+<dt>major</dt>
+<dd>major number for sound driver;
+Default: 116</dd>
+<dt>cards_limit</dt>
+<dd>limiting card index for auto-loading (1-8);
+Default: 1;
+For auto-loading more than one card, specify this option
+together with snd-card-X aliases.</dd>
+<dt>slots</dt>
+<dd>Reserve the slot index for the given driver;
+This option takes multiple strings.
+See <a class="reference internal" href="#module-autoloading-support">Module Autoloading Support</a> section for details.</dd>
+<dt>debug</dt>
+<dd>Specifies the debug message level;
+(0 = disable debug prints, 1 = normal debug messages,
+2 = verbose debug messages);
+This option appears only when <code class="docutils literal notranslate"><span class="pre">CONFIG_SND_DEBUG=y</span></code>.
+This option can be dynamically changed via sysfs
+/sys/modules/snd/parameters/debug file.</dd>
+</dl>
+</div>
+<div class="section" id="module-snd-pcm-oss">
+<h3>Module snd-pcm-oss<a class="headerlink" href="#module-snd-pcm-oss" title="Permalink to this headline">¶</a></h3>
+<p>The PCM OSS emulation module.
+This module takes options which change the mapping of devices.</p>
+<dl class="docutils">
+<dt>dsp_map</dt>
+<dd>PCM device number maps assigned to the 1st OSS device;
+Default: 0</dd>
+<dt>adsp_map</dt>
+<dd>PCM device number maps assigned to the 2st OSS device;
+Default: 1</dd>
+<dt>nonblock_open</dt>
+<dd>Don’t block opening busy PCM devices;
+Default: 1</dd>
+</dl>
+<p>For example, when <code class="docutils literal notranslate"><span class="pre">dsp_map=2</span></code>, /dev/dsp will be mapped to PCM #2 of
+the card #0.  Similarly, when <code class="docutils literal notranslate"><span class="pre">adsp_map=0</span></code>, /dev/adsp will be mapped
+to PCM #0 of the card #0.
+For changing the second or later card, specify the option with
+commas, such like <code class="docutils literal notranslate"><span class="pre">dsp_map=0,1</span></code>.</p>
+<p><code class="docutils literal notranslate"><span class="pre">nonblock_open</span></code> option is used to change the behavior of the PCM
+regarding opening the device.  When this option is non-zero,
+opening a busy OSS PCM device won’t be blocked but return
+immediately with EAGAIN (just like O_NONBLOCK flag).</p>
+</div>
+<div class="section" id="module-snd-rawmidi">
+<h3>Module snd-rawmidi<a class="headerlink" href="#module-snd-rawmidi" title="Permalink to this headline">¶</a></h3>
+<p>This module takes options which change the mapping of devices.
+similar to those of the snd-pcm-oss module.</p>
+<dl class="docutils">
+<dt>midi_map</dt>
+<dd>MIDI device number maps assigned to the 1st OSS device;
+Default: 0</dd>
+<dt>amidi_map</dt>
+<dd>MIDI device number maps assigned to the 2st OSS device;
+Default: 1</dd>
+</dl>
+</div>
+<div class="section" id="common-parameters-for-top-sound-card-modules">
+<h3>Common parameters for top sound card modules<a class="headerlink" href="#common-parameters-for-top-sound-card-modules" title="Permalink to this headline">¶</a></h3>
+<p>Each of top level sound card module takes the following options.</p>
+<dl class="docutils">
+<dt>index</dt>
+<dd>index (slot #) of sound card;
+Values: 0 through 31 or negative;
+If nonnegative, assign that index number;
+if negative, interpret as a bitmask of permissible indices;
+the first free permitted index is assigned;
+Default: -1</dd>
+<dt>id</dt>
+<dd>card ID (identifier or name);
+Can be up to 15 characters long;
+Default: the card type;
+A directory by this name is created under /proc/asound/
+containing information about the card;
+This ID can be used instead of the index number in
+identifying the card</dd>
+<dt>enable</dt>
+<dd>enable card;
+Default: enabled, for PCI and ISA PnP cards</dd>
+</dl>
+</div>
+<div class="section" id="module-snd-adlib">
+<h3>Module snd-adlib<a class="headerlink" href="#module-snd-adlib" title="Permalink to this headline">¶</a></h3>
+<p>Module for AdLib FM cards.</p>
+<dl class="docutils">
+<dt>port</dt>
+<dd>port # for OPL chip</dd>
+</dl>
+<p>This module supports multiple cards. It does not support autoprobe, so
+the port must be specified. For actual AdLib FM cards it will be 0x388.
+Note that this card does not have PCM support and no mixer; only FM
+synthesis.</p>
+<p>Make sure you have <code class="docutils literal notranslate"><span class="pre">sbiload</span></code> from the alsa-tools package available and,
+after loading the module, find out the assigned ALSA sequencer port
+number through <code class="docutils literal notranslate"><span class="pre">sbiload</span> <span class="pre">-l</span></code>.</p>
+<p>Example output:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Port     Client name                       Port name
+64:0     OPL2 FM synth                     OPL2 FM Port
+</pre></div>
+</div>
+<p>Load the <code class="docutils literal notranslate"><span class="pre">std.sb</span></code> and <code class="docutils literal notranslate"><span class="pre">drums.sb</span></code> patches also supplied by <code class="docutils literal notranslate"><span class="pre">sbiload</span></code>:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>sbiload -p 64:0 std.sb drums.sb
+</pre></div>
+</div>
+<p>If you use this driver to drive an OPL3, you can use <code class="docutils literal notranslate"><span class="pre">std.o3</span></code> and <code class="docutils literal notranslate"><span class="pre">drums.o3</span></code>
+instead. To have the card produce sound, use <code class="docutils literal notranslate"><span class="pre">aplaymidi</span></code> from alsa-utils:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>aplaymidi -p 64:0 foo.mid
+</pre></div>
+</div>
+</div>
+<div class="section" id="module-snd-ad1816a">
+<h3>Module snd-ad1816a<a class="headerlink" href="#module-snd-ad1816a" title="Permalink to this headline">¶</a></h3>
+<p>Module for sound cards based on Analog Devices AD1816A/AD1815 ISA chips.</p>
+<dl class="docutils">
+<dt>clockfreq</dt>
+<dd>Clock frequency for AD1816A chip (default = 0, 33000Hz)</dd>
+</dl>
+<p>This module supports multiple cards, autoprobe and PnP.</p>
+</div>
+<div class="section" id="module-snd-ad1848">
+<h3>Module snd-ad1848<a class="headerlink" href="#module-snd-ad1848" title="Permalink to this headline">¶</a></h3>
+<p>Module for sound cards based on AD1848/AD1847/CS4248 ISA chips.</p>
+<dl class="docutils">
+<dt>port</dt>
+<dd>port # for AD1848 chip</dd>
+<dt>irq</dt>
+<dd>IRQ # for AD1848  chip</dd>
+<dt>dma1</dt>
+<dd>DMA # for AD1848 chip (0,1,3)</dd>
+</dl>
+<p>This module supports multiple cards.  It does not support autoprobe
+thus main port must be specified!!! Other ports are optional.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-ad1889">
+<h3>Module snd-ad1889<a class="headerlink" href="#module-snd-ad1889" title="Permalink to this headline">¶</a></h3>
+<p>Module for Analog Devices AD1889 chips.</p>
+<dl class="docutils">
+<dt>ac97_quirk</dt>
+<dd>AC‘97 workaround for strange hardware;
+See the description of intel8x0 module for details.</dd>
+</dl>
+<p>This module supports multiple cards.</p>
+</div>
+<div class="section" id="module-snd-ali5451">
+<h3>Module snd-ali5451<a class="headerlink" href="#module-snd-ali5451" title="Permalink to this headline">¶</a></h3>
+<p>Module for ALi M5451 PCI chip.</p>
+<dl class="docutils">
+<dt>pcm_channels</dt>
+<dd>Number of hardware channels assigned for PCM</dd>
+<dt>spdif</dt>
+<dd>Support SPDIF I/O;
+Default: disabled</dd>
+</dl>
+<p>This module supports one chip and autoprobe.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-als100">
+<h3>Module snd-als100<a class="headerlink" href="#module-snd-als100" title="Permalink to this headline">¶</a></h3>
+<p>Module for sound cards based on Avance Logic ALS100/ALS120 ISA chips.</p>
+<p>This module supports multiple cards, autoprobe and PnP.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-als300">
+<h3>Module snd-als300<a class="headerlink" href="#module-snd-als300" title="Permalink to this headline">¶</a></h3>
+<p>Module for Avance Logic ALS300 and ALS300+</p>
+<p>This module supports multiple cards.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-als4000">
+<h3>Module snd-als4000<a class="headerlink" href="#module-snd-als4000" title="Permalink to this headline">¶</a></h3>
+<p>Module for sound cards based on Avance Logic ALS4000 PCI chip.</p>
+<dl class="docutils">
+<dt>joystick_port</dt>
+<dd>port # for legacy joystick support;
+0 = disabled (default), 1 = auto-detect</dd>
+</dl>
+<p>This module supports multiple cards, autoprobe and PnP.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-asihpi">
+<h3>Module snd-asihpi<a class="headerlink" href="#module-snd-asihpi" title="Permalink to this headline">¶</a></h3>
+<p>Module for AudioScience ASI soundcards</p>
+<dl class="docutils">
+<dt>enable_hpi_hwdep</dt>
+<dd>enable HPI hwdep for AudioScience soundcard</dd>
+</dl>
+<p>This module supports multiple cards.
+The driver requires the firmware loader support on kernel.</p>
+</div>
+<div class="section" id="module-snd-atiixp">
+<h3>Module snd-atiixp<a class="headerlink" href="#module-snd-atiixp" title="Permalink to this headline">¶</a></h3>
+<p>Module for ATI IXP 150/200/250/400 AC97 controllers.</p>
+<dl class="docutils">
+<dt>ac97_clock</dt>
+<dd>AC‘97 clock (default = 48000)</dd>
+<dt>ac97_quirk</dt>
+<dd>AC‘97 workaround for strange hardware;
+See <a class="reference internal" href="#ac97-quirk-option">AC97 Quirk Option</a> section below.</dd>
+<dt>ac97_codec</dt>
+<dd>Workaround to specify which AC‘97 codec instead of probing.
+If this works for you file a bug with your <cite>lspci -vn</cite> output.
+(-2 = Force probing, -1 = Default behavior, 0-2 = Use the
+specified codec.)</dd>
+<dt>spdif_aclink</dt>
+<dd>S/PDIF transfer over AC-link (default = 1)</dd>
+</dl>
+<p>This module supports one card and autoprobe.</p>
+<p>ATI IXP has two different methods to control SPDIF output.  One is
+over AC-link and another is over the “direct” SPDIF output.  The
+implementation depends on the motherboard, and you’ll need to
+choose the correct one via spdif_aclink module option.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-atiixp-modem">
+<h3>Module snd-atiixp-modem<a class="headerlink" href="#module-snd-atiixp-modem" title="Permalink to this headline">¶</a></h3>
+<p>Module for ATI IXP 150/200/250 AC97 modem controllers.</p>
+<p>This module supports one card and autoprobe.</p>
+<p>Note: The default index value of this module is -2, i.e. the first
+slot is excluded.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-au8810-snd-au8820-snd-au8830">
+<h3>Module snd-au8810, snd-au8820, snd-au8830<a class="headerlink" href="#module-snd-au8810-snd-au8820-snd-au8830" title="Permalink to this headline">¶</a></h3>
+<p>Module for Aureal Vortex, Vortex2 and Advantage device.</p>
+<dl class="docutils">
+<dt>pcifix</dt>
+<dd>Control PCI workarounds;
+0 = Disable all workarounds,
+1 = Force the PCI latency of the Aureal card to 0xff,
+2 = Force the Extend PCI#2 Internal Master for Efficient
+Handling of Dummy Requests on the VIA KT133 AGP Bridge,
+3 = Force both settings,
+255 = Autodetect what is required (default)</dd>
+</dl>
+<p>This module supports all ADB PCM channels, ac97 mixer, SPDIF, hardware
+EQ, mpu401, gameport. A3D and wavetable support are still in development.
+Development and reverse engineering work is being coordinated at
+<a class="reference external" href="http://savannah.nongnu.org/projects/openvortex/">http://savannah.nongnu.org/projects/openvortex/</a>
+SPDIF output has a copy of the AC97 codec output, unless you use the
+<code class="docutils literal notranslate"><span class="pre">spdif</span></code> pcm device, which allows raw data passthru.
+The hardware EQ hardware and SPDIF is only present in the Vortex2 and
+Advantage.</p>
+<p>Note: Some ALSA mixer applications don’t handle the SPDIF sample rate
+control correctly. If you have problems regarding this, try
+another ALSA compliant mixer (alsamixer works).</p>
+</div>
+<div class="section" id="module-snd-azt1605">
+<h3>Module snd-azt1605<a class="headerlink" href="#module-snd-azt1605" title="Permalink to this headline">¶</a></h3>
+<p>Module for Aztech Sound Galaxy soundcards based on the Aztech AZT1605
+chipset.</p>
+<dl class="docutils">
+<dt>port</dt>
+<dd>port # for BASE (0x220,0x240,0x260,0x280)</dd>
+<dt>wss_port</dt>
+<dd>port # for WSS (0x530,0x604,0xe80,0xf40)</dd>
+<dt>irq</dt>
+<dd>IRQ # for WSS (7,9,10,11)</dd>
+<dt>dma1</dt>
+<dd>DMA # for WSS playback (0,1,3)</dd>
+<dt>dma2</dt>
+<dd>DMA # for WSS capture (0,1), -1 = disabled (default)</dd>
+<dt>mpu_port</dt>
+<dd>port # for MPU-401 UART (0x300,0x330), -1 = disabled (default)</dd>
+<dt>mpu_irq</dt>
+<dd>IRQ # for MPU-401 UART (3,5,7,9), -1 = disabled (default)</dd>
+<dt>fm_port</dt>
+<dd>port # for OPL3 (0x388), -1 = disabled (default)</dd>
+</dl>
+<p>This module supports multiple cards. It does not support autoprobe:
+<code class="docutils literal notranslate"><span class="pre">port</span></code>, <code class="docutils literal notranslate"><span class="pre">wss_port</span></code>, <code class="docutils literal notranslate"><span class="pre">irq</span></code> and <code class="docutils literal notranslate"><span class="pre">dma1</span></code> have to be specified.
+The other values are optional.</p>
+<p><code class="docutils literal notranslate"><span class="pre">port</span></code> needs to match the BASE ADDRESS jumper on the card (0x220 or 0x240)
+or the value stored in the card’s EEPROM for cards that have an EEPROM and
+their “CONFIG MODE” jumper set to “EEPROM SETTING”. The other values can
+be chosen freely from the options enumerated above.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">dma2</span></code> is specified and different from <code class="docutils literal notranslate"><span class="pre">dma1</span></code>, the card will operate in
+full-duplex mode. When <code class="docutils literal notranslate"><span class="pre">dma1=3</span></code>, only <code class="docutils literal notranslate"><span class="pre">dma2=0</span></code> is valid and the only way to
+enable capture since only channels 0 and 1 are available for capture.</p>
+<p>Generic settings are <code class="docutils literal notranslate"><span class="pre">port=0x220</span> <span class="pre">wss_port=0x530</span> <span class="pre">irq=10</span> <span class="pre">dma1=1</span> <span class="pre">dma2=0</span>
+<span class="pre">mpu_port=0x330</span> <span class="pre">mpu_irq=9</span> <span class="pre">fm_port=0x388</span></code>.</p>
+<p>Whatever IRQ and DMA channels you pick, be sure to reserve them for
+legacy ISA in your BIOS.</p>
+</div>
+<div class="section" id="module-snd-azt2316">
+<h3>Module snd-azt2316<a class="headerlink" href="#module-snd-azt2316" title="Permalink to this headline">¶</a></h3>
+<p>Module for Aztech Sound Galaxy soundcards based on the Aztech AZT2316
+chipset.</p>
+<dl class="docutils">
+<dt>port</dt>
+<dd>port # for BASE (0x220,0x240,0x260,0x280)</dd>
+<dt>wss_port</dt>
+<dd>port # for WSS (0x530,0x604,0xe80,0xf40)</dd>
+<dt>irq</dt>
+<dd>IRQ # for WSS (7,9,10,11)</dd>
+<dt>dma1</dt>
+<dd>DMA # for WSS playback (0,1,3)</dd>
+<dt>dma2</dt>
+<dd>DMA # for WSS capture (0,1), -1 = disabled (default)</dd>
+<dt>mpu_port</dt>
+<dd>port # for MPU-401 UART (0x300,0x330), -1 = disabled (default)</dd>
+<dt>mpu_irq</dt>
+<dd>IRQ # for MPU-401 UART (5,7,9,10), -1 = disabled (default)</dd>
+<dt>fm_port</dt>
+<dd>port # for OPL3 (0x388), -1 = disabled (default)</dd>
+</dl>
+<p>This module supports multiple cards. It does not support autoprobe:
+<code class="docutils literal notranslate"><span class="pre">port</span></code>, <code class="docutils literal notranslate"><span class="pre">wss_port</span></code>, <code class="docutils literal notranslate"><span class="pre">irq</span></code> and <code class="docutils literal notranslate"><span class="pre">dma1</span></code> have to be specified.
+The other values are optional.</p>
+<p><code class="docutils literal notranslate"><span class="pre">port</span></code> needs to match the BASE ADDRESS jumper on the card (0x220 or 0x240)
+or the value stored in the card’s EEPROM for cards that have an EEPROM and
+their “CONFIG MODE” jumper set to “EEPROM SETTING”. The other values can
+be chosen freely from the options enumerated above.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">dma2</span></code> is specified and different from <code class="docutils literal notranslate"><span class="pre">dma1</span></code>, the card will operate in
+full-duplex mode. When <code class="docutils literal notranslate"><span class="pre">dma1=3</span></code>, only <code class="docutils literal notranslate"><span class="pre">dma2=0</span></code> is valid and the only way to
+enable capture since only channels 0 and 1 are available for capture.</p>
+<p>Generic settings are <code class="docutils literal notranslate"><span class="pre">port=0x220</span> <span class="pre">wss_port=0x530</span> <span class="pre">irq=10</span> <span class="pre">dma1=1</span> <span class="pre">dma2=0</span>
+<span class="pre">mpu_port=0x330</span> <span class="pre">mpu_irq=9</span> <span class="pre">fm_port=0x388</span></code>.</p>
+<p>Whatever IRQ and DMA channels you pick, be sure to reserve them for
+legacy ISA in your BIOS.</p>
+</div>
+<div class="section" id="module-snd-aw2">
+<h3>Module snd-aw2<a class="headerlink" href="#module-snd-aw2" title="Permalink to this headline">¶</a></h3>
+<p>Module for Audiowerk2 sound card</p>
+<p>This module supports multiple cards.</p>
+</div>
+<div class="section" id="module-snd-azt2320">
+<h3>Module snd-azt2320<a class="headerlink" href="#module-snd-azt2320" title="Permalink to this headline">¶</a></h3>
+<p>Module for sound cards based on Aztech System AZT2320 ISA chip (PnP only).</p>
+<p>This module supports multiple cards, PnP and autoprobe.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-azt3328">
+<h3>Module snd-azt3328<a class="headerlink" href="#module-snd-azt3328" title="Permalink to this headline">¶</a></h3>
+<p>Module for sound cards based on Aztech AZF3328 PCI chip.</p>
+<dl class="docutils">
+<dt>joystick</dt>
+<dd>Enable joystick (default off)</dd>
+</dl>
+<p>This module supports multiple cards.</p>
+</div>
+<div class="section" id="module-snd-bt87x">
+<h3>Module snd-bt87x<a class="headerlink" href="#module-snd-bt87x" title="Permalink to this headline">¶</a></h3>
+<p>Module for video cards based on Bt87x chips.</p>
+<dl class="docutils">
+<dt>digital_rate</dt>
+<dd>Override the default digital rate (Hz)</dd>
+<dt>load_all</dt>
+<dd>Load the driver even if the card model isn’t known</dd>
+</dl>
+<p>This module supports multiple cards.</p>
+<p>Note: The default index value of this module is -2, i.e. the first
+slot is excluded.</p>
+</div>
+<div class="section" id="module-snd-ca0106">
+<h3>Module snd-ca0106<a class="headerlink" href="#module-snd-ca0106" title="Permalink to this headline">¶</a></h3>
+<p>Module for Creative Audigy LS and SB Live 24bit</p>
+<p>This module supports multiple cards.</p>
+</div>
+<div class="section" id="module-snd-cmi8330">
+<h3>Module snd-cmi8330<a class="headerlink" href="#module-snd-cmi8330" title="Permalink to this headline">¶</a></h3>
+<p>Module for sound cards based on C-Media CMI8330 ISA chips.</p>
+<dl class="docutils">
+<dt>isapnp</dt>
+<dd>ISA PnP detection - 0 = disable, 1 = enable (default)</dd>
+</dl>
+<p>with <code class="docutils literal notranslate"><span class="pre">isapnp=0</span></code>, the following options are available:</p>
+<dl class="docutils">
+<dt>wssport</dt>
+<dd>port # for CMI8330 chip (WSS)</dd>
+<dt>wssirq</dt>
+<dd>IRQ # for CMI8330 chip (WSS)</dd>
+<dt>wssdma</dt>
+<dd>first DMA # for CMI8330 chip (WSS)</dd>
+<dt>sbport</dt>
+<dd>port # for CMI8330 chip (SB16)</dd>
+<dt>sbirq</dt>
+<dd>IRQ # for CMI8330 chip (SB16)</dd>
+<dt>sbdma8</dt>
+<dd>8bit DMA # for CMI8330 chip (SB16)</dd>
+<dt>sbdma16</dt>
+<dd>16bit DMA # for CMI8330 chip (SB16)</dd>
+<dt>fmport</dt>
+<dd>(optional) OPL3 I/O port</dd>
+<dt>mpuport</dt>
+<dd>(optional) MPU401 I/O port</dd>
+<dt>mpuirq</dt>
+<dd>(optional) MPU401 irq #</dd>
+</dl>
+<p>This module supports multiple cards and autoprobe.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-cmipci">
+<h3>Module snd-cmipci<a class="headerlink" href="#module-snd-cmipci" title="Permalink to this headline">¶</a></h3>
+<p>Module for C-Media CMI8338/8738/8768/8770 PCI sound cards.</p>
+<dl class="docutils">
+<dt>mpu_port</dt>
+<dd>port address of MIDI interface (8338 only):
+0x300,0x310,0x320,0x330 = legacy port,
+0 = disable (default)</dd>
+<dt>fm_port</dt>
+<dd>port address of OPL-3 FM synthesizer (8x38 only):
+0x388 = legacy port,
+1 = integrated PCI port (default on 8738),
+0 = disable</dd>
+<dt>soft_ac3</dt>
+<dd>Software-conversion of raw SPDIF packets (model 033 only) (default = 1)</dd>
+<dt>joystick_port</dt>
+<dd>Joystick port address (0 = disable, 1 = auto-detect)</dd>
+</dl>
+<p>This module supports autoprobe and multiple cards.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-cs4231">
+<h3>Module snd-cs4231<a class="headerlink" href="#module-snd-cs4231" title="Permalink to this headline">¶</a></h3>
+<p>Module for sound cards based on CS4231 ISA chips.</p>
+<dl class="docutils">
+<dt>port</dt>
+<dd>port # for CS4231 chip</dd>
+<dt>mpu_port</dt>
+<dd>port # for MPU-401 UART (optional), -1 = disable</dd>
+<dt>irq</dt>
+<dd>IRQ # for CS4231 chip</dd>
+<dt>mpu_irq</dt>
+<dd>IRQ # for MPU-401 UART</dd>
+<dt>dma1</dt>
+<dd>first DMA # for CS4231 chip</dd>
+<dt>dma2</dt>
+<dd>second DMA # for CS4231 chip</dd>
+</dl>
+<p>This module supports multiple cards. This module does not support autoprobe
+thus main port must be specified!!! Other ports are optional.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-cs4236">
+<h3>Module snd-cs4236<a class="headerlink" href="#module-snd-cs4236" title="Permalink to this headline">¶</a></h3>
+<p>Module for sound cards based on CS4232/CS4232A,
+CS4235/CS4236/CS4236B/CS4237B/CS4238B/CS4239 ISA chips.</p>
+<dl class="docutils">
+<dt>isapnp</dt>
+<dd>ISA PnP detection - 0 = disable, 1 = enable (default)</dd>
+</dl>
+<p>with <code class="docutils literal notranslate"><span class="pre">isapnp=0</span></code>, the following options are available:</p>
+<dl class="docutils">
+<dt>port</dt>
+<dd>port # for CS4236 chip (PnP setup - 0x534)</dd>
+<dt>cport</dt>
+<dd>control port # for CS4236 chip (PnP setup - 0x120,0x210,0xf00)</dd>
+<dt>mpu_port</dt>
+<dd>port # for MPU-401 UART (PnP setup - 0x300), -1 = disable</dd>
+<dt>fm_port</dt>
+<dd>FM port # for CS4236 chip (PnP setup - 0x388), -1 = disable</dd>
+<dt>irq</dt>
+<dd>IRQ # for CS4236 chip (5,7,9,11,12,15)</dd>
+<dt>mpu_irq</dt>
+<dd>IRQ # for MPU-401 UART (9,11,12,15)</dd>
+<dt>dma1</dt>
+<dd>first DMA # for CS4236 chip (0,1,3)</dd>
+<dt>dma2</dt>
+<dd>second DMA # for CS4236 chip (0,1,3), -1 = disable</dd>
+</dl>
+<p>This module supports multiple cards. This module does not support autoprobe
+(if ISA PnP is not used) thus main port and control port must be
+specified!!! Other ports are optional.</p>
+<p>The power-management is supported.</p>
+<p>This module is aliased as snd-cs4232 since it provides the old
+snd-cs4232 functionality, too.</p>
+</div>
+<div class="section" id="module-snd-cs4281">
+<h3>Module snd-cs4281<a class="headerlink" href="#module-snd-cs4281" title="Permalink to this headline">¶</a></h3>
+<p>Module for Cirrus Logic CS4281 soundchip.</p>
+<dl class="docutils">
+<dt>dual_codec</dt>
+<dd>Secondary codec ID (0 = disable, default)</dd>
+</dl>
+<p>This module supports multiple cards.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-cs46xx">
+<h3>Module snd-cs46xx<a class="headerlink" href="#module-snd-cs46xx" title="Permalink to this headline">¶</a></h3>
+<p>Module for PCI sound cards based on CS4610/CS4612/CS4614/CS4615/CS4622/
+CS4624/CS4630/CS4280 PCI chips.</p>
+<dl class="docutils">
+<dt>external_amp</dt>
+<dd>Force to enable external amplifier.</dd>
+<dt>thinkpad</dt>
+<dd>Force to enable Thinkpad’s CLKRUN control.</dd>
+<dt>mmap_valid</dt>
+<dd>Support OSS mmap mode (default = 0).</dd>
+</dl>
+<p>This module supports multiple cards and autoprobe.
+Usually external amp and CLKRUN controls are detected automatically
+from PCI sub vendor/device ids.  If they don’t work, give the options
+above explicitly.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-cs5530">
+<h3>Module snd-cs5530<a class="headerlink" href="#module-snd-cs5530" title="Permalink to this headline">¶</a></h3>
+<p>Module for Cyrix/NatSemi Geode 5530 chip.</p>
+</div>
+<div class="section" id="module-snd-cs5535audio">
+<h3>Module snd-cs5535audio<a class="headerlink" href="#module-snd-cs5535audio" title="Permalink to this headline">¶</a></h3>
+<p>Module for multifunction CS5535 companion PCI device</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-ctxfi">
+<h3>Module snd-ctxfi<a class="headerlink" href="#module-snd-ctxfi" title="Permalink to this headline">¶</a></h3>
+<p>Module for Creative Sound Blaster X-Fi boards (20k1 / 20k2 chips)</p>
+<ul class="simple">
+<li>Creative Sound Blaster X-Fi Titanium Fatal1ty Champion Series</li>
+<li>Creative Sound Blaster X-Fi Titanium Fatal1ty Professional Series</li>
+<li>Creative Sound Blaster X-Fi Titanium Professional Audio</li>
+<li>Creative Sound Blaster X-Fi Titanium</li>
+<li>Creative Sound Blaster X-Fi Elite Pro</li>
+<li>Creative Sound Blaster X-Fi Platinum</li>
+<li>Creative Sound Blaster X-Fi Fatal1ty</li>
+<li>Creative Sound Blaster X-Fi XtremeGamer</li>
+<li>Creative Sound Blaster X-Fi XtremeMusic</li>
+</ul>
+<dl class="docutils">
+<dt>reference_rate</dt>
+<dd>reference sample rate, 44100 or 48000 (default)</dd>
+<dt>multiple</dt>
+<dd>multiple to ref. sample rate, 1 or 2 (default)</dd>
+<dt>subsystem</dt>
+<dd>override the PCI SSID for probing;
+the value consists of SSVID &lt;&lt; 16 | SSDID.
+The default is zero, which means no override.</dd>
+</dl>
+<p>This module supports multiple cards.</p>
+</div>
+<div class="section" id="module-snd-darla20">
+<h3>Module snd-darla20<a class="headerlink" href="#module-snd-darla20" title="Permalink to this headline">¶</a></h3>
+<p>Module for Echoaudio Darla20</p>
+<p>This module supports multiple cards.
+The driver requires the firmware loader support on kernel.</p>
+</div>
+<div class="section" id="module-snd-darla24">
+<h3>Module snd-darla24<a class="headerlink" href="#module-snd-darla24" title="Permalink to this headline">¶</a></h3>
+<p>Module for Echoaudio Darla24</p>
+<p>This module supports multiple cards.
+The driver requires the firmware loader support on kernel.</p>
+</div>
+<div class="section" id="module-snd-dt019x">
+<h3>Module snd-dt019x<a class="headerlink" href="#module-snd-dt019x" title="Permalink to this headline">¶</a></h3>
+<p>Module for Diamond Technologies DT-019X / Avance Logic ALS-007 (PnP
+only)</p>
+<p>This module supports multiple cards.  This module is enabled only with
+ISA PnP support.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-dummy">
+<h3>Module snd-dummy<a class="headerlink" href="#module-snd-dummy" title="Permalink to this headline">¶</a></h3>
+<p>Module for the dummy sound card. This “card” doesn’t do any output
+or input, but you may use this module for any application which
+requires a sound card (like RealPlayer).</p>
+<dl class="docutils">
+<dt>pcm_devs</dt>
+<dd>Number of PCM devices assigned to each card (default = 1, up to 4)</dd>
+<dt>pcm_substreams</dt>
+<dd>Number of PCM substreams assigned to each PCM (default = 8, up to 128)</dd>
+<dt>hrtimer</dt>
+<dd>Use hrtimer (=1, default) or system timer (=0)</dd>
+<dt>fake_buffer</dt>
+<dd>Fake buffer allocations (default = 1)</dd>
+</dl>
+<p>When multiple PCM devices are created, snd-dummy gives different
+behavior to each PCM device:
+* 0 = interleaved with mmap support
+* 1 = non-interleaved with mmap support
+* 2 = interleaved without mmap
+* 3 = non-interleaved without mmap</p>
+<p>As default, snd-dummy drivers doesn’t allocate the real buffers
+but either ignores read/write or mmap a single dummy page to all
+buffer pages, in order to save the resources.  If your apps need
+the read/ written buffer data to be consistent, pass fake_buffer=0
+option.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-echo3g">
+<h3>Module snd-echo3g<a class="headerlink" href="#module-snd-echo3g" title="Permalink to this headline">¶</a></h3>
+<p>Module for Echoaudio 3G cards (Gina3G/Layla3G)</p>
+<p>This module supports multiple cards.
+The driver requires the firmware loader support on kernel.</p>
+</div>
+<div class="section" id="module-snd-emu10k1">
+<h3>Module snd-emu10k1<a class="headerlink" href="#module-snd-emu10k1" title="Permalink to this headline">¶</a></h3>
+<p>Module for EMU10K1/EMU10k2 based PCI sound cards.</p>
+<ul class="simple">
+<li>Sound Blaster Live!</li>
+<li>Sound Blaster PCI 512</li>
+<li>Emu APS (partially supported)</li>
+<li>Sound Blaster Audigy</li>
+</ul>
+<dl class="docutils">
+<dt>extin</dt>
+<dd>bitmap of available external inputs for FX8010 (see bellow)</dd>
+<dt>extout</dt>
+<dd>bitmap of available external outputs for FX8010 (see bellow)</dd>
+<dt>seq_ports</dt>
+<dd>allocated sequencer ports (4 by default)</dd>
+<dt>max_synth_voices</dt>
+<dd>limit of voices used for wavetable (64 by default)</dd>
+<dt>max_buffer_size</dt>
+<dd>specifies the maximum size of wavetable/pcm buffers given in MB
+unit.  Default value is 128.</dd>
+<dt>enable_ir</dt>
+<dd>enable IR</dd>
+</dl>
+<p>This module supports multiple cards and autoprobe.</p>
+<p>Input &amp; Output configurations                   [extin/extout]
+* Creative Card wo/Digital out                  [0x0003/0x1f03]
+* Creative Card w/Digital out                   [0x0003/0x1f0f]
+* Creative Card w/Digital CD in                 [0x000f/0x1f0f]
+* Creative Card wo/Digital out + LiveDrive      [0x3fc3/0x1fc3]
+* Creative Card w/Digital out + LiveDrive       [0x3fc3/0x1fcf]
+* Creative Card w/Digital CD in + LiveDrive     [0x3fcf/0x1fcf]
+* Creative Card wo/Digital out + Digital I/O 2  [0x0fc3/0x1f0f]
+* Creative Card w/Digital out + Digital I/O 2   [0x0fc3/0x1f0f]
+* Creative Card w/Digital CD in + Digital I/O 2 [0x0fcf/0x1f0f]
+* Creative Card 5.1/w Digital out + LiveDrive   [0x3fc3/0x1fff]
+* Creative Card 5.1 (c) 2003                    [0x3fc3/0x7cff]
+* Creative Card all ins and outs                [0x3fff/0x7fff]</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-emu10k1x">
+<h3>Module snd-emu10k1x<a class="headerlink" href="#module-snd-emu10k1x" title="Permalink to this headline">¶</a></h3>
+<p>Module for Creative Emu10k1X (SB Live Dell OEM version)</p>
+<p>This module supports multiple cards.</p>
+</div>
+<div class="section" id="module-snd-ens1370">
+<h3>Module snd-ens1370<a class="headerlink" href="#module-snd-ens1370" title="Permalink to this headline">¶</a></h3>
+<p>Module for Ensoniq AudioPCI ES1370 PCI sound cards.</p>
+<ul class="simple">
+<li>SoundBlaster PCI 64</li>
+<li>SoundBlaster PCI 128</li>
+</ul>
+<dl class="docutils">
+<dt>joystick</dt>
+<dd>Enable joystick (default off)</dd>
+</dl>
+<p>This module supports multiple cards and autoprobe.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-ens1371">
+<h3>Module snd-ens1371<a class="headerlink" href="#module-snd-ens1371" title="Permalink to this headline">¶</a></h3>
+<p>Module for Ensoniq AudioPCI ES1371 PCI sound cards.</p>
+<ul class="simple">
+<li>SoundBlaster PCI 64</li>
+<li>SoundBlaster PCI 128</li>
+<li>SoundBlaster Vibra PCI</li>
+</ul>
+<dl class="docutils">
+<dt>joystick_port</dt>
+<dd>port # for joystick (0x200,0x208,0x210,0x218), 0 = disable
+(default), 1 = auto-detect</dd>
+</dl>
+<p>This module supports multiple cards and autoprobe.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-es1688">
+<h3>Module snd-es1688<a class="headerlink" href="#module-snd-es1688" title="Permalink to this headline">¶</a></h3>
+<p>Module for ESS AudioDrive ES-1688 and ES-688 sound cards.</p>
+<dl class="docutils">
+<dt>isapnp</dt>
+<dd>ISA PnP detection - 0 = disable, 1 = enable (default)</dd>
+<dt>mpu_port</dt>
+<dd>port # for MPU-401 port (0x300,0x310,0x320,0x330), -1 = disable (default)</dd>
+<dt>mpu_irq</dt>
+<dd>IRQ # for MPU-401 port (5,7,9,10)</dd>
+<dt>fm_port</dt>
+<dd>port # for OPL3 (option; share the same port as default)</dd>
+</dl>
+<p>with <code class="docutils literal notranslate"><span class="pre">isapnp=0</span></code>, the following additional options are available:</p>
+<dl class="docutils">
+<dt>port</dt>
+<dd>port # for ES-1688 chip (0x220,0x240,0x260)</dd>
+<dt>irq</dt>
+<dd>IRQ # for ES-1688 chip (5,7,9,10)</dd>
+<dt>dma8</dt>
+<dd>DMA # for ES-1688 chip (0,1,3)</dd>
+</dl>
+<p>This module supports multiple cards and autoprobe (without MPU-401 port)
+and PnP with the ES968 chip.</p>
+</div>
+<div class="section" id="module-snd-es18xx">
+<h3>Module snd-es18xx<a class="headerlink" href="#module-snd-es18xx" title="Permalink to this headline">¶</a></h3>
+<p>Module for ESS AudioDrive ES-18xx sound cards.</p>
+<dl class="docutils">
+<dt>isapnp</dt>
+<dd>ISA PnP detection - 0 = disable, 1 = enable (default)</dd>
+</dl>
+<p>with <code class="docutils literal notranslate"><span class="pre">isapnp=0</span></code>, the following options are available:</p>
+<dl class="docutils">
+<dt>port</dt>
+<dd>port # for ES-18xx chip (0x220,0x240,0x260)</dd>
+<dt>mpu_port</dt>
+<dd>port # for MPU-401 port (0x300,0x310,0x320,0x330), -1 = disable (default)</dd>
+<dt>fm_port</dt>
+<dd>port # for FM (optional, not used)</dd>
+<dt>irq</dt>
+<dd>IRQ # for ES-18xx chip (5,7,9,10)</dd>
+<dt>dma1</dt>
+<dd>first DMA # for ES-18xx chip (0,1,3)</dd>
+<dt>dma2</dt>
+<dd>first DMA # for ES-18xx chip (0,1,3)</dd>
+</dl>
+<p>This module supports multiple cards, ISA PnP and autoprobe (without MPU-401
+port if native ISA PnP routines are not used).
+When <code class="docutils literal notranslate"><span class="pre">dma2</span></code> is equal with <code class="docutils literal notranslate"><span class="pre">dma1</span></code>, the driver works as half-duplex.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-es1938">
+<h3>Module snd-es1938<a class="headerlink" href="#module-snd-es1938" title="Permalink to this headline">¶</a></h3>
+<p>Module for sound cards based on ESS Solo-1 (ES1938,ES1946) chips.</p>
+<p>This module supports multiple cards and autoprobe.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-es1968">
+<h3>Module snd-es1968<a class="headerlink" href="#module-snd-es1968" title="Permalink to this headline">¶</a></h3>
+<p>Module for sound cards based on ESS Maestro-1/2/2E (ES1968/ES1978) chips.</p>
+<dl class="docutils">
+<dt>total_bufsize</dt>
+<dd>total buffer size in kB (1-4096kB)</dd>
+<dt>pcm_substreams_p</dt>
+<dd>playback channels (1-8, default=2)</dd>
+<dt>pcm_substreams_c</dt>
+<dd>capture channels (1-8, default=0)</dd>
+<dt>clock</dt>
+<dd>clock (0 = auto-detection)</dd>
+<dt>use_pm</dt>
+<dd>support the power-management (0 = off, 1 = on, 2 = auto (default))</dd>
+<dt>enable_mpu</dt>
+<dd>enable MPU401 (0 = off, 1 = on, 2 = auto (default))</dd>
+<dt>joystick</dt>
+<dd>enable joystick (default off)</dd>
+</dl>
+<p>This module supports multiple cards and autoprobe.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-fm801">
+<h3>Module snd-fm801<a class="headerlink" href="#module-snd-fm801" title="Permalink to this headline">¶</a></h3>
+<p>Module for ForteMedia FM801 based PCI sound cards.</p>
+<dl class="docutils">
+<dt>tea575x_tuner</dt>
+<dd>Enable TEA575x tuner;
+1 = MediaForte 256-PCS,
+2 = MediaForte 256-PCPR,
+3 = MediaForte 64-PCR
+High 16-bits are video (radio) device number + 1;
+example: 0x10002 (MediaForte 256-PCPR, device 1)</dd>
+</dl>
+<p>This module supports multiple cards and autoprobe.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-gina20">
+<h3>Module snd-gina20<a class="headerlink" href="#module-snd-gina20" title="Permalink to this headline">¶</a></h3>
+<p>Module for Echoaudio Gina20</p>
+<p>This module supports multiple cards.
+The driver requires the firmware loader support on kernel.</p>
+</div>
+<div class="section" id="module-snd-gina24">
+<h3>Module snd-gina24<a class="headerlink" href="#module-snd-gina24" title="Permalink to this headline">¶</a></h3>
+<p>Module for Echoaudio Gina24</p>
+<p>This module supports multiple cards.
+The driver requires the firmware loader support on kernel.</p>
+</div>
+<div class="section" id="module-snd-gusclassic">
+<h3>Module snd-gusclassic<a class="headerlink" href="#module-snd-gusclassic" title="Permalink to this headline">¶</a></h3>
+<p>Module for Gravis UltraSound Classic sound card.</p>
+<dl class="docutils">
+<dt>port</dt>
+<dd>port # for GF1 chip (0x220,0x230,0x240,0x250,0x260)</dd>
+<dt>irq</dt>
+<dd>IRQ # for GF1 chip (3,5,9,11,12,15)</dd>
+<dt>dma1</dt>
+<dd>DMA # for GF1 chip (1,3,5,6,7)</dd>
+<dt>dma2</dt>
+<dd>DMA # for GF1 chip (1,3,5,6,7,-1=disable)</dd>
+<dt>joystick_dac</dt>
+<dd>0 to 31, (0.59V-4.52V or 0.389V-2.98V)</dd>
+<dt>voices</dt>
+<dd>GF1 voices limit (14-32)</dd>
+<dt>pcm_voices</dt>
+<dd>reserved PCM voices</dd>
+</dl>
+<p>This module supports multiple cards and autoprobe.</p>
+</div>
+<div class="section" id="module-snd-gusextreme">
+<h3>Module snd-gusextreme<a class="headerlink" href="#module-snd-gusextreme" title="Permalink to this headline">¶</a></h3>
+<p>Module for Gravis UltraSound Extreme (Synergy ViperMax) sound card.</p>
+<dl class="docutils">
+<dt>port</dt>
+<dd>port # for ES-1688 chip (0x220,0x230,0x240,0x250,0x260)</dd>
+<dt>gf1_port</dt>
+<dd>port # for GF1 chip (0x210,0x220,0x230,0x240,0x250,0x260,0x270)</dd>
+<dt>mpu_port</dt>
+<dd>port # for MPU-401 port (0x300,0x310,0x320,0x330), -1 = disable</dd>
+<dt>irq</dt>
+<dd>IRQ # for ES-1688 chip (5,7,9,10)</dd>
+<dt>gf1_irq</dt>
+<dd>IRQ # for GF1 chip (3,5,9,11,12,15)</dd>
+<dt>mpu_irq</dt>
+<dd>IRQ # for MPU-401 port (5,7,9,10)</dd>
+<dt>dma8</dt>
+<dd>DMA # for ES-1688 chip (0,1,3)</dd>
+<dt>dma1</dt>
+<dd>DMA # for GF1 chip (1,3,5,6,7)</dd>
+<dt>joystick_dac</dt>
+<dd>0 to 31, (0.59V-4.52V or 0.389V-2.98V)</dd>
+<dt>voices</dt>
+<dd>GF1 voices limit (14-32)</dd>
+<dt>pcm_voices</dt>
+<dd>reserved PCM voices</dd>
+</dl>
+<p>This module supports multiple cards and autoprobe (without MPU-401 port).</p>
+</div>
+<div class="section" id="module-snd-gusmax">
+<h3>Module snd-gusmax<a class="headerlink" href="#module-snd-gusmax" title="Permalink to this headline">¶</a></h3>
+<p>Module for Gravis UltraSound MAX sound card.</p>
+<dl class="docutils">
+<dt>port</dt>
+<dd>port # for GF1 chip (0x220,0x230,0x240,0x250,0x260)</dd>
+<dt>irq</dt>
+<dd>IRQ # for GF1 chip (3,5,9,11,12,15)</dd>
+<dt>dma1</dt>
+<dd>DMA # for GF1 chip (1,3,5,6,7)</dd>
+<dt>dma2</dt>
+<dd>DMA # for GF1 chip (1,3,5,6,7,-1=disable)</dd>
+<dt>joystick_dac</dt>
+<dd>0 to 31, (0.59V-4.52V or 0.389V-2.98V)</dd>
+<dt>voices</dt>
+<dd>GF1 voices limit (14-32)</dd>
+<dt>pcm_voices</dt>
+<dd>reserved PCM voices</dd>
+</dl>
+<p>This module supports multiple cards and autoprobe.</p>
+</div>
+<div class="section" id="module-snd-hda-intel">
+<h3>Module snd-hda-intel<a class="headerlink" href="#module-snd-hda-intel" title="Permalink to this headline">¶</a></h3>
+<p>Module for Intel HD Audio (ICH6, ICH6M, ESB2, ICH7, ICH8, ICH9, ICH10,
+PCH, SCH), ATI SB450, SB600, R600, RS600, RS690, RS780, RV610, RV620,
+RV630, RV635, RV670, RV770, VIA VT8251/VT8237A, SIS966, ULI M5461</p>
+<p>[Multiple options for each card instance]</p>
+<dl class="docutils">
+<dt>model</dt>
+<dd>force the model name</dd>
+<dt>position_fix</dt>
+<dd>Fix DMA pointer;
+-1 = system default: choose appropriate one per controller hardware,
+0 = auto: falls back to LPIB when POSBUF doesn’t work,
+1 = use LPIB,
+2 = POSBUF: use position buffer,
+3 = VIACOMBO: VIA-specific workaround for capture,
+4 = COMBO: use LPIB for playback, auto for capture stream</dd>
+<dt>probe_mask</dt>
+<dd>Bitmask to probe codecs (default = -1, meaning all slots);
+When the bit 8 (0x100) is set, the lower 8 bits are used
+as the “fixed” codec slots; i.e. the driver probes the
+slots regardless what hardware reports back</dd>
+<dt>probe_only</dt>
+<dd>Only probing and no codec initialization (default=off);
+Useful to check the initial codec status for debugging</dd>
+<dt>bdl_pos_adj</dt>
+<dd>Specifies the DMA IRQ timing delay in samples.
+Passing -1 will make the driver to choose the appropriate
+value based on the controller chip.</dd>
+<dt>patch</dt>
+<dd>Specifies the early “patch” files to modify the HD-audio setup
+before initializing the codecs.
+This option is available only when <code class="docutils literal notranslate"><span class="pre">CONFIG_SND_HDA_PATCH_LOADER=y</span></code>
+is set.  See hd-audio/notes.rst for details.</dd>
+<dt>beep_mode</dt>
+<dd>Selects the beep registration mode (0=off, 1=on);
+default value is set via <code class="docutils literal notranslate"><span class="pre">CONFIG_SND_HDA_INPUT_BEEP_MODE</span></code> kconfig.</dd>
+</dl>
+<p>[Single (global) options]</p>
+<dl class="docutils">
+<dt>single_cmd</dt>
+<dd>Use single immediate commands to communicate with codecs
+(for debugging only)</dd>
+<dt>enable_msi</dt>
+<dd>Enable Message Signaled Interrupt (MSI) (default = off)</dd>
+<dt>power_save</dt>
+<dd>Automatic power-saving timeout (in second, 0 = disable)</dd>
+<dt>power_save_controller</dt>
+<dd>Reset HD-audio controller in power-saving mode (default = on)</dd>
+<dt>align_buffer_size</dt>
+<dd>Force rounding of buffer/period sizes to multiples of 128 bytes.
+This is more efficient in terms of memory access but isn’t
+required by the HDA spec and prevents users from specifying
+exact period/buffer sizes. (default = on)</dd>
+<dt>snoop</dt>
+<dd>Enable/disable snooping (default = on)</dd>
+</dl>
+<p>This module supports multiple cards and autoprobe.</p>
+<p>See hd-audio/notes.rst for more details about HD-audio driver.</p>
+<p>Each codec may have a model table for different configurations.
+If your machine isn’t listed there, the default (usually minimal)
+configuration is set up.  You can pass <code class="docutils literal notranslate"><span class="pre">model=&lt;name&gt;</span></code> option to
+specify a certain model in such a case.  There are different
+models depending on the codec chip.  The list of available models
+is found in hd-audio/models.rst.</p>
+<p>The model name <code class="docutils literal notranslate"><span class="pre">generic</span></code> is treated as a special case.  When this
+model is given, the driver uses the generic codec parser without
+“codec-patch”.  It’s sometimes good for testing and debugging.</p>
+<p>If the default configuration doesn’t work and one of the above
+matches with your device, report it together with alsa-info.sh
+output (with <code class="docutils literal notranslate"><span class="pre">--no-upload</span></code> option) to kernel bugzilla or alsa-devel
+ML (see the section <a class="reference internal" href="#links-and-addresses">Links and Addresses</a>).</p>
+<p><code class="docutils literal notranslate"><span class="pre">power_save</span></code> and <code class="docutils literal notranslate"><span class="pre">power_save_controller</span></code> options are for power-saving
+mode.  See powersave.rst for details.</p>
+<p>Note 2: If you get click noises on output, try the module option
+<code class="docutils literal notranslate"><span class="pre">position_fix=1</span></code> or <code class="docutils literal notranslate"><span class="pre">2</span></code>.  <code class="docutils literal notranslate"><span class="pre">position_fix=1</span></code> will use the SD_LPIB
+register value without FIFO size correction as the current
+DMA pointer.  <code class="docutils literal notranslate"><span class="pre">position_fix=2</span></code> will make the driver to use
+the position buffer instead of reading SD_LPIB register.
+(Usually SD_LPIB register is more accurate than the
+position buffer.)</p>
+<p><code class="docutils literal notranslate"><span class="pre">position_fix=3</span></code> is specific to VIA devices.  The position
+of the capture stream is checked from both LPIB and POSBUF
+values.  <code class="docutils literal notranslate"><span class="pre">position_fix=4</span></code> is a combination mode, using LPIB
+for playback and POSBUF for capture.</p>
+<p>NB: If you get many <code class="docutils literal notranslate"><span class="pre">azx_get_response</span> <span class="pre">timeout</span></code> messages at
+loading, it’s likely a problem of interrupts (e.g. ACPI irq
+routing).  Try to boot with options like <code class="docutils literal notranslate"><span class="pre">pci=noacpi</span></code>.  Also, you
+can try <code class="docutils literal notranslate"><span class="pre">single_cmd=1</span></code> module option.  This will switch the
+communication method between HDA controller and codecs to the
+single immediate commands instead of CORB/RIRB.  Basically, the
+single command mode is provided only for BIOS, and you won’t get
+unsolicited events, too.  But, at least, this works independently
+from the irq.  Remember this is a last resort, and should be
+avoided as much as possible…</p>
+<p>MORE NOTES ON <code class="docutils literal notranslate"><span class="pre">azx_get_response</span> <span class="pre">timeout</span></code> PROBLEMS:
+On some hardware, you may need to add a proper probe_mask option
+to avoid the <code class="docutils literal notranslate"><span class="pre">azx_get_response</span> <span class="pre">timeout</span></code> problem above, instead.
+This occurs when the access to non-existing or non-working codec slot
+(likely a modem one) causes a stall of the communication via HD-audio
+bus.  You can see which codec slots are probed by enabling
+<code class="docutils literal notranslate"><span class="pre">CONFIG_SND_DEBUG_VERBOSE</span></code>, or simply from the file name of the codec
+proc files.  Then limit the slots to probe by probe_mask option.
+For example, <code class="docutils literal notranslate"><span class="pre">probe_mask=1</span></code> means to probe only the first slot, and
+<code class="docutils literal notranslate"><span class="pre">probe_mask=4</span></code> means only the third slot.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-hdsp">
+<h3>Module snd-hdsp<a class="headerlink" href="#module-snd-hdsp" title="Permalink to this headline">¶</a></h3>
+<p>Module for RME Hammerfall DSP audio interface(s)</p>
+<p>This module supports multiple cards.</p>
+<p>Note: The firmware data can be automatically loaded via hotplug
+when <code class="docutils literal notranslate"><span class="pre">CONFIG_FW_LOADER</span></code> is set.  Otherwise, you need to load
+the firmware via hdsploader utility included in alsa-tools
+package.
+The firmware data is found in alsa-firmware package.</p>
+<p>Note: snd-page-alloc module does the job which snd-hammerfall-mem
+module did formerly.  It will allocate the buffers in advance
+when any HDSP cards are found.  To make the buffer
+allocation sure, load snd-page-alloc module in the early
+stage of boot sequence.  See <a class="reference internal" href="#early-buffer-allocation">Early Buffer Allocation</a>
+section.</p>
+</div>
+<div class="section" id="module-snd-hdspm">
+<h3>Module snd-hdspm<a class="headerlink" href="#module-snd-hdspm" title="Permalink to this headline">¶</a></h3>
+<p>Module for RME HDSP MADI board.</p>
+<dl class="docutils">
+<dt>precise_ptr</dt>
+<dd>Enable precise pointer, or disable.</dd>
+<dt>line_outs_monitor</dt>
+<dd>Send playback streams to analog outs by default.</dd>
+<dt>enable_monitor</dt>
+<dd>Enable Analog Out on Channel 63/64 by default.</dd>
+</dl>
+<p>See hdspm.rst for details.</p>
+</div>
+<div class="section" id="module-snd-ice1712">
+<h3>Module snd-ice1712<a class="headerlink" href="#module-snd-ice1712" title="Permalink to this headline">¶</a></h3>
+<p>Module for Envy24 (ICE1712) based PCI sound cards.</p>
+<ul class="simple">
+<li>MidiMan M Audio Delta 1010</li>
+<li>MidiMan M Audio Delta 1010LT</li>
+<li>MidiMan M Audio Delta DiO 2496</li>
+<li>MidiMan M Audio Delta 66</li>
+<li>MidiMan M Audio Delta 44</li>
+<li>MidiMan M Audio Delta 410</li>
+<li>MidiMan M Audio Audiophile 2496</li>
+<li>TerraTec EWS 88MT</li>
+<li>TerraTec EWS 88D</li>
+<li>TerraTec EWX 24/96</li>
+<li>TerraTec DMX 6Fire</li>
+<li>TerraTec Phase 88</li>
+<li>Hoontech SoundTrack DSP 24</li>
+<li>Hoontech SoundTrack DSP 24 Value</li>
+<li>Hoontech SoundTrack DSP 24 Media 7.1</li>
+<li>Event Electronics, EZ8</li>
+<li>Digigram VX442</li>
+<li>Lionstracs, Mediastaton</li>
+<li>Terrasoniq TS 88</li>
+</ul>
+<dl class="docutils">
+<dt>model</dt>
+<dd>Use the given board model, one of the following:
+delta1010, dio2496, delta66, delta44, audiophile, delta410,
+delta1010lt, vx442, ewx2496, ews88mt, ews88mt_new, ews88d,
+dmx6fire, dsp24, dsp24_value, dsp24_71, ez8,
+phase88, mediastation</dd>
+<dt>omni</dt>
+<dd>Omni I/O support for MidiMan M-Audio Delta44/66</dd>
+<dt>cs8427_timeout</dt>
+<dd>reset timeout for the CS8427 chip (S/PDIF transceiver) in msec
+resolution, default value is 500 (0.5 sec)</dd>
+</dl>
+<p>This module supports multiple cards and autoprobe.
+Note: The consumer part is not used with all Envy24 based cards (for
+example in the MidiMan Delta siree).</p>
+<p>Note: The supported board is detected by reading EEPROM or PCI
+SSID (if EEPROM isn’t available).  You can override the
+model by passing <code class="docutils literal notranslate"><span class="pre">model</span></code> module option in case that the
+driver isn’t configured properly or you want to try another
+type for testing.</p>
+</div>
+<div class="section" id="module-snd-ice1724">
+<h3>Module snd-ice1724<a class="headerlink" href="#module-snd-ice1724" title="Permalink to this headline">¶</a></h3>
+<p>Module for Envy24HT (VT/ICE1724), Envy24PT (VT1720) based PCI sound cards.</p>
+<ul class="simple">
+<li>MidiMan M Audio Revolution 5.1</li>
+<li>MidiMan M Audio Revolution 7.1</li>
+<li>MidiMan M Audio Audiophile 192</li>
+<li>AMP Ltd AUDIO2000</li>
+<li>TerraTec Aureon 5.1 Sky</li>
+<li>TerraTec Aureon 7.1 Space</li>
+<li>TerraTec Aureon 7.1 Universe</li>
+<li>TerraTec Phase 22</li>
+<li>TerraTec Phase 28</li>
+<li>AudioTrak Prodigy 7.1</li>
+<li>AudioTrak Prodigy 7.1 LT</li>
+<li>AudioTrak Prodigy 7.1 XT</li>
+<li>AudioTrak Prodigy 7.1 HIFI</li>
+<li>AudioTrak Prodigy 7.1 HD2</li>
+<li>AudioTrak Prodigy 192</li>
+<li>Pontis MS300</li>
+<li>Albatron K8X800 Pro II</li>
+<li>Chaintech ZNF3-150</li>
+<li>Chaintech ZNF3-250</li>
+<li>Chaintech 9CJS</li>
+<li>Chaintech AV-710</li>
+<li>Shuttle SN25P</li>
+<li>Onkyo SE-90PCI</li>
+<li>Onkyo SE-200PCI</li>
+<li>ESI Juli&#64;</li>
+<li>ESI Maya44</li>
+<li>Hercules Fortissimo IV</li>
+<li>EGO-SYS WaveTerminal 192M</li>
+</ul>
+<dl class="docutils">
+<dt>model</dt>
+<dd>Use the given board model, one of the following:
+revo51, revo71, amp2000, prodigy71, prodigy71lt,
+prodigy71xt, prodigy71hifi, prodigyhd2, prodigy192,
+juli, aureon51, aureon71, universe, ap192, k8x800,
+phase22, phase28, ms300, av710, se200pci, se90pci,
+fortissimo4, sn25p, WT192M, maya44</dd>
+</dl>
+<p>This module supports multiple cards and autoprobe.</p>
+<p>Note: The supported board is detected by reading EEPROM or PCI
+SSID (if EEPROM isn’t available).  You can override the
+model by passing <code class="docutils literal notranslate"><span class="pre">model</span></code> module option in case that the
+driver isn’t configured properly or you want to try another
+type for testing.</p>
+</div>
+<div class="section" id="module-snd-indigo">
+<h3>Module snd-indigo<a class="headerlink" href="#module-snd-indigo" title="Permalink to this headline">¶</a></h3>
+<p>Module for Echoaudio Indigo</p>
+<p>This module supports multiple cards.
+The driver requires the firmware loader support on kernel.</p>
+</div>
+<div class="section" id="module-snd-indigodj">
+<h3>Module snd-indigodj<a class="headerlink" href="#module-snd-indigodj" title="Permalink to this headline">¶</a></h3>
+<p>Module for Echoaudio Indigo DJ</p>
+<p>This module supports multiple cards.
+The driver requires the firmware loader support on kernel.</p>
+</div>
+<div class="section" id="module-snd-indigoio">
+<h3>Module snd-indigoio<a class="headerlink" href="#module-snd-indigoio" title="Permalink to this headline">¶</a></h3>
+<p>Module for Echoaudio Indigo IO</p>
+<p>This module supports multiple cards.
+The driver requires the firmware loader support on kernel.</p>
+</div>
+<div class="section" id="module-snd-intel8x0">
+<h3>Module snd-intel8x0<a class="headerlink" href="#module-snd-intel8x0" title="Permalink to this headline">¶</a></h3>
+<p>Module for AC‘97 motherboards from Intel and compatibles.</p>
+<ul class="simple">
+<li>Intel i810/810E, i815, i820, i830, i84x, MX440 ICH5, ICH6, ICH7,
+6300ESB, ESB2</li>
+<li>SiS 7012 (SiS 735)</li>
+<li>NVidia NForce, NForce2, NForce3, MCP04, CK804 CK8, CK8S, MCP501</li>
+<li>AMD AMD768, AMD8111</li>
+<li>ALi m5455</li>
+</ul>
+<dl class="docutils">
+<dt>ac97_clock</dt>
+<dd>AC‘97 codec clock base (0 = auto-detect)</dd>
+<dt>ac97_quirk</dt>
+<dd>AC‘97 workaround for strange hardware;
+See <a class="reference internal" href="#ac97-quirk-option">AC97 Quirk Option</a> section below.</dd>
+<dt>buggy_irq</dt>
+<dd>Enable workaround for buggy interrupts on some motherboards
+(default yes on nForce chips, otherwise off)</dd>
+<dt>buggy_semaphore</dt>
+<dd>Enable workaround for hardware with buggy semaphores (e.g. on some
+ASUS laptops) (default off)</dd>
+<dt>spdif_aclink</dt>
+<dd>Use S/PDIF over AC-link instead of direct connection from the
+controller chip (0 = off, 1 = on, -1 = default)</dd>
+</dl>
+<p>This module supports one chip and autoprobe.</p>
+<p>Note: the latest driver supports auto-detection of chip clock.
+if you still encounter too fast playback, specify the clock
+explicitly via the module option <code class="docutils literal notranslate"><span class="pre">ac97_clock=41194</span></code>.</p>
+<p>Joystick/MIDI ports are not supported by this driver.  If your
+motherboard has these devices, use the ns558 or snd-mpu401
+modules, respectively.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-intel8x0m">
+<h3>Module snd-intel8x0m<a class="headerlink" href="#module-snd-intel8x0m" title="Permalink to this headline">¶</a></h3>
+<p>Module for Intel ICH (i8x0) chipset MC97 modems.</p>
+<ul class="simple">
+<li>Intel i810/810E, i815, i820, i830, i84x, MX440 ICH5, ICH6, ICH7</li>
+<li>SiS 7013 (SiS 735)</li>
+<li>NVidia NForce, NForce2, NForce2s, NForce3</li>
+<li>AMD AMD8111</li>
+<li>ALi m5455</li>
+</ul>
+<dl class="docutils">
+<dt>ac97_clock</dt>
+<dd>AC‘97 codec clock base (0 = auto-detect)</dd>
+</dl>
+<p>This module supports one card and autoprobe.</p>
+<p>Note: The default index value of this module is -2, i.e. the first
+slot is excluded.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-interwave">
+<h3>Module snd-interwave<a class="headerlink" href="#module-snd-interwave" title="Permalink to this headline">¶</a></h3>
+<p>Module for Gravis UltraSound PnP, Dynasonic 3-D/Pro, STB Sound Rage 32
+and other sound cards based on AMD InterWave (tm) chip.</p>
+<dl class="docutils">
+<dt>joystick_dac</dt>
+<dd>0 to 31, (0.59V-4.52V or 0.389V-2.98V)</dd>
+<dt>midi</dt>
+<dd>1 = MIDI UART enable, 0 = MIDI UART disable (default)</dd>
+<dt>pcm_voices</dt>
+<dd>reserved PCM voices for the synthesizer (default 2)</dd>
+<dt>effect</dt>
+<dd>1 = InterWave effects enable (default 0); requires 8 voices</dd>
+<dt>isapnp</dt>
+<dd>ISA PnP detection - 0 = disable, 1 = enable (default)</dd>
+</dl>
+<p>with <code class="docutils literal notranslate"><span class="pre">isapnp=0</span></code>, the following options are available:</p>
+<dl class="docutils">
+<dt>port</dt>
+<dd>port # for InterWave chip (0x210,0x220,0x230,0x240,0x250,0x260)</dd>
+<dt>irq</dt>
+<dd>IRQ # for InterWave chip (3,5,9,11,12,15)</dd>
+<dt>dma1</dt>
+<dd>DMA # for InterWave chip (0,1,3,5,6,7)</dd>
+<dt>dma2</dt>
+<dd>DMA # for InterWave chip (0,1,3,5,6,7,-1=disable)</dd>
+</dl>
+<p>This module supports multiple cards, autoprobe and ISA PnP.</p>
+</div>
+<div class="section" id="module-snd-interwave-stb">
+<h3>Module snd-interwave-stb<a class="headerlink" href="#module-snd-interwave-stb" title="Permalink to this headline">¶</a></h3>
+<p>Module for UltraSound 32-Pro (sound card from STB used by Compaq)
+and other sound cards based on AMD InterWave (tm) chip with TEA6330T
+circuit for extended control of bass, treble and master volume.</p>
+<dl class="docutils">
+<dt>joystick_dac</dt>
+<dd>0 to 31, (0.59V-4.52V or 0.389V-2.98V)</dd>
+<dt>midi</dt>
+<dd>1 = MIDI UART enable, 0 = MIDI UART disable (default)</dd>
+<dt>pcm_voices</dt>
+<dd>reserved PCM voices for the synthesizer (default 2)</dd>
+<dt>effect</dt>
+<dd>1 = InterWave effects enable (default 0); requires 8 voices</dd>
+<dt>isapnp</dt>
+<dd>ISA PnP detection - 0 = disable, 1 = enable (default)</dd>
+</dl>
+<p>with <code class="docutils literal notranslate"><span class="pre">isapnp=0</span></code>, the following options are available:</p>
+<dl class="docutils">
+<dt>port</dt>
+<dd>port # for InterWave chip (0x210,0x220,0x230,0x240,0x250,0x260)</dd>
+<dt>port_tc</dt>
+<dd>tone control (i2c bus) port # for TEA6330T chip (0x350,0x360,0x370,0x380)</dd>
+<dt>irq</dt>
+<dd>IRQ # for InterWave chip (3,5,9,11,12,15)</dd>
+<dt>dma1</dt>
+<dd>DMA # for InterWave chip (0,1,3,5,6,7)</dd>
+<dt>dma2</dt>
+<dd>DMA # for InterWave chip (0,1,3,5,6,7,-1=disable)</dd>
+</dl>
+<p>This module supports multiple cards, autoprobe and ISA PnP.</p>
+</div>
+<div class="section" id="module-snd-jazz16">
+<h3>Module snd-jazz16<a class="headerlink" href="#module-snd-jazz16" title="Permalink to this headline">¶</a></h3>
+<p>Module for Media Vision Jazz16 chipset. The chipset consists of 3 chips:
+MVD1216 + MVA416 + MVA514.</p>
+<dl class="docutils">
+<dt>port</dt>
+<dd>port # for SB DSP chip (0x210,0x220,0x230,0x240,0x250,0x260)</dd>
+<dt>irq</dt>
+<dd>IRQ # for SB DSP chip (3,5,7,9,10,15)</dd>
+<dt>dma8</dt>
+<dd>DMA # for SB DSP chip (1,3)</dd>
+<dt>dma16</dt>
+<dd>DMA # for SB DSP chip (5,7)</dd>
+<dt>mpu_port</dt>
+<dd>MPU-401 port # (0x300,0x310,0x320,0x330)</dd>
+<dt>mpu_irq</dt>
+<dd>MPU-401 irq # (2,3,5,7)</dd>
+</dl>
+<p>This module supports multiple cards.</p>
+</div>
+<div class="section" id="module-snd-korg1212">
+<h3>Module snd-korg1212<a class="headerlink" href="#module-snd-korg1212" title="Permalink to this headline">¶</a></h3>
+<p>Module for Korg 1212 IO PCI card</p>
+<p>This module supports multiple cards.</p>
+</div>
+<div class="section" id="module-snd-layla20">
+<h3>Module snd-layla20<a class="headerlink" href="#module-snd-layla20" title="Permalink to this headline">¶</a></h3>
+<p>Module for Echoaudio Layla20</p>
+<p>This module supports multiple cards.
+The driver requires the firmware loader support on kernel.</p>
+</div>
+<div class="section" id="module-snd-layla24">
+<h3>Module snd-layla24<a class="headerlink" href="#module-snd-layla24" title="Permalink to this headline">¶</a></h3>
+<p>Module for Echoaudio Layla24</p>
+<p>This module supports multiple cards.
+The driver requires the firmware loader support on kernel.</p>
+</div>
+<div class="section" id="module-snd-lola">
+<h3>Module snd-lola<a class="headerlink" href="#module-snd-lola" title="Permalink to this headline">¶</a></h3>
+<p>Module for Digigram Lola PCI-e boards</p>
+<p>This module supports multiple cards.</p>
+</div>
+<div class="section" id="module-snd-lx6464es">
+<h3>Module snd-lx6464es<a class="headerlink" href="#module-snd-lx6464es" title="Permalink to this headline">¶</a></h3>
+<p>Module for Digigram LX6464ES boards</p>
+<p>This module supports multiple cards.</p>
+</div>
+<div class="section" id="module-snd-maestro3">
+<h3>Module snd-maestro3<a class="headerlink" href="#module-snd-maestro3" title="Permalink to this headline">¶</a></h3>
+<p>Module for Allegro/Maestro3 chips</p>
+<dl class="docutils">
+<dt>external_amp</dt>
+<dd>enable external amp (enabled by default)</dd>
+<dt>amp_gpio</dt>
+<dd>GPIO pin number for external amp (0-15) or -1 for default pin (8
+for allegro, 1 for others)</dd>
+</dl>
+<p>This module supports autoprobe and multiple chips.</p>
+<p>Note: the binding of amplifier is dependent on hardware.
+If there is no sound even though all channels are unmuted, try to
+specify other gpio connection via amp_gpio option.
+For example, a Panasonic notebook might need <code class="docutils literal notranslate"><span class="pre">amp_gpio=0x0d</span></code>
+option.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-mia">
+<h3>Module snd-mia<a class="headerlink" href="#module-snd-mia" title="Permalink to this headline">¶</a></h3>
+<p>Module for Echoaudio Mia</p>
+<p>This module supports multiple cards.
+The driver requires the firmware loader support on kernel.</p>
+</div>
+<div class="section" id="module-snd-miro">
+<h3>Module snd-miro<a class="headerlink" href="#module-snd-miro" title="Permalink to this headline">¶</a></h3>
+<p>Module for Miro soundcards: miroSOUND PCM 1 pro, miroSOUND PCM 12,
+miroSOUND PCM 20 Radio.</p>
+<dl class="docutils">
+<dt>port</dt>
+<dd>Port # (0x530,0x604,0xe80,0xf40)</dd>
+<dt>irq</dt>
+<dd>IRQ # (5,7,9,10,11)</dd>
+<dt>dma1</dt>
+<dd>1st dma # (0,1,3)</dd>
+<dt>dma2</dt>
+<dd>2nd dma # (0,1)</dd>
+<dt>mpu_port</dt>
+<dd>MPU-401 port # (0x300,0x310,0x320,0x330)</dd>
+<dt>mpu_irq</dt>
+<dd>MPU-401 irq # (5,7,9,10)</dd>
+<dt>fm_port</dt>
+<dd>FM Port # (0x388)</dd>
+<dt>wss</dt>
+<dd>enable WSS mode</dd>
+<dt>ide</dt>
+<dd>enable onboard ide support</dd>
+</dl>
+</div>
+<div class="section" id="module-snd-mixart">
+<h3>Module snd-mixart<a class="headerlink" href="#module-snd-mixart" title="Permalink to this headline">¶</a></h3>
+<p>Module for Digigram miXart8 sound cards.</p>
+<p>This module supports multiple cards.
+Note: One miXart8 board will be represented as 4 alsa cards.
+See MIXART.txt for details.</p>
+<p>When the driver is compiled as a module and the hotplug firmware
+is supported, the firmware data is loaded via hotplug automatically.
+Install the necessary firmware files in alsa-firmware package.
+When no hotplug fw loader is available, you need to load the
+firmware via mixartloader utility in alsa-tools package.</p>
+</div>
+<div class="section" id="module-snd-mona">
+<h3>Module snd-mona<a class="headerlink" href="#module-snd-mona" title="Permalink to this headline">¶</a></h3>
+<p>Module for Echoaudio Mona</p>
+<p>This module supports multiple cards.
+The driver requires the firmware loader support on kernel.</p>
+</div>
+<div class="section" id="module-snd-mpu401">
+<h3>Module snd-mpu401<a class="headerlink" href="#module-snd-mpu401" title="Permalink to this headline">¶</a></h3>
+<p>Module for MPU-401 UART devices.</p>
+<dl class="docutils">
+<dt>port</dt>
+<dd>port number or -1 (disable)</dd>
+<dt>irq</dt>
+<dd>IRQ number or -1 (disable)</dd>
+<dt>pnp</dt>
+<dd>PnP detection - 0 = disable, 1 = enable (default)</dd>
+</dl>
+<p>This module supports multiple devices and PnP.</p>
+</div>
+<div class="section" id="module-snd-msnd-classic">
+<h3>Module snd-msnd-classic<a class="headerlink" href="#module-snd-msnd-classic" title="Permalink to this headline">¶</a></h3>
+<p>Module for Turtle Beach MultiSound Classic, Tahiti or Monterey
+soundcards.</p>
+<dl class="docutils">
+<dt>io</dt>
+<dd>Port # for msnd-classic card</dd>
+<dt>irq</dt>
+<dd>IRQ # for msnd-classic card</dd>
+<dt>mem</dt>
+<dd>Memory address (0xb0000, 0xc8000, 0xd0000, 0xd8000, 0xe0000 or 0xe8000)</dd>
+<dt>write_ndelay</dt>
+<dd>enable write ndelay (default = 1)</dd>
+<dt>calibrate_signal</dt>
+<dd>calibrate signal (default = 0)</dd>
+<dt>isapnp</dt>
+<dd>ISA PnP detection - 0 = disable, 1 = enable (default)</dd>
+<dt>digital</dt>
+<dd>Digital daughterboard present (default = 0)</dd>
+<dt>cfg</dt>
+<dd>Config port (0x250, 0x260 or 0x270) default = PnP</dd>
+<dt>reset</dt>
+<dd>Reset all devices</dd>
+<dt>mpu_io</dt>
+<dd>MPU401 I/O port</dd>
+<dt>mpu_irq</dt>
+<dd>MPU401 irq#</dd>
+<dt>ide_io0</dt>
+<dd>IDE port #0</dd>
+<dt>ide_io1</dt>
+<dd>IDE port #1</dd>
+<dt>ide_irq</dt>
+<dd>IDE irq#</dd>
+<dt>joystick_io</dt>
+<dd>Joystick I/O port</dd>
+</dl>
+<p>The driver requires firmware files <code class="docutils literal notranslate"><span class="pre">turtlebeach/msndinit.bin</span></code> and
+<code class="docutils literal notranslate"><span class="pre">turtlebeach/msndperm.bin</span></code> in the proper firmware directory.</p>
+<p>See Documentation/sound/cards/multisound.sh for important information
+about this driver.  Note that it has been discontinued, but the
+Voyetra Turtle Beach knowledge base entry for it is still available
+at
+<a class="reference external" href="http://www.turtlebeach.com">http://www.turtlebeach.com</a></p>
+</div>
+<div class="section" id="module-snd-msnd-pinnacle">
+<h3>Module snd-msnd-pinnacle<a class="headerlink" href="#module-snd-msnd-pinnacle" title="Permalink to this headline">¶</a></h3>
+<p>Module for Turtle Beach MultiSound Pinnacle/Fiji soundcards.</p>
+<dl class="docutils">
+<dt>io</dt>
+<dd>Port # for pinnacle/fiji card</dd>
+<dt>irq</dt>
+<dd>IRQ # for pinnalce/fiji card</dd>
+<dt>mem</dt>
+<dd>Memory address (0xb0000, 0xc8000, 0xd0000, 0xd8000, 0xe0000 or 0xe8000)</dd>
+<dt>write_ndelay</dt>
+<dd>enable write ndelay (default = 1)</dd>
+<dt>calibrate_signal</dt>
+<dd>calibrate signal (default = 0)</dd>
+<dt>isapnp</dt>
+<dd>ISA PnP detection - 0 = disable, 1 = enable (default)</dd>
+</dl>
+<p>The driver requires firmware files <code class="docutils literal notranslate"><span class="pre">turtlebeach/pndspini.bin</span></code> and
+<code class="docutils literal notranslate"><span class="pre">turtlebeach/pndsperm.bin</span></code> in the proper firmware directory.</p>
+</div>
+<div class="section" id="module-snd-mtpav">
+<h3>Module snd-mtpav<a class="headerlink" href="#module-snd-mtpav" title="Permalink to this headline">¶</a></h3>
+<p>Module for MOTU MidiTimePiece AV multiport MIDI (on the parallel
+port).</p>
+<dl class="docutils">
+<dt>port</dt>
+<dd>I/O port # for MTPAV (0x378,0x278, default=0x378)</dd>
+<dt>irq</dt>
+<dd>IRQ # for MTPAV (7,5, default=7)</dd>
+<dt>hwports</dt>
+<dd>number of supported hardware ports, default=8.</dd>
+</dl>
+<p>Module supports only 1 card.  This module has no enable option.</p>
+</div>
+<div class="section" id="module-snd-mts64">
+<h3>Module snd-mts64<a class="headerlink" href="#module-snd-mts64" title="Permalink to this headline">¶</a></h3>
+<p>Module for Ego Systems (ESI) Miditerminal 4140</p>
+<p>This module supports multiple devices.
+Requires parport (<code class="docutils literal notranslate"><span class="pre">CONFIG_PARPORT</span></code>).</p>
+</div>
+<div class="section" id="module-snd-nm256">
+<h3>Module snd-nm256<a class="headerlink" href="#module-snd-nm256" title="Permalink to this headline">¶</a></h3>
+<p>Module for NeoMagic NM256AV/ZX chips</p>
+<dl class="docutils">
+<dt>playback_bufsize</dt>
+<dd>max playback frame size in kB (4-128kB)</dd>
+<dt>capture_bufsize</dt>
+<dd>max capture frame size in kB (4-128kB)</dd>
+<dt>force_ac97</dt>
+<dd>0 or 1 (disabled by default)</dd>
+<dt>buffer_top</dt>
+<dd>specify buffer top address</dd>
+<dt>use_cache</dt>
+<dd>0 or 1 (disabled by default)</dd>
+<dt>vaio_hack</dt>
+<dd>alias buffer_top=0x25a800</dd>
+<dt>reset_workaround</dt>
+<dd>enable AC97 RESET workaround for some laptops</dd>
+<dt>reset_workaround2</dt>
+<dd>enable extended AC97 RESET workaround for some other laptops</dd>
+</dl>
+<p>This module supports one chip and autoprobe.</p>
+<p>The power-management is supported.</p>
+<p>Note: on some notebooks the buffer address cannot be detected
+automatically, or causes hang-up during initialization.
+In such a case, specify the buffer top address explicitly via
+the buffer_top option.
+For example,
+Sony F250: buffer_top=0x25a800
+Sony F270: buffer_top=0x272800
+The driver supports only ac97 codec.  It’s possible to force
+to initialize/use ac97 although it’s not detected.  In such a
+case, use <code class="docutils literal notranslate"><span class="pre">force_ac97=1</span></code> option - but <em>NO</em> guarantee whether it
+works!</p>
+<p>Note: The NM256 chip can be linked internally with non-AC97
+codecs.  This driver supports only the AC97 codec, and won’t work
+with machines with other (most likely CS423x or OPL3SAx) chips,
+even though the device is detected in lspci.  In such a case, try
+other drivers, e.g. snd-cs4232 or snd-opl3sa2.  Some has ISA-PnP
+but some doesn’t have ISA PnP.  You’ll need to specify <code class="docutils literal notranslate"><span class="pre">isapnp=0</span></code>
+and proper hardware parameters in the case without ISA PnP.</p>
+<p>Note: some laptops need a workaround for AC97 RESET.  For the
+known hardware like Dell Latitude LS and Sony PCG-F305, this
+workaround is enabled automatically.  For other laptops with a
+hard freeze, you can try <code class="docutils literal notranslate"><span class="pre">reset_workaround=1</span></code> option.</p>
+<p>Note: Dell Latitude CSx laptops have another problem regarding
+AC97 RESET.  On these laptops, reset_workaround2 option is
+turned on as default.  This option is worth to try if the
+previous reset_workaround option doesn’t help.</p>
+<p>Note: This driver is really crappy.  It’s a porting from the
+OSS driver, which is a result of black-magic reverse engineering.
+The detection of codec will fail if the driver is loaded <em>after</em>
+X-server as described above.  You might be able to force to load
+the module, but it may result in hang-up.   Hence, make sure that
+you load this module <em>before</em> X if you encounter this kind of
+problem.</p>
+</div>
+<div class="section" id="module-snd-opl3sa2">
+<h3>Module snd-opl3sa2<a class="headerlink" href="#module-snd-opl3sa2" title="Permalink to this headline">¶</a></h3>
+<p>Module for Yamaha OPL3-SA2/SA3 sound cards.</p>
+<dl class="docutils">
+<dt>isapnp</dt>
+<dd>ISA PnP detection - 0 = disable, 1 = enable (default)</dd>
+</dl>
+<p>with <code class="docutils literal notranslate"><span class="pre">isapnp=0</span></code>, the following options are available:</p>
+<dl class="docutils">
+<dt>port</dt>
+<dd>control port # for OPL3-SA chip (0x370)</dd>
+<dt>sb_port</dt>
+<dd>SB port # for OPL3-SA chip (0x220,0x240)</dd>
+<dt>wss_port</dt>
+<dd>WSS port # for OPL3-SA chip (0x530,0xe80,0xf40,0x604)</dd>
+<dt>midi_port</dt>
+<dd>port # for MPU-401 UART (0x300,0x330), -1 = disable</dd>
+<dt>fm_port</dt>
+<dd>FM port # for OPL3-SA chip (0x388), -1 = disable</dd>
+<dt>irq</dt>
+<dd>IRQ # for OPL3-SA chip (5,7,9,10)</dd>
+<dt>dma1</dt>
+<dd>first DMA # for Yamaha OPL3-SA chip (0,1,3)</dd>
+<dt>dma2</dt>
+<dd>second DMA # for Yamaha OPL3-SA chip (0,1,3), -1 = disable</dd>
+</dl>
+<p>This module supports multiple cards and ISA PnP.  It does not support
+autoprobe (if ISA PnP is not used) thus all ports must be specified!!!</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-opti92x-ad1848">
+<h3>Module snd-opti92x-ad1848<a class="headerlink" href="#module-snd-opti92x-ad1848" title="Permalink to this headline">¶</a></h3>
+<p>Module for sound cards based on OPTi 82c92x and Analog Devices AD1848 chips.
+Module works with OAK Mozart cards as well.</p>
+<dl class="docutils">
+<dt>isapnp</dt>
+<dd>ISA PnP detection - 0 = disable, 1 = enable (default)</dd>
+</dl>
+<p>with <code class="docutils literal notranslate"><span class="pre">isapnp=0</span></code>, the following options are available:</p>
+<dl class="docutils">
+<dt>port</dt>
+<dd>port # for WSS chip (0x530,0xe80,0xf40,0x604)</dd>
+<dt>mpu_port</dt>
+<dd>port # for MPU-401 UART (0x300,0x310,0x320,0x330)</dd>
+<dt>fm_port</dt>
+<dd>port # for OPL3 device (0x388)</dd>
+<dt>irq</dt>
+<dd>IRQ # for WSS chip (5,7,9,10,11)</dd>
+<dt>mpu_irq</dt>
+<dd>IRQ # for MPU-401 UART (5,7,9,10)</dd>
+<dt>dma1</dt>
+<dd>first DMA # for WSS chip (0,1,3)</dd>
+</dl>
+<p>This module supports only one card, autoprobe and PnP.</p>
+</div>
+<div class="section" id="module-snd-opti92x-cs4231">
+<h3>Module snd-opti92x-cs4231<a class="headerlink" href="#module-snd-opti92x-cs4231" title="Permalink to this headline">¶</a></h3>
+<p>Module for sound cards based on OPTi 82c92x and Crystal CS4231 chips.</p>
+<dl class="docutils">
+<dt>isapnp</dt>
+<dd>ISA PnP detection - 0 = disable, 1 = enable (default)</dd>
+</dl>
+<p>with <code class="docutils literal notranslate"><span class="pre">isapnp=0</span></code>, the following options are available:</p>
+<dl class="docutils">
+<dt>port</dt>
+<dd>port # for WSS chip (0x530,0xe80,0xf40,0x604)</dd>
+<dt>mpu_port</dt>
+<dd>port # for MPU-401 UART (0x300,0x310,0x320,0x330)</dd>
+<dt>fm_port</dt>
+<dd>port # for OPL3 device (0x388)</dd>
+<dt>irq</dt>
+<dd>IRQ # for WSS chip (5,7,9,10,11)</dd>
+<dt>mpu_irq</dt>
+<dd>IRQ # for MPU-401 UART (5,7,9,10)</dd>
+<dt>dma1</dt>
+<dd>first DMA # for WSS chip (0,1,3)</dd>
+<dt>dma2</dt>
+<dd>second DMA # for WSS chip (0,1,3)</dd>
+</dl>
+<p>This module supports only one card, autoprobe and PnP.</p>
+</div>
+<div class="section" id="module-snd-opti93x">
+<h3>Module snd-opti93x<a class="headerlink" href="#module-snd-opti93x" title="Permalink to this headline">¶</a></h3>
+<p>Module for sound cards based on OPTi 82c93x chips.</p>
+<dl class="docutils">
+<dt>isapnp</dt>
+<dd>ISA PnP detection - 0 = disable, 1 = enable (default)</dd>
+</dl>
+<p>with <code class="docutils literal notranslate"><span class="pre">isapnp=0</span></code>, the following options are available:</p>
+<dl class="docutils">
+<dt>port</dt>
+<dd>port # for WSS chip (0x530,0xe80,0xf40,0x604)</dd>
+<dt>mpu_port</dt>
+<dd>port # for MPU-401 UART (0x300,0x310,0x320,0x330)</dd>
+<dt>fm_port</dt>
+<dd>port # for OPL3 device (0x388)</dd>
+<dt>irq</dt>
+<dd>IRQ # for WSS chip (5,7,9,10,11)</dd>
+<dt>mpu_irq</dt>
+<dd>IRQ # for MPU-401 UART (5,7,9,10)</dd>
+<dt>dma1</dt>
+<dd>first DMA # for WSS chip (0,1,3)</dd>
+<dt>dma2</dt>
+<dd>second DMA # for WSS chip (0,1,3)</dd>
+</dl>
+<p>This module supports only one card, autoprobe and PnP.</p>
+</div>
+<div class="section" id="module-snd-oxygen">
+<h3>Module snd-oxygen<a class="headerlink" href="#module-snd-oxygen" title="Permalink to this headline">¶</a></h3>
+<p>Module for sound cards based on the C-Media CMI8786/8787/8788 chip:</p>
+<ul class="simple">
+<li>Asound A-8788</li>
+<li>Asus Xonar DG/DGX</li>
+<li>AuzenTech X-Meridian</li>
+<li>AuzenTech X-Meridian 2G</li>
+<li>Bgears b-Enspirer</li>
+<li>Club3D Theatron DTS</li>
+<li>HT-Omega Claro (plus)</li>
+<li>HT-Omega Claro halo (XT)</li>
+<li>Kuroutoshikou CMI8787-HG2PCI</li>
+<li>Razer Barracuda AC-1</li>
+<li>Sondigo Inferno</li>
+<li>TempoTec HiFier Fantasia</li>
+<li>TempoTec HiFier Serenade</li>
+</ul>
+<p>This module supports autoprobe and multiple cards.</p>
+</div>
+<div class="section" id="module-snd-pcsp">
+<h3>Module snd-pcsp<a class="headerlink" href="#module-snd-pcsp" title="Permalink to this headline">¶</a></h3>
+<p>Module for internal PC-Speaker.</p>
+<dl class="docutils">
+<dt>nopcm</dt>
+<dd>Disable PC-Speaker PCM sound. Only beeps remain.</dd>
+<dt>nforce_wa</dt>
+<dd>enable NForce chipset workaround. Expect bad sound.</dd>
+</dl>
+<p>This module supports system beeps, some kind of PCM playback and
+even a few mixer controls.</p>
+</div>
+<div class="section" id="module-snd-pcxhr">
+<h3>Module snd-pcxhr<a class="headerlink" href="#module-snd-pcxhr" title="Permalink to this headline">¶</a></h3>
+<p>Module for Digigram PCXHR boards</p>
+<p>This module supports multiple cards.</p>
+</div>
+<div class="section" id="module-snd-portman2x4">
+<h3>Module snd-portman2x4<a class="headerlink" href="#module-snd-portman2x4" title="Permalink to this headline">¶</a></h3>
+<p>Module for Midiman Portman 2x4 parallel port MIDI interface</p>
+<p>This module supports multiple cards.</p>
+</div>
+<div class="section" id="module-snd-powermac-on-ppc-only">
+<h3>Module snd-powermac (on ppc only)<a class="headerlink" href="#module-snd-powermac-on-ppc-only" title="Permalink to this headline">¶</a></h3>
+<p>Module for PowerMac, iMac and iBook on-board soundchips</p>
+<dl class="docutils">
+<dt>enable_beep</dt>
+<dd>enable beep using PCM (enabled as default)</dd>
+</dl>
+<p>Module supports autoprobe a chip.</p>
+<p>Note: the driver may have problems regarding endianness.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-pxa2xx-ac97-on-arm-only">
+<h3>Module snd-pxa2xx-ac97 (on arm only)<a class="headerlink" href="#module-snd-pxa2xx-ac97-on-arm-only" title="Permalink to this headline">¶</a></h3>
+<p>Module for AC97 driver for the Intel PXA2xx chip</p>
+<p>For ARM architecture only.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-riptide">
+<h3>Module snd-riptide<a class="headerlink" href="#module-snd-riptide" title="Permalink to this headline">¶</a></h3>
+<p>Module for Conexant Riptide chip</p>
+<dl class="docutils">
+<dt>joystick_port</dt>
+<dd>Joystick port # (default: 0x200)</dd>
+<dt>mpu_port</dt>
+<dd>MPU401 port # (default: 0x330)</dd>
+<dt>opl3_port</dt>
+<dd>OPL3 port # (default: 0x388)</dd>
+</dl>
+<p>This module supports multiple cards.
+The driver requires the firmware loader support on kernel.
+You need to install the firmware file <code class="docutils literal notranslate"><span class="pre">riptide.hex</span></code> to the standard
+firmware path (e.g. /lib/firmware).</p>
+</div>
+<div class="section" id="module-snd-rme32">
+<h3>Module snd-rme32<a class="headerlink" href="#module-snd-rme32" title="Permalink to this headline">¶</a></h3>
+<p>Module for RME Digi32, Digi32 Pro and Digi32/8 (Sek’d Prodif32,
+Prodif96 and Prodif Gold) sound cards.</p>
+<p>This module supports multiple cards.</p>
+</div>
+<div class="section" id="module-snd-rme96">
+<h3>Module snd-rme96<a class="headerlink" href="#module-snd-rme96" title="Permalink to this headline">¶</a></h3>
+<p>Module for RME Digi96, Digi96/8 and Digi96/8 PRO/PAD/PST sound cards.</p>
+<p>This module supports multiple cards.</p>
+</div>
+<div class="section" id="module-snd-rme9652">
+<h3>Module snd-rme9652<a class="headerlink" href="#module-snd-rme9652" title="Permalink to this headline">¶</a></h3>
+<p>Module for RME Digi9652 (Hammerfall, Hammerfall-Light) sound cards.</p>
+<dl class="docutils">
+<dt>precise_ptr</dt>
+<dd>Enable precise pointer (doesn’t work reliably). (default = 0)</dd>
+</dl>
+<p>This module supports multiple cards.</p>
+<p>Note: snd-page-alloc module does the job which snd-hammerfall-mem
+module did formerly.  It will allocate the buffers in advance
+when any RME9652 cards are found.  To make the buffer
+allocation sure, load snd-page-alloc module in the early
+stage of boot sequence.  See <a class="reference internal" href="#early-buffer-allocation">Early Buffer Allocation</a>
+section.</p>
+</div>
+<div class="section" id="module-snd-sa11xx-uda1341-on-arm-only">
+<h3>Module snd-sa11xx-uda1341 (on arm only)<a class="headerlink" href="#module-snd-sa11xx-uda1341-on-arm-only" title="Permalink to this headline">¶</a></h3>
+<p>Module for Philips UDA1341TS on Compaq iPAQ H3600 sound card.</p>
+<p>Module supports only one card.
+Module has no enable and index options.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-sb8">
+<h3>Module snd-sb8<a class="headerlink" href="#module-snd-sb8" title="Permalink to this headline">¶</a></h3>
+<p>Module for 8-bit SoundBlaster cards: SoundBlaster 1.0, SoundBlaster 2.0,
+SoundBlaster Pro</p>
+<dl class="docutils">
+<dt>port</dt>
+<dd>port # for SB DSP chip (0x220,0x240,0x260)</dd>
+<dt>irq</dt>
+<dd>IRQ # for SB DSP chip (5,7,9,10)</dd>
+<dt>dma8</dt>
+<dd>DMA # for SB DSP chip (1,3)</dd>
+</dl>
+<p>This module supports multiple cards and autoprobe.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-sb16-and-snd-sbawe">
+<h3>Module snd-sb16 and snd-sbawe<a class="headerlink" href="#module-snd-sb16-and-snd-sbawe" title="Permalink to this headline">¶</a></h3>
+<p>Module for 16-bit SoundBlaster cards: SoundBlaster 16 (PnP),
+SoundBlaster AWE 32 (PnP), SoundBlaster AWE 64 PnP</p>
+<dl class="docutils">
+<dt>mic_agc</dt>
+<dd>Mic Auto-Gain-Control - 0 = disable, 1 = enable (default)</dd>
+<dt>csp</dt>
+<dd>ASP/CSP chip support - 0 = disable (default), 1 = enable</dd>
+<dt>isapnp</dt>
+<dd>ISA PnP detection - 0 = disable, 1 = enable (default)</dd>
+</dl>
+<p>with isapnp=0, the following options are available:</p>
+<dl class="docutils">
+<dt>port</dt>
+<dd>port # for SB DSP 4.x chip (0x220,0x240,0x260)</dd>
+<dt>mpu_port</dt>
+<dd>port # for MPU-401 UART (0x300,0x330), -1 = disable</dd>
+<dt>awe_port</dt>
+<dd>base port # for EMU8000 synthesizer (0x620,0x640,0x660) (snd-sbawe
+module only)</dd>
+<dt>irq</dt>
+<dd>IRQ # for SB DSP 4.x chip (5,7,9,10)</dd>
+<dt>dma8</dt>
+<dd>8-bit DMA # for SB DSP 4.x chip (0,1,3)</dd>
+<dt>dma16</dt>
+<dd>16-bit DMA # for SB DSP 4.x chip (5,6,7)</dd>
+</dl>
+<p>This module supports multiple cards, autoprobe and ISA PnP.</p>
+<p>Note: To use Vibra16X cards in 16-bit half duplex mode, you must
+disable 16bit DMA with dma16 = -1 module parameter.
+Also, all Sound Blaster 16 type cards can operate in 16-bit
+half duplex mode through 8-bit DMA channel by disabling their
+16-bit DMA channel.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-sc6000">
+<h3>Module snd-sc6000<a class="headerlink" href="#module-snd-sc6000" title="Permalink to this headline">¶</a></h3>
+<p>Module for Gallant SC-6000 soundcard and later models: SC-6600 and
+SC-7000.</p>
+<dl class="docutils">
+<dt>port</dt>
+<dd>Port # (0x220 or 0x240)</dd>
+<dt>mss_port</dt>
+<dd>MSS Port # (0x530 or 0xe80)</dd>
+<dt>irq</dt>
+<dd>IRQ # (5,7,9,10,11)</dd>
+<dt>mpu_irq</dt>
+<dd>MPU-401 IRQ # (5,7,9,10) ,0 - no MPU-401 irq</dd>
+<dt>dma</dt>
+<dd>DMA # (1,3,0)</dd>
+<dt>joystick</dt>
+<dd>Enable gameport - 0 = disable (default), 1 = enable</dd>
+</dl>
+<p>This module supports multiple cards.</p>
+<p>This card is also known as Audio Excel DSP 16 or Zoltrix AV302.</p>
+</div>
+<div class="section" id="module-snd-sscape">
+<h3>Module snd-sscape<a class="headerlink" href="#module-snd-sscape" title="Permalink to this headline">¶</a></h3>
+<p>Module for ENSONIQ SoundScape cards.</p>
+<dl class="docutils">
+<dt>port</dt>
+<dd>Port # (PnP setup)</dd>
+<dt>wss_port</dt>
+<dd>WSS Port # (PnP setup)</dd>
+<dt>irq</dt>
+<dd>IRQ # (PnP setup)</dd>
+<dt>mpu_irq</dt>
+<dd>MPU-401 IRQ # (PnP setup)</dd>
+<dt>dma</dt>
+<dd>DMA # (PnP setup)</dd>
+<dt>dma2</dt>
+<dd>2nd DMA # (PnP setup, -1 to disable)</dd>
+<dt>joystick</dt>
+<dd>Enable gameport - 0 = disable (default), 1 = enable</dd>
+</dl>
+<p>This module supports multiple cards.</p>
+<p>The driver requires the firmware loader support on kernel.</p>
+</div>
+<div class="section" id="module-snd-sun-amd7930-on-sparc-only">
+<h3>Module snd-sun-amd7930 (on sparc only)<a class="headerlink" href="#module-snd-sun-amd7930-on-sparc-only" title="Permalink to this headline">¶</a></h3>
+<p>Module for AMD7930 sound chips found on Sparcs.</p>
+<p>This module supports multiple cards.</p>
+</div>
+<div class="section" id="module-snd-sun-cs4231-on-sparc-only">
+<h3>Module snd-sun-cs4231 (on sparc only)<a class="headerlink" href="#module-snd-sun-cs4231-on-sparc-only" title="Permalink to this headline">¶</a></h3>
+<p>Module for CS4231 sound chips found on Sparcs.</p>
+<p>This module supports multiple cards.</p>
+</div>
+<div class="section" id="module-snd-sun-dbri-on-sparc-only">
+<h3>Module snd-sun-dbri (on sparc only)<a class="headerlink" href="#module-snd-sun-dbri-on-sparc-only" title="Permalink to this headline">¶</a></h3>
+<p>Module for DBRI sound chips found on Sparcs.</p>
+<p>This module supports multiple cards.</p>
+</div>
+<div class="section" id="module-snd-wavefront">
+<h3>Module snd-wavefront<a class="headerlink" href="#module-snd-wavefront" title="Permalink to this headline">¶</a></h3>
+<p>Module for Turtle Beach Maui, Tropez and Tropez+ sound cards.</p>
+<dl class="docutils">
+<dt>use_cs4232_midi</dt>
+<dd>Use CS4232 MPU-401 interface
+(inaccessibly located inside your computer)</dd>
+<dt>isapnp</dt>
+<dd>ISA PnP detection - 0 = disable, 1 = enable (default)</dd>
+</dl>
+<p>with isapnp=0, the following options are available:</p>
+<dl class="docutils">
+<dt>cs4232_pcm_port</dt>
+<dd>Port # for CS4232 PCM interface.</dd>
+<dt>cs4232_pcm_irq</dt>
+<dd>IRQ # for CS4232 PCM interface (5,7,9,11,12,15).</dd>
+<dt>cs4232_mpu_port</dt>
+<dd>Port # for CS4232 MPU-401 interface.</dd>
+<dt>cs4232_mpu_irq</dt>
+<dd>IRQ # for CS4232 MPU-401 interface (9,11,12,15).</dd>
+<dt>ics2115_port</dt>
+<dd>Port # for ICS2115</dd>
+<dt>ics2115_irq</dt>
+<dd>IRQ # for ICS2115</dd>
+<dt>fm_port</dt>
+<dd>FM OPL-3 Port #</dd>
+<dt>dma1</dt>
+<dd>DMA1 # for CS4232 PCM interface.</dd>
+<dt>dma2</dt>
+<dd>DMA2 # for CS4232 PCM interface.</dd>
+</dl>
+<p>The below are options for wavefront_synth features:</p>
+<dl class="docutils">
+<dt>wf_raw</dt>
+<dd>Assume that we need to boot the OS (default:no);
+If yes, then during driver loading, the state of the board is
+ignored, and we reset the board and load the firmware anyway.</dd>
+<dt>fx_raw</dt>
+<dd>Assume that the FX process needs help (default:yes);
+If false, we’ll leave the FX processor in whatever state it is
+when the driver is loaded.  The default is to download the
+microprogram and associated coefficients to set it up for
+“default” operation, whatever that means.</dd>
+<dt>debug_default</dt>
+<dd>Debug parameters for card initialization</dd>
+<dt>wait_usecs</dt>
+<dd>How long to wait without sleeping, usecs (default:150);
+This magic number seems to give pretty optimal throughput
+based on my limited experimentation.
+If you want to play around with it and find a better value, be
+my guest. Remember, the idea is to get a number that causes us
+to just busy wait for as many WaveFront commands as possible,
+without coming up with a number so large that we hog the whole
+CPU.
+Specifically, with this number, out of about 134,000 status
+waits, only about 250 result in a sleep.</dd>
+<dt>sleep_interval</dt>
+<dd>How long to sleep when waiting for reply (default: 100)</dd>
+<dt>sleep_tries</dt>
+<dd>How many times to try sleeping during a wait (default: 50)</dd>
+<dt>ospath</dt>
+<dd>Pathname to processed ICS2115 OS firmware (default:wavefront.os);
+The path name of the ISC2115 OS firmware.  In the recent
+version, it’s handled via firmware loader framework, so it
+must be installed in the proper path, typically,
+/lib/firmware.</dd>
+<dt>reset_time</dt>
+<dd>How long to wait for a reset to take effect (default:2)</dd>
+<dt>ramcheck_time</dt>
+<dd>How many seconds to wait for the RAM test (default:20)</dd>
+<dt>osrun_time</dt>
+<dd>How many seconds to wait for the ICS2115 OS (default:10)</dd>
+</dl>
+<p>This module supports multiple cards and ISA PnP.</p>
+<p>Note: the firmware file <code class="docutils literal notranslate"><span class="pre">wavefront.os</span></code> was located in the earlier
+version in /etc.  Now it’s loaded via firmware loader, and
+must be in the proper firmware path, such as /lib/firmware.
+Copy (or symlink) the file appropriately if you get an error
+regarding firmware downloading after upgrading the kernel.</p>
+</div>
+<div class="section" id="module-snd-sonicvibes">
+<h3>Module snd-sonicvibes<a class="headerlink" href="#module-snd-sonicvibes" title="Permalink to this headline">¶</a></h3>
+<p>Module for S3 SonicVibes PCI sound cards.
+* PINE Schubert 32 PCI</p>
+<dl class="docutils">
+<dt>reverb</dt>
+<dd>Reverb Enable - 1 = enable, 0 = disable (default);
+SoundCard must have onboard SRAM for this.</dd>
+<dt>mge</dt>
+<dd>Mic Gain Enable - 1 = enable, 0 = disable (default)</dd>
+</dl>
+<p>This module supports multiple cards and autoprobe.</p>
+</div>
+<div class="section" id="module-snd-serial-u16550">
+<h3>Module snd-serial-u16550<a class="headerlink" href="#module-snd-serial-u16550" title="Permalink to this headline">¶</a></h3>
+<p>Module for UART16550A serial MIDI ports.</p>
+<dl class="docutils">
+<dt>port</dt>
+<dd>port # for UART16550A chip</dd>
+<dt>irq</dt>
+<dd>IRQ # for UART16550A chip, -1 = poll mode</dd>
+<dt>speed</dt>
+<dd>speed in bauds (9600,19200,38400,57600,115200)
+38400 = default</dd>
+<dt>base</dt>
+<dd>base for divisor in bauds (57600,115200,230400,460800)
+115200 = default</dd>
+<dt>outs</dt>
+<dd>number of MIDI ports in a serial port (1-4)
+1 = default</dd>
+<dt>adaptor</dt>
+<dd><dl class="first last docutils">
+<dt>Type of adaptor.</dt>
+<dd>0 = Soundcanvas, 1 = MS-124T, 2 = MS-124W S/A,
+3 = MS-124W M/B, 4 = Generic</dd>
+</dl>
+</dd>
+</dl>
+<p>This module supports multiple cards. This module does not support autoprobe
+thus the main port must be specified!!! Other options are optional.</p>
+</div>
+<div class="section" id="module-snd-trident">
+<h3>Module snd-trident<a class="headerlink" href="#module-snd-trident" title="Permalink to this headline">¶</a></h3>
+<p>Module for Trident 4DWave DX/NX sound cards.
+* Best Union  Miss Melody 4DWave PCI
+* HIS  4DWave PCI
+* Warpspeed  ONSpeed 4DWave PCI
+* AzTech  PCI 64-Q3D
+* Addonics  SV 750
+* CHIC  True Sound 4Dwave
+* Shark  Predator4D-PCI
+* Jaton  SonicWave 4D
+* SiS SI7018 PCI Audio
+* Hoontech SoundTrack Digital 4DWave NX</p>
+<dl class="docutils">
+<dt>pcm_channels</dt>
+<dd>max channels (voices) reserved for PCM</dd>
+<dt>wavetable_size</dt>
+<dd>max wavetable size in kB (4-?kb)</dd>
+</dl>
+<p>This module supports multiple cards and autoprobe.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-ua101">
+<h3>Module snd-ua101<a class="headerlink" href="#module-snd-ua101" title="Permalink to this headline">¶</a></h3>
+<p>Module for the Edirol UA-101/UA-1000 audio/MIDI interfaces.</p>
+<p>This module supports multiple devices, autoprobe and hotplugging.</p>
+</div>
+<div class="section" id="module-snd-usb-audio">
+<h3>Module snd-usb-audio<a class="headerlink" href="#module-snd-usb-audio" title="Permalink to this headline">¶</a></h3>
+<p>Module for USB audio and USB MIDI devices.</p>
+<dl class="docutils">
+<dt>vid</dt>
+<dd>Vendor ID for the device (optional)</dd>
+<dt>pid</dt>
+<dd>Product ID for the device (optional)</dd>
+<dt>nrpacks</dt>
+<dd>Max. number of packets per URB (default: 8)</dd>
+<dt>device_setup</dt>
+<dd>Device specific magic number (optional);
+Influence depends on the device
+Default: 0x0000</dd>
+<dt>ignore_ctl_error</dt>
+<dd>Ignore any USB-controller regarding mixer interface (default: no)</dd>
+<dt>autoclock</dt>
+<dd>Enable auto-clock selection for UAC2 devices (default: yes)</dd>
+<dt>quirk_alias</dt>
+<dd>Quirk alias list, pass strings like <code class="docutils literal notranslate"><span class="pre">0123abcd:5678beef</span></code>, which
+applies the existing quirk for the device 5678:beef to a new
+device 0123:abcd.</dd>
+<dt>use_vmalloc</dt>
+<dd>Use vmalloc() for allocations of the PCM buffers (default: yes).
+For architectures with non-coherent memory like ARM or MIPS, the
+mmap access may give inconsistent results with vmalloc’ed
+buffers.  If mmap is used on such architectures, turn off this
+option, so that the DMA-coherent buffers are allocated and used
+instead.</dd>
+</dl>
+<p>This module supports multiple devices, autoprobe and hotplugging.</p>
+<p>NB: <code class="docutils literal notranslate"><span class="pre">nrpacks</span></code> parameter can be modified dynamically via sysfs.
+Don’t put the value over 20.  Changing via sysfs has no sanity
+check.</p>
+<p>NB: <code class="docutils literal notranslate"><span class="pre">ignore_ctl_error=1</span></code> may help when you get an error at accessing
+the mixer element such as URB error -22.  This happens on some
+buggy USB device or the controller.</p>
+<p>NB: quirk_alias option is provided only for testing / development.
+If you want to have a proper support, contact to upstream for
+adding the matching quirk in the driver code statically.</p>
+</div>
+<div class="section" id="module-snd-usb-caiaq">
+<h3>Module snd-usb-caiaq<a class="headerlink" href="#module-snd-usb-caiaq" title="Permalink to this headline">¶</a></h3>
+<p>Module for caiaq UB audio interfaces,</p>
+<ul class="simple">
+<li>Native Instruments RigKontrol2</li>
+<li>Native Instruments Kore Controller</li>
+<li>Native Instruments Audio Kontrol 1</li>
+<li>Native Instruments Audio 8 DJ</li>
+</ul>
+<p>This module supports multiple devices, autoprobe and hotplugging.</p>
+</div>
+<div class="section" id="module-snd-usb-usx2y">
+<h3>Module snd-usb-usx2y<a class="headerlink" href="#module-snd-usb-usx2y" title="Permalink to this headline">¶</a></h3>
+<p>Module for Tascam USB US-122, US-224 and US-428 devices.</p>
+<p>This module supports multiple devices, autoprobe and hotplugging.</p>
+<p>Note: you need to load the firmware via <code class="docutils literal notranslate"><span class="pre">usx2yloader</span></code> utility included
+in alsa-tools and alsa-firmware packages.</p>
+</div>
+<div class="section" id="module-snd-via82xx">
+<h3>Module snd-via82xx<a class="headerlink" href="#module-snd-via82xx" title="Permalink to this headline">¶</a></h3>
+<p>Module for AC‘97 motherboards based on VIA 82C686A/686B, 8233, 8233A,
+8233C, 8235, 8237 (south) bridge.</p>
+<dl class="docutils">
+<dt>mpu_port</dt>
+<dd>0x300,0x310,0x320,0x330, otherwise obtain BIOS setup
+[VIA686A/686B only]</dd>
+<dt>joystick</dt>
+<dd>Enable joystick (default off) [VIA686A/686B only]</dd>
+<dt>ac97_clock</dt>
+<dd>AC‘97 codec clock base (default 48000Hz)</dd>
+<dt>dxs_support</dt>
+<dd>support DXS channels, 0 = auto (default), 1 = enable, 2 = disable,
+3 = 48k only, 4 = no VRA, 5 = enable any sample rate and different
+sample rates on different channels [VIA8233/C, 8235, 8237 only]</dd>
+<dt>ac97_quirk</dt>
+<dd>AC‘97 workaround for strange hardware;
+See <a class="reference internal" href="#ac97-quirk-option">AC97 Quirk Option</a> section below.</dd>
+</dl>
+<p>This module supports one chip and autoprobe.</p>
+<p>Note: on some SMP motherboards like MSI 694D the interrupts might
+not be generated properly.  In such a case, please try to
+set the SMP (or MPS) version on BIOS to 1.1 instead of
+default value 1.4.  Then the interrupt number will be
+assigned under 15. You might also upgrade your BIOS.</p>
+<p>Note: VIA8233/5/7 (not VIA8233A) can support DXS (direct sound)
+channels as the first PCM.  On these channels, up to 4
+streams can be played at the same time, and the controller
+can perform sample rate conversion with separate rates for
+each channel.
+As default (<code class="docutils literal notranslate"><span class="pre">dxs_support</span> <span class="pre">=</span> <span class="pre">0</span></code>), 48k fixed rate is chosen
+except for the known devices since the output is often
+noisy except for 48k on some mother boards due to the
+bug of BIOS.
+Please try once <code class="docutils literal notranslate"><span class="pre">dxs_support=5</span></code> and if it works on other
+sample rates (e.g. 44.1kHz of mp3 playback), please let us
+know the PCI subsystem vendor/device id’s (output of
+<code class="docutils literal notranslate"><span class="pre">lspci</span> <span class="pre">-nv</span></code>).
+If <code class="docutils literal notranslate"><span class="pre">dxs_support=5</span></code> does not work, try <code class="docutils literal notranslate"><span class="pre">dxs_support=4</span></code>; if it
+doesn’t work too, try dxs_support=1.  (dxs_support=1 is
+usually for old motherboards.  The correct implemented
+board should work with 4 or 5.)  If it still doesn’t
+work and the default setting is ok, <code class="docutils literal notranslate"><span class="pre">dxs_support=3</span></code> is the
+right choice.  If the default setting doesn’t work at all,
+try <code class="docutils literal notranslate"><span class="pre">dxs_support=2</span></code> to disable the DXS channels.
+In any cases, please let us know the result and the
+subsystem vendor/device ids.  See <a class="reference internal" href="#links-and-addresses">Links and Addresses</a>
+below.</p>
+<p>Note: for the MPU401 on VIA823x, use snd-mpu401 driver
+additionally.  The mpu_port option is for VIA686 chips only.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-via82xx-modem">
+<h3>Module snd-via82xx-modem<a class="headerlink" href="#module-snd-via82xx-modem" title="Permalink to this headline">¶</a></h3>
+<p>Module for VIA82xx AC97 modem</p>
+<dl class="docutils">
+<dt>ac97_clock</dt>
+<dd>AC‘97 codec clock base (default 48000Hz)</dd>
+</dl>
+<p>This module supports one card and autoprobe.</p>
+<p>Note: The default index value of this module is -2, i.e. the first
+slot is excluded.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-virmidi">
+<h3>Module snd-virmidi<a class="headerlink" href="#module-snd-virmidi" title="Permalink to this headline">¶</a></h3>
+<p>Module for virtual rawmidi devices.
+This module creates virtual rawmidi devices which communicate
+to the corresponding ALSA sequencer ports.</p>
+<dl class="docutils">
+<dt>midi_devs</dt>
+<dd>MIDI devices # (1-4, default=4)</dd>
+</dl>
+<p>This module supports multiple cards.</p>
+</div>
+<div class="section" id="module-snd-virtuoso">
+<h3>Module snd-virtuoso<a class="headerlink" href="#module-snd-virtuoso" title="Permalink to this headline">¶</a></h3>
+<p>Module for sound cards based on the Asus AV66/AV100/AV200 chips,
+i.e., Xonar D1, DX, D2, D2X, DS, DSX, Essence ST (Deluxe),
+Essence STX (II), HDAV1.3 (Deluxe), and HDAV1.3 Slim.</p>
+<p>This module supports autoprobe and multiple cards.</p>
+</div>
+<div class="section" id="module-snd-vx222">
+<h3>Module snd-vx222<a class="headerlink" href="#module-snd-vx222" title="Permalink to this headline">¶</a></h3>
+<p>Module for Digigram VX-Pocket VX222, V222 v2 and Mic cards.</p>
+<dl class="docutils">
+<dt>mic</dt>
+<dd>Enable Microphone on V222 Mic (NYI)</dd>
+<dt>ibl</dt>
+<dd>Capture IBL size. (default = 0, minimum size)</dd>
+</dl>
+<p>This module supports multiple cards.</p>
+<p>When the driver is compiled as a module and the hotplug firmware
+is supported, the firmware data is loaded via hotplug automatically.
+Install the necessary firmware files in alsa-firmware package.
+When no hotplug fw loader is available, you need to load the
+firmware via vxloader utility in alsa-tools package.  To invoke
+vxloader automatically, add the following to /etc/modprobe.d/alsa.conf</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>install snd-vx222 /sbin/modprobe --first-time -i snd-vx222\
+  &amp;&amp; /usr/bin/vxloader
+</pre></div>
+</div>
+<p>(for 2.2/2.4 kernels, add <code class="docutils literal notranslate"><span class="pre">post-install</span> <span class="pre">/usr/bin/vxloader</span></code> to
+/etc/modules.conf, instead.)
+IBL size defines the interrupts period for PCM.  The smaller size
+gives smaller latency but leads to more CPU consumption, too.
+The size is usually aligned to 126.  As default (=0), the smallest
+size is chosen.  The possible IBL values can be found in
+/proc/asound/cardX/vx-status proc file.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-vxpocket">
+<h3>Module snd-vxpocket<a class="headerlink" href="#module-snd-vxpocket" title="Permalink to this headline">¶</a></h3>
+<p>Module for Digigram VX-Pocket VX2 and 440 PCMCIA cards.</p>
+<dl class="docutils">
+<dt>ibl</dt>
+<dd>Capture IBL size. (default = 0, minimum size)</dd>
+</dl>
+<p>This module supports multiple cards.  The module is compiled only when
+PCMCIA is supported on kernel.</p>
+<p>With the older 2.6.x kernel, to activate the driver via the card
+manager, you’ll need to set up /etc/pcmcia/vxpocket.conf.  See the
+sound/pcmcia/vx/vxpocket.c.  2.6.13 or later kernel requires no
+longer require a config file.</p>
+<p>When the driver is compiled as a module and the hotplug firmware
+is supported, the firmware data is loaded via hotplug automatically.
+Install the necessary firmware files in alsa-firmware package.
+When no hotplug fw loader is available, you need to load the
+firmware via vxloader utility in alsa-tools package.</p>
+<p>About capture IBL, see the description of snd-vx222 module.</p>
+<p>Note: snd-vxp440 driver is merged to snd-vxpocket driver since
+ALSA 1.0.10.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-ymfpci">
+<h3>Module snd-ymfpci<a class="headerlink" href="#module-snd-ymfpci" title="Permalink to this headline">¶</a></h3>
+<p>Module for Yamaha PCI chips (YMF72x, YMF74x &amp; YMF75x).</p>
+<dl class="docutils">
+<dt>mpu_port</dt>
+<dd>0x300,0x330,0x332,0x334, 0 (disable) by default,
+1 (auto-detect for YMF744/754 only)</dd>
+<dt>fm_port</dt>
+<dd>0x388,0x398,0x3a0,0x3a8, 0 (disable) by default
+1 (auto-detect for YMF744/754 only)</dd>
+<dt>joystick_port</dt>
+<dd>0x201,0x202,0x204,0x205, 0 (disable) by default,
+1 (auto-detect)</dd>
+<dt>rear_switch</dt>
+<dd>enable shared rear/line-in switch (bool)</dd>
+</dl>
+<p>This module supports autoprobe and multiple chips.</p>
+<p>The power-management is supported.</p>
+</div>
+<div class="section" id="module-snd-pdaudiocf">
+<h3>Module snd-pdaudiocf<a class="headerlink" href="#module-snd-pdaudiocf" title="Permalink to this headline">¶</a></h3>
+<p>Module for Sound Core PDAudioCF sound card.</p>
+<p>The power-management is supported.</p>
+</div>
+</div>
+<div class="section" id="ac97-quirk-option">
+<h2>AC97 Quirk Option<a class="headerlink" href="#ac97-quirk-option" title="Permalink to this headline">¶</a></h2>
+<p>The ac97_quirk option is used to enable/override the workaround for
+specific devices on drivers for on-board AC‘97 controllers like
+snd-intel8x0.  Some hardware have swapped output pins between Master
+and Headphone, or Surround (thanks to confusion of AC‘97
+specifications from version to version :-)</p>
+<p>The driver provides the auto-detection of known problematic devices,
+but some might be unknown or wrongly detected.  In such a case, pass
+the proper value with this option.</p>
+<p>The following strings are accepted:</p>
+<dl class="docutils">
+<dt>default</dt>
+<dd>Don’t override the default setting</dd>
+<dt>none</dt>
+<dd>Disable the quirk</dd>
+<dt>hp_only</dt>
+<dd>Bind Master and Headphone controls as a single control</dd>
+<dt>swap_hp</dt>
+<dd>Swap headphone and master controls</dd>
+<dt>swap_surround</dt>
+<dd>Swap master and surround controls</dd>
+<dt>ad_sharing</dt>
+<dd>For AD1985, turn on OMS bit and use headphone</dd>
+<dt>alc_jack</dt>
+<dd>For ALC65x, turn on the jack sense mode</dd>
+<dt>inv_eapd</dt>
+<dd>Inverted EAPD implementation</dd>
+<dt>mute_led</dt>
+<dd>Bind EAPD bit for turning on/off mute LED</dd>
+</dl>
+<p>For backward compatibility, the corresponding integer value -1, 0, …
+are  accepted, too.</p>
+<p>For example, if <code class="docutils literal notranslate"><span class="pre">Master</span></code> volume control has no effect on your device
+but only <code class="docutils literal notranslate"><span class="pre">Headphone</span></code> does, pass ac97_quirk=hp_only module option.</p>
+</div>
+<div class="section" id="configuring-non-isapnp-cards">
+<h2>Configuring Non-ISAPNP Cards<a class="headerlink" href="#configuring-non-isapnp-cards" title="Permalink to this headline">¶</a></h2>
+<p>When the kernel is configured with ISA-PnP support, the modules
+supporting the isapnp cards will have module options <code class="docutils literal notranslate"><span class="pre">isapnp</span></code>.
+If this option is set, <em>only</em> the ISA-PnP devices will be probed.
+For probing the non ISA-PnP cards, you have to pass <code class="docutils literal notranslate"><span class="pre">isapnp=0</span></code> option
+together with the proper i/o and irq configuration.</p>
+<p>When the kernel is configured without ISA-PnP support, isapnp option
+will be not built in.</p>
+</div>
+<div class="section" id="module-autoloading-support">
+<h2>Module Autoloading Support<a class="headerlink" href="#module-autoloading-support" title="Permalink to this headline">¶</a></h2>
+<p>The ALSA drivers can be loaded automatically on demand by defining
+module aliases.  The string <code class="docutils literal notranslate"><span class="pre">snd-card-%1</span></code> is requested for ALSA native
+devices where <code class="docutils literal notranslate"><span class="pre">%i</span></code> is sound card number from zero to seven.</p>
+<p>To auto-load an ALSA driver for OSS services, define the string
+<code class="docutils literal notranslate"><span class="pre">sound-slot-%i</span></code> where <code class="docutils literal notranslate"><span class="pre">%i</span></code> means the slot number for OSS, which
+corresponds to the card index of ALSA.  Usually, define this
+as the same card module.</p>
+<p>An example configuration for a single emu10k1 card is like below:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>----- /etc/modprobe.d/alsa.conf
+alias snd-card-0 snd-emu10k1
+alias sound-slot-0 snd-emu10k1
+----- /etc/modprobe.d/alsa.conf
+</pre></div>
+</div>
+<p>The available number of auto-loaded sound cards depends on the module
+option <code class="docutils literal notranslate"><span class="pre">cards_limit</span></code> of snd module.  As default it’s set to 1.
+To enable the auto-loading of multiple cards, specify the number of
+sound cards in that option.</p>
+<p>When multiple cards are available, it’d better to specify the index
+number for each card via module option, too, so that the order of
+cards is kept consistent.</p>
+<p>An example configuration for two sound cards is like below:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>----- /etc/modprobe.d/alsa.conf
+# ALSA portion
+options snd cards_limit=2
+alias snd-card-0 snd-interwave
+alias snd-card-1 snd-ens1371
+options snd-interwave index=0
+options snd-ens1371 index=1
+# OSS/Free portion
+alias sound-slot-0 snd-interwave
+alias sound-slot-1 snd-ens1371
+----- /etc/modprobe.d/alsa.conf
+</pre></div>
+</div>
+<p>In this example, the interwave card is always loaded as the first card
+(index 0) and ens1371 as the second (index 1).</p>
+<p>Alternative (and new) way to fixate the slot assignment is to use
+<code class="docutils literal notranslate"><span class="pre">slots</span></code> option of snd module.  In the case above, specify like the
+following:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>options snd slots=snd-interwave,snd-ens1371
+</pre></div>
+</div>
+<p>Then, the first slot (#0) is reserved for snd-interwave driver, and
+the second (#1) for snd-ens1371.  You can omit index option in each
+driver if slots option is used (although you can still have them at
+the same time as long as they don’t conflict).</p>
+<p>The slots option is especially useful for avoiding the possible
+hot-plugging and the resultant slot conflict.  For example, in the
+case above again, the first two slots are already reserved.  If any
+other driver (e.g. snd-usb-audio) is loaded before snd-interwave or
+snd-ens1371, it will be assigned to the third or later slot.</p>
+<p>When a module name is given with ‘!’, the slot will be given for any
+modules but that name.  For example, <code class="docutils literal notranslate"><span class="pre">slots=!snd-pcsp</span></code> will reserve
+the first slot for any modules but snd-pcsp.</p>
+</div>
+<div class="section" id="alsa-pcm-devices-to-oss-devices-mapping">
+<h2>ALSA PCM devices to OSS devices mapping<a class="headerlink" href="#alsa-pcm-devices-to-oss-devices-mapping" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>/dev/snd/pcmC0D0[c|p]  -&gt; /dev/audio0 (/dev/audio) -&gt; minor 4
+/dev/snd/pcmC0D0[c|p]  -&gt; /dev/dsp0 (/dev/dsp)     -&gt; minor 3
+/dev/snd/pcmC0D1[c|p]  -&gt; /dev/adsp0 (/dev/adsp)   -&gt; minor 12
+/dev/snd/pcmC1D0[c|p]  -&gt; /dev/audio1              -&gt; minor 4+16 = 20
+/dev/snd/pcmC1D0[c|p]  -&gt; /dev/dsp1                -&gt; minor 3+16 = 19
+/dev/snd/pcmC1D1[c|p]  -&gt; /dev/adsp1               -&gt; minor 12+16 = 28
+/dev/snd/pcmC2D0[c|p]  -&gt; /dev/audio2              -&gt; minor 4+32 = 36
+/dev/snd/pcmC2D0[c|p]  -&gt; /dev/dsp2                -&gt; minor 3+32 = 39
+/dev/snd/pcmC2D1[c|p]  -&gt; /dev/adsp2               -&gt; minor 12+32 = 44
+</pre></div>
+</div>
+<p>The first number from <code class="docutils literal notranslate"><span class="pre">/dev/snd/pcmC{X}D{Y}[c|p]</span></code> expression means
+sound card number and second means device number.  The ALSA devices
+have either <code class="docutils literal notranslate"><span class="pre">c</span></code> or <code class="docutils literal notranslate"><span class="pre">p</span></code> suffix indicating the direction, capture and
+playback, respectively.</p>
+<p>Please note that the device mapping above may be varied via the module
+options of snd-pcm-oss module.</p>
+</div>
+<div class="section" id="proc-interfaces-proc-asound">
+<h2>Proc interfaces (/proc/asound)<a class="headerlink" href="#proc-interfaces-proc-asound" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="proc-asound-card-pcm-cp-oss">
+<h3>/proc/asound/card#/pcm#[cp]/oss<a class="headerlink" href="#proc-asound-card-pcm-cp-oss" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt>erase</dt>
+<dd>erase all additional information about OSS applications</dd>
+<dt>&lt;app_name&gt; &lt;fragments&gt; &lt;fragment_size&gt; [&lt;options&gt;]</dt>
+<dd><dl class="first last docutils">
+<dt>&lt;app_name&gt;</dt>
+<dd>name of application with (higher priority) or without path</dd>
+<dt>&lt;fragments&gt;</dt>
+<dd>number of fragments or zero if auto</dd>
+<dt>&lt;fragment_size&gt;</dt>
+<dd>size of fragment in bytes or zero if auto</dd>
+<dt>&lt;options&gt;</dt>
+<dd><p class="first">optional parameters</p>
+<dl class="last docutils">
+<dt>disable</dt>
+<dd>the application tries to open a pcm device for
+this channel but does not want to use it.
+(Cause a bug or mmap needs)
+It’s good for Quake etc…</dd>
+<dt>direct</dt>
+<dd>don’t use plugins</dd>
+<dt>block</dt>
+<dd>force block mode (rvplayer)</dd>
+<dt>non-block</dt>
+<dd>force non-block mode</dd>
+<dt>whole-frag</dt>
+<dd>write only whole fragments (optimization affecting
+playback only)</dd>
+<dt>no-silence</dt>
+<dd>do not fill silence ahead to avoid clicks</dd>
+<dt>buggy-ptr</dt>
+<dd>Returns the whitespace blocks in GETOPTR ioctl
+instead of filled blocks</dd>
+</dl>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>Example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>echo &quot;x11amp 128 16384&quot; &gt; /proc/asound/card0/pcm0p/oss
+echo &quot;squake 0 0 disable&quot; &gt; /proc/asound/card0/pcm0c/oss
+echo &quot;rvplayer 0 0 block&quot; &gt; /proc/asound/card0/pcm0p/oss
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="early-buffer-allocation">
+<h2>Early Buffer Allocation<a class="headerlink" href="#early-buffer-allocation" title="Permalink to this headline">¶</a></h2>
+<p>Some drivers (e.g. hdsp) require the large contiguous buffers, and
+sometimes it’s too late to find such spaces when the driver module is
+actually loaded due to memory fragmentation.  You can pre-allocate the
+PCM buffers by loading snd-page-alloc module and write commands to its
+proc file in prior, for example, in the early boot stage like
+<code class="docutils literal notranslate"><span class="pre">/etc/init.d/*.local</span></code> scripts.</p>
+<p>Reading the proc file /proc/drivers/snd-page-alloc shows the current
+usage of page allocation.  In writing, you can send the following
+commands to the snd-page-alloc driver:</p>
+<ul class="simple">
+<li>add VENDOR DEVICE MASK SIZE BUFFERS</li>
+</ul>
+<p>VENDOR and DEVICE are PCI vendor and device IDs.  They take
+integer numbers (0x prefix is needed for the hex).
+MASK is the PCI DMA mask.  Pass 0 if not restricted.
+SIZE is the size of each buffer to allocate.  You can pass
+k and m suffix for KB and MB.  The max number is 16MB.
+BUFFERS is the number of buffers to allocate.  It must be greater
+than 0.  The max number is 4.</p>
+<ul class="simple">
+<li>erase</li>
+</ul>
+<p>This will erase the all pre-allocated buffers which are not in
+use.</p>
+</div>
+<div class="section" id="links-and-addresses">
+<h2>Links and Addresses<a class="headerlink" href="#links-and-addresses" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>ALSA project homepage</dt>
+<dd><a class="reference external" href="http://www.alsa-project.org">http://www.alsa-project.org</a></dd>
+<dt>Kernel Bugzilla</dt>
+<dd><a class="reference external" href="http://bugzilla.kernel.org/">http://bugzilla.kernel.org/</a></dd>
+<dt>ALSA Developers ML</dt>
+<dd><a class="reference external" href="mailto:alsa-devel&#37;&#52;&#48;alsa-project&#46;org">mailto:alsa-devel<span>&#64;</span>alsa-project<span>&#46;</span>org</a></dd>
+<dt>alsa-info.sh script</dt>
+<dd><a class="reference external" href="http://www.alsa-project.org/alsa-info.sh">http://www.alsa-project.org/alsa-info.sh</a></dd>
+</dl>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="hd-audio/index.html" class="btn btn-neutral float-right" title="HD-Audio" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="soc/codec-to-codec.html" class="btn btn-neutral float-left" title="Creating codec to codec dai link for ALSA dapm" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
