@@ -1,0 +1,646 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>1.21. V4L2 async kAPI &mdash; The Linux Kernel 5.2.0+ documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="1.22. V4L2 fwnode kAPI" href="v4l2-fwnode.html" />
+    <link rel="prev" title="1.20. V4L2 Memory to Memory functions and data structures" href="v4l2-mem2mem.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.2.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Linux Media Subsystem Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../media_uapi.html">Linux Media Infrastructure userspace API</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../media_kapi.html">Media subsystem kernel internal API</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="v4l2-core.html">1. Video4Linux devices</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="v4l2-intro.html">1.1. Introduction</a></li>
+<li class="toctree-l4"><a class="reference internal" href="v4l2-intro.html#structure-of-a-v4l-driver">1.2. Structure of a V4L driver</a></li>
+<li class="toctree-l4"><a class="reference internal" href="v4l2-intro.html#structure-of-the-v4l2-framework">1.3. Structure of the V4L2 framework</a></li>
+<li class="toctree-l4"><a class="reference internal" href="v4l2-dev.html">1.4. Video device’ s internal representation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="v4l2-device.html">1.5. V4L2 device instance</a></li>
+<li class="toctree-l4"><a class="reference internal" href="v4l2-fh.html">1.6. V4L2 File handlers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="v4l2-subdev.html">1.7. V4L2 sub-devices</a></li>
+<li class="toctree-l4"><a class="reference internal" href="v4l2-subdev.html#v4l2-sub-device-userspace-api">1.8. V4L2 sub-device userspace API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="v4l2-subdev.html#i2c-sub-device-drivers">1.9. I2C sub-device drivers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="v4l2-subdev.html#v4l2-sub-device-functions-and-data-structures">1.10. V4L2 sub-device functions and data structures</a></li>
+<li class="toctree-l4"><a class="reference internal" href="v4l2-event.html">1.11. V4L2 events</a></li>
+<li class="toctree-l4"><a class="reference internal" href="v4l2-controls.html">1.12. V4L2 Controls</a></li>
+<li class="toctree-l4"><a class="reference internal" href="v4l2-videobuf.html">1.13. Videobuf Framework</a></li>
+<li class="toctree-l4"><a class="reference internal" href="v4l2-videobuf2.html">1.14. V4L2 videobuf2 functions and data structures</a></li>
+<li class="toctree-l4"><a class="reference internal" href="v4l2-clocks.html">1.15. V4L2 clocks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="v4l2-dv-timings.html">1.16. V4L2 DV Timings functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="v4l2-flash-led-class.html">1.17. V4L2 flash functions and data structures</a></li>
+<li class="toctree-l4"><a class="reference internal" href="v4l2-mc.html">1.18. V4L2 Media Controller functions and data structures</a></li>
+<li class="toctree-l4"><a class="reference internal" href="v4l2-mediabus.html">1.19. V4L2 Media Bus functions and data structures</a></li>
+<li class="toctree-l4"><a class="reference internal" href="v4l2-mem2mem.html">1.20. V4L2 Memory to Memory functions and data structures</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">1.21. V4L2 async kAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="v4l2-fwnode.html">1.22. V4L2 fwnode kAPI</a></li>
+<li class="toctree-l4"><a class="reference internal" href="v4l2-rect.html">1.23. V4L2 rect helper functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="v4l2-tuner.html">1.24. Tuner functions and data structures</a></li>
+<li class="toctree-l4"><a class="reference internal" href="v4l2-common.html">1.25. V4L2 common functions and data structures</a></li>
+<li class="toctree-l4"><a class="reference internal" href="v4l2-tveeprom.html">1.26. Hauppauge TV EEPROM functions and data structures</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dtv-core.html">2. Digital TV (DVB) devices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rc-core.html">3. Remote Controller devices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mc-core.html">4. Media Controller devices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cec-core.html">5. CEC Kernel Support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="csi2.html">6. MIPI CSI-2</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../dvb-drivers/index.html">Linux Digital TV driver-specific documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../v4l-drivers/index.html">Video4Linux (V4L)  driver-specific documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cec-drivers/index.html">CEC driver-specific documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../x86/index.html">x86-specific Documentation</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Linux Media Subsystem Documentation</a> &raquo;</li>
+        
+          <li><a href="../media_kapi.html">Media subsystem kernel internal API</a> &raquo;</li>
+        
+          <li><a href="v4l2-core.html">1. Video4Linux devices</a> &raquo;</li>
+        
+      <li>1.21. V4L2 async kAPI</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/media/kapi/v4l2-async.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="v4l2-async-kapi">
+<h1>1.21. V4L2 async kAPI<a class="headerlink" href="#v4l2-async-kapi" title="Permalink to this headline">¶</a></h1>
+<dl class="type">
+<dt id="c.v4l2_async_match_type">
+enum <code class="descname">v4l2_async_match_type</code><a class="headerlink" href="#c.v4l2_async_match_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>type of asynchronous subdevice logic to be used in order to identify a match</p>
+</dd></dl>
+
+<p><strong>Constants</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">V4L2_ASYNC_MATCH_CUSTOM</span></code></dt>
+<dd>Match will use the logic provided by <a class="reference internal" href="v4l2-subdev.html#c.v4l2_async_subdev" title="v4l2_async_subdev"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span>
+<span class="pre">v4l2_async_subdev</span></code></a>.match ops</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">V4L2_ASYNC_MATCH_DEVNAME</span></code></dt>
+<dd>Match will use the device name</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">V4L2_ASYNC_MATCH_I2C</span></code></dt>
+<dd>Match will check for I2C adapter ID and address</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">V4L2_ASYNC_MATCH_FWNODE</span></code></dt>
+<dd>Match will use firmware node</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This enum is used by the asyncrhronous sub-device logic to define the
+algorithm that will be used to match an asynchronous device.</p>
+<dl class="type">
+<dt id="c.v4l2_async_subdev">
+struct <code class="descname">v4l2_async_subdev</code><a class="headerlink" href="#c.v4l2_async_subdev" title="Permalink to this definition">¶</a></dt>
+<dd><p>sub-device descriptor, as known to a bridge</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct v4l2_async_subdev {
+  enum v4l2_async_match_type match_type;
+  union {
+    struct fwnode_handle *fwnode;
+    const char *device_name;
+    struct {
+      int adapter_id;
+      unsigned short address;
+    } i2c;
+    struct {
+      bool (*match)(struct device *dev, struct v4l2_async_subdev *sd);
+      void *priv;
+    } custom;
+  } match;
+  struct list_head list;
+  struct list_head asd_list;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">match_type</span></code></dt>
+<dd>type of match that will be used</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">match</span></code></dt>
+<dd>union of per-bus type matching data sets</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">match.fwnode</span></code></dt>
+<dd>pointer to <code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">fwnode_handle</span></code> to be matched.
+Used if <strong>match_type</strong> is <code class="docutils literal notranslate"><span class="pre">V4L2_ASYNC_MATCH_FWNODE</span></code>.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">match.device_name</span></code></dt>
+<dd>string containing the device name to be matched.
+Used if <strong>match_type</strong> is <code class="docutils literal notranslate"><span class="pre">V4L2_ASYNC_MATCH_DEVNAME</span></code>.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">match.i2c</span></code></dt>
+<dd>embedded struct with I2C parameters to be matched.
+Both <strong>match.i2c.adapter_id</strong> and <strong>match.i2c.address</strong>
+should be matched.
+Used if <strong>match_type</strong> is <code class="docutils literal notranslate"><span class="pre">V4L2_ASYNC_MATCH_I2C</span></code>.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">match.i2c.adapter_id</span></code></dt>
+<dd>I2C adapter ID to be matched.
+Used if <strong>match_type</strong> is <code class="docutils literal notranslate"><span class="pre">V4L2_ASYNC_MATCH_I2C</span></code>.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">match.i2c.address</span></code></dt>
+<dd>I2C address to be matched.
+Used if <strong>match_type</strong> is <code class="docutils literal notranslate"><span class="pre">V4L2_ASYNC_MATCH_I2C</span></code>.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">match.custom</span></code></dt>
+<dd>Driver-specific match criteria.
+Used if <strong>match_type</strong> is <code class="docutils literal notranslate"><span class="pre">V4L2_ASYNC_MATCH_CUSTOM</span></code>.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">match.custom.match</span></code></dt>
+<dd>Driver-specific match function to be used if
+<code class="docutils literal notranslate"><span class="pre">V4L2_ASYNC_MATCH_CUSTOM</span></code>.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">match.custom.priv</span></code></dt>
+<dd>Driver-specific private struct with match parameters
+to be used if <code class="docutils literal notranslate"><span class="pre">V4L2_ASYNC_MATCH_CUSTOM</span></code>.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">list</span></code></dt>
+<dd>used to link struct v4l2_async_subdev objects, waiting to be
+probed, to a notifier-&gt;waiting list</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">asd_list</span></code></dt>
+<dd>used to add struct v4l2_async_subdev objects to the
+master notifier <strong>asd_list</strong></dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>When this struct is used as a member in a driver specific struct,
+the driver specific struct shall contain the <a class="reference internal" href="v4l2-subdev.html#c.v4l2_async_subdev" title="v4l2_async_subdev"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span>
+<span class="pre">v4l2_async_subdev</span></code></a> as its first member.</p>
+<dl class="type">
+<dt id="c.v4l2_async_notifier_operations">
+struct <code class="descname">v4l2_async_notifier_operations</code><a class="headerlink" href="#c.v4l2_async_notifier_operations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Asynchronous V4L2 notifier operations</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct v4l2_async_notifier_operations {
+  int (*bound)(struct v4l2_async_notifier *notifier,struct v4l2_subdev *subdev, struct v4l2_async_subdev *asd);
+  int (*complete)(struct v4l2_async_notifier *notifier);
+  void (*unbind)(struct v4l2_async_notifier *notifier,struct v4l2_subdev *subdev, struct v4l2_async_subdev *asd);
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">bound</span></code></dt>
+<dd>a subdevice driver has successfully probed one of the subdevices</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">complete</span></code></dt>
+<dd>All subdevices have been probed successfully. The complete
+callback is only executed for the root notifier.</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">unbind</span></code></dt>
+<dd>a subdevice is leaving</dd>
+</dl>
+<dl class="type">
+<dt id="c.v4l2_async_notifier">
+struct <code class="descname">v4l2_async_notifier</code><a class="headerlink" href="#c.v4l2_async_notifier" title="Permalink to this definition">¶</a></dt>
+<dd><p>v4l2_device notifier data</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct v4l2_async_notifier {
+  const struct v4l2_async_notifier_operations *ops;
+  struct v4l2_device *v4l2_dev;
+  struct v4l2_subdev *sd;
+  struct v4l2_async_notifier *parent;
+  struct list_head asd_list;
+  struct list_head waiting;
+  struct list_head done;
+  struct list_head list;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">ops</span></code></dt>
+<dd>notifier operations</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">v4l2_dev</span></code></dt>
+<dd>v4l2_device of the root notifier, NULL otherwise</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">sd</span></code></dt>
+<dd>sub-device that registered the notifier, NULL otherwise</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">parent</span></code></dt>
+<dd>parent notifier</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">asd_list</span></code></dt>
+<dd>master list of struct v4l2_async_subdev</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">waiting</span></code></dt>
+<dd>list of struct v4l2_async_subdev, waiting for their drivers</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">done</span></code></dt>
+<dd>list of struct v4l2_subdev, already probed</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">list</span></code></dt>
+<dd>member in a global list of notifiers</dd>
+</dl>
+<dl class="function">
+<dt id="c.v4l2_async_notifier_init">
+void <code class="descname">v4l2_async_notifier_init</code><span class="sig-paren">(</span>struct <a class="reference internal" href="v4l2-subdev.html#c.v4l2_async_notifier" title="v4l2_async_notifier">v4l2_async_notifier</a> *<em>&nbsp;notifier</em><span class="sig-paren">)</span><a class="headerlink" href="#c.v4l2_async_notifier_init" title="Permalink to this definition">¶</a></dt>
+<dd><p>Initialize a notifier.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">v4l2_async_notifier</span> <span class="pre">*</span> <span class="pre">notifier</span></code></dt>
+<dd>pointer to <a class="reference internal" href="v4l2-subdev.html#c.v4l2_async_notifier" title="v4l2_async_notifier"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">v4l2_async_notifier</span></code></a></dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This function initializes the notifier <strong>asd_list</strong>. It must be called
+before the first call to <strong>v4l2_async_notifier_add_subdev</strong>.</p>
+<dl class="function">
+<dt id="c.v4l2_async_notifier_add_subdev">
+int <code class="descname">v4l2_async_notifier_add_subdev</code><span class="sig-paren">(</span>struct <a class="reference internal" href="v4l2-subdev.html#c.v4l2_async_notifier" title="v4l2_async_notifier">v4l2_async_notifier</a> *<em>&nbsp;notifier</em>, struct <a class="reference internal" href="v4l2-subdev.html#c.v4l2_async_subdev" title="v4l2_async_subdev">v4l2_async_subdev</a> *<em>&nbsp;asd</em><span class="sig-paren">)</span><a class="headerlink" href="#c.v4l2_async_notifier_add_subdev" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add an async subdev to the notifier’s master asd list.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">v4l2_async_notifier</span> <span class="pre">*</span> <span class="pre">notifier</span></code></dt>
+<dd>pointer to <a class="reference internal" href="v4l2-subdev.html#c.v4l2_async_notifier" title="v4l2_async_notifier"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">v4l2_async_notifier</span></code></a></dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">v4l2_async_subdev</span> <span class="pre">*</span> <span class="pre">asd</span></code></dt>
+<dd>pointer to <a class="reference internal" href="v4l2-subdev.html#c.v4l2_async_subdev" title="v4l2_async_subdev"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">v4l2_async_subdev</span></code></a></dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Call this function before registering a notifier to link the
+provided asd to the notifiers master <strong>asd_list</strong>.</p>
+<dl class="function">
+<dt id="c.v4l2_async_notifier_add_fwnode_subdev">
+struct <a class="reference internal" href="v4l2-subdev.html#c.v4l2_async_subdev" title="v4l2_async_subdev">v4l2_async_subdev</a> * <code class="descname">v4l2_async_notifier_add_fwnode_subdev</code><span class="sig-paren">(</span>struct <a class="reference internal" href="v4l2-subdev.html#c.v4l2_async_notifier" title="v4l2_async_notifier">v4l2_async_notifier</a> *<em>&nbsp;notifier</em>, struct fwnode_handle *<em>&nbsp;fwnode</em>, unsigned int<em>&nbsp;asd_struct_size</em><span class="sig-paren">)</span><a class="headerlink" href="#c.v4l2_async_notifier_add_fwnode_subdev" title="Permalink to this definition">¶</a></dt>
+<dd><p>Allocate and add a fwnode async subdev to the notifier’s master asd_list.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">v4l2_async_notifier</span> <span class="pre">*</span> <span class="pre">notifier</span></code></dt>
+<dd>pointer to <a class="reference internal" href="v4l2-subdev.html#c.v4l2_async_notifier" title="v4l2_async_notifier"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">v4l2_async_notifier</span></code></a></dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">fwnode_handle</span> <span class="pre">*</span> <span class="pre">fwnode</span></code></dt>
+<dd>fwnode handle of the sub-device to be matched</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">unsigned</span> <span class="pre">int</span> <span class="pre">asd_struct_size</span></code></dt>
+<dd>size of the driver’s async sub-device struct, including
+sizeof(struct v4l2_async_subdev). The <a class="reference internal" href="v4l2-subdev.html#c.v4l2_async_subdev" title="v4l2_async_subdev"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span>
+<span class="pre">v4l2_async_subdev</span></code></a> shall be the first member of
+the driver’s async sub-device struct, i.e. both
+begin at the same memory address.</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Allocate a fwnode-matched asd of size asd_struct_size, and add it
+to the notifiers <strong>asd_list</strong>.</p>
+<dl class="function">
+<dt id="c.v4l2_async_notifier_add_i2c_subdev">
+struct <a class="reference internal" href="v4l2-subdev.html#c.v4l2_async_subdev" title="v4l2_async_subdev">v4l2_async_subdev</a> * <code class="descname">v4l2_async_notifier_add_i2c_subdev</code><span class="sig-paren">(</span>struct <a class="reference internal" href="v4l2-subdev.html#c.v4l2_async_notifier" title="v4l2_async_notifier">v4l2_async_notifier</a> *<em>&nbsp;notifier</em>, int<em>&nbsp;adapter_id</em>, unsigned short<em>&nbsp;address</em>, unsigned int<em>&nbsp;asd_struct_size</em><span class="sig-paren">)</span><a class="headerlink" href="#c.v4l2_async_notifier_add_i2c_subdev" title="Permalink to this definition">¶</a></dt>
+<dd><p>Allocate and add an i2c async subdev to the notifier’s master asd_list.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">v4l2_async_notifier</span> <span class="pre">*</span> <span class="pre">notifier</span></code></dt>
+<dd>pointer to <a class="reference internal" href="v4l2-subdev.html#c.v4l2_async_notifier" title="v4l2_async_notifier"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">v4l2_async_notifier</span></code></a></dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">adapter_id</span></code></dt>
+<dd>I2C adapter ID to be matched</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">unsigned</span> <span class="pre">short</span> <span class="pre">address</span></code></dt>
+<dd>I2C address of sub-device to be matched</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">unsigned</span> <span class="pre">int</span> <span class="pre">asd_struct_size</span></code></dt>
+<dd>size of the driver’s async sub-device struct, including
+sizeof(struct v4l2_async_subdev). The <a class="reference internal" href="v4l2-subdev.html#c.v4l2_async_subdev" title="v4l2_async_subdev"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span>
+<span class="pre">v4l2_async_subdev</span></code></a> shall be the first member of
+the driver’s async sub-device struct, i.e. both
+begin at the same memory address.</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Same as above but for I2C matched sub-devices.</p>
+<dl class="function">
+<dt id="c.v4l2_async_notifier_add_devname_subdev">
+struct <a class="reference internal" href="v4l2-subdev.html#c.v4l2_async_subdev" title="v4l2_async_subdev">v4l2_async_subdev</a> * <code class="descname">v4l2_async_notifier_add_devname_subdev</code><span class="sig-paren">(</span>struct <a class="reference internal" href="v4l2-subdev.html#c.v4l2_async_notifier" title="v4l2_async_notifier">v4l2_async_notifier</a> *<em>&nbsp;notifier</em>, const char *<em>&nbsp;device_name</em>, unsigned int<em>&nbsp;asd_struct_size</em><span class="sig-paren">)</span><a class="headerlink" href="#c.v4l2_async_notifier_add_devname_subdev" title="Permalink to this definition">¶</a></dt>
+<dd><p>Allocate and add a device-name async subdev to the notifier’s master asd_list.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">v4l2_async_notifier</span> <span class="pre">*</span> <span class="pre">notifier</span></code></dt>
+<dd>pointer to <a class="reference internal" href="v4l2-subdev.html#c.v4l2_async_notifier" title="v4l2_async_notifier"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">v4l2_async_notifier</span></code></a></dd>
+<dt><code class="docutils literal notranslate"><span class="pre">const</span> <span class="pre">char</span> <span class="pre">*</span> <span class="pre">device_name</span></code></dt>
+<dd>device name string to be matched</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">unsigned</span> <span class="pre">int</span> <span class="pre">asd_struct_size</span></code></dt>
+<dd>size of the driver’s async sub-device struct, including
+sizeof(struct v4l2_async_subdev). The <a class="reference internal" href="v4l2-subdev.html#c.v4l2_async_subdev" title="v4l2_async_subdev"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span>
+<span class="pre">v4l2_async_subdev</span></code></a> shall be the first member of
+the driver’s async sub-device struct, i.e. both
+begin at the same memory address.</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Same as above but for device-name matched sub-devices.</p>
+<dl class="function">
+<dt id="c.v4l2_async_notifier_register">
+int <code class="descname">v4l2_async_notifier_register</code><span class="sig-paren">(</span>struct <a class="reference internal" href="v4l2-device.html#c.v4l2_device" title="v4l2_device">v4l2_device</a> *<em>&nbsp;v4l2_dev</em>, struct <a class="reference internal" href="v4l2-subdev.html#c.v4l2_async_notifier" title="v4l2_async_notifier">v4l2_async_notifier</a> *<em>&nbsp;notifier</em><span class="sig-paren">)</span><a class="headerlink" href="#c.v4l2_async_notifier_register" title="Permalink to this definition">¶</a></dt>
+<dd><p>registers a subdevice asynchronous notifier</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">v4l2_device</span> <span class="pre">*</span> <span class="pre">v4l2_dev</span></code></dt>
+<dd>pointer to <a class="reference internal" href="v4l2-device.html#c.v4l2_device" title="v4l2_device"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">v4l2_device</span></code></a></dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">v4l2_async_notifier</span> <span class="pre">*</span> <span class="pre">notifier</span></code></dt>
+<dd>pointer to <a class="reference internal" href="v4l2-subdev.html#c.v4l2_async_notifier" title="v4l2_async_notifier"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">v4l2_async_notifier</span></code></a></dd>
+</dl>
+<dl class="function">
+<dt id="c.v4l2_async_subdev_notifier_register">
+int <code class="descname">v4l2_async_subdev_notifier_register</code><span class="sig-paren">(</span>struct <a class="reference internal" href="v4l2-subdev.html#c.v4l2_subdev" title="v4l2_subdev">v4l2_subdev</a> *<em>&nbsp;sd</em>, struct <a class="reference internal" href="v4l2-subdev.html#c.v4l2_async_notifier" title="v4l2_async_notifier">v4l2_async_notifier</a> *<em>&nbsp;notifier</em><span class="sig-paren">)</span><a class="headerlink" href="#c.v4l2_async_subdev_notifier_register" title="Permalink to this definition">¶</a></dt>
+<dd><p>registers a subdevice asynchronous notifier for a sub-device</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">v4l2_subdev</span> <span class="pre">*</span> <span class="pre">sd</span></code></dt>
+<dd>pointer to <a class="reference internal" href="v4l2-subdev.html#c.v4l2_subdev" title="v4l2_subdev"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">v4l2_subdev</span></code></a></dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">v4l2_async_notifier</span> <span class="pre">*</span> <span class="pre">notifier</span></code></dt>
+<dd>pointer to <a class="reference internal" href="v4l2-subdev.html#c.v4l2_async_notifier" title="v4l2_async_notifier"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">v4l2_async_notifier</span></code></a></dd>
+</dl>
+<dl class="function">
+<dt id="c.v4l2_async_notifier_unregister">
+void <code class="descname">v4l2_async_notifier_unregister</code><span class="sig-paren">(</span>struct <a class="reference internal" href="v4l2-subdev.html#c.v4l2_async_notifier" title="v4l2_async_notifier">v4l2_async_notifier</a> *<em>&nbsp;notifier</em><span class="sig-paren">)</span><a class="headerlink" href="#c.v4l2_async_notifier_unregister" title="Permalink to this definition">¶</a></dt>
+<dd><p>unregisters a subdevice asynchronous notifier</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">v4l2_async_notifier</span> <span class="pre">*</span> <span class="pre">notifier</span></code></dt>
+<dd>pointer to <a class="reference internal" href="v4l2-subdev.html#c.v4l2_async_notifier" title="v4l2_async_notifier"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">v4l2_async_notifier</span></code></a></dd>
+</dl>
+<dl class="function">
+<dt id="c.v4l2_async_notifier_cleanup">
+void <code class="descname">v4l2_async_notifier_cleanup</code><span class="sig-paren">(</span>struct <a class="reference internal" href="v4l2-subdev.html#c.v4l2_async_notifier" title="v4l2_async_notifier">v4l2_async_notifier</a> *<em>&nbsp;notifier</em><span class="sig-paren">)</span><a class="headerlink" href="#c.v4l2_async_notifier_cleanup" title="Permalink to this definition">¶</a></dt>
+<dd><p>clean up notifier resources</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">v4l2_async_notifier</span> <span class="pre">*</span> <span class="pre">notifier</span></code></dt>
+<dd>the notifier the resources of which are to be cleaned up</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Release memory resources related to a notifier, including the async
+sub-devices allocated for the purposes of the notifier but not the notifier
+itself. The user is responsible for calling this function to clean up the
+notifier after calling
+<strong>v4l2_async_notifier_add_subdev</strong>,
+<strong>v4l2_async_notifier_parse_fwnode_endpoints</strong> or
+<strong>v4l2_fwnode_reference_parse_sensor_common</strong>.</p>
+<p>There is no harm from calling v4l2_async_notifier_cleanup in other
+cases as long as its memory has been zeroed after it has been
+allocated.</p>
+<dl class="function">
+<dt id="c.v4l2_async_register_subdev">
+int <code class="descname">v4l2_async_register_subdev</code><span class="sig-paren">(</span>struct <a class="reference internal" href="v4l2-subdev.html#c.v4l2_subdev" title="v4l2_subdev">v4l2_subdev</a> *<em>&nbsp;sd</em><span class="sig-paren">)</span><a class="headerlink" href="#c.v4l2_async_register_subdev" title="Permalink to this definition">¶</a></dt>
+<dd><p>registers a sub-device to the asynchronous subdevice framework</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">v4l2_subdev</span> <span class="pre">*</span> <span class="pre">sd</span></code></dt>
+<dd>pointer to <a class="reference internal" href="v4l2-subdev.html#c.v4l2_subdev" title="v4l2_subdev"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">v4l2_subdev</span></code></a></dd>
+</dl>
+<dl class="function">
+<dt id="c.v4l2_async_register_subdev_sensor_common">
+int <code class="descname">v4l2_async_register_subdev_sensor_common</code><span class="sig-paren">(</span>struct <a class="reference internal" href="v4l2-subdev.html#c.v4l2_subdev" title="v4l2_subdev">v4l2_subdev</a> *<em>&nbsp;sd</em><span class="sig-paren">)</span><a class="headerlink" href="#c.v4l2_async_register_subdev_sensor_common" title="Permalink to this definition">¶</a></dt>
+<dd><p>registers a sensor sub-device to the asynchronous sub-device framework and parse set up common sensor related devices</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">v4l2_subdev</span> <span class="pre">*</span> <span class="pre">sd</span></code></dt>
+<dd>pointer to struct <a class="reference internal" href="v4l2-subdev.html#c.v4l2_subdev" title="v4l2_subdev"><code class="xref c c-type docutils literal notranslate"><span class="pre">v4l2_subdev</span></code></a></dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This function is just like <a class="reference internal" href="v4l2-subdev.html#c.v4l2_async_register_subdev" title="v4l2_async_register_subdev"><code class="xref c c-func docutils literal notranslate"><span class="pre">v4l2_async_register_subdev()</span></code></a> with the exception
+that calling it will also parse firmware interfaces for remote references
+using <a class="reference internal" href="v4l2-fwnode.html#c.v4l2_async_notifier_parse_fwnode_sensor_common" title="v4l2_async_notifier_parse_fwnode_sensor_common"><code class="xref c c-func docutils literal notranslate"><span class="pre">v4l2_async_notifier_parse_fwnode_sensor_common()</span></code></a> and registers the
+async sub-devices. The sub-device is similarly unregistered by calling
+<a class="reference internal" href="v4l2-subdev.html#c.v4l2_async_unregister_subdev" title="v4l2_async_unregister_subdev"><code class="xref c c-func docutils literal notranslate"><span class="pre">v4l2_async_unregister_subdev()</span></code></a>.</p>
+<p>While registered, the subdev module is marked as in-use.</p>
+<p>An error is returned if the module is no longer loaded on any attempts
+to register it.</p>
+<dl class="function">
+<dt id="c.v4l2_async_unregister_subdev">
+void <code class="descname">v4l2_async_unregister_subdev</code><span class="sig-paren">(</span>struct <a class="reference internal" href="v4l2-subdev.html#c.v4l2_subdev" title="v4l2_subdev">v4l2_subdev</a> *<em>&nbsp;sd</em><span class="sig-paren">)</span><a class="headerlink" href="#c.v4l2_async_unregister_subdev" title="Permalink to this definition">¶</a></dt>
+<dd><p>unregisters a sub-device to the asynchronous subdevice framework</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">v4l2_subdev</span> <span class="pre">*</span> <span class="pre">sd</span></code></dt>
+<dd>pointer to <a class="reference internal" href="v4l2-subdev.html#c.v4l2_subdev" title="v4l2_subdev"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">v4l2_subdev</span></code></a></dd>
+</dl>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="v4l2-fwnode.html" class="btn btn-neutral float-right" title="1.22. V4L2 fwnode kAPI" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="v4l2-mem2mem.html" class="btn btn-neutral float-left" title="1.20. V4L2 Memory to Memory functions and data structures" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

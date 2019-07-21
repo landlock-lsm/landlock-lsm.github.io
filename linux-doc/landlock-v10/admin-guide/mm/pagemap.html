@@ -1,0 +1,521 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Examining Process Page Tables &mdash; The Linux Kernel 5.2.0+ documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Soft-Dirty PTEs" href="soft-dirty.html" />
+    <link rel="prev" title="NUMA Locality" href="numaperf.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.2.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">The Linux kernel user’s and administrator’s guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../README.html">Linux kernel release 5.x &lt;http://kernel.org/&gt;</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../kernel-parameters.html">The kernel’s command-line parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../devices.html">Linux allocated devices (4.x+ version)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../hw-vuln/index.html">Hardware vulnerabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reporting-bugs.html">Reporting bugs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../security-bugs.html">Security bugs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../bug-hunting.html">Bug hunting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../bug-bisect.html">Bisecting a bug</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tainted-kernels.html">Tainted kernels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ramoops.html">Ramoops oops/panic logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dynamic-debug-howto.html">Dynamic debug</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../init.html">Explaining the dreaded “No init found.” boot hang message</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sysfs-rules.html">Rules on how to access information in sysfs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../initrd.html">Using the initial RAM disk (initrd)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cgroup-v2.html">Control Group v2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../serial-console.html">Linux Serial Console</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../braille-console.html">Linux Braille Console</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../parport.html">Parport</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../md.html">RAID arrays</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../module-signing.html">Kernel module signing facility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sysrq.html">Linux Magic System Request Key Hacks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../unicode.html">Unicode support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../vga-softcursor.html">Software cursor for VGA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../binfmt-misc.html">Kernel Support for miscellaneous (your favourite) Binary Formats v1.1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mono.html">Mono(tm) Binary Kernel Support for Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../java.html">Java(tm) Binary Kernel Support for Linux v1.03</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ras.html">Reliability, Availability and Serviceability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../bcache.html">A block layer cache (bcache)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ext4.html">ext4 General Information</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../binderfs.html">The Android binderfs Filesystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pm/index.html">Power Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../thunderbolt.html">Thunderbolt</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../LSM/index.html">Linux Security Module Usage</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">Memory Management</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="concepts.html">Concepts overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hugetlbpage.html">HugeTLB Pages</a></li>
+<li class="toctree-l3"><a class="reference internal" href="idle_page_tracking.html">Idle Page Tracking</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ksm.html">Kernel Samepage Merging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="memory-hotplug.html">Memory Hotplug</a></li>
+<li class="toctree-l3"><a class="reference internal" href="numa_memory_policy.html">NUMA Memory Policy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="numaperf.html">NUMA Locality</a></li>
+<li class="toctree-l3"><a class="reference internal" href="numaperf.html#numa-performance">NUMA Performance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="numaperf.html#numa-cache">NUMA Cache</a></li>
+<li class="toctree-l3"><a class="reference internal" href="numaperf.html#see-also">See Also</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Examining Process Page Tables</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#short-descriptions-to-the-page-flags">Short descriptions to the page flags</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#using-pagemap-to-do-something-useful">Using pagemap to do something useful</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#other-notes">Other notes</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="soft-dirty.html">Soft-Dirty PTEs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="transhuge.html">Transparent Hugepage Support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="userfaultfd.html">Userfaultfd</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../perf-security.html">Perf Events and tool security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../acpi/index.html">ACPI Support</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../media/index.html">Linux Media Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../x86/index.html">x86-specific Documentation</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">The Linux kernel user’s and administrator’s guide</a> &raquo;</li>
+        
+          <li><a href="index.html">Memory Management</a> &raquo;</li>
+        
+      <li>Examining Process Page Tables</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/admin-guide/mm/pagemap.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="examining-process-page-tables">
+<span id="pagemap"></span><h1>Examining Process Page Tables<a class="headerlink" href="#examining-process-page-tables" title="Permalink to this headline">¶</a></h1>
+<p>pagemap is a new (as of 2.6.25) set of interfaces in the kernel that allow
+userspace programs to examine the page tables and related information by
+reading files in <code class="docutils literal notranslate"><span class="pre">/proc</span></code>.</p>
+<p>There are four components to pagemap:</p>
+<blockquote>
+<div><ul>
+<li><p class="first"><code class="docutils literal notranslate"><span class="pre">/proc/pid/pagemap</span></code>.  This file lets a userspace process find out which
+physical frame each virtual page is mapped to.  It contains one 64-bit
+value for each virtual page, containing the following data (from
+<code class="docutils literal notranslate"><span class="pre">fs/proc/task_mmu.c</span></code>, above pagemap_read):</p>
+<blockquote>
+<div><ul class="simple">
+<li>Bits 0-54  page frame number (PFN) if present</li>
+<li>Bits 0-4   swap type if swapped</li>
+<li>Bits 5-54  swap offset if swapped</li>
+<li>Bit  55    pte is soft-dirty (see
+<a class="reference internal" href="soft-dirty.html#soft-dirty"><span class="std std-ref">Documentation/admin-guide/mm/soft-dirty.rst</span></a>)</li>
+<li>Bit  56    page exclusively mapped (since 4.2)</li>
+<li>Bits 57-60 zero</li>
+<li>Bit  61    page is file-page or shared-anon (since 3.5)</li>
+<li>Bit  62    page swapped</li>
+<li>Bit  63    page present</li>
+</ul>
+</div></blockquote>
+<p>Since Linux 4.0 only users with the CAP_SYS_ADMIN capability can get PFNs.
+In 4.0 and 4.1 opens by unprivileged fail with -EPERM.  Starting from
+4.2 the PFN field is zeroed if the user does not have CAP_SYS_ADMIN.
+Reason: information about PFNs helps in exploiting Rowhammer vulnerability.</p>
+<p>If the page is not present but in swap, then the PFN contains an
+encoding of the swap file number and the page’s offset into the
+swap. Unmapped pages return a null PFN. This allows determining
+precisely which pages are mapped (or in swap) and comparing mapped
+pages between processes.</p>
+<p>Efficient users of this interface will use <code class="docutils literal notranslate"><span class="pre">/proc/pid/maps</span></code> to
+determine which areas of memory are actually mapped and llseek to
+skip over unmapped regions.</p>
+</li>
+<li><p class="first"><code class="docutils literal notranslate"><span class="pre">/proc/kpagecount</span></code>.  This file contains a 64-bit count of the number of
+times each page is mapped, indexed by PFN.</p>
+</li>
+</ul>
+</div></blockquote>
+<p>The page-types tool in the tools/vm directory can be used to query the
+number of times a page is mapped.</p>
+<blockquote>
+<div><ul>
+<li><p class="first"><code class="docutils literal notranslate"><span class="pre">/proc/kpageflags</span></code>.  This file contains a 64-bit set of flags for each
+page, indexed by PFN.</p>
+<p>The flags are (from <code class="docutils literal notranslate"><span class="pre">fs/proc/page.c</span></code>, above kpageflags_read):</p>
+<blockquote>
+<div><ol class="arabic simple" start="0">
+<li>LOCKED</li>
+<li>ERROR</li>
+<li>REFERENCED</li>
+<li>UPTODATE</li>
+<li>DIRTY</li>
+<li>LRU</li>
+<li>ACTIVE</li>
+<li>SLAB</li>
+<li>WRITEBACK</li>
+<li>RECLAIM</li>
+<li>BUDDY</li>
+<li>MMAP</li>
+<li>ANON</li>
+<li>SWAPCACHE</li>
+<li>SWAPBACKED</li>
+<li>COMPOUND_HEAD</li>
+<li>COMPOUND_TAIL</li>
+<li>HUGE</li>
+<li>UNEVICTABLE</li>
+<li>HWPOISON</li>
+<li>NOPAGE</li>
+<li>KSM</li>
+<li>THP</li>
+<li>OFFLINE</li>
+<li>ZERO_PAGE</li>
+<li>IDLE</li>
+<li>PGTABLE</li>
+</ol>
+</div></blockquote>
+</li>
+<li><p class="first"><code class="docutils literal notranslate"><span class="pre">/proc/kpagecgroup</span></code>.  This file contains a 64-bit inode number of the
+memory cgroup each page is charged to, indexed by PFN. Only available when
+CONFIG_MEMCG is set.</p>
+</li>
+</ul>
+</div></blockquote>
+<div class="section" id="short-descriptions-to-the-page-flags">
+<h2>Short descriptions to the page flags<a class="headerlink" href="#short-descriptions-to-the-page-flags" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>0 - LOCKED</dt>
+<dd>page is being locked for exclusive access, e.g. by undergoing read/write IO</dd>
+<dt>7 - SLAB</dt>
+<dd>page is managed by the SLAB/SLOB/SLUB/SLQB kernel memory allocator
+When compound page is used, SLUB/SLQB will only set this flag on the head
+page; SLOB will not flag it at all.</dd>
+<dt>10 - BUDDY</dt>
+<dd>a free memory block managed by the buddy system allocator
+The buddy system organizes free memory in blocks of various orders.
+An order N block has 2^N physically contiguous pages, with the BUDDY flag
+set for and _only_ for the first page.</dd>
+<dt>15 - COMPOUND_HEAD</dt>
+<dd>A compound page with order N consists of 2^N physically contiguous pages.
+A compound page with order 2 takes the form of “HTTT”, where H donates its
+head page and T donates its tail page(s).  The major consumers of compound
+pages are hugeTLB pages
+(<a class="reference internal" href="hugetlbpage.html#hugetlbpage"><span class="std std-ref">Documentation/admin-guide/mm/hugetlbpage.rst</span></a>),
+the SLUB etc.  memory allocators and various device drivers.
+However in this interface, only huge/giga pages are made visible
+to end users.</dd>
+<dt>16 - COMPOUND_TAIL</dt>
+<dd>A compound page tail (see description above).</dd>
+<dt>17 - HUGE</dt>
+<dd>this is an integral part of a HugeTLB page</dd>
+<dt>19 - HWPOISON</dt>
+<dd>hardware detected memory corruption on this page: don’t touch the data!</dd>
+<dt>20 - NOPAGE</dt>
+<dd>no page frame exists at the requested address</dd>
+<dt>21 - KSM</dt>
+<dd>identical memory pages dynamically shared between one or more processes</dd>
+<dt>22 - THP</dt>
+<dd>contiguous pages which construct transparent hugepages</dd>
+<dt>23 - OFFLINE</dt>
+<dd>page is logically offline</dd>
+<dt>24 - ZERO_PAGE</dt>
+<dd>zero page for pfn_zero or huge_zero page</dd>
+<dt>25 - IDLE</dt>
+<dd>page has not been accessed since it was marked idle (see
+<a class="reference internal" href="idle_page_tracking.html#idle-page-tracking"><span class="std std-ref">Documentation/admin-guide/mm/idle_page_tracking.rst</span></a>).
+Note that this flag may be stale in case the page was accessed via
+a PTE. To make sure the flag is up-to-date one has to read
+<code class="docutils literal notranslate"><span class="pre">/sys/kernel/mm/page_idle/bitmap</span></code> first.</dd>
+<dt>26 - PGTABLE</dt>
+<dd>page is in use as a page table</dd>
+</dl>
+<div class="section" id="io-related-page-flags">
+<h3>IO related page flags<a class="headerlink" href="#io-related-page-flags" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt>1 - ERROR</dt>
+<dd>IO error occurred</dd>
+<dt>3 - UPTODATE</dt>
+<dd>page has up-to-date data
+ie. for file backed page: (in-memory data revision &gt;= on-disk one)</dd>
+<dt>4 - DIRTY</dt>
+<dd>page has been written to, hence contains new data
+i.e. for file backed page: (in-memory data revision &gt;  on-disk one)</dd>
+<dt>8 - WRITEBACK</dt>
+<dd>page is being synced to disk</dd>
+</dl>
+</div>
+<div class="section" id="lru-related-page-flags">
+<h3>LRU related page flags<a class="headerlink" href="#lru-related-page-flags" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt>5 - LRU</dt>
+<dd>page is in one of the LRU lists</dd>
+<dt>6 - ACTIVE</dt>
+<dd>page is in the active LRU list</dd>
+<dt>18 - UNEVICTABLE</dt>
+<dd>page is in the unevictable (non-)LRU list It is somehow pinned and
+not a candidate for LRU page reclaims, e.g. ramfs pages,
+shmctl(SHM_LOCK) and mlock() memory segments</dd>
+<dt>2 - REFERENCED</dt>
+<dd>page has been referenced since last LRU list enqueue/requeue</dd>
+<dt>9 - RECLAIM</dt>
+<dd>page will be reclaimed soon after its pageout IO completed</dd>
+<dt>11 - MMAP</dt>
+<dd>a memory mapped page</dd>
+<dt>12 - ANON</dt>
+<dd>a memory mapped page that is not part of a file</dd>
+<dt>13 - SWAPCACHE</dt>
+<dd>page is mapped to swap space, i.e. has an associated swap entry</dd>
+<dt>14 - SWAPBACKED</dt>
+<dd>page is backed by swap/RAM</dd>
+</dl>
+<p>The page-types tool in the tools/vm directory can be used to query the
+above flags.</p>
+</div>
+</div>
+<div class="section" id="using-pagemap-to-do-something-useful">
+<h2>Using pagemap to do something useful<a class="headerlink" href="#using-pagemap-to-do-something-useful" title="Permalink to this headline">¶</a></h2>
+<p>The general procedure for using pagemap to find out about a process’ memory
+usage goes like this:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li>Read <code class="docutils literal notranslate"><span class="pre">/proc/pid/maps</span></code> to determine which parts of the memory space are
+mapped to what.</li>
+<li>Select the maps you are interested in – all of them, or a particular
+library, or the stack or the heap, etc.</li>
+<li>Open <code class="docutils literal notranslate"><span class="pre">/proc/pid/pagemap</span></code> and seek to the pages you would like to examine.</li>
+<li>Read a u64 for each page from pagemap.</li>
+<li>Open <code class="docutils literal notranslate"><span class="pre">/proc/kpagecount</span></code> and/or <code class="docutils literal notranslate"><span class="pre">/proc/kpageflags</span></code>.  For each PFN you
+just read, seek to that entry in the file, and read the data you want.</li>
+</ol>
+</div></blockquote>
+<p>For example, to find the “unique set size” (USS), which is the amount of
+memory that a process is using that is not shared with any other process,
+you can go through every map in the process, find the PFNs, look those up
+in kpagecount, and tally up the number of pages that are only referenced
+once.</p>
+</div>
+<div class="section" id="other-notes">
+<h2>Other notes<a class="headerlink" href="#other-notes" title="Permalink to this headline">¶</a></h2>
+<p>Reading from any of the files will return -EINVAL if you are not starting
+the read on an 8-byte boundary (e.g., if you sought an odd number of bytes
+into the file), or if the size of the read is not a multiple of 8 bytes.</p>
+<p>Before Linux 3.11 pagemap bits 55-60 were used for “page-shift” (which is
+always 12 at most architectures). Since Linux 3.11 their meaning changes
+after first clear of soft-dirty bits. Since Linux 4.2 they are used for
+flags unconditionally.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="soft-dirty.html" class="btn btn-neutral float-right" title="Soft-Dirty PTEs" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="numaperf.html" class="btn btn-neutral float-left" title="NUMA Locality" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

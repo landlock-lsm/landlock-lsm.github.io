@@ -1,0 +1,717 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>The Linux Hardware Monitoring kernel API &mdash; The Linux Kernel 5.2.0+ documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="PMBus core driver and internal API" href="pmbus-core.html" />
+    <link rel="prev" title="Linux Hardware Monitoring" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.2.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../media/index.html">Linux Media Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Linux Hardware Monitoring</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">The Linux Hardware Monitoring kernel API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-api">The API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#using-devm-hwmon-device-register-with-info">Using devm_hwmon_device_register_with_info()</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#driver-callback-functions">Driver callback functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#driver-provided-sysfs-attributes">Driver-provided sysfs attributes</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="pmbus-core.html">PMBus core driver and internal API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="submitting-patches.html">How to Get Your Patch Accepted Into the Hwmon Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sysfs-interface.html">Naming and data format standards for sysfs files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userspace-tools.html">Userspace tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#hardware-monitoring-kernel-drivers">Hardware Monitoring Kernel Drivers</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Linux Hardware Monitoring</a> &raquo;</li>
+        
+      <li>The Linux Hardware Monitoring kernel API</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/hwmon/hwmon-kernel-api.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="the-linux-hardware-monitoring-kernel-api">
+<h1>The Linux Hardware Monitoring kernel API<a class="headerlink" href="#the-linux-hardware-monitoring-kernel-api" title="Permalink to this headline">¶</a></h1>
+<p>Guenter Roeck</p>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>This document describes the API that can be used by hardware monitoring
+drivers that want to use the hardware monitoring framework.</p>
+<p>This document does not describe what a hardware monitoring (hwmon) Driver or
+Device is. It also does not describe the API which can be used by user space
+to communicate with a hardware monitoring device. If you want to know this
+then please read the following file: Documentation/hwmon/sysfs-interface.rst.</p>
+<p>For additional guidelines on how to write and improve hwmon drivers, please
+also read Documentation/hwmon/submitting-patches.rst.</p>
+</div>
+<div class="section" id="the-api">
+<h2>The API<a class="headerlink" href="#the-api" title="Permalink to this headline">¶</a></h2>
+<p>Each hardware monitoring driver must #include &lt;linux/hwmon.h&gt; and, in most
+cases, &lt;linux/hwmon-sysfs.h&gt;. linux/hwmon.h declares the following
+register/unregister functions:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct device *
+hwmon_device_register_with_groups(struct device *dev, const char *name,
+                                  void *drvdata,
+                                  const struct attribute_group **groups);
+
+struct device *
+devm_hwmon_device_register_with_groups(struct device *dev,
+                                       const char *name, void *drvdata,
+                                       const struct attribute_group **groups);
+
+struct device *
+hwmon_device_register_with_info(struct device *dev,
+                                const char *name, void *drvdata,
+                                const struct hwmon_chip_info *info,
+                                const struct attribute_group **extra_groups);
+
+struct device *
+devm_hwmon_device_register_with_info(struct device *dev,
+                                     const char *name,
+                                     void *drvdata,
+                                     const struct hwmon_chip_info *info,
+                                     const struct attribute_group **extra_groups);
+
+void hwmon_device_unregister(struct device *dev);
+
+void devm_hwmon_device_unregister(struct device *dev);
+</pre></div>
+</div>
+<p>hwmon_device_register_with_groups registers a hardware monitoring device.
+The first parameter of this function is a pointer to the parent device.
+The name parameter is a pointer to the hwmon device name. The registration
+function wil create a name sysfs attribute pointing to this name.
+The drvdata parameter is the pointer to the local driver data.
+hwmon_device_register_with_groups will attach this pointer to the newly
+allocated hwmon device. The pointer can be retrieved by the driver using
+dev_get_drvdata() on the hwmon device pointer. The groups parameter is
+a pointer to a list of sysfs attribute groups. The list must be NULL terminated.
+hwmon_device_register_with_groups creates the hwmon device with name attribute
+as well as all sysfs attributes attached to the hwmon device.
+This function returns a pointer to the newly created hardware monitoring device
+or PTR_ERR for failure.</p>
+<p>devm_hwmon_device_register_with_groups is similar to
+hwmon_device_register_with_groups. However, it is device managed, meaning the
+hwmon device does not have to be removed explicitly by the removal function.</p>
+<p>hwmon_device_register_with_info is the most comprehensive and preferred means
+to register a hardware monitoring device. It creates the standard sysfs
+attributes in the hardware monitoring core, letting the driver focus on reading
+from and writing to the chip instead of having to bother with sysfs attributes.
+The parent device parameter cannot be NULL with non-NULL chip info. Its
+parameters are described in more detail below.</p>
+<p>devm_hwmon_device_register_with_info is similar to
+hwmon_device_register_with_info. However, it is device managed, meaning the
+hwmon device does not have to be removed explicitly by the removal function.</p>
+<p>hwmon_device_unregister deregisters a registered hardware monitoring device.
+The parameter of this function is the pointer to the registered hardware
+monitoring device structure. This function must be called from the driver
+remove function if the hardware monitoring device was registered with
+hwmon_device_register_with_groups or hwmon_device_register_with_info.</p>
+<p>devm_hwmon_device_unregister does not normally have to be called. It is only
+needed for error handling, and only needed if the driver probe fails after
+the call to devm_hwmon_device_register_with_groups or
+hwmon_device_register_with_info and if the automatic (device managed)
+removal would be too late.</p>
+<p>All supported hwmon device registration functions only accept valid device
+names. Device names including invalid characters (whitespace, ‘*’, or ‘-‘)
+will be rejected. The ‘name’ parameter is mandatory.</p>
+</div>
+<div class="section" id="using-devm-hwmon-device-register-with-info">
+<h2>Using devm_hwmon_device_register_with_info()<a class="headerlink" href="#using-devm-hwmon-device-register-with-info" title="Permalink to this headline">¶</a></h2>
+<p>hwmon_device_register_with_info() registers a hardware monitoring device.
+The parameters to this function are</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><cite>struct device *dev</cite></td>
+<td>Pointer to parent device</td>
+</tr>
+<tr class="row-even"><td><cite>const char *name</cite></td>
+<td>Device name</td>
+</tr>
+<tr class="row-odd"><td><cite>void *drvdata</cite></td>
+<td>Driver private data</td>
+</tr>
+<tr class="row-even"><td><cite>const struct hwmon_chip_info *info</cite></td>
+<td>Pointer to chip description.</td>
+</tr>
+<tr class="row-odd"><td><cite>const struct attribute_group **extra_groups</cite></td>
+<td>Null-terminated list of additional non-standard
+sysfs attribute groups.</td>
+</tr>
+</tbody>
+</table>
+<p>This function returns a pointer to the created hardware monitoring device
+on success and a negative error code for failure.</p>
+<p>The hwmon_chip_info structure looks as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct hwmon_chip_info {
+        const struct hwmon_ops *ops;
+        const struct hwmon_channel_info **info;
+};
+</pre></div>
+</div>
+<p>It contains the following fields:</p>
+<ul class="simple">
+<li><dl class="first docutils">
+<dt>ops:</dt>
+<dd>Pointer to device operations.</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>info:</dt>
+<dd>NULL-terminated list of device channel descriptors.</dd>
+</dl>
+</li>
+</ul>
+<p>The list of hwmon operations is defined as:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct hwmon_ops {
+      umode_t (*is_visible)(const void *, enum hwmon_sensor_types type,
+                            u32 attr, int);
+      int (*read)(struct device *, enum hwmon_sensor_types type,
+                  u32 attr, int, long *);
+      int (*write)(struct device *, enum hwmon_sensor_types type,
+                   u32 attr, int, long);
+};
+</pre></div>
+</div>
+<p>It defines the following operations.</p>
+<ul class="simple">
+<li><dl class="first docutils">
+<dt>is_visible:</dt>
+<dd>Pointer to a function to return the file mode for each supported
+attribute. This function is mandatory.</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>read:</dt>
+<dd>Pointer to a function for reading a value from the chip. This function
+is optional, but must be provided if any readable attributes exist.</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>write:</dt>
+<dd>Pointer to a function for writing a value to the chip. This function is
+optional, but must be provided if any writeable attributes exist.</dd>
+</dl>
+</li>
+</ul>
+<p>Each sensor channel is described with struct hwmon_channel_info, which is
+defined as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct hwmon_channel_info {
+        enum hwmon_sensor_types type;
+        u32 *config;
+};
+</pre></div>
+</div>
+<p>It contains following fields:</p>
+<ul>
+<li><dl class="first docutils">
+<dt>type:</dt>
+<dd><p class="first">The hardware monitoring sensor type.</p>
+<p>Supported sensor types are</p>
+<blockquote class="last">
+<div><table border="1" class="docutils">
+<colgroup>
+<col width="26%" />
+<col width="74%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>hwmon_chip</td>
+<td>A virtual sensor type, used to describe attributes
+which are not bound to a specific input or output</td>
+</tr>
+<tr class="row-even"><td>hwmon_temp</td>
+<td>Temperature sensor</td>
+</tr>
+<tr class="row-odd"><td>hwmon_in</td>
+<td>Voltage sensor</td>
+</tr>
+<tr class="row-even"><td>hwmon_curr</td>
+<td>Current sensor</td>
+</tr>
+<tr class="row-odd"><td>hwmon_power</td>
+<td>Power sensor</td>
+</tr>
+<tr class="row-even"><td>hwmon_energy</td>
+<td>Energy sensor</td>
+</tr>
+<tr class="row-odd"><td>hwmon_humidity</td>
+<td>Humidity sensor</td>
+</tr>
+<tr class="row-even"><td>hwmon_fan</td>
+<td>Fan speed sensor</td>
+</tr>
+<tr class="row-odd"><td>hwmon_pwm</td>
+<td>PWM control</td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt>config:</dt>
+<dd><p class="first last">Pointer to a 0-terminated list of configuration values for each
+sensor of the given type. Each value is a combination of bit values
+describing the attributes supposed by a single sensor.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>As an example, here is the complete description file for a LM75 compatible
+sensor chip. The chip has a single temperature sensor. The driver wants to
+register with the thermal subsystem (HWMON_C_REGISTER_TZ), and it supports
+the update_interval attribute (HWMON_C_UPDATE_INTERVAL). The chip supports
+reading the temperature (HWMON_T_INPUT), it has a maximum temperature
+register (HWMON_T_MAX) as well as a maximum temperature hysteresis register
+(HWMON_T_MAX_HYST):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>static const u32 lm75_chip_config[] = {
+        HWMON_C_REGISTER_TZ | HWMON_C_UPDATE_INTERVAL,
+        0
+};
+
+static const struct hwmon_channel_info lm75_chip = {
+        .type = hwmon_chip,
+        .config = lm75_chip_config,
+};
+
+static const u32 lm75_temp_config[] = {
+        HWMON_T_INPUT | HWMON_T_MAX | HWMON_T_MAX_HYST,
+        0
+};
+
+static const struct hwmon_channel_info lm75_temp = {
+        .type = hwmon_temp,
+        .config = lm75_temp_config,
+};
+
+static const struct hwmon_channel_info *lm75_info[] = {
+        &amp;lm75_chip,
+        &amp;lm75_temp,
+        NULL
+};
+
+The HWMON_CHANNEL_INFO() macro can and should be used when possible.
+With this macro, the above example can be simplified to
+
+static const struct hwmon_channel_info *lm75_info[] = {
+        HWMON_CHANNEL_INFO(chip,
+                        HWMON_C_REGISTER_TZ | HWMON_C_UPDATE_INTERVAL),
+        HWMON_CHANNEL_INFO(temp,
+                        HWMON_T_INPUT | HWMON_T_MAX | HWMON_T_MAX_HYST),
+        NULL
+};
+
+The remaining declarations are as follows.
+
+static const struct hwmon_ops lm75_hwmon_ops = {
+        .is_visible = lm75_is_visible,
+        .read = lm75_read,
+        .write = lm75_write,
+};
+
+static const struct hwmon_chip_info lm75_chip_info = {
+        .ops = &amp;lm75_hwmon_ops,
+        .info = lm75_info,
+};
+</pre></div>
+</div>
+<p>A complete list of bit values indicating individual attribute support
+is defined in include/linux/hwmon.h. Definition prefixes are as follows.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="23%" />
+<col width="77%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>HWMON_C_xxxx</td>
+<td>Chip attributes, for use with hwmon_chip.</td>
+</tr>
+<tr class="row-even"><td>HWMON_T_xxxx</td>
+<td>Temperature attributes, for use with hwmon_temp.</td>
+</tr>
+<tr class="row-odd"><td>HWMON_I_xxxx</td>
+<td>Voltage attributes, for use with hwmon_in.</td>
+</tr>
+<tr class="row-even"><td>HWMON_C_xxxx</td>
+<td>Current attributes, for use with hwmon_curr.
+Notice the prefix overlap with chip attributes.</td>
+</tr>
+<tr class="row-odd"><td>HWMON_P_xxxx</td>
+<td>Power attributes, for use with hwmon_power.</td>
+</tr>
+<tr class="row-even"><td>HWMON_E_xxxx</td>
+<td>Energy attributes, for use with hwmon_energy.</td>
+</tr>
+<tr class="row-odd"><td>HWMON_H_xxxx</td>
+<td>Humidity attributes, for use with hwmon_humidity.</td>
+</tr>
+<tr class="row-even"><td>HWMON_F_xxxx</td>
+<td>Fan speed attributes, for use with hwmon_fan.</td>
+</tr>
+<tr class="row-odd"><td>HWMON_PWM_xxxx</td>
+<td>PWM control attributes, for use with hwmon_pwm.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="driver-callback-functions">
+<h2>Driver callback functions<a class="headerlink" href="#driver-callback-functions" title="Permalink to this headline">¶</a></h2>
+<p>Each driver provides is_visible, read, and write functions. Parameters
+and return values for those functions are as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>umode_t is_visible_func(const void *data, enum hwmon_sensor_types type,
+                        u32 attr, int channel)
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>Parameters:</dt>
+<dd><dl class="first last docutils">
+<dt>data:</dt>
+<dd>Pointer to device private data structure.</dd>
+<dt>type:</dt>
+<dd>The sensor type.</dd>
+<dt>attr:</dt>
+<dd>Attribute identifier associated with a specific attribute.
+For example, the attribute value for HWMON_T_INPUT would be
+hwmon_temp_input. For complete mappings of bit fields to
+attribute values please see include/linux/hwmon.h.</dd>
+<dt>channel:</dt>
+<dd>The sensor channel number.</dd>
+</dl>
+</dd>
+<dt>Return value:</dt>
+<dd>The file mode for this attribute. Typically, this will be 0 (the
+attribute will not be created), S_IRUGO, or ‘S_IRUGO | S_IWUSR’.</dd>
+</dl>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int read_func(struct device *dev, enum hwmon_sensor_types type,
+              u32 attr, int channel, long *val)
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>Parameters:</dt>
+<dd><dl class="first last docutils">
+<dt>dev:</dt>
+<dd>Pointer to the hardware monitoring device.</dd>
+<dt>type:</dt>
+<dd>The sensor type.</dd>
+<dt>attr:</dt>
+<dd>Attribute identifier associated with a specific attribute.
+For example, the attribute value for HWMON_T_INPUT would be
+hwmon_temp_input. For complete mappings please see
+include/linux/hwmon.h.</dd>
+<dt>channel:</dt>
+<dd>The sensor channel number.</dd>
+<dt>val:</dt>
+<dd>Pointer to attribute value.</dd>
+</dl>
+</dd>
+<dt>Return value:</dt>
+<dd>0 on success, a negative error number otherwise.</dd>
+</dl>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int write_func(struct device *dev, enum hwmon_sensor_types type,
+               u32 attr, int channel, long val)
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>Parameters:</dt>
+<dd><dl class="first last docutils">
+<dt>dev:</dt>
+<dd>Pointer to the hardware monitoring device.</dd>
+<dt>type:</dt>
+<dd>The sensor type.</dd>
+<dt>attr:</dt>
+<dd>Attribute identifier associated with a specific attribute.
+For example, the attribute value for HWMON_T_INPUT would be
+hwmon_temp_input. For complete mappings please see
+include/linux/hwmon.h.</dd>
+<dt>channel:</dt>
+<dd>The sensor channel number.</dd>
+<dt>val:</dt>
+<dd>The value to write to the chip.</dd>
+</dl>
+</dd>
+<dt>Return value:</dt>
+<dd>0 on success, a negative error number otherwise.</dd>
+</dl>
+</div>
+<div class="section" id="driver-provided-sysfs-attributes">
+<h2>Driver-provided sysfs attributes<a class="headerlink" href="#driver-provided-sysfs-attributes" title="Permalink to this headline">¶</a></h2>
+<p>If the hardware monitoring device is registered with
+hwmon_device_register_with_info or devm_hwmon_device_register_with_info,
+it is most likely not necessary to provide sysfs attributes. Only additional
+non-standard sysfs attributes need to be provided when one of those registration
+functions is used.</p>
+<p>The header file linux/hwmon-sysfs.h provides a number of useful macros to
+declare and use hardware monitoring sysfs attributes.</p>
+<p>In many cases, you can use the exsting define DEVICE_ATTR or its variants
+DEVICE_ATTR_{RW,RO,WO} to declare such attributes. This is feasible if an
+attribute has no additional context. However, in many cases there will be
+additional information such as a sensor index which will need to be passed
+to the sysfs attribute handling function.</p>
+<p>SENSOR_DEVICE_ATTR and SENSOR_DEVICE_ATTR_2 can be used to define attributes
+which need such additional context information. SENSOR_DEVICE_ATTR requires
+one additional argument, SENSOR_DEVICE_ATTR_2 requires two.</p>
+<p>Simplified variants of SENSOR_DEVICE_ATTR and SENSOR_DEVICE_ATTR_2 are available
+and should be used if standard attribute permissions and function names are
+feasible. Standard permissions are 0644 for SENSOR_DEVICE_ATTR[_2]_RW,
+0444 for SENSOR_DEVICE_ATTR[_2]_RO, and 0200 for SENSOR_DEVICE_ATTR[_2]_WO.
+Standard functions, similar to DEVICE_ATTR_{RW,RO,WO}, have _show and _store
+appended to the provided function name.</p>
+<p>SENSOR_DEVICE_ATTR and its variants define a struct sensor_device_attribute
+variable. This structure has the following fields:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct sensor_device_attribute {
+        struct device_attribute dev_attr;
+        int index;
+};
+</pre></div>
+</div>
+<p>You can use to_sensor_dev_attr to get the pointer to this structure from the
+attribute read or write function. Its parameter is the device to which the
+attribute is attached.</p>
+<p>SENSOR_DEVICE_ATTR_2 and its variants define a struct sensor_device_attribute_2
+variable, which is defined as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct sensor_device_attribute_2 {
+        struct device_attribute dev_attr;
+        u8 index;
+        u8 nr;
+};
+</pre></div>
+</div>
+<p>Use to_sensor_dev_attr_2 to get the pointer to this structure. Its parameter
+is the device to which the attribute is attached.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="pmbus-core.html" class="btn btn-neutral float-right" title="PMBus core driver and internal API" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral float-left" title="Linux Hardware Monitoring" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

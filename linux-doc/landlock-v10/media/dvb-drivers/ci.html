@@ -1,0 +1,479 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>5. Digital TV Conditional Access Interface (CI API) &mdash; The Linux Kernel 5.2.0+ documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="6. Idea behind the dvb-usb-framework" href="dvb-usb.html" />
+    <link rel="prev" title="4. Hardware supported by the linuxtv.org DVB drivers" href="cards.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.2.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Linux Media Subsystem Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../media_uapi.html">Linux Media Infrastructure userspace API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../media_kapi.html">Media subsystem kernel internal API</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">Linux Digital TV driver-specific documentation</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="intro.html">1. Introduction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="avermedia.html">2. HOWTO: Get An Avermedia DVB-T working under Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bt8xx.html">3. How to get the bt8xx cards working</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cards.html">4. Hardware supported by the linuxtv.org DVB drivers</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">5. Digital TV Conditional Access Interface (CI API)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#ca-zap">5.1. ca_zap</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cards-that-fall-in-this-category">5.2. Cards that fall in this category</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#ci-modules-that-are-supported">5.3. CI modules that are supported</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#the-high-level-ci-api">5.4. The High level CI API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#why-the-need-for-another-ci-interface">5.5. Why the need for another CI interface?</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dvb-usb.html">6. Idea behind the dvb-usb-framework</a></li>
+<li class="toctree-l3"><a class="reference internal" href="faq.html">7. FAQ</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lmedm04.html">8. Firmware files for lmedm04 cards</a></li>
+<li class="toctree-l3"><a class="reference internal" href="opera-firmware.html">9. Opera firmware</a></li>
+<li class="toctree-l3"><a class="reference internal" href="technisat.html">10. How to set up the Technisat/B2C2 Flexcop devices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ttusb-dec.html">11. TechnoTrend/Hauppauge DEC USB Driver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="udev.html">12. UDEV rules for DVB</a></li>
+<li class="toctree-l3"><a class="reference internal" href="frontends.html">13. Frontend drivers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="contributors.html">14. Contributors</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../v4l-drivers/index.html">Video4Linux (V4L)  driver-specific documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cec-drivers/index.html">CEC driver-specific documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../x86/index.html">x86-specific Documentation</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Linux Media Subsystem Documentation</a> &raquo;</li>
+        
+          <li><a href="index.html">Linux Digital TV driver-specific documentation</a> &raquo;</li>
+        
+      <li>5. Digital TV Conditional Access Interface (CI API)</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/media/dvb-drivers/ci.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="digital-tv-conditional-access-interface-ci-api">
+<h1>5. Digital TV Conditional Access Interface (CI API)<a class="headerlink" href="#digital-tv-conditional-access-interface-ci-api" title="Permalink to this headline">¶</a></h1>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This documentation is outdated.</p>
+</div>
+<p>This document describes the usage of the high level CI API as
+in accordance to the Linux DVB API. This is a not a documentation for the,
+existing low level CI API.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">For the Twinhan/Twinhan clones, the dst_ca module handles the CI
+hardware handling.This module is loaded automatically if a CI
+(Common Interface, that holds the CAM (Conditional Access Module)
+is detected.</p>
+</div>
+<div class="section" id="ca-zap">
+<h2>5.1. ca_zap<a class="headerlink" href="#ca-zap" title="Permalink to this headline">¶</a></h2>
+<p>A userspace application, like <code class="docutils literal notranslate"><span class="pre">ca_zap</span></code> is required to handle encrypted
+MPEG-TS streams.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">ca_zap</span></code> userland application is in charge of sending the
+descrambling related information to the Conditional Access Module (CAM).</p>
+<p>This application requires the following to function properly as of now.</p>
+<ol class="loweralpha simple">
+<li>Tune to a valid channel, with szap.</li>
+</ol>
+<blockquote>
+<div>eg: $ szap -c channels.conf -r “TMC” -x</div></blockquote>
+<ol class="loweralpha simple" start="2">
+<li>a channels.conf containing a valid PMT PID</li>
+</ol>
+<blockquote>
+<div><p>eg: TMC:11996:h:0:27500:278:512:650:321</p>
+<p>here 278 is a valid PMT PID. the rest of the values are the
+same ones that szap uses.</p>
+</div></blockquote>
+<ol class="loweralpha simple" start="3">
+<li>after running a szap, you have to run ca_zap, for the
+descrambler to function,</li>
+</ol>
+<blockquote>
+<div>eg: $ ca_zap channels.conf “TMC”</div></blockquote>
+<ol class="loweralpha simple" start="4">
+<li>Hopefully enjoy your favourite subscribed channel as you do with
+a FTA card.</li>
+</ol>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Currently ca_zap, and dst_test, both are meant for demonstration
+purposes only, they can become full fledged applications if necessary.</p>
+</div>
+</div>
+<div class="section" id="cards-that-fall-in-this-category">
+<h2>5.2. Cards that fall in this category<a class="headerlink" href="#cards-that-fall-in-this-category" title="Permalink to this headline">¶</a></h2>
+<p>At present the cards that fall in this category are the Twinhan and its
+clones, these cards are available as VVMER, Tomato, Hercules, Orange and
+so on.</p>
+</div>
+<div class="section" id="ci-modules-that-are-supported">
+<h2>5.3. CI modules that are supported<a class="headerlink" href="#ci-modules-that-are-supported" title="Permalink to this headline">¶</a></h2>
+<p>The CI module support is largely dependent upon the firmware on the cards
+Some cards do support almost all of the available CI modules. There is
+nothing much that can be done in order to make additional CI modules
+working with these cards.</p>
+<p>Modules that have been tested by this driver at present are</p>
+<ol class="arabic simple">
+<li>Irdeto 1 and 2 from SCM</li>
+<li>Viaccess from SCM</li>
+<li>Dragoncam</li>
+</ol>
+</div>
+<div class="section" id="the-high-level-ci-api">
+<h2>5.4. The High level CI API<a class="headerlink" href="#the-high-level-ci-api" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="for-the-programmer">
+<h3>5.4.1. For the programmer<a class="headerlink" href="#for-the-programmer" title="Permalink to this headline">¶</a></h3>
+<p>With the High Level CI approach any new card with almost any random
+architecture can be implemented with this style, the definitions
+inside the switch statement can be easily adapted for any card, thereby
+eliminating the need for any additional ioctls.</p>
+<p>The disadvantage is that the driver/hardware has to manage the rest. For
+the application programmer it would be as simple as sending/receiving an
+array to/from the CI ioctls as defined in the Linux DVB API. No changes
+have been made in the API to accommodate this feature.</p>
+</div>
+</div>
+<div class="section" id="why-the-need-for-another-ci-interface">
+<h2>5.5. Why the need for another CI interface?<a class="headerlink" href="#why-the-need-for-another-ci-interface" title="Permalink to this headline">¶</a></h2>
+<p>This is one of the most commonly asked question. Well a nice question.
+Strictly speaking this is not a new interface.</p>
+<p>The CI interface is defined in the DVB API in ca.h as:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">typedef</span> <span class="k">struct</span> <span class="n">ca_slot_info</span> <span class="p">{</span>
+        <span class="kt">int</span> <span class="n">num</span><span class="p">;</span>               <span class="cm">/* slot number */</span>
+
+        <span class="kt">int</span> <span class="n">type</span><span class="p">;</span>              <span class="cm">/* CA interface this slot supports */</span>
+<span class="cp">#define CA_CI            1     </span><span class="cm">/* CI high level interface */</span><span class="cp"></span>
+<span class="cp">#define CA_CI_LINK       2     </span><span class="cm">/* CI link layer level interface */</span><span class="cp"></span>
+<span class="cp">#define CA_CI_PHYS       4     </span><span class="cm">/* CI physical layer level interface */</span><span class="cp"></span>
+<span class="cp">#define CA_DESCR         8     </span><span class="cm">/* built-in descrambler */</span><span class="cp"></span>
+<span class="cp">#define CA_SC          128     </span><span class="cm">/* simple smart card interface */</span><span class="cp"></span>
+
+        <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">flags</span><span class="p">;</span>
+<span class="cp">#define CA_CI_MODULE_PRESENT 1 </span><span class="cm">/* module (or card) inserted */</span><span class="cp"></span>
+<span class="cp">#define CA_CI_MODULE_READY   2</span>
+<span class="p">}</span> <span class="n">ca_slot_info_t</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>This CI interface follows the CI high level interface, which is not
+implemented by most applications. Hence this area is revisited.</p>
+<p>This CI interface is quite different in the case that it tries to
+accommodate all other CI based devices, that fall into the other categories.</p>
+<p>This means that this CI interface handles the EN50221 style tags in the
+Application layer only and no session management is taken care of by the
+application. The driver/hardware will take care of all that.</p>
+<p>This interface is purely an EN50221 interface exchanging APDU’s. This
+means that no session management, link layer or a transport layer do
+exist in this case in the application to driver communication. It is
+as simple as that. The driver/hardware has to take care of that.</p>
+<p>With this High Level CI interface, the interface can be defined with the
+regular ioctls.</p>
+<p>All these ioctls are also valid for the High level CI interface</p>
+<p>#define CA_RESET          _IO(‘o’, 128)
+#define CA_GET_CAP        _IOR(‘o’, 129, ca_caps_t)
+#define CA_GET_SLOT_INFO  _IOR(‘o’, 130, ca_slot_info_t)
+#define CA_GET_DESCR_INFO _IOR(‘o’, 131, ca_descr_info_t)
+#define CA_GET_MSG        _IOR(‘o’, 132, ca_msg_t)
+#define CA_SEND_MSG       _IOW(‘o’, 133, ca_msg_t)
+#define CA_SET_DESCR      _IOW(‘o’, 134, ca_descr_t)</p>
+<p>On querying the device, the device yields information thus:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>CA_GET_SLOT_INFO
+----------------------------
+Command = [info]
+APP: Number=[1]
+APP: Type=[1]
+APP: flags=[1]
+APP: CI High level interface
+APP: CA/CI Module Present
+
+CA_GET_CAP
+----------------------------
+Command = [caps]
+APP: Slots=[1]
+APP: Type=[1]
+APP: Descrambler keys=[16]
+APP: Type=[1]
+
+CA_SEND_MSG
+----------------------------
+Descriptors(Program Level)=[ 09 06 06 04 05 50 ff f1]
+Found CA descriptor @ program level
+
+(20) ES type=[2] ES pid=[201]  ES length =[0 (0x0)]
+(25) ES type=[4] ES pid=[301]  ES length =[0 (0x0)]
+ca_message length is 25 (0x19) bytes
+EN50221 CA MSG=[ 9f 80 32 19 03 01 2d d1 f0 08 01 09 06 06 04 05 50 ff f1 02 e0 c9 00 00 04 e1 2d 00 00]
+</pre></div>
+</div>
+<p>Not all ioctl’s are implemented in the driver from the API, the other
+features of the hardware that cannot be implemented by the API are achieved
+using the CA_GET_MSG and CA_SEND_MSG ioctls. An EN50221 style wrapper is
+used to exchange the data to maintain compatibility with other hardware.</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cm">/* a message to/from a CI-CAM */</span>
+<span class="k">typedef</span> <span class="k">struct</span> <span class="n">ca_msg</span> <span class="p">{</span>
+        <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">index</span><span class="p">;</span>
+        <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">type</span><span class="p">;</span>
+        <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">length</span><span class="p">;</span>
+        <span class="kt">unsigned</span> <span class="kt">char</span> <span class="n">msg</span><span class="p">[</span><span class="mi">256</span><span class="p">];</span>
+<span class="p">}</span> <span class="n">ca_msg_t</span><span class="p">;</span>
+</pre></div>
+</div>
+<p>The flow of data can be described thus,</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>     App (User)
+     -----
+     parse
+       |
+       |
+       v
+     en50221 APDU (package)
+--------------------------------------
+|      |                             | High Level CI driver
+|      |                             |
+|      v                             |
+|    en50221 APDU (unpackage)        |
+|      |                             |
+|      |                             |
+|      v                             |
+|    sanity checks                   |
+|      |                             |
+|      |                             |
+|      v                             |
+|    do (H/W dep)                    |
+--------------------------------------
+       |    Hardware
+       |
+       v
+</pre></div>
+</div>
+<p>The High Level CI interface uses the EN50221 DVB standard, following a
+standard ensures futureproofness.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="dvb-usb.html" class="btn btn-neutral float-right" title="6. Idea behind the dvb-usb-framework" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="cards.html" class="btn btn-neutral float-left" title="4. Hardware supported by the linuxtv.org DVB drivers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
