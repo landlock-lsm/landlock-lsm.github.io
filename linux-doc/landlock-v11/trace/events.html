@@ -1,0 +1,828 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Event Tracing &mdash; The Linux Kernel 5.2.0+ documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Subsystem Trace Points: kmem" href="events-kmem.html" />
+    <link rel="prev" title="Using the Linux Kernel Tracepoints" href="tracepoints.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.4.0-rc3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ioctl/index.html">IOCTLs</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Linux Tracing Technologies</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="ftrace-design.html">Function Tracer Design</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tracepoint-analysis.html">Notes on Analysing Behaviour Using Events and Tracepoints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ftrace.html">ftrace - Function Tracer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ftrace-uses.html">Using ftrace to hook to functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kprobetrace.html">Kprobe-based Event Tracing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="uprobetracer.html">Uprobe-tracer: Uprobe-based Event Tracing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tracepoints.html">Using the Linux Kernel Tracepoints</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Event Tracing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#introduction">1. Introduction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#using-event-tracing">2. Using Event Tracing</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#via-the-set-event-interface">2.1 Via the ‘set_event’ interface</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#via-the-enable-toggle">2.2 Via the ‘enable’ toggle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#boot-option">2.3 Boot option</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#defining-an-event-enabled-tracepoint">3. Defining an event-enabled tracepoint</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#event-formats">4. Event formats</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#event-filtering">5. Event filtering</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#expression-syntax">5.1 Expression syntax</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#setting-filters">5.2 Setting filters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#clearing-filters">5.3 Clearing filters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#subsystem-filters">5.3 Subsystem filters</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pid-filtering">5.4 PID filtering</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#event-triggers">6. Event triggers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#id1">6.1 Expression syntax</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#supported-trigger-commands">6.2 Supported trigger commands</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="events-kmem.html">Subsystem Trace Points: kmem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="events-power.html">Subsystem Trace Points: power</a></li>
+<li class="toctree-l2"><a class="reference internal" href="events-nmi.html">NMI Trace Events</a></li>
+<li class="toctree-l2"><a class="reference internal" href="events-msr.html">MSR Trace Events</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mmiotrace.html">In-kernel memory-mapped I/O tracing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="histogram.html">Event Histograms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hwlat_detector.html">Hardware Latency Detector</a></li>
+<li class="toctree-l2"><a class="reference internal" href="intel_th.html">Intel(R) Trace Hub (TH)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stm.html">System Trace Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sys-t.html">MIPI SyS-T over STP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coresight.html">Coresight - HW Assisted Tracing on ARM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coresight-cpu-debug.html">Coresight CPU Debug Module</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../media/index.html">Linux Media Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mic/index.html">Intel Many Integrated Core (MIC) architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Linux Tracing Technologies</a> &raquo;</li>
+        
+      <li>Event Tracing</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/trace/events.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="event-tracing">
+<h1>Event Tracing<a class="headerlink" href="#event-tracing" title="Permalink to this headline">¶</a></h1>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Author:</th><td class="field-body">Theodore Ts’o</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Updated:</th><td class="field-body">Li Zefan and Tom Zanussi</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="introduction">
+<h2>1. Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>Tracepoints (see Documentation/trace/tracepoints.rst) can be used
+without creating custom kernel modules to register probe functions
+using the event tracing infrastructure.</p>
+<p>Not all tracepoints can be traced using the event tracing system;
+the kernel developer must provide code snippets which define how the
+tracing information is saved into the tracing buffer, and how the
+tracing information should be printed.</p>
+</div>
+<div class="section" id="using-event-tracing">
+<h2>2. Using Event Tracing<a class="headerlink" href="#using-event-tracing" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="via-the-set-event-interface">
+<h3>2.1 Via the ‘set_event’ interface<a class="headerlink" href="#via-the-set-event-interface" title="Permalink to this headline">¶</a></h3>
+<p>The events which are available for tracing can be found in the file
+/sys/kernel/debug/tracing/available_events.</p>
+<p>To enable a particular event, such as ‘sched_wakeup’, simply echo it
+to /sys/kernel/debug/tracing/set_event. For example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo sched_wakeup &gt;&gt; /sys/kernel/debug/tracing/set_event
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">‘&gt;&gt;’ is necessary, otherwise it will firstly disable all the events.</p>
+</div>
+<p>To disable an event, echo the event name to the set_event file prefixed
+with an exclamation point:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo &#39;!sched_wakeup&#39; &gt;&gt; /sys/kernel/debug/tracing/set_event
+</pre></div>
+</div>
+<p>To disable all events, echo an empty line to the set_event file:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo &gt; /sys/kernel/debug/tracing/set_event
+</pre></div>
+</div>
+<p>To enable all events, echo <code class="docutils literal notranslate"><span class="pre">*:*</span></code> or <code class="docutils literal notranslate"><span class="pre">*:</span></code> to the set_event file:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo *:* &gt; /sys/kernel/debug/tracing/set_event
+</pre></div>
+</div>
+<p>The events are organized into subsystems, such as ext4, irq, sched,
+etc., and a full event name looks like this: &lt;subsystem&gt;:&lt;event&gt;.  The
+subsystem name is optional, but it is displayed in the available_events
+file.  All of the events in a subsystem can be specified via the syntax
+<code class="docutils literal notranslate"><span class="pre">&lt;subsystem&gt;:*</span></code>; for example, to enable all irq events, you can use the
+command:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo &#39;irq:*&#39; &gt; /sys/kernel/debug/tracing/set_event
+</pre></div>
+</div>
+</div>
+<div class="section" id="via-the-enable-toggle">
+<h3>2.2 Via the ‘enable’ toggle<a class="headerlink" href="#via-the-enable-toggle" title="Permalink to this headline">¶</a></h3>
+<p>The events available are also listed in /sys/kernel/debug/tracing/events/ hierarchy
+of directories.</p>
+<p>To enable event ‘sched_wakeup’:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo 1 &gt; /sys/kernel/debug/tracing/events/sched/sched_wakeup/enable
+</pre></div>
+</div>
+<p>To disable it:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo 0 &gt; /sys/kernel/debug/tracing/events/sched/sched_wakeup/enable
+</pre></div>
+</div>
+<p>To enable all events in sched subsystem:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo 1 &gt; /sys/kernel/debug/tracing/events/sched/enable
+</pre></div>
+</div>
+<p>To enable all events:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo 1 &gt; /sys/kernel/debug/tracing/events/enable
+</pre></div>
+</div>
+<p>When reading one of these enable files, there are four results:</p>
+<blockquote>
+<div><ul class="simple">
+<li>0 - all events this file affects are disabled</li>
+<li>1 - all events this file affects are enabled</li>
+<li>X - there is a mixture of events enabled and disabled</li>
+<li>? - this file does not affect any event</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="boot-option">
+<h3>2.3 Boot option<a class="headerlink" href="#boot-option" title="Permalink to this headline">¶</a></h3>
+<p>In order to facilitate early boot debugging, use boot option:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>trace_event=[event-list]
+</pre></div>
+</div>
+<p>event-list is a comma separated list of events. See section 2.1 for event
+format.</p>
+</div>
+</div>
+<div class="section" id="defining-an-event-enabled-tracepoint">
+<h2>3. Defining an event-enabled tracepoint<a class="headerlink" href="#defining-an-event-enabled-tracepoint" title="Permalink to this headline">¶</a></h2>
+<p>See The example provided in samples/trace_events</p>
+</div>
+<div class="section" id="event-formats">
+<h2>4. Event formats<a class="headerlink" href="#event-formats" title="Permalink to this headline">¶</a></h2>
+<p>Each trace event has a ‘format’ file associated with it that contains
+a description of each field in a logged event.  This information can
+be used to parse the binary trace stream, and is also the place to
+find the field names that can be used in event filters (see section 5).</p>
+<p>It also displays the format string that will be used to print the
+event in text mode, along with the event name and ID used for
+profiling.</p>
+<p>Every event has a set of <code class="docutils literal notranslate"><span class="pre">common</span></code> fields associated with it; these are
+the fields prefixed with <code class="docutils literal notranslate"><span class="pre">common_</span></code>.  The other fields vary between
+events and correspond to the fields defined in the TRACE_EVENT
+definition for that event.</p>
+<p>Each field in the format has the form:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>field:field-type field-name; offset:N; size:N;
+</pre></div>
+</div>
+<p>where offset is the offset of the field in the trace record and size
+is the size of the data item, in bytes.</p>
+<p>For example, here’s the information displayed for the ‘sched_wakeup’
+event:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># cat /sys/kernel/debug/tracing/events/sched/sched_wakeup/format
+
+name: sched_wakeup
+ID: 60
+format:
+        field:unsigned short common_type;       offset:0;       size:2;
+        field:unsigned char common_flags;       offset:2;       size:1;
+        field:unsigned char common_preempt_count;       offset:3;       size:1;
+        field:int common_pid;   offset:4;       size:4;
+        field:int common_tgid;  offset:8;       size:4;
+
+        field:char comm[TASK_COMM_LEN]; offset:12;      size:16;
+        field:pid_t pid;        offset:28;      size:4;
+        field:int prio; offset:32;      size:4;
+        field:int success;      offset:36;      size:4;
+        field:int cpu;  offset:40;      size:4;
+
+print fmt: &quot;task %s:%d [%d] success=%d [%03d]&quot;, REC-&gt;comm, REC-&gt;pid,
+           REC-&gt;prio, REC-&gt;success, REC-&gt;cpu
+</pre></div>
+</div>
+<p>This event contains 10 fields, the first 5 common and the remaining 5
+event-specific.  All the fields for this event are numeric, except for
+‘comm’ which is a string, a distinction important for event filtering.</p>
+</div>
+<div class="section" id="event-filtering">
+<h2>5. Event filtering<a class="headerlink" href="#event-filtering" title="Permalink to this headline">¶</a></h2>
+<p>Trace events can be filtered in the kernel by associating boolean
+‘filter expressions’ with them.  As soon as an event is logged into
+the trace buffer, its fields are checked against the filter expression
+associated with that event type.  An event with field values that
+‘match’ the filter will appear in the trace output, and an event whose
+values don’t match will be discarded.  An event with no filter
+associated with it matches everything, and is the default when no
+filter has been set for an event.</p>
+<div class="section" id="expression-syntax">
+<h3>5.1 Expression syntax<a class="headerlink" href="#expression-syntax" title="Permalink to this headline">¶</a></h3>
+<p>A filter expression consists of one or more ‘predicates’ that can be
+combined using the logical operators ‘&amp;&amp;’ and ‘||’.  A predicate is
+simply a clause that compares the value of a field contained within a
+logged event with a constant value and returns either 0 or 1 depending
+on whether the field value matched (1) or didn’t match (0):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>field-name relational-operator value
+</pre></div>
+</div>
+<p>Parentheses can be used to provide arbitrary logical groupings and
+double-quotes can be used to prevent the shell from interpreting
+operators as shell metacharacters.</p>
+<p>The field-names available for use in filters can be found in the
+‘format’ files for trace events (see section 4).</p>
+<p>The relational-operators depend on the type of the field being tested:</p>
+<p>The operators available for numeric fields are:</p>
+<p>==, !=, &lt;, &lt;=, &gt;, &gt;=, &amp;</p>
+<p>And for string fields they are:</p>
+<p>==, !=, ~</p>
+<p>The glob (~) accepts a wild card character (*,?) and character classes
+([). For example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>prev_comm ~ &quot;*sh&quot;
+prev_comm ~ &quot;sh*&quot;
+prev_comm ~ &quot;*sh*&quot;
+prev_comm ~ &quot;ba*sh&quot;
+</pre></div>
+</div>
+</div>
+<div class="section" id="setting-filters">
+<h3>5.2 Setting filters<a class="headerlink" href="#setting-filters" title="Permalink to this headline">¶</a></h3>
+<p>A filter for an individual event is set by writing a filter expression
+to the ‘filter’ file for the given event.</p>
+<p>For example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># cd /sys/kernel/debug/tracing/events/sched/sched_wakeup
+# echo &quot;common_preempt_count &gt; 4&quot; &gt; filter
+</pre></div>
+</div>
+<p>A slightly more involved example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># cd /sys/kernel/debug/tracing/events/signal/signal_generate
+# echo &quot;((sig &gt;= 10 &amp;&amp; sig &lt; 15) || sig == 17) &amp;&amp; comm != bash&quot; &gt; filter
+</pre></div>
+</div>
+<p>If there is an error in the expression, you’ll get an ‘Invalid
+argument’ error when setting it, and the erroneous string along with
+an error message can be seen by looking at the filter e.g.:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># cd /sys/kernel/debug/tracing/events/signal/signal_generate
+# echo &quot;((sig &gt;= 10 &amp;&amp; sig &lt; 15) || dsig == 17) &amp;&amp; comm != bash&quot; &gt; filter
+-bash: echo: write error: Invalid argument
+# cat filter
+((sig &gt;= 10 &amp;&amp; sig &lt; 15) || dsig == 17) &amp;&amp; comm != bash
+^
+parse_error: Field not found
+</pre></div>
+</div>
+<p>Currently the caret (‘^’) for an error always appears at the beginning of
+the filter string; the error message should still be useful though
+even without more accurate position info.</p>
+</div>
+<div class="section" id="clearing-filters">
+<h3>5.3 Clearing filters<a class="headerlink" href="#clearing-filters" title="Permalink to this headline">¶</a></h3>
+<p>To clear the filter for an event, write a ‘0’ to the event’s filter
+file.</p>
+<p>To clear the filters for all events in a subsystem, write a ‘0’ to the
+subsystem’s filter file.</p>
+</div>
+<div class="section" id="subsystem-filters">
+<h3>5.3 Subsystem filters<a class="headerlink" href="#subsystem-filters" title="Permalink to this headline">¶</a></h3>
+<p>For convenience, filters for every event in a subsystem can be set or
+cleared as a group by writing a filter expression into the filter file
+at the root of the subsystem.  Note however, that if a filter for any
+event within the subsystem lacks a field specified in the subsystem
+filter, or if the filter can’t be applied for any other reason, the
+filter for that event will retain its previous setting.  This can
+result in an unintended mixture of filters which could lead to
+confusing (to the user who might think different filters are in
+effect) trace output.  Only filters that reference just the common
+fields can be guaranteed to propagate successfully to all events.</p>
+<p>Here are a few subsystem filter examples that also illustrate the
+above points:</p>
+<p>Clear the filters on all events in the sched subsystem:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># cd /sys/kernel/debug/tracing/events/sched
+# echo 0 &gt; filter
+# cat sched_switch/filter
+none
+# cat sched_wakeup/filter
+none
+</pre></div>
+</div>
+<p>Set a filter using only common fields for all events in the sched
+subsystem (all events end up with the same filter):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># cd /sys/kernel/debug/tracing/events/sched
+# echo common_pid == 0 &gt; filter
+# cat sched_switch/filter
+common_pid == 0
+# cat sched_wakeup/filter
+common_pid == 0
+</pre></div>
+</div>
+<p>Attempt to set a filter using a non-common field for all events in the
+sched subsystem (all events but those that have a prev_pid field retain
+their old filters):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># cd /sys/kernel/debug/tracing/events/sched
+# echo prev_pid == 0 &gt; filter
+# cat sched_switch/filter
+prev_pid == 0
+# cat sched_wakeup/filter
+common_pid == 0
+</pre></div>
+</div>
+</div>
+<div class="section" id="pid-filtering">
+<h3>5.4 PID filtering<a class="headerlink" href="#pid-filtering" title="Permalink to this headline">¶</a></h3>
+<p>The set_event_pid file in the same directory as the top events directory
+exists, will filter all events from tracing any task that does not have the
+PID listed in the set_event_pid file.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># cd /sys/kernel/debug/tracing
+# echo $$ &gt; set_event_pid
+# echo 1 &gt; events/enable
+</pre></div>
+</div>
+<p>Will only trace events for the current task.</p>
+<p>To add more PIDs without losing the PIDs already included, use ‘&gt;&gt;’.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo 123 244 1 &gt;&gt; set_event_pid
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="event-triggers">
+<h2>6. Event triggers<a class="headerlink" href="#event-triggers" title="Permalink to this headline">¶</a></h2>
+<p>Trace events can be made to conditionally invoke trigger ‘commands’
+which can take various forms and are described in detail below;
+examples would be enabling or disabling other trace events or invoking
+a stack trace whenever the trace event is hit.  Whenever a trace event
+with attached triggers is invoked, the set of trigger commands
+associated with that event is invoked.  Any given trigger can
+additionally have an event filter of the same form as described in
+section 5 (Event filtering) associated with it - the command will only
+be invoked if the event being invoked passes the associated filter.
+If no filter is associated with the trigger, it always passes.</p>
+<p>Triggers are added to and removed from a particular event by writing
+trigger expressions to the ‘trigger’ file for the given event.</p>
+<p>A given event can have any number of triggers associated with it,
+subject to any restrictions that individual commands may have in that
+regard.</p>
+<p>Event triggers are implemented on top of “soft” mode, which means that
+whenever a trace event has one or more triggers associated with it,
+the event is activated even if it isn’t actually enabled, but is
+disabled in a “soft” mode.  That is, the tracepoint will be called,
+but just will not be traced, unless of course it’s actually enabled.
+This scheme allows triggers to be invoked even for events that aren’t
+enabled, and also allows the current event filter implementation to be
+used for conditionally invoking triggers.</p>
+<p>The syntax for event triggers is roughly based on the syntax for
+set_ftrace_filter ‘ftrace filter commands’ (see the ‘Filter commands’
+section of Documentation/trace/ftrace.rst), but there are major
+differences and the implementation isn’t currently tied to it in any
+way, so beware about making generalizations between the two.</p>
+<dl class="docutils">
+<dt>Note: Writing into trace_marker (See Documentation/trace/ftrace.rst)</dt>
+<dd>can also enable triggers that are written into
+/sys/kernel/tracing/events/ftrace/print/trigger</dd>
+</dl>
+<div class="section" id="id1">
+<h3>6.1 Expression syntax<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>Triggers are added by echoing the command to the ‘trigger’ file:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo &#39;command[:count] [if filter]&#39; &gt; trigger
+</pre></div>
+</div>
+<p>Triggers are removed by echoing the same command but starting with ‘!’
+to the ‘trigger’ file:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo &#39;!command[:count] [if filter]&#39; &gt; trigger
+</pre></div>
+</div>
+<p>The [if filter] part isn’t used in matching commands when removing, so
+leaving that off in a ‘!’ command will accomplish the same thing as
+having it in.</p>
+<p>The filter syntax is the same as that described in the ‘Event
+filtering’ section above.</p>
+<p>For ease of use, writing to the trigger file using ‘&gt;’ currently just
+adds or removes a single trigger and there’s no explicit ‘&gt;&gt;’ support
+(‘&gt;’ actually behaves like ‘&gt;&gt;’) or truncation support to remove all
+triggers (you have to use ‘!’ for each one added.)</p>
+</div>
+<div class="section" id="supported-trigger-commands">
+<h3>6.2 Supported trigger commands<a class="headerlink" href="#supported-trigger-commands" title="Permalink to this headline">¶</a></h3>
+<p>The following commands are supported:</p>
+<ul>
+<li><p class="first">enable_event/disable_event</p>
+<p>These commands can enable or disable another trace event whenever
+the triggering event is hit.  When these commands are registered,
+the other trace event is activated, but disabled in a “soft” mode.
+That is, the tracepoint will be called, but just will not be traced.
+The event tracepoint stays in this mode as long as there’s a trigger
+in effect that can trigger it.</p>
+<p>For example, the following trigger causes kmalloc events to be
+traced when a read system call is entered, and the :1 at the end
+specifies that this enablement happens only once:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo &#39;enable_event:kmem:kmalloc:1&#39; &gt; \
+    /sys/kernel/debug/tracing/events/syscalls/sys_enter_read/trigger
+</pre></div>
+</div>
+<p>The following trigger causes kmalloc events to stop being traced
+when a read system call exits.  This disablement happens on every
+read system call exit:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo &#39;disable_event:kmem:kmalloc&#39; &gt; \
+    /sys/kernel/debug/tracing/events/syscalls/sys_exit_read/trigger
+</pre></div>
+</div>
+<p>The format is:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>enable_event:&lt;system&gt;:&lt;event&gt;[:count]
+disable_event:&lt;system&gt;:&lt;event&gt;[:count]
+</pre></div>
+</div>
+<p>To remove the above commands:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo &#39;!enable_event:kmem:kmalloc:1&#39; &gt; \
+    /sys/kernel/debug/tracing/events/syscalls/sys_enter_read/trigger
+
+# echo &#39;!disable_event:kmem:kmalloc&#39; &gt; \
+    /sys/kernel/debug/tracing/events/syscalls/sys_exit_read/trigger
+</pre></div>
+</div>
+<p>Note that there can be any number of enable/disable_event triggers
+per triggering event, but there can only be one trigger per
+triggered event. e.g. sys_enter_read can have triggers enabling both
+kmem:kmalloc and sched:sched_switch, but can’t have two kmem:kmalloc
+versions such as kmem:kmalloc and kmem:kmalloc:1 or ‘kmem:kmalloc if
+bytes_req == 256’ and ‘kmem:kmalloc if bytes_alloc == 256’ (they
+could be combined into a single filter on kmem:kmalloc though).</p>
+</li>
+<li><p class="first">stacktrace</p>
+<p>This command dumps a stacktrace in the trace buffer whenever the
+triggering event occurs.</p>
+<p>For example, the following trigger dumps a stacktrace every time the
+kmalloc tracepoint is hit:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo &#39;stacktrace&#39; &gt; \
+      /sys/kernel/debug/tracing/events/kmem/kmalloc/trigger
+</pre></div>
+</div>
+<p>The following trigger dumps a stacktrace the first 5 times a kmalloc
+request happens with a size &gt;= 64K:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo &#39;stacktrace:5 if bytes_req &gt;= 65536&#39; &gt; \
+      /sys/kernel/debug/tracing/events/kmem/kmalloc/trigger
+</pre></div>
+</div>
+<p>The format is:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>stacktrace[:count]
+</pre></div>
+</div>
+<p>To remove the above commands:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo &#39;!stacktrace&#39; &gt; \
+      /sys/kernel/debug/tracing/events/kmem/kmalloc/trigger
+
+# echo &#39;!stacktrace:5 if bytes_req &gt;= 65536&#39; &gt; \
+      /sys/kernel/debug/tracing/events/kmem/kmalloc/trigger
+</pre></div>
+</div>
+<p>The latter can also be removed more simply by the following (without
+the filter):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo &#39;!stacktrace:5&#39; &gt; \
+      /sys/kernel/debug/tracing/events/kmem/kmalloc/trigger
+</pre></div>
+</div>
+<p>Note that there can be only one stacktrace trigger per triggering
+event.</p>
+</li>
+<li><p class="first">snapshot</p>
+<p>This command causes a snapshot to be triggered whenever the
+triggering event occurs.</p>
+<p>The following command creates a snapshot every time a block request
+queue is unplugged with a depth &gt; 1.  If you were tracing a set of
+events or functions at the time, the snapshot trace buffer would
+capture those events when the trigger event occurred:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo &#39;snapshot if nr_rq &gt; 1&#39; &gt; \
+      /sys/kernel/debug/tracing/events/block/block_unplug/trigger
+</pre></div>
+</div>
+<p>To only snapshot once:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo &#39;snapshot:1 if nr_rq &gt; 1&#39; &gt; \
+      /sys/kernel/debug/tracing/events/block/block_unplug/trigger
+</pre></div>
+</div>
+<p>To remove the above commands:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo &#39;!snapshot if nr_rq &gt; 1&#39; &gt; \
+      /sys/kernel/debug/tracing/events/block/block_unplug/trigger
+
+# echo &#39;!snapshot:1 if nr_rq &gt; 1&#39; &gt; \
+      /sys/kernel/debug/tracing/events/block/block_unplug/trigger
+</pre></div>
+</div>
+<p>Note that there can be only one snapshot trigger per triggering
+event.</p>
+</li>
+<li><p class="first">traceon/traceoff</p>
+<p>These commands turn tracing on and off when the specified events are
+hit. The parameter determines how many times the tracing system is
+turned on and off. If unspecified, there is no limit.</p>
+<p>The following command turns tracing off the first time a block
+request queue is unplugged with a depth &gt; 1.  If you were tracing a
+set of events or functions at the time, you could then examine the
+trace buffer to see the sequence of events that led up to the
+trigger event:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo &#39;traceoff:1 if nr_rq &gt; 1&#39; &gt; \
+      /sys/kernel/debug/tracing/events/block/block_unplug/trigger
+</pre></div>
+</div>
+<p>To always disable tracing when nr_rq  &gt; 1:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo &#39;traceoff if nr_rq &gt; 1&#39; &gt; \
+      /sys/kernel/debug/tracing/events/block/block_unplug/trigger
+</pre></div>
+</div>
+<p>To remove the above commands:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo &#39;!traceoff:1 if nr_rq &gt; 1&#39; &gt; \
+      /sys/kernel/debug/tracing/events/block/block_unplug/trigger
+
+# echo &#39;!traceoff if nr_rq &gt; 1&#39; &gt; \
+      /sys/kernel/debug/tracing/events/block/block_unplug/trigger
+</pre></div>
+</div>
+<p>Note that there can be only one traceon or traceoff trigger per
+triggering event.</p>
+</li>
+<li><p class="first">hist</p>
+<p>This command aggregates event hits into a hash table keyed on one or
+more trace event format fields (or stacktrace) and a set of running
+totals derived from one or more trace event format fields and/or
+event counts (hitcount).</p>
+<p>See Documentation/trace/histogram.rst for details and examples.</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="events-kmem.html" class="btn btn-neutral float-right" title="Subsystem Trace Points: kmem" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="tracepoints.html" class="btn btn-neutral float-left" title="Using the Linux Kernel Tracepoints" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

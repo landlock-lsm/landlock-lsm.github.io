@@ -1,0 +1,799 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Cluster-wide Power-up/power-down race avoidance algorithm &mdash; The Linux Kernel 5.2.0+ documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Interface for registering and calling firmware-specific operations for ARM" href="firmware.html" />
+    <link rel="prev" title="Booting ARM Linux" href="booting.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.4.0-rc3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ioctl/index.html">IOCTLs</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../media/index.html">Linux Media Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mic/index.html">Intel Many Integrated Core (MIC) architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">ARM Architecture</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="arm.html">ARM Linux 2.6 and upper</a></li>
+<li class="toctree-l2"><a class="reference internal" href="booting.html">Booting ARM Linux</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Cluster-wide Power-up/power-down race avoidance algorithm</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#rationale">Rationale</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#basic-model">Basic model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cpu-state">CPU state</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cluster-state">Cluster state</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#last-man-and-first-man-selection">Last man and First man selection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#features-and-limitations">Features and Limitations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#colophon">Colophon</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="firmware.html">Interface for registering and calling firmware-specific operations for ARM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="interrupts.html">Interrupts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel_mode_neon.html">Kernel mode NEON</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel_user_helpers.html">Kernel-provided User Helpers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="memory.html">Kernel Memory Layout on ARM Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mem_alignment.html">Memory alignment</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tcm.html">ARM TCM (Tightly-Coupled Memory) handling in Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="setup.html">Kernel initialisation parameters on ARM Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="swp_emulation.html">Software emulation of deprecated SWP instruction (CONFIG_SWP_EMULATE)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="uefi.html">The Unified Extensible Firmware Interface (UEFI)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vlocks.html">vlocks for Bare-Metal Mutual Exclusion</a></li>
+<li class="toctree-l2"><a class="reference internal" href="porting.html">Porting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#soc-specific-documents">SoC-specific documents</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">ARM Architecture</a> &raquo;</li>
+        
+      <li>Cluster-wide Power-up/power-down race avoidance algorithm</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/arm/cluster-pm-race-avoidance.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="cluster-wide-power-up-power-down-race-avoidance-algorithm">
+<h1>Cluster-wide Power-up/power-down race avoidance algorithm<a class="headerlink" href="#cluster-wide-power-up-power-down-race-avoidance-algorithm" title="Permalink to this headline">¶</a></h1>
+<p>This file documents the algorithm which is used to coordinate CPU and
+cluster setup and teardown operations and to manage hardware coherency
+controls safely.</p>
+<p>The section “Rationale” explains what the algorithm is for and why it is
+needed.  “Basic model” explains general concepts using a simplified view
+of the system.  The other sections explain the actual details of the
+algorithm in use.</p>
+<div class="section" id="rationale">
+<h2>Rationale<a class="headerlink" href="#rationale" title="Permalink to this headline">¶</a></h2>
+<p>In a system containing multiple CPUs, it is desirable to have the
+ability to turn off individual CPUs when the system is idle, reducing
+power consumption and thermal dissipation.</p>
+<p>In a system containing multiple clusters of CPUs, it is also desirable
+to have the ability to turn off entire clusters.</p>
+<p>Turning entire clusters off and on is a risky business, because it
+involves performing potentially destructive operations affecting a group
+of independently running CPUs, while the OS continues to run.  This
+means that we need some coordination in order to ensure that critical
+cluster-level operations are only performed when it is truly safe to do
+so.</p>
+<p>Simple locking may not be sufficient to solve this problem, because
+mechanisms like Linux spinlocks may rely on coherency mechanisms which
+are not immediately enabled when a cluster powers up.  Since enabling or
+disabling those mechanisms may itself be a non-atomic operation (such as
+writing some hardware registers and invalidating large caches), other
+methods of coordination are required in order to guarantee safe
+power-down and power-up at the cluster level.</p>
+<p>The mechanism presented in this document describes a coherent memory
+based protocol for performing the needed coordination.  It aims to be as
+lightweight as possible, while providing the required safety properties.</p>
+</div>
+<div class="section" id="basic-model">
+<h2>Basic model<a class="headerlink" href="#basic-model" title="Permalink to this headline">¶</a></h2>
+<p>Each cluster and CPU is assigned a state, as follows:</p>
+<blockquote>
+<div><ul class="simple">
+<li>DOWN</li>
+<li>COMING_UP</li>
+<li>UP</li>
+<li>GOING_DOWN</li>
+</ul>
+</div></blockquote>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>    +---------&gt; UP ----------+
+    |                        v
+
+COMING_UP                GOING_DOWN
+
+    ^                        |
+    +--------- DOWN &lt;--------+
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>DOWN:</dt>
+<dd>The CPU or cluster is not coherent, and is either powered off or
+suspended, or is ready to be powered off or suspended.</dd>
+<dt>COMING_UP:</dt>
+<dd>The CPU or cluster has committed to moving to the UP state.
+It may be part way through the process of initialisation and
+enabling coherency.</dd>
+<dt>UP:</dt>
+<dd>The CPU or cluster is active and coherent at the hardware
+level.  A CPU in this state is not necessarily being used
+actively by the kernel.</dd>
+<dt>GOING_DOWN:</dt>
+<dd>The CPU or cluster has committed to moving to the DOWN
+state.  It may be part way through the process of teardown and
+coherency exit.</dd>
+</dl>
+<p>Each CPU has one of these states assigned to it at any point in time.
+The CPU states are described in the “CPU state” section, below.</p>
+<p>Each cluster is also assigned a state, but it is necessary to split the
+state value into two parts (the “cluster” state and “inbound” state) and
+to introduce additional states in order to avoid races between different
+CPUs in the cluster simultaneously modifying the state.  The cluster-
+level states are described in the “Cluster state” section.</p>
+<p>To help distinguish the CPU states from cluster states in this
+discussion, the state names are given a <cite>CPU_</cite> prefix for the CPU states,
+and a <cite>CLUSTER_</cite> or <cite>INBOUND_</cite> prefix for the cluster states.</p>
+</div>
+<div class="section" id="cpu-state">
+<h2>CPU state<a class="headerlink" href="#cpu-state" title="Permalink to this headline">¶</a></h2>
+<p>In this algorithm, each individual core in a multi-core processor is
+referred to as a “CPU”.  CPUs are assumed to be single-threaded:
+therefore, a CPU can only be doing one thing at a single point in time.</p>
+<p>This means that CPUs fit the basic model closely.</p>
+<p>The algorithm defines the following states for each CPU in the system:</p>
+<blockquote>
+<div><ul class="simple">
+<li>CPU_DOWN</li>
+<li>CPU_COMING_UP</li>
+<li>CPU_UP</li>
+<li>CPU_GOING_DOWN</li>
+</ul>
+</div></blockquote>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span> cluster setup and
+CPU setup complete          policy decision
+      +-----------&gt; CPU_UP ------------+
+      |                                v
+
+CPU_COMING_UP                   CPU_GOING_DOWN
+
+      ^                                |
+      +----------- CPU_DOWN &lt;----------+
+ policy decision           CPU teardown complete
+or hardware event
+</pre></div>
+</div>
+<p>The definitions of the four states correspond closely to the states of
+the basic model.</p>
+<p>Transitions between states occur as follows.</p>
+<p>A trigger event (spontaneous) means that the CPU can transition to the
+next state as a result of making local progress only, with no
+requirement for any external event to happen.</p>
+<dl class="docutils">
+<dt>CPU_DOWN:</dt>
+<dd><p class="first">A CPU reaches the CPU_DOWN state when it is ready for
+power-down.  On reaching this state, the CPU will typically
+power itself down or suspend itself, via a WFI instruction or a
+firmware call.</p>
+<dl class="last docutils">
+<dt>Next state:</dt>
+<dd>CPU_COMING_UP</dd>
+<dt>Conditions:</dt>
+<dd>none</dd>
+<dt>Trigger events:</dt>
+<dd><ol class="first last loweralpha simple">
+<li>an explicit hardware power-up operation, resulting
+from a policy decision on another CPU;</li>
+<li>a hardware event, such as an interrupt.</li>
+</ol>
+</dd>
+</dl>
+</dd>
+<dt>CPU_COMING_UP:</dt>
+<dd><p class="first">A CPU cannot start participating in hardware coherency until the
+cluster is set up and coherent.  If the cluster is not ready,
+then the CPU will wait in the CPU_COMING_UP state until the
+cluster has been set up.</p>
+<dl class="docutils">
+<dt>Next state:</dt>
+<dd>CPU_UP</dd>
+<dt>Conditions:</dt>
+<dd>The CPU’s parent cluster must be in CLUSTER_UP.</dd>
+<dt>Trigger events:</dt>
+<dd>Transition of the parent cluster to CLUSTER_UP.</dd>
+</dl>
+<p class="last">Refer to the “Cluster state” section for a description of the
+CLUSTER_UP state.</p>
+</dd>
+<dt>CPU_UP:</dt>
+<dd><p class="first">When a CPU reaches the CPU_UP state, it is safe for the CPU to
+start participating in local coherency.</p>
+<p>This is done by jumping to the kernel’s CPU resume code.</p>
+<p>Note that the definition of this state is slightly different
+from the basic model definition: CPU_UP does not mean that the
+CPU is coherent yet, but it does mean that it is safe to resume
+the kernel.  The kernel handles the rest of the resume
+procedure, so the remaining steps are not visible as part of the
+race avoidance algorithm.</p>
+<p>The CPU remains in this state until an explicit policy decision
+is made to shut down or suspend the CPU.</p>
+<dl class="last docutils">
+<dt>Next state:</dt>
+<dd>CPU_GOING_DOWN</dd>
+<dt>Conditions:</dt>
+<dd>none</dd>
+<dt>Trigger events:</dt>
+<dd>explicit policy decision</dd>
+</dl>
+</dd>
+<dt>CPU_GOING_DOWN:</dt>
+<dd><p class="first">While in this state, the CPU exits coherency, including any
+operations required to achieve this (such as cleaning data
+caches).</p>
+<dl class="last docutils">
+<dt>Next state:</dt>
+<dd>CPU_DOWN</dd>
+<dt>Conditions:</dt>
+<dd>local CPU teardown complete</dd>
+<dt>Trigger events:</dt>
+<dd>(spontaneous)</dd>
+</dl>
+</dd>
+</dl>
+</div>
+<div class="section" id="cluster-state">
+<h2>Cluster state<a class="headerlink" href="#cluster-state" title="Permalink to this headline">¶</a></h2>
+<p>A cluster is a group of connected CPUs with some common resources.
+Because a cluster contains multiple CPUs, it can be doing multiple
+things at the same time.  This has some implications.  In particular, a
+CPU can start up while another CPU is tearing the cluster down.</p>
+<p>In this discussion, the “outbound side” is the view of the cluster state
+as seen by a CPU tearing the cluster down.  The “inbound side” is the
+view of the cluster state as seen by a CPU setting the CPU up.</p>
+<p>In order to enable safe coordination in such situations, it is important
+that a CPU which is setting up the cluster can advertise its state
+independently of the CPU which is tearing down the cluster.  For this
+reason, the cluster state is split into two parts:</p>
+<blockquote>
+<div><p>“cluster” state: The global state of the cluster; or the state
+on the outbound side:</p>
+<blockquote>
+<div><ul class="simple">
+<li>CLUSTER_DOWN</li>
+<li>CLUSTER_UP</li>
+<li>CLUSTER_GOING_DOWN</li>
+</ul>
+</div></blockquote>
+<p>“inbound” state: The state of the cluster on the inbound side.</p>
+<blockquote>
+<div><ul class="simple">
+<li>INBOUND_NOT_COMING_UP</li>
+<li>INBOUND_COMING_UP</li>
+</ul>
+</div></blockquote>
+<p>The different pairings of these states results in six possible
+states for the cluster as a whole:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>                          CLUSTER_UP
+        +==========&gt; INBOUND_NOT_COMING_UP -------------+
+        #                                               |
+                                                        |
+   CLUSTER_UP     &lt;----+                                |
+INBOUND_COMING_UP      |                                v
+
+        ^             CLUSTER_GOING_DOWN       CLUSTER_GOING_DOWN
+        #              INBOUND_COMING_UP &lt;=== INBOUND_NOT_COMING_UP
+
+  CLUSTER_DOWN         |                                |
+INBOUND_COMING_UP &lt;----+                                |
+                                                        |
+        ^                                               |
+        +===========     CLUSTER_DOWN      &lt;------------+
+                     INBOUND_NOT_COMING_UP
+</pre></div>
+</div>
+<p>Transitions —–&gt; can only be made by the outbound CPU, and
+only involve changes to the “cluster” state.</p>
+<p>Transitions ===##&gt; can only be made by the inbound CPU, and only
+involve changes to the “inbound” state, except where there is no
+further transition possible on the outbound side (i.e., the
+outbound CPU has put the cluster into the CLUSTER_DOWN state).</p>
+<p>The race avoidance algorithm does not provide a way to determine
+which exact CPUs within the cluster play these roles.  This must
+be decided in advance by some other means.  Refer to the section
+“Last man and first man selection” for more explanation.</p>
+<p>CLUSTER_DOWN/INBOUND_NOT_COMING_UP is the only state where the
+cluster can actually be powered down.</p>
+<p>The parallelism of the inbound and outbound CPUs is observed by
+the existence of two different paths from CLUSTER_GOING_DOWN/
+INBOUND_NOT_COMING_UP (corresponding to GOING_DOWN in the basic
+model) to CLUSTER_DOWN/INBOUND_COMING_UP (corresponding to
+COMING_UP in the basic model).  The second path avoids cluster
+teardown completely.</p>
+<p>CLUSTER_UP/INBOUND_COMING_UP is equivalent to UP in the basic
+model.  The final transition to CLUSTER_UP/INBOUND_NOT_COMING_UP
+is trivial and merely resets the state machine ready for the
+next cycle.</p>
+<p>Details of the allowable transitions follow.</p>
+<p>The next state in each case is notated</p>
+<blockquote>
+<div>&lt;cluster state&gt;/&lt;inbound state&gt; (&lt;transitioner&gt;)</div></blockquote>
+<p>where the &lt;transitioner&gt; is the side on which the transition
+can occur; either the inbound or the outbound side.</p>
+</div></blockquote>
+<dl class="docutils">
+<dt>CLUSTER_DOWN/INBOUND_NOT_COMING_UP:</dt>
+<dd><dl class="first last docutils">
+<dt>Next state:</dt>
+<dd>CLUSTER_DOWN/INBOUND_COMING_UP (inbound)</dd>
+<dt>Conditions:</dt>
+<dd>none</dd>
+<dt>Trigger events:</dt>
+<dd><ol class="first last loweralpha simple">
+<li>an explicit hardware power-up operation, resulting
+from a policy decision on another CPU;</li>
+<li>a hardware event, such as an interrupt.</li>
+</ol>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>CLUSTER_DOWN/INBOUND_COMING_UP:</p>
+<blockquote>
+<div><p>In this state, an inbound CPU sets up the cluster, including
+enabling of hardware coherency at the cluster level and any
+other operations (such as cache invalidation) which are required
+in order to achieve this.</p>
+<p>The purpose of this state is to do sufficient cluster-level
+setup to enable other CPUs in the cluster to enter coherency
+safely.</p>
+<dl class="docutils">
+<dt>Next state:</dt>
+<dd>CLUSTER_UP/INBOUND_COMING_UP (inbound)</dd>
+<dt>Conditions:</dt>
+<dd>cluster-level setup and hardware coherency complete</dd>
+<dt>Trigger events:</dt>
+<dd>(spontaneous)</dd>
+</dl>
+</div></blockquote>
+<p>CLUSTER_UP/INBOUND_COMING_UP:</p>
+<blockquote>
+<div><p>Cluster-level setup is complete and hardware coherency is
+enabled for the cluster.  Other CPUs in the cluster can safely
+enter coherency.</p>
+<p>This is a transient state, leading immediately to
+CLUSTER_UP/INBOUND_NOT_COMING_UP.  All other CPUs on the cluster
+should consider treat these two states as equivalent.</p>
+<dl class="docutils">
+<dt>Next state:</dt>
+<dd>CLUSTER_UP/INBOUND_NOT_COMING_UP (inbound)</dd>
+<dt>Conditions:</dt>
+<dd>none</dd>
+<dt>Trigger events:</dt>
+<dd>(spontaneous)</dd>
+</dl>
+</div></blockquote>
+<p>CLUSTER_UP/INBOUND_NOT_COMING_UP:</p>
+<blockquote>
+<div><p>Cluster-level setup is complete and hardware coherency is
+enabled for the cluster.  Other CPUs in the cluster can safely
+enter coherency.</p>
+<p>The cluster will remain in this state until a policy decision is
+made to power the cluster down.</p>
+<dl class="docutils">
+<dt>Next state:</dt>
+<dd>CLUSTER_GOING_DOWN/INBOUND_NOT_COMING_UP (outbound)</dd>
+<dt>Conditions:</dt>
+<dd>none</dd>
+<dt>Trigger events:</dt>
+<dd>policy decision to power down the cluster</dd>
+</dl>
+</div></blockquote>
+<p>CLUSTER_GOING_DOWN/INBOUND_NOT_COMING_UP:</p>
+<blockquote>
+<div><p>An outbound CPU is tearing the cluster down.  The selected CPU
+must wait in this state until all CPUs in the cluster are in the
+CPU_DOWN state.</p>
+<p>When all CPUs are in the CPU_DOWN state, the cluster can be torn
+down, for example by cleaning data caches and exiting
+cluster-level coherency.</p>
+<p>To avoid wasteful unnecessary teardown operations, the outbound
+should check the inbound cluster state for asynchronous
+transitions to INBOUND_COMING_UP.  Alternatively, individual
+CPUs can be checked for entry into CPU_COMING_UP or CPU_UP.</p>
+<p>Next states:</p>
+<dl class="docutils">
+<dt>CLUSTER_DOWN/INBOUND_NOT_COMING_UP (outbound)</dt>
+<dd><dl class="first last docutils">
+<dt>Conditions:</dt>
+<dd>cluster torn down and ready to power off</dd>
+<dt>Trigger events:</dt>
+<dd>(spontaneous)</dd>
+</dl>
+</dd>
+<dt>CLUSTER_GOING_DOWN/INBOUND_COMING_UP (inbound)</dt>
+<dd><dl class="first last docutils">
+<dt>Conditions:</dt>
+<dd>none</dd>
+<dt>Trigger events:</dt>
+<dd><ol class="first last loweralpha simple">
+<li>an explicit hardware power-up operation,
+resulting from a policy decision on another
+CPU;</li>
+<li>a hardware event, such as an interrupt.</li>
+</ol>
+</dd>
+</dl>
+</dd>
+</dl>
+</div></blockquote>
+<p>CLUSTER_GOING_DOWN/INBOUND_COMING_UP:</p>
+<blockquote>
+<div><p>The cluster is (or was) being torn down, but another CPU has
+come online in the meantime and is trying to set up the cluster
+again.</p>
+<p>If the outbound CPU observes this state, it has two choices:</p>
+<blockquote>
+<div><ol class="loweralpha simple">
+<li>back out of teardown, restoring the cluster to the
+CLUSTER_UP state;</li>
+<li>finish tearing the cluster down and put the cluster
+in the CLUSTER_DOWN state; the inbound CPU will
+set up the cluster again from there.</li>
+</ol>
+</div></blockquote>
+<p>Choice (a) permits the removal of some latency by avoiding
+unnecessary teardown and setup operations in situations where
+the cluster is not really going to be powered down.</p>
+<p>Next states:</p>
+<dl class="docutils">
+<dt>CLUSTER_UP/INBOUND_COMING_UP (outbound)</dt>
+<dd><dl class="first last docutils">
+<dt>Conditions:</dt>
+<dd>cluster-level setup and hardware
+coherency complete</dd>
+<dt>Trigger events:</dt>
+<dd>(spontaneous)</dd>
+</dl>
+</dd>
+<dt>CLUSTER_DOWN/INBOUND_COMING_UP (outbound)</dt>
+<dd><dl class="first last docutils">
+<dt>Conditions:</dt>
+<dd>cluster torn down and ready to power off</dd>
+<dt>Trigger events:</dt>
+<dd>(spontaneous)</dd>
+</dl>
+</dd>
+</dl>
+</div></blockquote>
+</div>
+<div class="section" id="last-man-and-first-man-selection">
+<h2>Last man and First man selection<a class="headerlink" href="#last-man-and-first-man-selection" title="Permalink to this headline">¶</a></h2>
+<p>The CPU which performs cluster tear-down operations on the outbound side
+is commonly referred to as the “last man”.</p>
+<p>The CPU which performs cluster setup on the inbound side is commonly
+referred to as the “first man”.</p>
+<p>The race avoidance algorithm documented above does not provide a
+mechanism to choose which CPUs should play these roles.</p>
+<p>Last man:</p>
+<p>When shutting down the cluster, all the CPUs involved are initially
+executing Linux and hence coherent.  Therefore, ordinary spinlocks can
+be used to select a last man safely, before the CPUs become
+non-coherent.</p>
+<p>First man:</p>
+<p>Because CPUs may power up asynchronously in response to external wake-up
+events, a dynamic mechanism is needed to make sure that only one CPU
+attempts to play the first man role and do the cluster-level
+initialisation: any other CPUs must wait for this to complete before
+proceeding.</p>
+<p>Cluster-level initialisation may involve actions such as configuring
+coherency controls in the bus fabric.</p>
+<p>The current implementation in mcpm_head.S uses a separate mutual exclusion
+mechanism to do this arbitration.  This mechanism is documented in
+detail in vlocks.txt.</p>
+</div>
+<div class="section" id="features-and-limitations">
+<h2>Features and Limitations<a class="headerlink" href="#features-and-limitations" title="Permalink to this headline">¶</a></h2>
+<p>Implementation:</p>
+<blockquote>
+<div><p>The current ARM-based implementation is split between
+arch/arm/common/mcpm_head.S (low-level inbound CPU operations) and
+arch/arm/common/mcpm_entry.c (everything else):</p>
+<p>__mcpm_cpu_going_down() signals the transition of a CPU to the
+CPU_GOING_DOWN state.</p>
+<p>__mcpm_cpu_down() signals the transition of a CPU to the CPU_DOWN
+state.</p>
+<p>A CPU transitions to CPU_COMING_UP and then to CPU_UP via the
+low-level power-up code in mcpm_head.S.  This could
+involve CPU-specific setup code, but in the current
+implementation it does not.</p>
+<p>__mcpm_outbound_enter_critical() and __mcpm_outbound_leave_critical()
+handle transitions from CLUSTER_UP to CLUSTER_GOING_DOWN
+and from there to CLUSTER_DOWN or back to CLUSTER_UP (in
+the case of an aborted cluster power-down).</p>
+<p>These functions are more complex than the __mcpm_cpu_*()
+functions due to the extra inter-CPU coordination which
+is needed for safe transitions at the cluster level.</p>
+<p>A cluster transitions from CLUSTER_DOWN back to CLUSTER_UP via
+the low-level power-up code in mcpm_head.S.  This
+typically involves platform-specific setup code,
+provided by the platform-specific power_up_setup
+function registered via mcpm_sync_init.</p>
+</div></blockquote>
+<p>Deep topologies:</p>
+<blockquote>
+<div>As currently described and implemented, the algorithm does not
+support CPU topologies involving more than two levels (i.e.,
+clusters of clusters are not supported).  The algorithm could be
+extended by replicating the cluster-level states for the
+additional topological levels, and modifying the transition
+rules for the intermediate (non-outermost) cluster levels.</div></blockquote>
+</div>
+<div class="section" id="colophon">
+<h2>Colophon<a class="headerlink" href="#colophon" title="Permalink to this headline">¶</a></h2>
+<p>Originally created and documented by Dave Martin for Linaro Limited, in
+collaboration with Nicolas Pitre and Achin Gupta.</p>
+<p>Copyright (C) 2012-2013  Linaro Limited
+Distributed under the terms of Version 2 of the GNU General Public
+License, as defined in linux/COPYING.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="firmware.html" class="btn btn-neutral float-right" title="Interface for registering and calling firmware-specific operations for ARM" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="booting.html" class="btn btn-neutral float-left" title="Booting ARM Linux" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
