@@ -1,0 +1,496 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Debugging kernel and modules via gdb &mdash; The Linux Kernel 5.6.0-rc3+ documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Using kgdb, kdb and the kernel debugger internals" href="kgdb.html" />
+    <link rel="prev" title="Kernel Memory Leak Detector" href="kmemleak.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.6.0-rc3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Development tools for the kernel</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="coccinelle.html">Coccinelle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sparse.html">Sparse</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kcov.html">kcov: code coverage for fuzzing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gcov.html">Using gcov with the Linux kernel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kasan.html">The Kernel Address Sanitizer (KASAN)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ubsan.html">The Undefined Behavior Sanitizer - UBSAN</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kmemleak.html">Kernel Memory Leak Detector</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Debugging kernel and modules via gdb</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#requirements">Requirements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#setup">Setup</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#examples-of-using-the-linux-provided-gdb-helpers">Examples of using the Linux-provided gdb helpers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#list-of-commands-and-functions">List of commands and functions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="kgdb.html">Using kgdb, kdb and the kernel debugger internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kselftest.html">Linux Kernel Selftests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kunit/index.html">KUnit - Unit Testing for the Linux Kernel</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../media/index.html">Linux Media Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mic/index.html">Intel Many Integrated Core (MIC) architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Development tools for the kernel</a> &raquo;</li>
+        
+      <li>Debugging kernel and modules via gdb</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/dev-tools/gdb-kernel-debugging.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="debugging-kernel-and-modules-via-gdb">
+<h1>Debugging kernel and modules via gdb<a class="headerlink" href="#debugging-kernel-and-modules-via-gdb" title="Permalink to this headline">¶</a></h1>
+<p>The kernel debugger kgdb, hypervisors like QEMU or JTAG-based hardware
+interfaces allow to debug the Linux kernel and its modules during runtime
+using gdb. Gdb comes with a powerful scripting interface for python. The
+kernel provides a collection of helper scripts that can simplify typical
+kernel debugging steps. This is a short tutorial about how to enable and use
+them. It focuses on QEMU/KVM virtual machines as target, but the examples can
+be transferred to the other gdb stubs as well.</p>
+<div class="section" id="requirements">
+<h2>Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>gdb 7.2+ (recommended: 7.4+) with python support enabled (typically true
+for distributions)</li>
+</ul>
+</div>
+<div class="section" id="setup">
+<h2>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p class="first">Create a virtual Linux machine for QEMU/KVM (see www.linux-kvm.org and
+www.qemu.org for more details). For cross-development,
+<a class="reference external" href="http://landley.net/aboriginal/bin">http://landley.net/aboriginal/bin</a> keeps a pool of machine images and
+toolchains that can be helpful to start from.</p>
+</li>
+<li><p class="first">Build the kernel with CONFIG_GDB_SCRIPTS enabled, but leave
+CONFIG_DEBUG_INFO_REDUCED off. If your architecture supports
+CONFIG_FRAME_POINTER, keep it enabled.</p>
+</li>
+<li><p class="first">Install that kernel on the guest, turn off KASLR if necessary by adding
+“nokaslr” to the kernel command line.
+Alternatively, QEMU allows to boot the kernel directly using -kernel,
+-append, -initrd command line switches. This is generally only useful if
+you do not depend on modules. See QEMU documentation for more details on
+this mode. In this case, you should build the kernel with
+CONFIG_RANDOMIZE_BASE disabled if the architecture supports KASLR.</p>
+</li>
+<li><p class="first">Enable the gdb stub of QEMU/KVM, either</p>
+<blockquote>
+<div><ul class="simple">
+<li>at VM startup time by appending “-s” to the QEMU command line</li>
+</ul>
+</div></blockquote>
+<p>or</p>
+<blockquote>
+<div><ul class="simple">
+<li>during runtime by issuing “gdbserver” from the QEMU monitor
+console</li>
+</ul>
+</div></blockquote>
+</li>
+<li><p class="first">cd /path/to/linux-build</p>
+</li>
+<li><p class="first">Start gdb: gdb vmlinux</p>
+<p>Note: Some distros may restrict auto-loading of gdb scripts to known safe
+directories. In case gdb reports to refuse loading vmlinux-gdb.py, add:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>add-auto-load-safe-path /path/to/linux-build
+</pre></div>
+</div>
+<p>to ~/.gdbinit. See gdb help for more details.</p>
+</li>
+<li><p class="first">Attach to the booted guest:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(gdb) target remote :1234
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="examples-of-using-the-linux-provided-gdb-helpers">
+<h2>Examples of using the Linux-provided gdb helpers<a class="headerlink" href="#examples-of-using-the-linux-provided-gdb-helpers" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p class="first">Load module (and main kernel) symbols:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(gdb) lx-symbols
+loading vmlinux
+scanning for modules in /home/user/linux/build
+loading @0xffffffffa0020000: /home/user/linux/build/net/netfilter/xt_tcpudp.ko
+loading @0xffffffffa0016000: /home/user/linux/build/net/netfilter/xt_pkttype.ko
+loading @0xffffffffa0002000: /home/user/linux/build/net/netfilter/xt_limit.ko
+loading @0xffffffffa00ca000: /home/user/linux/build/net/packet/af_packet.ko
+loading @0xffffffffa003c000: /home/user/linux/build/fs/fuse/fuse.ko
+...
+loading @0xffffffffa0000000: /home/user/linux/build/drivers/ata/ata_generic.ko
+</pre></div>
+</div>
+</li>
+<li><p class="first">Set a breakpoint on some not yet loaded module function, e.g.:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(gdb) b btrfs_init_sysfs
+Function &quot;btrfs_init_sysfs&quot; not defined.
+Make breakpoint pending on future shared library load? (y or [n]) y
+Breakpoint 1 (btrfs_init_sysfs) pending.
+</pre></div>
+</div>
+</li>
+<li><p class="first">Continue the target:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(gdb) c
+</pre></div>
+</div>
+</li>
+<li><p class="first">Load the module on the target and watch the symbols being loaded as well as
+the breakpoint hit:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>loading @0xffffffffa0034000: /home/user/linux/build/lib/libcrc32c.ko
+loading @0xffffffffa0050000: /home/user/linux/build/lib/lzo/lzo_compress.ko
+loading @0xffffffffa006e000: /home/user/linux/build/lib/zlib_deflate/zlib_deflate.ko
+loading @0xffffffffa01b1000: /home/user/linux/build/fs/btrfs/btrfs.ko
+
+Breakpoint 1, btrfs_init_sysfs () at /home/user/linux/fs/btrfs/sysfs.c:36
+36              btrfs_kset = kset_create_and_add(&quot;btrfs&quot;, NULL, fs_kobj);
+</pre></div>
+</div>
+</li>
+<li><p class="first">Dump the log buffer of the target kernel:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(gdb) lx-dmesg
+[     0.000000] Initializing cgroup subsys cpuset
+[     0.000000] Initializing cgroup subsys cpu
+[     0.000000] Linux version 3.8.0-rc4-dbg+ (...
+[     0.000000] Command line: root=/dev/sda2 resume=/dev/sda1 vga=0x314
+[     0.000000] e820: BIOS-provided physical RAM map:
+[     0.000000] BIOS-e820: [mem 0x0000000000000000-0x000000000009fbff] usable
+[     0.000000] BIOS-e820: [mem 0x000000000009fc00-0x000000000009ffff] reserved
+....
+</pre></div>
+</div>
+</li>
+<li><p class="first">Examine fields of the current task struct:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(gdb) p $lx_current().pid
+$1 = 4998
+(gdb) p $lx_current().comm
+$2 = &quot;modprobe\000\000\000\000\000\000\000&quot;
+</pre></div>
+</div>
+</li>
+<li><p class="first">Make use of the per-cpu function for the current or a specified CPU:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(gdb) p $lx_per_cpu(&quot;runqueues&quot;).nr_running
+$3 = 1
+(gdb) p $lx_per_cpu(&quot;runqueues&quot;, 2).nr_running
+$4 = 0
+</pre></div>
+</div>
+</li>
+<li><p class="first">Dig into hrtimers using the container_of helper:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(gdb) set $next = $lx_per_cpu(&quot;hrtimer_bases&quot;).clock_base[0].active.next
+(gdb) p *$container_of($next, &quot;struct hrtimer&quot;, &quot;node&quot;)
+$5 = {
+  node = {
+    node = {
+      __rb_parent_color = 18446612133355256072,
+      rb_right = 0x0 &lt;irq_stack_union&gt;,
+      rb_left = 0x0 &lt;irq_stack_union&gt;
+    },
+    expires = {
+      tv64 = 1835268000000
+    }
+  },
+  _softexpires = {
+    tv64 = 1835268000000
+  },
+  function = 0xffffffff81078232 &lt;tick_sched_timer&gt;,
+  base = 0xffff88003fd0d6f0,
+  state = 1,
+  start_pid = 0,
+  start_site = 0xffffffff81055c1f &lt;hrtimer_start_range_ns+20&gt;,
+  start_comm = &quot;swapper/2\000\000\000\000\000\000&quot;
+}
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="list-of-commands-and-functions">
+<h2>List of commands and functions<a class="headerlink" href="#list-of-commands-and-functions" title="Permalink to this headline">¶</a></h2>
+<p>The number of commands and convenience functions may evolve over the time,
+this is just a snapshot of the initial version:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(gdb) apropos lx
+function lx_current -- Return current task
+function lx_module -- Find module by name and return the module variable
+function lx_per_cpu -- Return per-cpu variable
+function lx_task_by_pid -- Find Linux task by PID and return the task_struct variable
+function lx_thread_info -- Calculate Linux thread_info from task variable
+lx-dmesg -- Print Linux kernel log buffer
+lx-lsmod -- List currently loaded modules
+lx-symbols -- (Re-)load symbols of Linux kernel and currently loaded modules
+</pre></div>
+</div>
+<p>Detailed help can be obtained via “help &lt;command-name&gt;” for commands and “help
+function &lt;function-name&gt;” for convenience functions.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="kgdb.html" class="btn btn-neutral float-right" title="Using kgdb, kdb and the kernel debugger internals" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="kmemleak.html" class="btn btn-neutral float-left" title="Kernel Memory Leak Detector" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

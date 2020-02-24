@@ -1,0 +1,910 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>HOWTO interact with BPF subsystem &mdash; The Linux Kernel 5.6.0-rc3+ documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="BPF_PROG_TYPE_CGROUP_SOCKOPT" href="prog_cgroup_sockopt.html" />
+    <link rel="prev" title="BPF Design Q&amp;A" href="bpf_design_QA.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.6.0-rc3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../media/index.html">Linux Media Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">BPF Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="index.html#bpf-type-format-btf">BPF Type Format (BTF)</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#frequently-asked-questions-faq">Frequently asked questions (FAQ)</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="bpf_design_QA.html">BPF Design Q&amp;A</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">HOWTO interact with BPF subsystem</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#reporting-bugs">Reporting bugs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#submitting-patches">Submitting patches</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#stable-submission">Stable submission</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#testing-patches">Testing patches</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#llvm">LLVM</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#program-types">Program types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#testing-bpf">Testing BPF</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mic/index.html">Intel Many Integrated Core (MIC) architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">BPF Documentation</a> &raquo;</li>
+        
+      <li>HOWTO interact with BPF subsystem</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/bpf/bpf_devel_QA.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="howto-interact-with-bpf-subsystem">
+<h1>HOWTO interact with BPF subsystem<a class="headerlink" href="#howto-interact-with-bpf-subsystem" title="Permalink to this headline">¶</a></h1>
+<p>This document provides information for the BPF subsystem about various
+workflows related to reporting bugs, submitting patches, and queueing
+patches for stable kernels.</p>
+<p>For general information about submitting patches, please refer to
+<a class="reference external" href="https://www.kernel.org/doc/html/latest/process/">Documentation/process/</a>. This document only describes additional specifics
+related to BPF.</p>
+<div class="contents local topic" id="contents">
+<ul class="simple">
+<li><a class="reference internal" href="#reporting-bugs" id="id1">Reporting bugs</a><ul>
+<li><a class="reference internal" href="#q-how-do-i-report-bugs-for-bpf-kernel-code" id="id2">Q: How do I report bugs for BPF kernel code?</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#submitting-patches" id="id3">Submitting patches</a><ul>
+<li><a class="reference internal" href="#q-to-which-mailing-list-do-i-need-to-submit-my-bpf-patches" id="id4">Q: To which mailing list do I need to submit my BPF patches?</a></li>
+<li><a class="reference internal" href="#q-where-can-i-find-patches-currently-under-discussion-for-bpf-subsystem" id="id5">Q: Where can I find patches currently under discussion for BPF subsystem?</a></li>
+<li><a class="reference internal" href="#q-how-do-the-changes-make-their-way-into-linux" id="id6">Q: How do the changes make their way into Linux?</a></li>
+<li><a class="reference internal" href="#q-how-do-i-indicate-which-tree-bpf-vs-bpf-next-my-patch-should-be-applied-to" id="id7">Q: How do I indicate which tree (bpf vs. bpf-next) my patch should be applied to?</a></li>
+<li><a class="reference internal" href="#q-what-does-it-mean-when-a-patch-gets-applied-to-bpf-or-bpf-next-tree" id="id8">Q: What does it mean when a patch gets applied to bpf or bpf-next tree?</a></li>
+<li><a class="reference internal" href="#q-how-long-do-i-need-to-wait-for-feedback-on-my-bpf-patches" id="id9">Q: How long do I need to wait for feedback on my BPF patches?</a></li>
+<li><a class="reference internal" href="#q-how-often-do-you-send-pull-requests-to-major-kernel-trees-like-net-or-net-next" id="id10">Q: How often do you send pull requests to major kernel trees like net or net-next?</a></li>
+<li><a class="reference internal" href="#q-are-patches-applied-to-bpf-next-when-the-merge-window-is-open" id="id11">Q: Are patches applied to bpf-next when the merge window is open?</a></li>
+<li><a class="reference internal" href="#q-verifier-changes-and-test-cases" id="id12">Q: Verifier changes and test cases</a></li>
+<li><a class="reference internal" href="#q-samples-bpf-preference-vs-selftests" id="id13">Q: samples/bpf preference vs selftests?</a></li>
+<li><a class="reference internal" href="#q-when-should-i-add-code-to-the-bpftool" id="id14">Q: When should I add code to the bpftool?</a></li>
+<li><a class="reference internal" href="#q-when-should-i-add-code-to-iproute2-s-bpf-loader" id="id15">Q: When should I add code to iproute2’s BPF loader?</a></li>
+<li><a class="reference internal" href="#q-do-you-accept-patches-as-well-for-iproute2-s-bpf-loader" id="id16">Q: Do you accept patches as well for iproute2’s BPF loader?</a></li>
+<li><a class="reference internal" href="#q-what-is-the-minimum-requirement-before-i-submit-my-bpf-patches" id="id17">Q: What is the minimum requirement before I submit my BPF patches?</a></li>
+<li><a class="reference internal" href="#q-features-changing-bpf-jit-and-or-llvm" id="id18">Q: Features changing BPF JIT and/or LLVM</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#stable-submission" id="id19">Stable submission</a><ul>
+<li><a class="reference internal" href="#q-i-need-a-specific-bpf-commit-in-stable-kernels-what-should-i-do" id="id20">Q: I need a specific BPF commit in stable kernels. What should I do?</a></li>
+<li><a class="reference internal" href="#q-do-you-also-backport-to-kernels-not-currently-maintained-as-stable" id="id21">Q: Do you also backport to kernels not currently maintained as stable?</a></li>
+<li><a class="reference internal" href="#q-the-bpf-patch-i-am-about-to-submit-needs-to-go-to-stable-as-well" id="id22">Q: The BPF patch I am about to submit needs to go to stable as well</a></li>
+<li><a class="reference internal" href="#q-queue-stable-patches" id="id23">Q: Queue stable patches</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#testing-patches" id="id24">Testing patches</a><ul>
+<li><a class="reference internal" href="#q-how-to-run-bpf-selftests" id="id25">Q: How to run BPF selftests</a></li>
+<li><a class="reference internal" href="#q-which-bpf-kernel-selftests-version-should-i-run-my-kernel-against" id="id26">Q: Which BPF kernel selftests version should I run my kernel against?</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#llvm" id="id27">LLVM</a><ul>
+<li><a class="reference internal" href="#q-where-do-i-find-llvm-with-bpf-support" id="id28">Q: Where do I find LLVM with BPF support?</a></li>
+<li><a class="reference internal" href="#q-got-it-so-how-do-i-build-llvm-manually-anyway" id="id29">Q: Got it, so how do I build LLVM manually anyway?</a></li>
+<li><a class="reference internal" href="#q-reporting-llvm-bpf-issues" id="id30">Q: Reporting LLVM BPF issues</a></li>
+<li><a class="reference internal" href="#q-new-bpf-instruction-for-kernel-and-llvm" id="id31">Q: New BPF instruction for kernel and LLVM</a></li>
+<li><a class="reference internal" href="#q-clang-flag-for-target-bpf" id="id32">Q: clang flag for target bpf?</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="reporting-bugs">
+<h2><a class="toc-backref" href="#id1">Reporting bugs</a><a class="headerlink" href="#reporting-bugs" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="q-how-do-i-report-bugs-for-bpf-kernel-code">
+<h3><a class="toc-backref" href="#id2">Q: How do I report bugs for BPF kernel code?</a><a class="headerlink" href="#q-how-do-i-report-bugs-for-bpf-kernel-code" title="Permalink to this headline">¶</a></h3>
+<p>A: Since all BPF kernel development as well as bpftool and iproute2 BPF
+loader development happens through the netdev kernel mailing list,
+please report any found issues around BPF to the following mailing
+list:</p>
+<blockquote>
+<div><a class="reference external" href="mailto:netdev&#37;&#52;&#48;vger&#46;kernel&#46;org">netdev<span>&#64;</span>vger<span>&#46;</span>kernel<span>&#46;</span>org</a></div></blockquote>
+<p>This may also include issues related to XDP, BPF tracing, etc.</p>
+<p>Given netdev has a high volume of traffic, please also add the BPF
+maintainers to Cc (from kernel <a class="reference external" href="../../MAINTAINERS">MAINTAINERS</a> file):</p>
+<ul class="simple">
+<li>Alexei Starovoitov &lt;<a class="reference external" href="mailto:ast&#37;&#52;&#48;kernel&#46;org">ast<span>&#64;</span>kernel<span>&#46;</span>org</a>&gt;</li>
+<li>Daniel Borkmann &lt;<a class="reference external" href="mailto:daniel&#37;&#52;&#48;iogearbox&#46;net">daniel<span>&#64;</span>iogearbox<span>&#46;</span>net</a>&gt;</li>
+</ul>
+<p>In case a buggy commit has already been identified, make sure to keep
+the actual commit authors in Cc as well for the report. They can
+typically be identified through the kernel’s git tree.</p>
+<p><strong>Please do NOT report BPF issues to bugzilla.kernel.org since it
+is a guarantee that the reported issue will be overlooked.</strong></p>
+</div>
+</div>
+<div class="section" id="submitting-patches">
+<h2><a class="toc-backref" href="#id3">Submitting patches</a><a class="headerlink" href="#submitting-patches" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="q-to-which-mailing-list-do-i-need-to-submit-my-bpf-patches">
+<h3><a class="toc-backref" href="#id4">Q: To which mailing list do I need to submit my BPF patches?</a><a class="headerlink" href="#q-to-which-mailing-list-do-i-need-to-submit-my-bpf-patches" title="Permalink to this headline">¶</a></h3>
+<p>A: Please submit your BPF patches to the netdev kernel mailing list:</p>
+<blockquote>
+<div><a class="reference external" href="mailto:netdev&#37;&#52;&#48;vger&#46;kernel&#46;org">netdev<span>&#64;</span>vger<span>&#46;</span>kernel<span>&#46;</span>org</a></div></blockquote>
+<p>Historically, BPF came out of networking and has always been maintained
+by the kernel networking community. Although these days BPF touches
+many other subsystems as well, the patches are still routed mainly
+through the networking community.</p>
+<p>In case your patch has changes in various different subsystems (e.g.
+tracing, security, etc), make sure to Cc the related kernel mailing
+lists and maintainers from there as well, so they are able to review
+the changes and provide their Acked-by’s to the patches.</p>
+</div>
+<div class="section" id="q-where-can-i-find-patches-currently-under-discussion-for-bpf-subsystem">
+<h3><a class="toc-backref" href="#id5">Q: Where can I find patches currently under discussion for BPF subsystem?</a><a class="headerlink" href="#q-where-can-i-find-patches-currently-under-discussion-for-bpf-subsystem" title="Permalink to this headline">¶</a></h3>
+<p>A: All patches that are Cc’ed to netdev are queued for review under netdev
+patchwork project:</p>
+<blockquote>
+<div><a class="reference external" href="http://patchwork.ozlabs.org/project/netdev/list/">http://patchwork.ozlabs.org/project/netdev/list/</a></div></blockquote>
+<p>Those patches which target BPF, are assigned to a ‘bpf’ delegate for
+further processing from BPF maintainers. The current queue with
+patches under review can be found at:</p>
+<blockquote>
+<div><a class="reference external" href="https://patchwork.ozlabs.org/project/netdev/list/?delegate=77147">https://patchwork.ozlabs.org/project/netdev/list/?delegate=77147</a></div></blockquote>
+<p>Once the patches have been reviewed by the BPF community as a whole
+and approved by the BPF maintainers, their status in patchwork will be
+changed to ‘Accepted’ and the submitter will be notified by mail. This
+means that the patches look good from a BPF perspective and have been
+applied to one of the two BPF kernel trees.</p>
+<p>In case feedback from the community requires a respin of the patches,
+their status in patchwork will be set to ‘Changes Requested’, and purged
+from the current review queue. Likewise for cases where patches would
+get rejected or are not applicable to the BPF trees (but assigned to
+the ‘bpf’ delegate).</p>
+</div>
+<div class="section" id="q-how-do-the-changes-make-their-way-into-linux">
+<h3><a class="toc-backref" href="#id6">Q: How do the changes make their way into Linux?</a><a class="headerlink" href="#q-how-do-the-changes-make-their-way-into-linux" title="Permalink to this headline">¶</a></h3>
+<p>A: There are two BPF kernel trees (git repositories). Once patches have
+been accepted by the BPF maintainers, they will be applied to one
+of the two BPF trees:</p>
+<blockquote>
+<div><ul class="simple">
+<li><a class="reference external" href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/">https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf.git/</a></li>
+<li><a class="reference external" href="https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf-next.git/">https://git.kernel.org/pub/scm/linux/kernel/git/bpf/bpf-next.git/</a></li>
+</ul>
+</div></blockquote>
+<p>The bpf tree itself is for fixes only, whereas bpf-next for features,
+cleanups or other kind of improvements (“next-like” content). This is
+analogous to net and net-next trees for networking. Both bpf and
+bpf-next will only have a master branch in order to simplify against
+which branch patches should get rebased to.</p>
+<p>Accumulated BPF patches in the bpf tree will regularly get pulled
+into the net kernel tree. Likewise, accumulated BPF patches accepted
+into the bpf-next tree will make their way into net-next tree. net and
+net-next are both run by David S. Miller. From there, they will go
+into the kernel mainline tree run by Linus Torvalds. To read up on the
+process of net and net-next being merged into the mainline tree, see
+the <a class="reference internal" href="../networking/netdev-FAQ.html#netdev-faq"><span class="std std-ref">netdev FAQ</span></a></p>
+<p>Occasionally, to prevent merge conflicts, we might send pull requests
+to other trees (e.g. tracing) with a small subset of the patches, but
+net and net-next are always the main trees targeted for integration.</p>
+<p>The pull requests will contain a high-level summary of the accumulated
+patches and can be searched on netdev kernel mailing list through the
+following subject lines (<code class="docutils literal notranslate"><span class="pre">yyyy-mm-dd</span></code> is the date of the pull
+request):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pull-request: bpf yyyy-mm-dd
+pull-request: bpf-next yyyy-mm-dd
+</pre></div>
+</div>
+</div>
+<div class="section" id="q-how-do-i-indicate-which-tree-bpf-vs-bpf-next-my-patch-should-be-applied-to">
+<h3><a class="toc-backref" href="#id7">Q: How do I indicate which tree (bpf vs. bpf-next) my patch should be applied to?</a><a class="headerlink" href="#q-how-do-i-indicate-which-tree-bpf-vs-bpf-next-my-patch-should-be-applied-to" title="Permalink to this headline">¶</a></h3>
+<p>A: The process is the very same as described in the <a class="reference internal" href="../networking/netdev-FAQ.html#netdev-faq"><span class="std std-ref">netdev FAQ</span></a>,
+so please read up on it. The subject line must indicate whether the
+patch is a fix or rather “next-like” content in order to let the
+maintainers know whether it is targeted at bpf or bpf-next.</p>
+<p>For fixes eventually landing in bpf -&gt; net tree, the subject must
+look like:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>git format-patch --subject-prefix=&#39;PATCH bpf&#39; start..finish
+</pre></div>
+</div>
+<p>For features/improvements/etc that should eventually land in
+bpf-next -&gt; net-next, the subject must look like:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>git format-patch --subject-prefix=&#39;PATCH bpf-next&#39; start..finish
+</pre></div>
+</div>
+<p>If unsure whether the patch or patch series should go into bpf
+or net directly, or bpf-next or net-next directly, it is not a
+problem either if the subject line says net or net-next as target.
+It is eventually up to the maintainers to do the delegation of
+the patches.</p>
+<p>If it is clear that patches should go into bpf or bpf-next tree,
+please make sure to rebase the patches against those trees in
+order to reduce potential conflicts.</p>
+<p>In case the patch or patch series has to be reworked and sent out
+again in a second or later revision, it is also required to add a
+version number (<code class="docutils literal notranslate"><span class="pre">v2</span></code>, <code class="docutils literal notranslate"><span class="pre">v3</span></code>, …) into the subject prefix:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>git format-patch --subject-prefix=&#39;PATCH net-next v2&#39; start..finish
+</pre></div>
+</div>
+<p>When changes have been requested to the patch series, always send the
+whole patch series again with the feedback incorporated (never send
+individual diffs on top of the old series).</p>
+</div>
+<div class="section" id="q-what-does-it-mean-when-a-patch-gets-applied-to-bpf-or-bpf-next-tree">
+<h3><a class="toc-backref" href="#id8">Q: What does it mean when a patch gets applied to bpf or bpf-next tree?</a><a class="headerlink" href="#q-what-does-it-mean-when-a-patch-gets-applied-to-bpf-or-bpf-next-tree" title="Permalink to this headline">¶</a></h3>
+<p>A: It means that the patch looks good for mainline inclusion from
+a BPF point of view.</p>
+<p>Be aware that this is not a final verdict that the patch will
+automatically get accepted into net or net-next trees eventually:</p>
+<p>On the netdev kernel mailing list reviews can come in at any point
+in time. If discussions around a patch conclude that they cannot
+get included as-is, we will either apply a follow-up fix or drop
+them from the trees entirely. Therefore, we also reserve to rebase
+the trees when deemed necessary. After all, the purpose of the tree
+is to:</p>
+<ol class="lowerroman simple">
+<li>accumulate and stage BPF patches for integration into trees
+like net and net-next, and</li>
+<li>run extensive BPF test suite and
+workloads on the patches before they make their way any further.</li>
+</ol>
+<p>Once the BPF pull request was accepted by David S. Miller, then
+the patches end up in net or net-next tree, respectively, and
+make their way from there further into mainline. Again, see the
+<a class="reference internal" href="../networking/netdev-FAQ.html#netdev-faq"><span class="std std-ref">netdev FAQ</span></a> for additional information e.g. on how often they are
+merged to mainline.</p>
+</div>
+<div class="section" id="q-how-long-do-i-need-to-wait-for-feedback-on-my-bpf-patches">
+<h3><a class="toc-backref" href="#id9">Q: How long do I need to wait for feedback on my BPF patches?</a><a class="headerlink" href="#q-how-long-do-i-need-to-wait-for-feedback-on-my-bpf-patches" title="Permalink to this headline">¶</a></h3>
+<p>A: We try to keep the latency low. The usual time to feedback will
+be around 2 or 3 business days. It may vary depending on the
+complexity of changes and current patch load.</p>
+</div>
+<div class="section" id="q-how-often-do-you-send-pull-requests-to-major-kernel-trees-like-net-or-net-next">
+<h3><a class="toc-backref" href="#id10">Q: How often do you send pull requests to major kernel trees like net or net-next?</a><a class="headerlink" href="#q-how-often-do-you-send-pull-requests-to-major-kernel-trees-like-net-or-net-next" title="Permalink to this headline">¶</a></h3>
+<p>A: Pull requests will be sent out rather often in order to not
+accumulate too many patches in bpf or bpf-next.</p>
+<p>As a rule of thumb, expect pull requests for each tree regularly
+at the end of the week. In some cases pull requests could additionally
+come also in the middle of the week depending on the current patch
+load or urgency.</p>
+</div>
+<div class="section" id="q-are-patches-applied-to-bpf-next-when-the-merge-window-is-open">
+<h3><a class="toc-backref" href="#id11">Q: Are patches applied to bpf-next when the merge window is open?</a><a class="headerlink" href="#q-are-patches-applied-to-bpf-next-when-the-merge-window-is-open" title="Permalink to this headline">¶</a></h3>
+<p>A: For the time when the merge window is open, bpf-next will not be
+processed. This is roughly analogous to net-next patch processing,
+so feel free to read up on the <a class="reference internal" href="../networking/netdev-FAQ.html#netdev-faq"><span class="std std-ref">netdev FAQ</span></a> about further details.</p>
+<p>During those two weeks of merge window, we might ask you to resend
+your patch series once bpf-next is open again. Once Linus released
+a <code class="docutils literal notranslate"><span class="pre">v*-rc1</span></code> after the merge window, we continue processing of bpf-next.</p>
+<p>For non-subscribers to kernel mailing lists, there is also a status
+page run by David S. Miller on net-next that provides guidance:</p>
+<blockquote>
+<div><a class="reference external" href="http://vger.kernel.org/~davem/net-next.html">http://vger.kernel.org/~davem/net-next.html</a></div></blockquote>
+</div>
+<div class="section" id="q-verifier-changes-and-test-cases">
+<h3><a class="toc-backref" href="#id12">Q: Verifier changes and test cases</a><a class="headerlink" href="#q-verifier-changes-and-test-cases" title="Permalink to this headline">¶</a></h3>
+<p>Q: I made a BPF verifier change, do I need to add test cases for
+BPF kernel <a class="reference external" href="../../tools/testing/selftests/bpf/">selftests</a>?</p>
+<p>A: If the patch has changes to the behavior of the verifier, then yes,
+it is absolutely necessary to add test cases to the BPF kernel
+<a class="reference external" href="../../tools/testing/selftests/bpf/">selftests</a> suite. If they are not present and we think they are
+needed, then we might ask for them before accepting any changes.</p>
+<p>In particular, test_verifier.c is tracking a high number of BPF test
+cases, including a lot of corner cases that LLVM BPF back end may
+generate out of the restricted C code. Thus, adding test cases is
+absolutely crucial to make sure future changes do not accidentally
+affect prior use-cases. Thus, treat those test cases as: verifier
+behavior that is not tracked in test_verifier.c could potentially
+be subject to change.</p>
+</div>
+<div class="section" id="q-samples-bpf-preference-vs-selftests">
+<h3><a class="toc-backref" href="#id13">Q: samples/bpf preference vs selftests?</a><a class="headerlink" href="#q-samples-bpf-preference-vs-selftests" title="Permalink to this headline">¶</a></h3>
+<p>Q: When should I add code to <a class="reference external" href="../../samples/bpf/">samples/bpf/</a> and when to BPF kernel
+<a class="reference external" href="../../tools/testing/selftests/bpf/">selftests</a> ?</p>
+<p>A: In general, we prefer additions to BPF kernel <a class="reference external" href="../../tools/testing/selftests/bpf/">selftests</a> rather than
+<a class="reference external" href="../../samples/bpf/">samples/bpf/</a>. The rationale is very simple: kernel selftests are
+regularly run by various bots to test for kernel regressions.</p>
+<p>The more test cases we add to BPF selftests, the better the coverage
+and the less likely it is that those could accidentally break. It is
+not that BPF kernel selftests cannot demo how a specific feature can
+be used.</p>
+<p>That said, <a class="reference external" href="../../samples/bpf/">samples/bpf/</a> may be a good place for people to get started,
+so it might be advisable that simple demos of features could go into
+<a class="reference external" href="../../samples/bpf/">samples/bpf/</a>, but advanced functional and corner-case testing rather
+into kernel selftests.</p>
+<p>If your sample looks like a test case, then go for BPF kernel selftests
+instead!</p>
+</div>
+<div class="section" id="q-when-should-i-add-code-to-the-bpftool">
+<h3><a class="toc-backref" href="#id14">Q: When should I add code to the bpftool?</a><a class="headerlink" href="#q-when-should-i-add-code-to-the-bpftool" title="Permalink to this headline">¶</a></h3>
+<p>A: The main purpose of bpftool (under tools/bpf/bpftool/) is to provide
+a central user space tool for debugging and introspection of BPF programs
+and maps that are active in the kernel. If UAPI changes related to BPF
+enable for dumping additional information of programs or maps, then
+bpftool should be extended as well to support dumping them.</p>
+</div>
+<div class="section" id="q-when-should-i-add-code-to-iproute2-s-bpf-loader">
+<h3><a class="toc-backref" href="#id15">Q: When should I add code to iproute2’s BPF loader?</a><a class="headerlink" href="#q-when-should-i-add-code-to-iproute2-s-bpf-loader" title="Permalink to this headline">¶</a></h3>
+<p>A: For UAPI changes related to the XDP or tc layer (e.g. <code class="docutils literal notranslate"><span class="pre">cls_bpf</span></code>),
+the convention is that those control-path related changes are added to
+iproute2’s BPF loader as well from user space side. This is not only
+useful to have UAPI changes properly designed to be usable, but also
+to make those changes available to a wider user base of major
+downstream distributions.</p>
+</div>
+<div class="section" id="q-do-you-accept-patches-as-well-for-iproute2-s-bpf-loader">
+<h3><a class="toc-backref" href="#id16">Q: Do you accept patches as well for iproute2’s BPF loader?</a><a class="headerlink" href="#q-do-you-accept-patches-as-well-for-iproute2-s-bpf-loader" title="Permalink to this headline">¶</a></h3>
+<p>A: Patches for the iproute2’s BPF loader have to be sent to:</p>
+<blockquote>
+<div><a class="reference external" href="mailto:netdev&#37;&#52;&#48;vger&#46;kernel&#46;org">netdev<span>&#64;</span>vger<span>&#46;</span>kernel<span>&#46;</span>org</a></div></blockquote>
+<p>While those patches are not processed by the BPF kernel maintainers,
+please keep them in Cc as well, so they can be reviewed.</p>
+<p>The official git repository for iproute2 is run by Stephen Hemminger
+and can be found at:</p>
+<blockquote>
+<div><a class="reference external" href="https://git.kernel.org/pub/scm/linux/kernel/git/shemminger/iproute2.git/">https://git.kernel.org/pub/scm/linux/kernel/git/shemminger/iproute2.git/</a></div></blockquote>
+<p>The patches need to have a subject prefix of ‘<code class="docutils literal notranslate"><span class="pre">[PATCH</span> <span class="pre">iproute2</span>
+<span class="pre">master]</span></code>’ or ‘<code class="docutils literal notranslate"><span class="pre">[PATCH</span> <span class="pre">iproute2</span> <span class="pre">net-next]</span></code>’. ‘<code class="docutils literal notranslate"><span class="pre">master</span></code>’ or
+‘<code class="docutils literal notranslate"><span class="pre">net-next</span></code>’ describes the target branch where the patch should be
+applied to. Meaning, if kernel changes went into the net-next kernel
+tree, then the related iproute2 changes need to go into the iproute2
+net-next branch, otherwise they can be targeted at master branch. The
+iproute2 net-next branch will get merged into the master branch after
+the current iproute2 version from master has been released.</p>
+<p>Like BPF, the patches end up in patchwork under the netdev project and
+are delegated to ‘shemminger’ for further processing:</p>
+<blockquote>
+<div><a class="reference external" href="http://patchwork.ozlabs.org/project/netdev/list/?delegate=389">http://patchwork.ozlabs.org/project/netdev/list/?delegate=389</a></div></blockquote>
+</div>
+<div class="section" id="q-what-is-the-minimum-requirement-before-i-submit-my-bpf-patches">
+<h3><a class="toc-backref" href="#id17">Q: What is the minimum requirement before I submit my BPF patches?</a><a class="headerlink" href="#q-what-is-the-minimum-requirement-before-i-submit-my-bpf-patches" title="Permalink to this headline">¶</a></h3>
+<p>A: When submitting patches, always take the time and properly test your
+patches <em>prior</em> to submission. Never rush them! If maintainers find
+that your patches have not been properly tested, it is a good way to
+get them grumpy. Testing patch submissions is a hard requirement!</p>
+<p>Note, fixes that go to bpf tree <em>must</em> have a <code class="docutils literal notranslate"><span class="pre">Fixes:</span></code> tag included.
+The same applies to fixes that target bpf-next, where the affected
+commit is in net-next (or in some cases bpf-next). The <code class="docutils literal notranslate"><span class="pre">Fixes:</span></code> tag is
+crucial in order to identify follow-up commits and tremendously helps
+for people having to do backporting, so it is a must have!</p>
+<p>We also don’t accept patches with an empty commit message. Take your
+time and properly write up a high quality commit message, it is
+essential!</p>
+<p>Think about it this way: other developers looking at your code a month
+from now need to understand <em>why</em> a certain change has been done that
+way, and whether there have been flaws in the analysis or assumptions
+that the original author did. Thus providing a proper rationale and
+describing the use-case for the changes is a must.</p>
+<p>Patch submissions with &gt;1 patch must have a cover letter which includes
+a high level description of the series. This high level summary will
+then be placed into the merge commit by the BPF maintainers such that
+it is also accessible from the git log for future reference.</p>
+</div>
+<div class="section" id="q-features-changing-bpf-jit-and-or-llvm">
+<h3><a class="toc-backref" href="#id18">Q: Features changing BPF JIT and/or LLVM</a><a class="headerlink" href="#q-features-changing-bpf-jit-and-or-llvm" title="Permalink to this headline">¶</a></h3>
+<p>Q: What do I need to consider when adding a new instruction or feature
+that would require BPF JIT and/or LLVM integration as well?</p>
+<p>A: We try hard to keep all BPF JITs up to date such that the same user
+experience can be guaranteed when running BPF programs on different
+architectures without having the program punt to the less efficient
+interpreter in case the in-kernel BPF JIT is enabled.</p>
+<p>If you are unable to implement or test the required JIT changes for
+certain architectures, please work together with the related BPF JIT
+developers in order to get the feature implemented in a timely manner.
+Please refer to the git log (<code class="docutils literal notranslate"><span class="pre">arch/*/net/</span></code>) to locate the necessary
+people for helping out.</p>
+<p>Also always make sure to add BPF test cases (e.g. test_bpf.c and
+test_verifier.c) for new instructions, so that they can receive
+broad test coverage and help run-time testing the various BPF JITs.</p>
+<p>In case of new BPF instructions, once the changes have been accepted
+into the Linux kernel, please implement support into LLVM’s BPF back
+end. See <a class="reference internal" href="#llvm">LLVM</a> section below for further information.</p>
+</div>
+</div>
+<div class="section" id="stable-submission">
+<h2><a class="toc-backref" href="#id19">Stable submission</a><a class="headerlink" href="#stable-submission" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="q-i-need-a-specific-bpf-commit-in-stable-kernels-what-should-i-do">
+<h3><a class="toc-backref" href="#id20">Q: I need a specific BPF commit in stable kernels. What should I do?</a><a class="headerlink" href="#q-i-need-a-specific-bpf-commit-in-stable-kernels-what-should-i-do" title="Permalink to this headline">¶</a></h3>
+<p>A: In case you need a specific fix in stable kernels, first check whether
+the commit has already been applied in the related <code class="docutils literal notranslate"><span class="pre">linux-*.y</span></code> branches:</p>
+<blockquote>
+<div><a class="reference external" href="https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git/">https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git/</a></div></blockquote>
+<p>If not the case, then drop an email to the BPF maintainers with the
+netdev kernel mailing list in Cc and ask for the fix to be queued up:</p>
+<blockquote>
+<div><a class="reference external" href="mailto:netdev&#37;&#52;&#48;vger&#46;kernel&#46;org">netdev<span>&#64;</span>vger<span>&#46;</span>kernel<span>&#46;</span>org</a></div></blockquote>
+<p>The process in general is the same as on netdev itself, see also the
+<a class="reference internal" href="../networking/netdev-FAQ.html#netdev-faq"><span class="std std-ref">netdev FAQ</span></a>.</p>
+</div>
+<div class="section" id="q-do-you-also-backport-to-kernels-not-currently-maintained-as-stable">
+<h3><a class="toc-backref" href="#id21">Q: Do you also backport to kernels not currently maintained as stable?</a><a class="headerlink" href="#q-do-you-also-backport-to-kernels-not-currently-maintained-as-stable" title="Permalink to this headline">¶</a></h3>
+<p>A: No. If you need a specific BPF commit in kernels that are currently not
+maintained by the stable maintainers, then you are on your own.</p>
+<p>The current stable and longterm stable kernels are all listed here:</p>
+<blockquote>
+<div><a class="reference external" href="https://www.kernel.org/">https://www.kernel.org/</a></div></blockquote>
+</div>
+<div class="section" id="q-the-bpf-patch-i-am-about-to-submit-needs-to-go-to-stable-as-well">
+<h3><a class="toc-backref" href="#id22">Q: The BPF patch I am about to submit needs to go to stable as well</a><a class="headerlink" href="#q-the-bpf-patch-i-am-about-to-submit-needs-to-go-to-stable-as-well" title="Permalink to this headline">¶</a></h3>
+<p>What should I do?</p>
+<p>A: The same rules apply as with netdev patch submissions in general, see
+the <a class="reference internal" href="../networking/netdev-FAQ.html#netdev-faq"><span class="std std-ref">netdev FAQ</span></a>.</p>
+<p>Never add “<code class="docutils literal notranslate"><span class="pre">Cc:</span> <span class="pre">stable&#64;vger.kernel.org</span></code>” to the patch description, but
+ask the BPF maintainers to queue the patches instead. This can be done
+with a note, for example, under the <code class="docutils literal notranslate"><span class="pre">---</span></code> part of the patch which does
+not go into the git log. Alternatively, this can be done as a simple
+request by mail instead.</p>
+</div>
+<div class="section" id="q-queue-stable-patches">
+<h3><a class="toc-backref" href="#id23">Q: Queue stable patches</a><a class="headerlink" href="#q-queue-stable-patches" title="Permalink to this headline">¶</a></h3>
+<p>Q: Where do I find currently queued BPF patches that will be submitted
+to stable?</p>
+<p>A: Once patches that fix critical bugs got applied into the bpf tree, they
+are queued up for stable submission under:</p>
+<blockquote>
+<div><a class="reference external" href="http://patchwork.ozlabs.org/bundle/bpf/stable/?state=*">http://patchwork.ozlabs.org/bundle/bpf/stable/?state=*</a></div></blockquote>
+<p>They will be on hold there at minimum until the related commit made its
+way into the mainline kernel tree.</p>
+<p>After having been under broader exposure, the queued patches will be
+submitted by the BPF maintainers to the stable maintainers.</p>
+</div>
+</div>
+<div class="section" id="testing-patches">
+<h2><a class="toc-backref" href="#id24">Testing patches</a><a class="headerlink" href="#testing-patches" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="q-how-to-run-bpf-selftests">
+<h3><a class="toc-backref" href="#id25">Q: How to run BPF selftests</a><a class="headerlink" href="#q-how-to-run-bpf-selftests" title="Permalink to this headline">¶</a></h3>
+<p>A: After you have booted into the newly compiled kernel, navigate to
+the BPF <a class="reference external" href="../../tools/testing/selftests/bpf/">selftests</a> suite in order to test BPF functionality (current
+working directory points to the root of the cloned git tree):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ cd tools/testing/selftests/bpf/
+$ make
+</pre></div>
+</div>
+<p>To run the verifier tests:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ sudo ./test_verifier
+</pre></div>
+</div>
+<p>The verifier tests print out all the current checks being
+performed. The summary at the end of running all tests will dump
+information of test successes and failures:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Summary: 418 PASSED, 0 FAILED
+</pre></div>
+</div>
+<p>In order to run through all BPF selftests, the following command is
+needed:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ sudo make run_tests
+</pre></div>
+</div>
+<p>See the kernels selftest <a class="reference external" href="https://www.kernel.org/doc/html/latest/dev-tools/kselftest.html">Documentation/dev-tools/kselftest.rst</a>
+document for further documentation.</p>
+</div>
+<div class="section" id="q-which-bpf-kernel-selftests-version-should-i-run-my-kernel-against">
+<h3><a class="toc-backref" href="#id26">Q: Which BPF kernel selftests version should I run my kernel against?</a><a class="headerlink" href="#q-which-bpf-kernel-selftests-version-should-i-run-my-kernel-against" title="Permalink to this headline">¶</a></h3>
+<p>A: If you run a kernel <code class="docutils literal notranslate"><span class="pre">xyz</span></code>, then always run the BPF kernel selftests
+from that kernel <code class="docutils literal notranslate"><span class="pre">xyz</span></code> as well. Do not expect that the BPF selftest
+from the latest mainline tree will pass all the time.</p>
+<p>In particular, test_bpf.c and test_verifier.c have a large number of
+test cases and are constantly updated with new BPF test sequences, or
+existing ones are adapted to verifier changes e.g. due to verifier
+becoming smarter and being able to better track certain things.</p>
+</div>
+</div>
+<div class="section" id="llvm">
+<h2><a class="toc-backref" href="#id27">LLVM</a><a class="headerlink" href="#llvm" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="q-where-do-i-find-llvm-with-bpf-support">
+<h3><a class="toc-backref" href="#id28">Q: Where do I find LLVM with BPF support?</a><a class="headerlink" href="#q-where-do-i-find-llvm-with-bpf-support" title="Permalink to this headline">¶</a></h3>
+<p>A: The BPF back end for LLVM is upstream in LLVM since version 3.7.1.</p>
+<p>All major distributions these days ship LLVM with BPF back end enabled,
+so for the majority of use-cases it is not required to compile LLVM by
+hand anymore, just install the distribution provided package.</p>
+<p>LLVM’s static compiler lists the supported targets through
+<code class="docutils literal notranslate"><span class="pre">llc</span> <span class="pre">--version</span></code>, make sure BPF targets are listed. Example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ llc --version
+LLVM (http://llvm.org/):
+  LLVM version 6.0.0svn
+  Optimized build.
+  Default target: x86_64-unknown-linux-gnu
+  Host CPU: skylake
+
+  Registered Targets:
+    bpf    - BPF (host endian)
+    bpfeb  - BPF (big endian)
+    bpfel  - BPF (little endian)
+    x86    - 32-bit X86: Pentium-Pro and above
+    x86-64 - 64-bit X86: EM64T and AMD64
+</pre></div>
+</div>
+<p>For developers in order to utilize the latest features added to LLVM’s
+BPF back end, it is advisable to run the latest LLVM releases. Support
+for new BPF kernel features such as additions to the BPF instruction
+set are often developed together.</p>
+<p>All LLVM releases can be found at: <a class="reference external" href="http://releases.llvm.org/">http://releases.llvm.org/</a></p>
+</div>
+<div class="section" id="q-got-it-so-how-do-i-build-llvm-manually-anyway">
+<h3><a class="toc-backref" href="#id29">Q: Got it, so how do I build LLVM manually anyway?</a><a class="headerlink" href="#q-got-it-so-how-do-i-build-llvm-manually-anyway" title="Permalink to this headline">¶</a></h3>
+<p>A: You need cmake and gcc-c++ as build requisites for LLVM. Once you have
+that set up, proceed with building the latest LLVM and clang version
+from the git repositories:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ git clone http://llvm.org/git/llvm.git
+$ cd llvm/tools
+$ git clone --depth 1 http://llvm.org/git/clang.git
+$ cd ..; mkdir build; cd build
+$ cmake .. -DLLVM_TARGETS_TO_BUILD=&quot;BPF;X86&quot; \
+           -DBUILD_SHARED_LIBS=OFF           \
+           -DCMAKE_BUILD_TYPE=Release        \
+           -DLLVM_BUILD_RUNTIME=OFF
+$ make -j $(getconf _NPROCESSORS_ONLN)
+</pre></div>
+</div>
+<p>The built binaries can then be found in the build/bin/ directory, where
+you can point the PATH variable to.</p>
+</div>
+<div class="section" id="q-reporting-llvm-bpf-issues">
+<h3><a class="toc-backref" href="#id30">Q: Reporting LLVM BPF issues</a><a class="headerlink" href="#q-reporting-llvm-bpf-issues" title="Permalink to this headline">¶</a></h3>
+<p>Q: Should I notify BPF kernel maintainers about issues in LLVM’s BPF code
+generation back end or about LLVM generated code that the verifier
+refuses to accept?</p>
+<p>A: Yes, please do!</p>
+<p>LLVM’s BPF back end is a key piece of the whole BPF
+infrastructure and it ties deeply into verification of programs from the
+kernel side. Therefore, any issues on either side need to be investigated
+and fixed whenever necessary.</p>
+<p>Therefore, please make sure to bring them up at netdev kernel mailing
+list and Cc BPF maintainers for LLVM and kernel bits:</p>
+<ul class="simple">
+<li>Yonghong Song &lt;<a class="reference external" href="mailto:yhs&#37;&#52;&#48;fb&#46;com">yhs<span>&#64;</span>fb<span>&#46;</span>com</a>&gt;</li>
+<li>Alexei Starovoitov &lt;<a class="reference external" href="mailto:ast&#37;&#52;&#48;kernel&#46;org">ast<span>&#64;</span>kernel<span>&#46;</span>org</a>&gt;</li>
+<li>Daniel Borkmann &lt;<a class="reference external" href="mailto:daniel&#37;&#52;&#48;iogearbox&#46;net">daniel<span>&#64;</span>iogearbox<span>&#46;</span>net</a>&gt;</li>
+</ul>
+<p>LLVM also has an issue tracker where BPF related bugs can be found:</p>
+<blockquote>
+<div><a class="reference external" href="https://bugs.llvm.org/buglist.cgi?quicksearch=bpf">https://bugs.llvm.org/buglist.cgi?quicksearch=bpf</a></div></blockquote>
+<p>However, it is better to reach out through mailing lists with having
+maintainers in Cc.</p>
+</div>
+<div class="section" id="q-new-bpf-instruction-for-kernel-and-llvm">
+<h3><a class="toc-backref" href="#id31">Q: New BPF instruction for kernel and LLVM</a><a class="headerlink" href="#q-new-bpf-instruction-for-kernel-and-llvm" title="Permalink to this headline">¶</a></h3>
+<p>Q: I have added a new BPF instruction to the kernel, how can I integrate
+it into LLVM?</p>
+<p>A: LLVM has a <code class="docutils literal notranslate"><span class="pre">-mcpu</span></code> selector for the BPF back end in order to allow
+the selection of BPF instruction set extensions. By default the
+<code class="docutils literal notranslate"><span class="pre">generic</span></code> processor target is used, which is the base instruction set
+(v1) of BPF.</p>
+<p>LLVM has an option to select <code class="docutils literal notranslate"><span class="pre">-mcpu=probe</span></code> where it will probe the host
+kernel for supported BPF instruction set extensions and selects the
+optimal set automatically.</p>
+<p>For cross-compilation, a specific version can be select manually as well</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ llc -march bpf -mcpu=help
+Available CPUs for this target:
+
+  generic - Select the generic processor.
+  probe   - Select the probe processor.
+  v1      - Select the v1 processor.
+  v2      - Select the v2 processor.
+[...]
+</pre></div>
+</div>
+<p>Newly added BPF instructions to the Linux kernel need to follow the same
+scheme, bump the instruction set version and implement probing for the
+extensions such that <code class="docutils literal notranslate"><span class="pre">-mcpu=probe</span></code> users can benefit from the
+optimization transparently when upgrading their kernels.</p>
+<p>If you are unable to implement support for the newly added BPF instruction
+please reach out to BPF developers for help.</p>
+<p>By the way, the BPF kernel selftests run with <code class="docutils literal notranslate"><span class="pre">-mcpu=probe</span></code> for better
+test coverage.</p>
+</div>
+<div class="section" id="q-clang-flag-for-target-bpf">
+<h3><a class="toc-backref" href="#id32">Q: clang flag for target bpf?</a><a class="headerlink" href="#q-clang-flag-for-target-bpf" title="Permalink to this headline">¶</a></h3>
+<p>Q: In some cases clang flag <code class="docutils literal notranslate"><span class="pre">-target</span> <span class="pre">bpf</span></code> is used but in other cases the
+default clang target, which matches the underlying architecture, is used.
+What is the difference and when I should use which?</p>
+<p>A: Although LLVM IR generation and optimization try to stay architecture
+independent, <code class="docutils literal notranslate"><span class="pre">-target</span> <span class="pre">&lt;arch&gt;</span></code> still has some impact on generated code:</p>
+<ul class="simple">
+<li>BPF program may recursively include header file(s) with file scope
+inline assembly codes. The default target can handle this well,
+while <code class="docutils literal notranslate"><span class="pre">bpf</span></code> target may fail if bpf backend assembler does not
+understand these assembly codes, which is true in most cases.</li>
+<li>When compiled without <code class="docutils literal notranslate"><span class="pre">-g</span></code>, additional elf sections, e.g.,
+.eh_frame and .rela.eh_frame, may be present in the object file
+with default target, but not with <code class="docutils literal notranslate"><span class="pre">bpf</span></code> target.</li>
+<li>The default target may turn a C switch statement into a switch table
+lookup and jump operation. Since the switch table is placed
+in the global readonly section, the bpf program will fail to load.
+The bpf target does not support switch table optimization.
+The clang option <code class="docutils literal notranslate"><span class="pre">-fno-jump-tables</span></code> can be used to disable
+switch table generation.</li>
+<li>For clang <code class="docutils literal notranslate"><span class="pre">-target</span> <span class="pre">bpf</span></code>, it is guaranteed that pointer or long /
+unsigned long types will always have a width of 64 bit, no matter
+whether underlying clang binary or default target (or kernel) is
+32 bit. However, when native clang target is used, then it will
+compile these types based on the underlying architecture’s conventions,
+meaning in case of 32 bit architecture, pointer or long / unsigned
+long types e.g. in BPF context structure will have width of 32 bit
+while the BPF LLVM back end still operates in 64 bit. The native
+target is mostly needed in tracing for the case of walking <code class="docutils literal notranslate"><span class="pre">pt_regs</span></code>
+or other kernel structures where CPU’s register width matters.
+Otherwise, <code class="docutils literal notranslate"><span class="pre">clang</span> <span class="pre">-target</span> <span class="pre">bpf</span></code> is generally recommended.</li>
+</ul>
+<p>You should use default target when:</p>
+<ul class="simple">
+<li>Your program includes a header file, e.g., ptrace.h, which eventually
+pulls in some header files containing file scope host assembly codes.</li>
+<li>You can add <code class="docutils literal notranslate"><span class="pre">-fno-jump-tables</span></code> to work around the switch table issue.</li>
+</ul>
+<p>Otherwise, you can use <code class="docutils literal notranslate"><span class="pre">bpf</span></code> target. Additionally, you <em>must</em> use bpf target
+when:</p>
+<ul class="simple">
+<li>Your program uses data structures with pointer or long / unsigned long
+types that interface with BPF helpers or context data structures. Access
+into these structures is verified by the BPF verifier and may result
+in verification failures if the native architecture is not aligned with
+the BPF architecture, e.g. 64-bit. An example of this is
+BPF_PROG_TYPE_SK_MSG require <code class="docutils literal notranslate"><span class="pre">-target</span> <span class="pre">bpf</span></code></li>
+</ul>
+<p>Happy BPF hacking!</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="prog_cgroup_sockopt.html" class="btn btn-neutral float-right" title="BPF_PROG_TYPE_CGROUP_SOCKOPT" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="bpf_design_QA.html" class="btn btn-neutral float-left" title="BPF Design Q&amp;A" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,808 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>How to get printk format specifiers right &mdash; The Linux Kernel 5.6.0-rc3+ documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Circular Buffers" href="circular-buffers.html" />
+    <link rel="prev" title="Generic bitfield packing and unpacking functions" href="packing.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.6.0-rc3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Core API Documentation</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#core-utilities">Core utilities</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="kernel-api.html">The Linux Kernel API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="assoc_array.html">Generic Associative Array Implementation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="atomic_ops.html">Semantics and Behavior of Atomic and Bitmask Operations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cachetlb.html">Cache and TLB Flushing Under Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="refcount-vs-atomic.html">refcount_t API compared to atomic_t</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cpu_hotplug.html">CPU hotplug in the Kernel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="idr.html">ID Allocation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="local_ops.html">Semantics and Behavior of Local Atomic Operations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="workqueue.html">Concurrency Managed Workqueue (cmwq)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="genericirq.html">Linux generic IRQ handling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xarray.html">XArray</a></li>
+<li class="toctree-l3"><a class="reference internal" href="librs.html">Reed-Solomon Library Programming Interface</a></li>
+<li class="toctree-l3"><a class="reference internal" href="genalloc.html">The genalloc/genpool subsystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="errseq.html">The errseq_t datatype</a></li>
+<li class="toctree-l3"><a class="reference internal" href="packing.html">Generic bitfield packing and unpacking functions</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">How to get printk format specifiers right</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#integer-types">Integer types</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pointer-types">Pointer types</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#thanks">Thanks</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="circular-buffers.html">Circular Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generic-radix-tree.html">Generic radix trees/sparse arrays</a></li>
+<li class="toctree-l3"><a class="reference internal" href="memory-allocation.html">Memory Allocation Guide</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mm-api.html">Memory Management APIs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pin_user_pages.html">pin_user_pages() and related calls</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gfp_mask-from-fs-io.html">GFP masks used from FS/IO context</a></li>
+<li class="toctree-l3"><a class="reference internal" href="timekeeping.html">ktime accessors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="boot-time-mm.html">Boot time memory management</a></li>
+<li class="toctree-l3"><a class="reference internal" href="memory-hotplug.html">Memory hotplug</a></li>
+<li class="toctree-l3"><a class="reference internal" href="protection-keys.html">Memory Protection Keys</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../RCU/index.html">RCU concepts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gcc-plugins.html">GCC plugin infrastructure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="symbol-namespaces.html">Symbol Namespaces</a></li>
+<li class="toctree-l3"><a class="reference internal" href="padata.html">The padata parallel execution mechanism</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ioctl.html">ioctl based interfaces</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#interfaces-for-kernel-debugging">Interfaces for kernel debugging</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../media/index.html">Linux Media Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mic/index.html">Intel Many Integrated Core (MIC) architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Core API Documentation</a> &raquo;</li>
+        
+      <li>How to get printk format specifiers right</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/core-api/printk-formats.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="how-to-get-printk-format-specifiers-right">
+<h1>How to get printk format specifiers right<a class="headerlink" href="#how-to-get-printk-format-specifiers-right" title="Permalink to this headline">¶</a></h1>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Author:</th><td class="field-body">Randy Dunlap &lt;<a class="reference external" href="mailto:rdunlap&#37;&#52;&#48;infradead&#46;org">rdunlap<span>&#64;</span>infradead<span>&#46;</span>org</a>&gt;</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Author:</th><td class="field-body">Andrew Murray &lt;<a class="reference external" href="mailto:amurray&#37;&#52;&#48;mpc-data&#46;co&#46;uk">amurray<span>&#64;</span>mpc-data<span>&#46;</span>co<span>&#46;</span>uk</a>&gt;</td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="integer-types">
+<h2>Integer types<a class="headerlink" href="#integer-types" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>If variable is of Type,         use printk format specifier:
+------------------------------------------------------------
+        char                    %d or %x
+        unsigned char           %u or %x
+        short int               %d or %x
+        unsigned short int      %u or %x
+        int                     %d or %x
+        unsigned int            %u or %x
+        long                    %ld or %lx
+        unsigned long           %lu or %lx
+        long long               %lld or %llx
+        unsigned long long      %llu or %llx
+        size_t                  %zu or %zx
+        ssize_t                 %zd or %zx
+        s8                      %d or %x
+        u8                      %u or %x
+        s16                     %d or %x
+        u16                     %u or %x
+        s32                     %d or %x
+        u32                     %u or %x
+        s64                     %lld or %llx
+        u64                     %llu or %llx
+</pre></div>
+</div>
+<p>If &lt;type&gt; is dependent on a config option for its size (e.g., sector_t,
+blkcnt_t) or is architecture-dependent for its size (e.g., tcflag_t), use a
+format specifier of its largest possible type and explicitly cast to it.</p>
+<p>Example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>printk(&quot;test: sector number/total blocks: %llu/%llu\n&quot;,
+        (unsigned long long)sector, (unsigned long long)blockcount);
+</pre></div>
+</div>
+<p>Reminder: sizeof() returns type size_t.</p>
+<p>The kernel’s printf does not support %n. Floating point formats (%e, %f,
+%g, %a) are also not recognized, for obvious reasons. Use of any
+unsupported specifier or length qualifier results in a WARN and early
+return from <a class="reference internal" href="kernel-api.html#c.vsnprintf" title="vsnprintf"><code class="xref c c-func docutils literal notranslate"><span class="pre">vsnprintf()</span></code></a>.</p>
+</div>
+<div class="section" id="pointer-types">
+<h2>Pointer types<a class="headerlink" href="#pointer-types" title="Permalink to this headline">¶</a></h2>
+<p>A raw pointer value may be printed with %p which will hash the address
+before printing. The kernel also supports extended specifiers for printing
+pointers of different types.</p>
+<p>Some of the extended specifiers print the data on the given address instead
+of printing the address itself. In this case, the following error messages
+might be printed instead of the unreachable information:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(null)   data on plain NULL address
+(efault) data on invalid address
+(einval) invalid data on a valid address
+</pre></div>
+</div>
+<div class="section" id="plain-pointers">
+<h3>Plain Pointers<a class="headerlink" href="#plain-pointers" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%p      abcdef12 or 00000000abcdef12
+</pre></div>
+</div>
+<p>Pointers printed without a specifier extension (i.e unadorned %p) are
+hashed to prevent leaking information about the kernel memory layout. This
+has the added benefit of providing a unique identifier. On 64-bit machines
+the first 32 bits are zeroed. The kernel will print <code class="docutils literal notranslate"><span class="pre">(ptrval)</span></code> until it
+gathers enough entropy. If you <em>really</em> want the address see %px below.</p>
+</div>
+<div class="section" id="error-pointers">
+<h3>Error Pointers<a class="headerlink" href="#error-pointers" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%pe     -ENOSPC
+</pre></div>
+</div>
+<p>For printing error pointers (i.e. a pointer for which IS_ERR() is true)
+as a symbolic error name. Error values for which no symbolic name is
+known are printed in decimal, while a non-ERR_PTR passed as the
+argument to %pe gets treated as ordinary %p.</p>
+</div>
+<div class="section" id="symbols-function-pointers">
+<h3>Symbols/Function Pointers<a class="headerlink" href="#symbols-function-pointers" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%pS     versatile_init+0x0/0x110
+%ps     versatile_init
+%pSR    versatile_init+0x9/0x110
+        (with __builtin_extract_return_addr() translation)
+%pB     prev_fn_of_versatile_init+0x88/0x88
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">S</span></code> and <code class="docutils literal notranslate"><span class="pre">s</span></code> specifiers are used for printing a pointer in symbolic
+format. They result in the symbol name with (S) or without (s)
+offsets. If KALLSYMS are disabled then the symbol address is printed instead.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">B</span></code> specifier results in the symbol name with offsets and should be
+used when printing stack backtraces. The specifier takes into
+consideration the effect of compiler optimisations which may occur
+when tail-calls are used and marked with the noreturn GCC attribute.</p>
+</div>
+<div class="section" id="kernel-pointers">
+<h3>Kernel Pointers<a class="headerlink" href="#kernel-pointers" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%pK     01234567 or 0123456789abcdef
+</pre></div>
+</div>
+<p>For printing kernel pointers which should be hidden from unprivileged
+users. The behaviour of %pK depends on the kptr_restrict sysctl - see
+Documentation/admin-guide/sysctl/kernel.rst for more details.</p>
+</div>
+<div class="section" id="unmodified-addresses">
+<h3>Unmodified Addresses<a class="headerlink" href="#unmodified-addresses" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%px     01234567 or 0123456789abcdef
+</pre></div>
+</div>
+<p>For printing pointers when you <em>really</em> want to print the address. Please
+consider whether or not you are leaking sensitive information about the
+kernel memory layout before printing pointers with %px. %px is functionally
+equivalent to %lx (or %lu). %px is preferred because it is more uniquely
+grep’able. If in the future we need to modify the way the kernel handles
+printing pointers we will be better equipped to find the call sites.</p>
+</div>
+<div class="section" id="pointer-differences">
+<h3>Pointer Differences<a class="headerlink" href="#pointer-differences" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%td     2560
+%tx     a00
+</pre></div>
+</div>
+<p>For printing the pointer differences, use the %t modifier for ptrdiff_t.</p>
+<p>Example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>printk(&quot;test: difference between pointers: %td\n&quot;, ptr2 - ptr1);
+</pre></div>
+</div>
+</div>
+<div class="section" id="struct-resources">
+<h3>Struct Resources<a class="headerlink" href="#struct-resources" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%pr     [mem 0x60000000-0x6fffffff flags 0x2200] or
+        [mem 0x0000000060000000-0x000000006fffffff flags 0x2200]
+%pR     [mem 0x60000000-0x6fffffff pref] or
+        [mem 0x0000000060000000-0x000000006fffffff pref]
+</pre></div>
+</div>
+<p>For printing struct resources. The <code class="docutils literal notranslate"><span class="pre">R</span></code> and <code class="docutils literal notranslate"><span class="pre">r</span></code> specifiers result in a
+printed resource with (R) or without (r) a decoded flags member.</p>
+<p>Passed by reference.</p>
+</div>
+<div class="section" id="physical-address-types-phys-addr-t">
+<h3>Physical address types phys_addr_t<a class="headerlink" href="#physical-address-types-phys-addr-t" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%pa[p]  0x01234567 or 0x0123456789abcdef
+</pre></div>
+</div>
+<p>For printing a phys_addr_t type (and its derivatives, such as
+resource_size_t) which can vary based on build options, regardless of the
+width of the CPU data path.</p>
+<p>Passed by reference.</p>
+</div>
+<div class="section" id="dma-address-types-dma-addr-t">
+<h3>DMA address types dma_addr_t<a class="headerlink" href="#dma-address-types-dma-addr-t" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%pad    0x01234567 or 0x0123456789abcdef
+</pre></div>
+</div>
+<p>For printing a dma_addr_t type which can vary based on build options,
+regardless of the width of the CPU data path.</p>
+<p>Passed by reference.</p>
+</div>
+<div class="section" id="raw-buffer-as-an-escaped-string">
+<h3>Raw buffer as an escaped string<a class="headerlink" href="#raw-buffer-as-an-escaped-string" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%*pE[achnops]
+</pre></div>
+</div>
+<p>For printing raw buffer as an escaped string. For the following buffer:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>1b 62 20 5c 43 07 22 90 0d 5d
+</pre></div>
+</div>
+<p>A few examples show how the conversion would be done (excluding surrounding
+quotes):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%*pE            &quot;\eb \C\a&quot;\220\r]&quot;
+%*pEhp          &quot;\x1bb \C\x07&quot;\x90\x0d]&quot;
+%*pEa           &quot;\e\142\040\\\103\a\042\220\r\135&quot;
+</pre></div>
+</div>
+<p>The conversion rules are applied according to an optional combination
+of flags (see <a class="reference internal" href="kernel-api.html#c.string_escape_mem" title="string_escape_mem"><code class="xref c c-func docutils literal notranslate"><span class="pre">string_escape_mem()</span></code></a> kernel documentation for the
+details):</p>
+<blockquote>
+<div><ul class="simple">
+<li>a - ESCAPE_ANY</li>
+<li>c - ESCAPE_SPECIAL</li>
+<li>h - ESCAPE_HEX</li>
+<li>n - ESCAPE_NULL</li>
+<li>o - ESCAPE_OCTAL</li>
+<li>p - ESCAPE_NP</li>
+<li>s - ESCAPE_SPACE</li>
+</ul>
+</div></blockquote>
+<p>By default ESCAPE_ANY_NP is used.</p>
+<p>ESCAPE_ANY_NP is the sane choice for many cases, in particularly for
+printing SSIDs.</p>
+<p>If field width is omitted then 1 byte only will be escaped.</p>
+</div>
+<div class="section" id="raw-buffer-as-a-hex-string">
+<h3>Raw buffer as a hex string<a class="headerlink" href="#raw-buffer-as-a-hex-string" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%*ph    00 01 02  ...  3f
+%*phC   00:01:02: ... :3f
+%*phD   00-01-02- ... -3f
+%*phN   000102 ... 3f
+</pre></div>
+</div>
+<p>For printing small buffers (up to 64 bytes long) as a hex string with a
+certain separator. For larger buffers consider using
+<code class="xref c c-func docutils literal notranslate"><span class="pre">print_hex_dump()</span></code>.</p>
+</div>
+<div class="section" id="mac-fddi-addresses">
+<h3>MAC/FDDI addresses<a class="headerlink" href="#mac-fddi-addresses" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%pM     00:01:02:03:04:05
+%pMR    05:04:03:02:01:00
+%pMF    00-01-02-03-04-05
+%pm     000102030405
+%pmR    050403020100
+</pre></div>
+</div>
+<p>For printing 6-byte MAC/FDDI addresses in hex notation. The <code class="docutils literal notranslate"><span class="pre">M</span></code> and <code class="docutils literal notranslate"><span class="pre">m</span></code>
+specifiers result in a printed address with (M) or without (m) byte
+separators. The default byte separator is the colon (:).</p>
+<p>Where FDDI addresses are concerned the <code class="docutils literal notranslate"><span class="pre">F</span></code> specifier can be used after
+the <code class="docutils literal notranslate"><span class="pre">M</span></code> specifier to use dash (-) separators instead of the default
+separator.</p>
+<p>For Bluetooth addresses the <code class="docutils literal notranslate"><span class="pre">R</span></code> specifier shall be used after the <code class="docutils literal notranslate"><span class="pre">M</span></code>
+specifier to use reversed byte order suitable for visual interpretation
+of Bluetooth addresses which are in the little endian order.</p>
+<p>Passed by reference.</p>
+</div>
+<div class="section" id="ipv4-addresses">
+<h3>IPv4 addresses<a class="headerlink" href="#ipv4-addresses" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%pI4    1.2.3.4
+%pi4    001.002.003.004
+%p[Ii]4[hnbl]
+</pre></div>
+</div>
+<p>For printing IPv4 dot-separated decimal addresses. The <code class="docutils literal notranslate"><span class="pre">I4</span></code> and <code class="docutils literal notranslate"><span class="pre">i4</span></code>
+specifiers result in a printed address with (i4) or without (I4) leading
+zeros.</p>
+<p>The additional <code class="docutils literal notranslate"><span class="pre">h</span></code>, <code class="docutils literal notranslate"><span class="pre">n</span></code>, <code class="docutils literal notranslate"><span class="pre">b</span></code>, and <code class="docutils literal notranslate"><span class="pre">l</span></code> specifiers are used to specify
+host, network, big or little endian order addresses respectively. Where
+no specifier is provided the default network/big endian order is used.</p>
+<p>Passed by reference.</p>
+</div>
+<div class="section" id="ipv6-addresses">
+<h3>IPv6 addresses<a class="headerlink" href="#ipv6-addresses" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%pI6    0001:0002:0003:0004:0005:0006:0007:0008
+%pi6    00010002000300040005000600070008
+%pI6c   1:2:3:4:5:6:7:8
+</pre></div>
+</div>
+<p>For printing IPv6 network-order 16-bit hex addresses. The <code class="docutils literal notranslate"><span class="pre">I6</span></code> and <code class="docutils literal notranslate"><span class="pre">i6</span></code>
+specifiers result in a printed address with (I6) or without (i6)
+colon-separators. Leading zeros are always used.</p>
+<p>The additional <code class="docutils literal notranslate"><span class="pre">c</span></code> specifier can be used with the <code class="docutils literal notranslate"><span class="pre">I</span></code> specifier to
+print a compressed IPv6 address as described by
+<a class="reference external" href="http://tools.ietf.org/html/rfc5952">http://tools.ietf.org/html/rfc5952</a></p>
+<p>Passed by reference.</p>
+</div>
+<div class="section" id="ipv4-ipv6-addresses-generic-with-port-flowinfo-scope">
+<h3>IPv4/IPv6 addresses (generic, with port, flowinfo, scope)<a class="headerlink" href="#ipv4-ipv6-addresses-generic-with-port-flowinfo-scope" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%pIS    1.2.3.4         or 0001:0002:0003:0004:0005:0006:0007:0008
+%piS    001.002.003.004 or 00010002000300040005000600070008
+%pISc   1.2.3.4         or 1:2:3:4:5:6:7:8
+%pISpc  1.2.3.4:12345   or [1:2:3:4:5:6:7:8]:12345
+%p[Ii]S[pfschnbl]
+</pre></div>
+</div>
+<p>For printing an IP address without the need to distinguish whether it’s of
+type AF_INET or AF_INET6. A pointer to a valid struct sockaddr,
+specified through <code class="docutils literal notranslate"><span class="pre">IS</span></code> or <code class="docutils literal notranslate"><span class="pre">iS</span></code>, can be passed to this format specifier.</p>
+<p>The additional <code class="docutils literal notranslate"><span class="pre">p</span></code>, <code class="docutils literal notranslate"><span class="pre">f</span></code>, and <code class="docutils literal notranslate"><span class="pre">s</span></code> specifiers are used to specify port
+(IPv4, IPv6), flowinfo (IPv6) and scope (IPv6). Ports have a <code class="docutils literal notranslate"><span class="pre">:</span></code> prefix,
+flowinfo a <code class="docutils literal notranslate"><span class="pre">/</span></code> and scope a <code class="docutils literal notranslate"><span class="pre">%</span></code>, each followed by the actual value.</p>
+<p>In case of an IPv6 address the compressed IPv6 address as described by
+<a class="reference external" href="http://tools.ietf.org/html/rfc5952">http://tools.ietf.org/html/rfc5952</a> is being used if the additional
+specifier <code class="docutils literal notranslate"><span class="pre">c</span></code> is given. The IPv6 address is surrounded by <code class="docutils literal notranslate"><span class="pre">[</span></code>, <code class="docutils literal notranslate"><span class="pre">]</span></code> in
+case of additional specifiers <code class="docutils literal notranslate"><span class="pre">p</span></code>, <code class="docutils literal notranslate"><span class="pre">f</span></code> or <code class="docutils literal notranslate"><span class="pre">s</span></code> as suggested by
+<a class="reference external" href="https://tools.ietf.org/html/draft-ietf-6man-text-addr-representation-07">https://tools.ietf.org/html/draft-ietf-6man-text-addr-representation-07</a></p>
+<p>In case of IPv4 addresses, the additional <code class="docutils literal notranslate"><span class="pre">h</span></code>, <code class="docutils literal notranslate"><span class="pre">n</span></code>, <code class="docutils literal notranslate"><span class="pre">b</span></code>, and <code class="docutils literal notranslate"><span class="pre">l</span></code>
+specifiers can be used as well and are ignored in case of an IPv6
+address.</p>
+<p>Passed by reference.</p>
+<p>Further examples:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%pISfc          1.2.3.4         or [1:2:3:4:5:6:7:8]/123456789
+%pISsc          1.2.3.4         or [1:2:3:4:5:6:7:8]%1234567890
+%pISpfc         1.2.3.4:12345   or [1:2:3:4:5:6:7:8]:12345/123456789
+</pre></div>
+</div>
+</div>
+<div class="section" id="uuid-guid-addresses">
+<h3>UUID/GUID addresses<a class="headerlink" href="#uuid-guid-addresses" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%pUb    00010203-0405-0607-0809-0a0b0c0d0e0f
+%pUB    00010203-0405-0607-0809-0A0B0C0D0E0F
+%pUl    03020100-0504-0706-0809-0a0b0c0e0e0f
+%pUL    03020100-0504-0706-0809-0A0B0C0E0E0F
+</pre></div>
+</div>
+<p>For printing 16-byte UUID/GUIDs addresses. The additional <code class="docutils literal notranslate"><span class="pre">l</span></code>, <code class="docutils literal notranslate"><span class="pre">L</span></code>,
+<code class="docutils literal notranslate"><span class="pre">b</span></code> and <code class="docutils literal notranslate"><span class="pre">B</span></code> specifiers are used to specify a little endian order in
+lower (l) or upper case (L) hex notation - and big endian order in lower (b)
+or upper case (B) hex notation.</p>
+<p>Where no additional specifiers are used the default big endian
+order with lower case hex notation will be printed.</p>
+<p>Passed by reference.</p>
+</div>
+<div class="section" id="dentry-names">
+<h3>dentry names<a class="headerlink" href="#dentry-names" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%pd{,2,3,4}
+%pD{,2,3,4}
+</pre></div>
+</div>
+<p>For printing dentry name; if we race with <code class="xref c c-func docutils literal notranslate"><span class="pre">d_move()</span></code>, the name might
+be a mix of old and new ones, but it won’t oops.  %pd dentry is a safer
+equivalent of %s dentry-&gt;d_name.name we used to use, %pd&lt;n&gt; prints <code class="docutils literal notranslate"><span class="pre">n</span></code>
+last components.  %pD does the same thing for struct file.</p>
+<p>Passed by reference.</p>
+</div>
+<div class="section" id="block-device-names">
+<h3>block_device names<a class="headerlink" href="#block-device-names" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%pg     sda, sda1 or loop0p1
+</pre></div>
+</div>
+<p>For printing name of block_device pointers.</p>
+</div>
+<div class="section" id="struct-va-format">
+<h3>struct va_format<a class="headerlink" href="#struct-va-format" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%pV
+</pre></div>
+</div>
+<p>For printing struct va_format structures. These contain a format string
+and va_list as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct va_format {
+        const char *fmt;
+        va_list *va;
+};
+</pre></div>
+</div>
+<p>Implements a “recursive vsnprintf”.</p>
+<p>Do not use this feature without some mechanism to verify the
+correctness of the format string and va_list arguments.</p>
+<p>Passed by reference.</p>
+</div>
+<div class="section" id="device-tree-nodes">
+<h3>Device tree nodes<a class="headerlink" href="#device-tree-nodes" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%pOF[fnpPcCF]
+</pre></div>
+</div>
+<p>For printing device tree node structures. Default behaviour is
+equivalent to %pOFf.</p>
+<blockquote>
+<div><ul class="simple">
+<li>f - device node full_name</li>
+<li>n - device node name</li>
+<li>p - device node phandle</li>
+<li>P - device node path spec (name + &#64;unit)</li>
+<li>F - device node flags</li>
+<li>c - major compatible string</li>
+<li>C - full compatible string</li>
+</ul>
+</div></blockquote>
+<p>The separator when using multiple arguments is ‘:’</p>
+<p>Examples:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%pOF    /foo/bar@0                      - Node full name
+%pOFf   /foo/bar@0                      - Same as above
+%pOFfp  /foo/bar@0:10                   - Node full name + phandle
+%pOFfcF /foo/bar@0:foo,device:--P-      - Node full name +
+                                          major compatible string +
+                                          node flags
+                                                D - dynamic
+                                                d - detached
+                                                P - Populated
+                                                B - Populated bus
+</pre></div>
+</div>
+<p>Passed by reference.</p>
+</div>
+<div class="section" id="fwnode-handles">
+<h3>Fwnode handles<a class="headerlink" href="#fwnode-handles" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%pfw[fP]
+</pre></div>
+</div>
+<p>For printing information on fwnode handles. The default is to print the full
+node name, including the path. The modifiers are functionally equivalent to
+%pOF above.</p>
+<blockquote>
+<div><ul class="simple">
+<li>f - full name of the node, including the path</li>
+<li>P - the name of the node including an address (if there is one)</li>
+</ul>
+</div></blockquote>
+<p>Examples (ACPI):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%pfwf   \_SB.PCI0.CIO2.port@1.endpoint@0        - Full node name
+%pfwP   endpoint@0                              - Node name
+</pre></div>
+</div>
+<p>Examples (OF):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%pfwf   /ocp@68000000/i2c@48072000/camera@10/port/endpoint - Full name
+%pfwP   endpoint                                - Node name
+</pre></div>
+</div>
+</div>
+<div class="section" id="time-and-date-struct-rtc-time">
+<h3>Time and date (struct rtc_time)<a class="headerlink" href="#time-and-date-struct-rtc-time" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%ptR            YYYY-mm-ddTHH:MM:SS
+%ptRd           YYYY-mm-dd
+%ptRt           HH:MM:SS
+%ptR[dt][r]
+</pre></div>
+</div>
+<p>For printing date and time as represented by struct rtc_time structure in
+human readable format.</p>
+<p>By default year will be incremented by 1900 and month by 1. Use %ptRr (raw)
+to suppress this behaviour.</p>
+<p>Passed by reference.</p>
+</div>
+<div class="section" id="struct-clk">
+<h3>struct clk<a class="headerlink" href="#struct-clk" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%pC     pll1
+%pCn    pll1
+</pre></div>
+</div>
+<p>For printing struct clk structures. %pC and %pCn print the name of the clock
+(Common Clock Framework) or a unique 32-bit ID (legacy clock framework).</p>
+<p>Passed by reference.</p>
+</div>
+<div class="section" id="bitmap-and-its-derivatives-such-as-cpumask-and-nodemask">
+<h3>bitmap and its derivatives such as cpumask and nodemask<a class="headerlink" href="#bitmap-and-its-derivatives-such-as-cpumask-and-nodemask" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%*pb    0779
+%*pbl   0,3-6,8-10
+</pre></div>
+</div>
+<p>For printing bitmap and its derivatives such as cpumask and nodemask,
+%*pb outputs the bitmap with field width as the number of bits and %*pbl
+output the bitmap as range list with field width as the number of bits.</p>
+<p>Passed by reference.</p>
+</div>
+<div class="section" id="flags-bitfields-such-as-page-flags-gfp-flags">
+<h3>Flags bitfields such as page flags, gfp_flags<a class="headerlink" href="#flags-bitfields-such-as-page-flags-gfp-flags" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%pGp    referenced|uptodate|lru|active|private
+%pGg    GFP_USER|GFP_DMA32|GFP_NOWARN
+%pGv    read|exec|mayread|maywrite|mayexec|denywrite
+</pre></div>
+</div>
+<p>For printing flags bitfields as a collection of symbolic constants that
+would construct the value. The type of flags is given by the third
+character. Currently supported are [p]age flags, [v]ma_flags (both
+expect <code class="docutils literal notranslate"><span class="pre">unsigned</span> <span class="pre">long</span> <span class="pre">*</span></code>) and [g]fp_flags (expects <code class="docutils literal notranslate"><span class="pre">gfp_t</span> <span class="pre">*</span></code>). The flag
+names and print order depends on the particular type.</p>
+<p>Note that this format should not be used directly in the
+<code class="xref c c-func docutils literal notranslate"><span class="pre">TP_printk()</span></code> part of a tracepoint. Instead, use the show_*_flags()
+functions from &lt;trace/events/mmflags.h&gt;.</p>
+<p>Passed by reference.</p>
+</div>
+<div class="section" id="network-device-features">
+<h3>Network device features<a class="headerlink" href="#network-device-features" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>%pNF    0x000000000000c000
+</pre></div>
+</div>
+<p>For printing netdev_features_t.</p>
+<p>Passed by reference.</p>
+</div>
+</div>
+<div class="section" id="thanks">
+<h2>Thanks<a class="headerlink" href="#thanks" title="Permalink to this headline">¶</a></h2>
+<p>If you add other %p extensions, please extend &lt;lib/test_printf.c&gt; with
+one or more test cases, if at all feasible.</p>
+<p>Thank you for your cooperation and attention.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="circular-buffers.html" class="btn btn-neutral float-right" title="Circular Buffers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="packing.html" class="btn btn-neutral float-left" title="Generic bitfield packing and unpacking functions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
