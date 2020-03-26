@@ -1,0 +1,593 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>NO_HZ: Reducing Scheduling-Clock Ticks &mdash; The Linux Kernel 5.6.0-rc7+ documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Clock sources, Clock events, sched_clock() and delay timers" href="timekeeping.html" />
+    <link rel="prev" title="hrtimers - subsystem for high-resolution kernel timers" href="hrtimers.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.6.0-rc7
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../media/index.html">Linux Media Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">timers</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="highres.html">High resolution timers and dynamic ticks design notes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hpet.html">High Precision Event Timer Driver for Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hrtimers.html">hrtimers - subsystem for high-resolution kernel timers</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">NO_HZ: Reducing Scheduling-Clock Ticks</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#never-omit-scheduling-clock-ticks">Never Omit Scheduling-Clock Ticks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#omit-scheduling-clock-ticks-for-idle-cpus">Omit Scheduling-Clock Ticks For Idle CPUs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#omit-scheduling-clock-ticks-for-cpus-with-only-one-runnable-task">Omit Scheduling-Clock Ticks For CPUs With Only One Runnable Task</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#rcu-implications">RCU Implications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#testing">Testing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#known-issues">Known Issues</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="timekeeping.html">Clock sources, Clock events, sched_clock() and delay timers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="timers-howto.html">delays - Information on the various kernel delay / sleep mechanisms</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mic/index.html">Intel Many Integrated Core (MIC) architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">timers</a> &raquo;</li>
+        
+      <li>NO_HZ: Reducing Scheduling-Clock Ticks</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/timers/no_hz.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="no-hz-reducing-scheduling-clock-ticks">
+<h1>NO_HZ: Reducing Scheduling-Clock Ticks<a class="headerlink" href="#no-hz-reducing-scheduling-clock-ticks" title="Permalink to this headline">¶</a></h1>
+<p>This document describes Kconfig options and boot parameters that can
+reduce the number of scheduling-clock interrupts, thereby improving energy
+efficiency and reducing OS jitter.  Reducing OS jitter is important for
+some types of computationally intensive high-performance computing (HPC)
+applications and for real-time applications.</p>
+<p>There are three main ways of managing scheduling-clock interrupts
+(also known as “scheduling-clock ticks” or simply “ticks”):</p>
+<ol class="arabic simple">
+<li>Never omit scheduling-clock ticks (CONFIG_HZ_PERIODIC=y or
+CONFIG_NO_HZ=n for older kernels).  You normally will -not-
+want to choose this option.</li>
+<li>Omit scheduling-clock ticks on idle CPUs (CONFIG_NO_HZ_IDLE=y or
+CONFIG_NO_HZ=y for older kernels).  This is the most common
+approach, and should be the default.</li>
+<li>Omit scheduling-clock ticks on CPUs that are either idle or that
+have only one runnable task (CONFIG_NO_HZ_FULL=y).  Unless you
+are running realtime applications or certain types of HPC
+workloads, you will normally -not- want this option.</li>
+</ol>
+<p>These three cases are described in the following three sections, followed
+by a third section on RCU-specific considerations, a fourth section
+discussing testing, and a fifth and final section listing known issues.</p>
+<div class="section" id="never-omit-scheduling-clock-ticks">
+<h2>Never Omit Scheduling-Clock Ticks<a class="headerlink" href="#never-omit-scheduling-clock-ticks" title="Permalink to this headline">¶</a></h2>
+<p>Very old versions of Linux from the 1990s and the very early 2000s
+are incapable of omitting scheduling-clock ticks.  It turns out that
+there are some situations where this old-school approach is still the
+right approach, for example, in heavy workloads with lots of tasks
+that use short bursts of CPU, where there are very frequent idle
+periods, but where these idle periods are also quite short (tens or
+hundreds of microseconds).  For these types of workloads, scheduling
+clock interrupts will normally be delivered any way because there
+will frequently be multiple runnable tasks per CPU.  In these cases,
+attempting to turn off the scheduling clock interrupt will have no effect
+other than increasing the overhead of switching to and from idle and
+transitioning between user and kernel execution.</p>
+<p>This mode of operation can be selected using CONFIG_HZ_PERIODIC=y (or
+CONFIG_NO_HZ=n for older kernels).</p>
+<p>However, if you are instead running a light workload with long idle
+periods, failing to omit scheduling-clock interrupts will result in
+excessive power consumption.  This is especially bad on battery-powered
+devices, where it results in extremely short battery lifetimes.  If you
+are running light workloads, you should therefore read the following
+section.</p>
+<p>In addition, if you are running either a real-time workload or an HPC
+workload with short iterations, the scheduling-clock interrupts can
+degrade your applications performance.  If this describes your workload,
+you should read the following two sections.</p>
+</div>
+<div class="section" id="omit-scheduling-clock-ticks-for-idle-cpus">
+<h2>Omit Scheduling-Clock Ticks For Idle CPUs<a class="headerlink" href="#omit-scheduling-clock-ticks-for-idle-cpus" title="Permalink to this headline">¶</a></h2>
+<p>If a CPU is idle, there is little point in sending it a scheduling-clock
+interrupt.  After all, the primary purpose of a scheduling-clock interrupt
+is to force a busy CPU to shift its attention among multiple duties,
+and an idle CPU has no duties to shift its attention among.</p>
+<p>The CONFIG_NO_HZ_IDLE=y Kconfig option causes the kernel to avoid sending
+scheduling-clock interrupts to idle CPUs, which is critically important
+both to battery-powered devices and to highly virtualized mainframes.
+A battery-powered device running a CONFIG_HZ_PERIODIC=y kernel would
+drain its battery very quickly, easily 2-3 times as fast as would the
+same device running a CONFIG_NO_HZ_IDLE=y kernel.  A mainframe running
+1,500 OS instances might find that half of its CPU time was consumed by
+unnecessary scheduling-clock interrupts.  In these situations, there
+is strong motivation to avoid sending scheduling-clock interrupts to
+idle CPUs.  That said, dyntick-idle mode is not free:</p>
+<ol class="arabic simple">
+<li>It increases the number of instructions executed on the path
+to and from the idle loop.</li>
+<li>On many architectures, dyntick-idle mode also increases the
+number of expensive clock-reprogramming operations.</li>
+</ol>
+<p>Therefore, systems with aggressive real-time response constraints often
+run CONFIG_HZ_PERIODIC=y kernels (or CONFIG_NO_HZ=n for older kernels)
+in order to avoid degrading from-idle transition latencies.</p>
+<p>An idle CPU that is not receiving scheduling-clock interrupts is said to
+be “dyntick-idle”, “in dyntick-idle mode”, “in nohz mode”, or “running
+tickless”.  The remainder of this document will use “dyntick-idle mode”.</p>
+<p>There is also a boot parameter “nohz=” that can be used to disable
+dyntick-idle mode in CONFIG_NO_HZ_IDLE=y kernels by specifying “nohz=off”.
+By default, CONFIG_NO_HZ_IDLE=y kernels boot with “nohz=on”, enabling
+dyntick-idle mode.</p>
+</div>
+<div class="section" id="omit-scheduling-clock-ticks-for-cpus-with-only-one-runnable-task">
+<h2>Omit Scheduling-Clock Ticks For CPUs With Only One Runnable Task<a class="headerlink" href="#omit-scheduling-clock-ticks-for-cpus-with-only-one-runnable-task" title="Permalink to this headline">¶</a></h2>
+<p>If a CPU has only one runnable task, there is little point in sending it
+a scheduling-clock interrupt because there is no other task to switch to.
+Note that omitting scheduling-clock ticks for CPUs with only one runnable
+task implies also omitting them for idle CPUs.</p>
+<p>The CONFIG_NO_HZ_FULL=y Kconfig option causes the kernel to avoid
+sending scheduling-clock interrupts to CPUs with a single runnable task,
+and such CPUs are said to be “adaptive-ticks CPUs”.  This is important
+for applications with aggressive real-time response constraints because
+it allows them to improve their worst-case response times by the maximum
+duration of a scheduling-clock interrupt.  It is also important for
+computationally intensive short-iteration workloads:  If any CPU is
+delayed during a given iteration, all the other CPUs will be forced to
+wait idle while the delayed CPU finishes.  Thus, the delay is multiplied
+by one less than the number of CPUs.  In these situations, there is
+again strong motivation to avoid sending scheduling-clock interrupts.</p>
+<p>By default, no CPU will be an adaptive-ticks CPU.  The “nohz_full=”
+boot parameter specifies the adaptive-ticks CPUs.  For example,
+“nohz_full=1,6-8” says that CPUs 1, 6, 7, and 8 are to be adaptive-ticks
+CPUs.  Note that you are prohibited from marking all of the CPUs as
+adaptive-tick CPUs:  At least one non-adaptive-tick CPU must remain
+online to handle timekeeping tasks in order to ensure that system
+calls like gettimeofday() returns accurate values on adaptive-tick CPUs.
+(This is not an issue for CONFIG_NO_HZ_IDLE=y because there are no running
+user processes to observe slight drifts in clock rate.)  Therefore, the
+boot CPU is prohibited from entering adaptive-ticks mode.  Specifying a
+“nohz_full=” mask that includes the boot CPU will result in a boot-time
+error message, and the boot CPU will be removed from the mask.  Note that
+this means that your system must have at least two CPUs in order for
+CONFIG_NO_HZ_FULL=y to do anything for you.</p>
+<p>Finally, adaptive-ticks CPUs must have their RCU callbacks offloaded.
+This is covered in the “RCU IMPLICATIONS” section below.</p>
+<p>Normally, a CPU remains in adaptive-ticks mode as long as possible.
+In particular, transitioning to kernel mode does not automatically change
+the mode.  Instead, the CPU will exit adaptive-ticks mode only if needed,
+for example, if that CPU enqueues an RCU callback.</p>
+<p>Just as with dyntick-idle mode, the benefits of adaptive-tick mode do
+not come for free:</p>
+<ol class="arabic simple">
+<li>CONFIG_NO_HZ_FULL selects CONFIG_NO_HZ_COMMON, so you cannot run
+adaptive ticks without also running dyntick idle.  This dependency
+extends down into the implementation, so that all of the costs
+of CONFIG_NO_HZ_IDLE are also incurred by CONFIG_NO_HZ_FULL.</li>
+<li>The user/kernel transitions are slightly more expensive due
+to the need to inform kernel subsystems (such as RCU) about
+the change in mode.</li>
+<li>POSIX CPU timers prevent CPUs from entering adaptive-tick mode.
+Real-time applications needing to take actions based on CPU time
+consumption need to use other means of doing so.</li>
+<li>If there are more perf events pending than the hardware can
+accommodate, they are normally round-robined so as to collect
+all of them over time.  Adaptive-tick mode may prevent this
+round-robining from happening.  This will likely be fixed by
+preventing CPUs with large numbers of perf events pending from
+entering adaptive-tick mode.</li>
+<li>Scheduler statistics for adaptive-tick CPUs may be computed
+slightly differently than those for non-adaptive-tick CPUs.
+This might in turn perturb load-balancing of real-time tasks.</li>
+<li>The LB_BIAS scheduler feature is disabled by adaptive ticks.</li>
+</ol>
+<p>Although improvements are expected over time, adaptive ticks is quite
+useful for many types of real-time and compute-intensive applications.
+However, the drawbacks listed above mean that adaptive ticks should not
+(yet) be enabled by default.</p>
+</div>
+<div class="section" id="rcu-implications">
+<h2>RCU Implications<a class="headerlink" href="#rcu-implications" title="Permalink to this headline">¶</a></h2>
+<p>There are situations in which idle CPUs cannot be permitted to
+enter either dyntick-idle mode or adaptive-tick mode, the most
+common being when that CPU has RCU callbacks pending.</p>
+<p>The CONFIG_RCU_FAST_NO_HZ=y Kconfig option may be used to cause such CPUs
+to enter dyntick-idle mode or adaptive-tick mode anyway.  In this case,
+a timer will awaken these CPUs every four jiffies in order to ensure
+that the RCU callbacks are processed in a timely fashion.</p>
+<p>Another approach is to offload RCU callback processing to “rcuo” kthreads
+using the CONFIG_RCU_NOCB_CPU=y Kconfig option.  The specific CPUs to
+offload may be selected using The “rcu_nocbs=” kernel boot parameter,
+which takes a comma-separated list of CPUs and CPU ranges, for example,
+“1,3-5” selects CPUs 1, 3, 4, and 5.</p>
+<p>The offloaded CPUs will never queue RCU callbacks, and therefore RCU
+never prevents offloaded CPUs from entering either dyntick-idle mode
+or adaptive-tick mode.  That said, note that it is up to userspace to
+pin the “rcuo” kthreads to specific CPUs if desired.  Otherwise, the
+scheduler will decide where to run them, which might or might not be
+where you want them to run.</p>
+</div>
+<div class="section" id="testing">
+<h2>Testing<a class="headerlink" href="#testing" title="Permalink to this headline">¶</a></h2>
+<p>So you enable all the OS-jitter features described in this document,
+but do not see any change in your workload’s behavior.  Is this because
+your workload isn’t affected that much by OS jitter, or is it because
+something else is in the way?  This section helps answer this question
+by providing a simple OS-jitter test suite, which is available on branch
+master of the following git archive:</p>
+<p>git://git.kernel.org/pub/scm/linux/kernel/git/frederic/dynticks-testing.git</p>
+<p>Clone this archive and follow the instructions in the README file.
+This test procedure will produce a trace that will allow you to evaluate
+whether or not you have succeeded in removing OS jitter from your system.
+If this trace shows that you have removed OS jitter as much as is
+possible, then you can conclude that your workload is not all that
+sensitive to OS jitter.</p>
+<p>Note: this test requires that your system have at least two CPUs.
+We do not currently have a good way to remove OS jitter from single-CPU
+systems.</p>
+</div>
+<div class="section" id="known-issues">
+<h2>Known Issues<a class="headerlink" href="#known-issues" title="Permalink to this headline">¶</a></h2>
+<ul>
+<li><p class="first">Dyntick-idle slows transitions to and from idle slightly.
+In practice, this has not been a problem except for the most
+aggressive real-time workloads, which have the option of disabling
+dyntick-idle mode, an option that most of them take.  However,
+some workloads will no doubt want to use adaptive ticks to
+eliminate scheduling-clock interrupt latencies.  Here are some
+options for these workloads:</p>
+<ol class="loweralpha simple">
+<li>Use PMQOS from userspace to inform the kernel of your
+latency requirements (preferred).</li>
+<li>On x86 systems, use the “idle=mwait” boot parameter.</li>
+</ol>
+<p>c.      On x86 systems, use the “intel_idle.max_cstate=” to limit
+`       the maximum C-state depth.</p>
+<ol class="loweralpha simple" start="4">
+<li>On x86 systems, use the “idle=poll” boot parameter.
+However, please note that use of this parameter can cause
+your CPU to overheat, which may cause thermal throttling
+to degrade your latencies – and that this degradation can
+be even worse than that of dyntick-idle.  Furthermore,
+this parameter effectively disables Turbo Mode on Intel
+CPUs, which can significantly reduce maximum performance.</li>
+</ol>
+</li>
+<li><p class="first">Adaptive-ticks slows user/kernel transitions slightly.
+This is not expected to be a problem for computationally intensive
+workloads, which have few such transitions.  Careful benchmarking
+will be required to determine whether or not other workloads
+are significantly affected by this effect.</p>
+</li>
+<li><p class="first">Adaptive-ticks does not do anything unless there is only one
+runnable task for a given CPU, even though there are a number
+of other situations where the scheduling-clock tick is not
+needed.  To give but one example, consider a CPU that has one
+runnable high-priority SCHED_FIFO task and an arbitrary number
+of low-priority SCHED_OTHER tasks.  In this case, the CPU is
+required to run the SCHED_FIFO task until it either blocks or
+some other higher-priority task awakens on (or is assigned to)
+this CPU, so there is no point in sending a scheduling-clock
+interrupt to this CPU.  However, the current implementation
+nevertheless sends scheduling-clock interrupts to CPUs having a
+single runnable SCHED_FIFO task and multiple runnable SCHED_OTHER
+tasks, even though these interrupts are unnecessary.</p>
+<p>And even when there are multiple runnable tasks on a given CPU,
+there is little point in interrupting that CPU until the current
+running task’s timeslice expires, which is almost always way
+longer than the time of the next scheduling-clock interrupt.</p>
+<p>Better handling of these sorts of situations is future work.</p>
+</li>
+<li><p class="first">A reboot is required to reconfigure both adaptive idle and RCU
+callback offloading.  Runtime reconfiguration could be provided
+if needed, however, due to the complexity of reconfiguring RCU at
+runtime, there would need to be an earthshakingly good reason.
+Especially given that you have the straightforward option of
+simply offloading RCU callbacks from all CPUs and pinning them
+where you want them whenever you want them pinned.</p>
+</li>
+<li><p class="first">Additional configuration is required to deal with other sources
+of OS jitter, including interrupts and system-utility tasks
+and processes.  This configuration normally involves binding
+interrupts and tasks to particular CPUs.</p>
+</li>
+<li><p class="first">Some sources of OS jitter can currently be eliminated only by
+constraining the workload.  For example, the only way to eliminate
+OS jitter due to global TLB shootdowns is to avoid the unmapping
+operations (such as kernel module unload operations) that
+result in these shootdowns.  For another example, page faults
+and TLB misses can be reduced (and in some cases eliminated) by
+using huge pages and by constraining the amount of memory used
+by the application.  Pre-faulting the working set can also be
+helpful, especially when combined with the mlock() and mlockall()
+system calls.</p>
+</li>
+<li><p class="first">Unless all CPUs are idle, at least one CPU must keep the
+scheduling-clock interrupt going in order to support accurate
+timekeeping.</p>
+</li>
+<li><p class="first">If there might potentially be some adaptive-ticks CPUs, there
+will be at least one CPU keeping the scheduling-clock interrupt
+going, even if all CPUs are otherwise idle.</p>
+<p>Better handling of this situation is ongoing work.</p>
+</li>
+<li><p class="first">Some process-handling operations still require the occasional
+scheduling-clock tick.  These operations include calculating CPU
+load, maintaining sched average, computing CFS entity vruntime,
+computing avenrun, and carrying out load balancing.  They are
+currently accommodated by scheduling-clock tick every second
+or so.  On-going work will eliminate the need even for these
+infrequent scheduling-clock ticks.</p>
+</li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="timekeeping.html" class="btn btn-neutral float-right" title="Clock sources, Clock events, sched_clock() and delay timers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="hrtimers.html" class="btn btn-neutral float-left" title="hrtimers - subsystem for high-resolution kernel timers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

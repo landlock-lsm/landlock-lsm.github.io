@@ -1,0 +1,638 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Setting up NFS/RDMA &mdash; The Linux Kernel 5.6.0-rc7+ documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Administrative interfaces for nfsd" href="nfsd-admin-interfaces.html" />
+    <link rel="prev" title="Mounting the root filesystem via NFS (nfsroot)" href="nfsroot.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.6.0-rc7
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">The Linux kernel user’s and administrator’s guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../README.html">Linux kernel release 5.x &lt;http://kernel.org/&gt;</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../kernel-parameters.html">The kernel’s command-line parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../devices.html">Linux allocated devices (4.x+ version)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sysctl/index.html">Documentation for /proc/sys</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../hw-vuln/index.html">Hardware vulnerabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reporting-bugs.html">Reporting bugs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../security-bugs.html">Security bugs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../bug-hunting.html">Bug hunting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../bug-bisect.html">Bisecting a bug</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tainted-kernels.html">Tainted kernels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ramoops.html">Ramoops oops/panic logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dynamic-debug-howto.html">Dynamic debug</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../init.html">Explaining the dreaded “No init found.” boot hang message</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../kdump/index.html">Documentation for Kdump - The kexec-based Crash Dumping Solution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../perf/index.html">Performance monitor support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sysfs-rules.html">Rules on how to access information in sysfs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../acpi/index.html">ACPI Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../aoe/index.html">ATA over Ethernet (AoE)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../auxdisplay/index.html">Auxiliary Display Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../bcache.html">A block layer cache (bcache)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../binderfs.html">The Android binderfs Filesystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../binfmt-misc.html">Kernel Support for miscellaneous (your favourite) Binary Formats v1.1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../blockdev/index.html">The Linux RapidIO Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../bootconfig.html">Boot Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../braille-console.html">Linux Braille Console</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../btmrvl.html">btmrvl driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cgroup-v1/index.html">Control Groups version 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cgroup-v2.html">Control Group v2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cifs/index.html">CIFS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../clearing-warn-once.html">Clearing WARN_ONCE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cpu-load.html">CPU load</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cputopology.html">How CPU topology info is exported via sysfs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dell_rbu.html">Dell Remote BIOS Update driver (dell_rbu)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../device-mapper/index.html">Device Mapper</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../efi-stub.html">The EFI Boot Stub</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ext4.html">ext4 General Information</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">NFS</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="nfs-client.html">NFS Client</a></li>
+<li class="toctree-l3"><a class="reference internal" href="nfsroot.html">Mounting the root filesystem via NFS (nfsroot)</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Setting up NFS/RDMA</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#getting-help">Getting Help</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#installation">Installation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#check-rdma-and-nfs-setup">Check RDMA and NFS Setup</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#nfs-rdma-setup">NFS/RDMA Setup</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="nfsd-admin-interfaces.html">Administrative interfaces for nfsd</a></li>
+<li class="toctree-l3"><a class="reference internal" href="nfs-idmapper.html">NFS ID Mapper</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pnfs-block-server.html">pNFS block layout server user guide</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pnfs-scsi-server.html">pNFS SCSI layout server user guide</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fault_injection.html">NFS Fault Injection</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../gpio/index.html">gpio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../highuid.html">Notes on the change from 16-bit UIDs to 32-bit UIDs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../hw_random.html">Linux support for random number generator in i8xx chipsets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../initrd.html">Using the initial RAM disk (initrd)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../iostats.html">I/O statistics fields</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../java.html">Java(tm) Binary Kernel Support for Linux v1.03</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../jfs.html">IBM’s Journaled File System (JFS) for Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../kernel-per-CPU-kthreads.html">Reducing OS jitter due to per-cpu kthreads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../laptops/index.html">Laptop Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../lcd-panel-cgram.html">Parallel port LCD/Keypad Panel support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ldm.html">LDM - Logical Disk Manager (Dynamic Disks)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../lockup-watchdogs.html">Softlockup detector and hardlockup detector (aka nmi_watchdog)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../LSM/index.html">Linux Security Module Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../md.html">RAID arrays</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mm/index.html">Memory Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../module-signing.html">Kernel module signing facility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mono.html">Mono(tm) Binary Kernel Support for Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../namespaces/index.html">Namespaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../numastat.html">Numa policy hit/miss statistics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../parport.html">Parport</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../perf-security.html">Perf Events and tool security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pm/index.html">Power Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pnp.html">Linux Plug and Play Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../rapidio.html">RapidIO Subsystem Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ras.html">Reliability, Availability and Serviceability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../rtc.html">Real Time Clock (RTC) Drivers for Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../serial-console.html">Linux Serial Console</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../svga.html">Video Mode Selection Support 2.13</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sysrq.html">Linux Magic System Request Key Hacks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../thunderbolt.html">USB4 and Thunderbolt</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ufs.html">Using UFS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../unicode.html">Unicode support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../vga-softcursor.html">Software cursor for VGA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../video-output.html">Video Output Switcher Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../wimax/index.html">WiMAX subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../xfs.html">The SGI XFS Filesystem</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../media/index.html">Linux Media Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mic/index.html">Intel Many Integrated Core (MIC) architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scheduler/index.html">Linux Scheduler</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">The Linux kernel user’s and administrator’s guide</a> &raquo;</li>
+        
+          <li><a href="index.html">NFS</a> &raquo;</li>
+        
+      <li>Setting up NFS/RDMA</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/admin-guide/nfs/nfs-rdma.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="setting-up-nfs-rdma">
+<h1>Setting up NFS/RDMA<a class="headerlink" href="#setting-up-nfs-rdma" title="Permalink to this headline">¶</a></h1>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Author:</th><td class="field-body">NetApp and Open Grid Computing (May 29, 2008)</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">This document is probably obsolete.</p>
+</div>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>This document describes how to install and setup the Linux NFS/RDMA client
+and server software.</p>
+<p>The NFS/RDMA client was first included in Linux 2.6.24. The NFS/RDMA server
+was first included in the following release, Linux 2.6.25.</p>
+<p>In our testing, we have obtained excellent performance results (full 10Gbit
+wire bandwidth at minimal client CPU) under many workloads. The code passes
+the full Connectathon test suite and operates over both Infiniband and iWARP
+RDMA adapters.</p>
+</div>
+<div class="section" id="getting-help">
+<h2>Getting Help<a class="headerlink" href="#getting-help" title="Permalink to this headline">¶</a></h2>
+<p>If you get stuck, you can ask questions on the
+<a class="reference external" href="mailto:nfs-rdma-devel&#37;&#52;&#48;lists&#46;sourceforge&#46;net">nfs-rdma-devel<span>&#64;</span>lists<span>&#46;</span>sourceforge<span>&#46;</span>net</a> mailing list.</p>
+</div>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>These instructions are a step by step guide to building a machine for
+use with NFS/RDMA.</p>
+<ul>
+<li><p class="first">Install an RDMA device</p>
+<p>Any device supported by the drivers in drivers/infiniband/hw is acceptable.</p>
+<p>Testing has been performed using several Mellanox-based IB cards, the
+Ammasso AMS1100 iWARP adapter, and the Chelsio cxgb3 iWARP adapter.</p>
+</li>
+<li><p class="first">Install a Linux distribution and tools</p>
+<p>The first kernel release to contain both the NFS/RDMA client and server was
+Linux 2.6.25  Therefore, a distribution compatible with this and subsequent
+Linux kernel release should be installed.</p>
+<p>The procedures described in this document have been tested with
+distributions from Red Hat’s Fedora Project (<a class="reference external" href="http://fedora.redhat.com/">http://fedora.redhat.com/</a>).</p>
+</li>
+<li><p class="first">Install nfs-utils-1.1.2 or greater on the client</p>
+<p>An NFS/RDMA mount point can be obtained by using the mount.nfs command in
+nfs-utils-1.1.2 or greater (nfs-utils-1.1.1 was the first nfs-utils
+version with support for NFS/RDMA mounts, but for various reasons we
+recommend using nfs-utils-1.1.2 or greater). To see which version of
+mount.nfs you are using, type:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ /sbin/mount.nfs -V
+</pre></div>
+</div>
+<p>If the version is less than 1.1.2 or the command does not exist,
+you should install the latest version of nfs-utils.</p>
+<p>Download the latest package from: <a class="reference external" href="http://www.kernel.org/pub/linux/utils/nfs">http://www.kernel.org/pub/linux/utils/nfs</a></p>
+<p>Uncompress the package and follow the installation instructions.</p>
+<p>If you will not need the idmapper and gssd executables (you do not need
+these to create an NFS/RDMA enabled mount command), the installation
+process can be simplified by disabling these features when running
+configure:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ ./configure --disable-gss --disable-nfsv4
+</pre></div>
+</div>
+<p>To build nfs-utils you will need the tcp_wrappers package installed. For
+more information on this see the package’s README and INSTALL files.</p>
+<p>After building the nfs-utils package, there will be a mount.nfs binary in
+the utils/mount directory. This binary can be used to initiate NFS v2, v3,
+or v4 mounts. To initiate a v4 mount, the binary must be called
+mount.nfs4.  The standard technique is to create a symlink called
+mount.nfs4 to mount.nfs.</p>
+<p>This mount.nfs binary should be installed at /sbin/mount.nfs as follows:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ sudo cp utils/mount/mount.nfs /sbin/mount.nfs
+</pre></div>
+</div>
+<p>In this location, mount.nfs will be invoked automatically for NFS mounts
+by the system mount command.</p>
+<blockquote>
+<div><div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">mount.nfs and therefore nfs-utils-1.1.2 or greater is only needed
+on the NFS client machine. You do not need this specific version of
+nfs-utils on the server. Furthermore, only the mount.nfs command from
+nfs-utils-1.1.2 is needed on the client.</p>
+</div>
+</div></blockquote>
+</li>
+<li><p class="first">Install a Linux kernel with NFS/RDMA</p>
+<p>The NFS/RDMA client and server are both included in the mainline Linux
+kernel version 2.6.25 and later. This and other versions of the Linux
+kernel can be found at: <a class="reference external" href="https://www.kernel.org/pub/linux/kernel/">https://www.kernel.org/pub/linux/kernel/</a></p>
+<p>Download the sources and place them in an appropriate location.</p>
+</li>
+<li><p class="first">Configure the RDMA stack</p>
+<p>Make sure your kernel configuration has RDMA support enabled. Under
+Device Drivers -&gt; InfiniBand support, update the kernel configuration
+to enable InfiniBand support [NOTE: the option name is misleading. Enabling
+InfiniBand support is required for all RDMA devices (IB, iWARP, etc.)].</p>
+<p>Enable the appropriate IB HCA support (mlx4, mthca, ehca, ipath, etc.) or
+iWARP adapter support (amso, cxgb3, etc.).</p>
+<p>If you are using InfiniBand, be sure to enable IP-over-InfiniBand support.</p>
+</li>
+<li><p class="first">Configure the NFS client and server</p>
+<p>Your kernel configuration must also have NFS file system support and/or
+NFS server support enabled. These and other NFS related configuration
+options can be found under File Systems -&gt; Network File Systems.</p>
+</li>
+<li><p class="first">Build, install, reboot</p>
+<p>The NFS/RDMA code will be enabled automatically if NFS and RDMA
+are turned on. The NFS/RDMA client and server are configured via the hidden
+SUNRPC_XPRT_RDMA config option that depends on SUNRPC and INFINIBAND. The
+value of SUNRPC_XPRT_RDMA will be:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li>N if either SUNRPC or INFINIBAND are N, in this case the NFS/RDMA client
+and server will not be built</li>
+<li>M if both SUNRPC and INFINIBAND are on (M or Y) and at least one is M,
+in this case the NFS/RDMA client and server will be built as modules</li>
+<li>Y if both SUNRPC and INFINIBAND are Y, in this case the NFS/RDMA client
+and server will be built into the kernel</li>
+</ol>
+</div></blockquote>
+<p>Therefore, if you have followed the steps above and turned no NFS and RDMA,
+the NFS/RDMA client and server will be built.</p>
+<p>Build a new kernel, install it, boot it.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="check-rdma-and-nfs-setup">
+<h2>Check RDMA and NFS Setup<a class="headerlink" href="#check-rdma-and-nfs-setup" title="Permalink to this headline">¶</a></h2>
+<p>Before configuring the NFS/RDMA software, it is a good idea to test
+your new kernel to ensure that the kernel is working correctly.
+In particular, it is a good idea to verify that the RDMA stack
+is functioning as expected and standard NFS over TCP/IP and/or UDP/IP
+is working properly.</p>
+<ul>
+<li><p class="first">Check RDMA Setup</p>
+<p>If you built the RDMA components as modules, load them at
+this time. For example, if you are using a Mellanox Tavor/Sinai/Arbel
+card:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ modprobe ib_mthca
+$ modprobe ib_ipoib
+</pre></div>
+</div>
+<p>If you are using InfiniBand, make sure there is a Subnet Manager (SM)
+running on the network. If your IB switch has an embedded SM, you can
+use it. Otherwise, you will need to run an SM, such as OpenSM, on one
+of your end nodes.</p>
+<p>If an SM is running on your network, you should see the following:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ cat /sys/class/infiniband/driverX/ports/1/state
+<span class="m">4</span>: ACTIVE
+</pre></div>
+</div>
+<p>where driverX is mthca0, ipath5, ehca3, etc.</p>
+<p>To further test the InfiniBand software stack, use IPoIB (this
+assumes you have two IB hosts named host1 and host2):</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>host1$ ip link <span class="nb">set</span> dev ib0 up
+host1$ ip address add dev ib0 a.b.c.x
+host2$ ip link <span class="nb">set</span> dev ib0 up
+host2$ ip address add dev ib0 a.b.c.y
+host1$ ping a.b.c.y
+host2$ ping a.b.c.x
+</pre></div>
+</div>
+<p>For other device types, follow the appropriate procedures.</p>
+</li>
+<li><p class="first">Check NFS Setup</p>
+<p>For the NFS components enabled above (client and/or server),
+test their functionality over standard Ethernet using TCP/IP or UDP/IP.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="nfs-rdma-setup">
+<h2>NFS/RDMA Setup<a class="headerlink" href="#nfs-rdma-setup" title="Permalink to this headline">¶</a></h2>
+<p>We recommend that you use two machines, one to act as the client and
+one to act as the server.</p>
+<div class="section" id="one-time-configuration">
+<h3>One time configuration:<a class="headerlink" href="#one-time-configuration" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">On the server system, configure the /etc/exports file and start the NFS/RDMA server.</p>
+<p>Exports entries with the following formats have been tested:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>/vol0   192.168.0.47(fsid=0,rw,async,insecure,no_root_squash)
+/vol0   192.168.0.0/255.255.255.0(fsid=0,rw,async,insecure,no_root_squash)
+</pre></div>
+</div>
+<p>The IP address(es) is(are) the client’s IPoIB address for an InfiniBand
+HCA or the client’s iWARP address(es) for an RNIC.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The “insecure” option must be used because the NFS/RDMA client does
+not use a reserved port.</p>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="each-time-a-machine-boots">
+<h3>Each time a machine boots:<a class="headerlink" href="#each-time-a-machine-boots" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p class="first">Load and configure the RDMA drivers</p>
+<p>For InfiniBand using a Mellanox adapter:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ modprobe ib_mthca
+$ modprobe ib_ipoib
+$ ip li <span class="nb">set</span> dev ib0 up
+$ ip addr add dev ib0 a.b.c.d
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Please use unique addresses for the client and server!</p>
+</div>
+</li>
+<li><p class="first">Start the NFS server</p>
+<p>If the NFS/RDMA server was built as a module (CONFIG_SUNRPC_XPRT_RDMA=m in
+kernel config), load the RDMA transport module:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ modprobe svcrdma
+</pre></div>
+</div>
+<p>Regardless of how the server was built (module or built-in), start the
+server:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ /etc/init.d/nfs start
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ service nfs start
+</pre></div>
+</div>
+<p>Instruct the server to listen on the RDMA transport:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ <span class="nb">echo</span> rdma <span class="m">20049</span> &gt; /proc/fs/nfsd/portlist
+</pre></div>
+</div>
+</li>
+<li><p class="first">On the client system</p>
+<p>If the NFS/RDMA client was built as a module (CONFIG_SUNRPC_XPRT_RDMA=m in
+kernel config), load the RDMA client module:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ modprobe xprtrdma.ko
+</pre></div>
+</div>
+<p>Regardless of how the client was built (module or built-in), use this
+command to mount the NFS/RDMA server:</p>
+<div class="highlight-sh notranslate"><div class="highlight"><pre><span></span>$ mount -o rdma,port<span class="o">=</span><span class="m">20049</span> &lt;IPoIB-server-name-or-address&gt;:/&lt;export&gt; /mnt
+</pre></div>
+</div>
+<p>To verify that the mount is using RDMA, run “cat /proc/mounts” and check
+the “proto” field for the given mount.</p>
+<p>Congratulations! You’re using NFS/RDMA!</p>
+</li>
+</ul>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="nfsd-admin-interfaces.html" class="btn btn-neutral float-right" title="Administrative interfaces for nfsd" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="nfsroot.html" class="btn btn-neutral float-left" title="Mounting the root filesystem via NFS (nfsroot)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
