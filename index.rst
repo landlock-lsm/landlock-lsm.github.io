@@ -1,13 +1,41 @@
-Landlock: programmatic access control
+Landlock: unprivileged access control
 =====================================
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-Landlock is a stackable Linux Security Module (LSM) that makes it possible to create security sandboxes, programmable access-controls or safe endpoint security agents.
-This kind of sandbox is expected to help mitigate the security impact of bugs or unexpected/malicious behaviors in user-space applications.
-Landlock is inspired by seccomp-bpf but instead of filtering syscalls and their raw arguments, a Landlock rule can inspect the use of kernel objects like files and hence make a decision according to the kernel semantic.
+The goal of Landlock is to enable to restrict ambient rights (e.g.  global
+filesystem access) for a set of processes.  Because Landlock is a stackable
+LSM, it makes possible to create safe security sandboxes as new security layers
+in addition to the existing system-wide access-controls. This kind of sandbox
+is expected to help mitigate the security impact of bugs or
+unexpected/malicious behaviors in user-space applications. Landlock empower any
+process, including unprivileged ones, to securely restrict themselves.
+
+
+[PATCH v15] -- Landlock LSM
+---------------------------
+
+`LKML`__ -- `code`__ -- `sandbox manager example`__ -- `ptrace tests`__ -- `documentation`__
+
+__ https://lore.kernel.org/lkml/20200326202731.693608-1-mic@digikod.net/
+__ https://github.com/landlock-lsm/linux/commits/landlock-v15
+__ https://github.com/landlock-lsm/linux/blob/landlock-v15/samples/landlock/sandboxer.c
+__ https://github.com/landlock-lsm/linux/blob/landlock-v15/tools/testing/selftests/landlock/
+__ linux-doc/landlock-v15/security/landlock/index.html
+
+
+[PATCH v14] -- Landlock LSM
+---------------------------
+
+`LKML`__ -- `code`__ -- `sandbox manager example`__ -- `ptrace tests`__ -- `documentation`__
+
+__ https://lore.kernel.org/lkml/20200224160215.4136-1-mic@digikod.net/
+__ https://github.com/landlock-lsm/linux/commits/landlock-v14
+__ https://github.com/landlock-lsm/linux/blob/landlock-v14/samples/landlock/sandboxer.c
+__ https://github.com/landlock-lsm/linux/blob/landlock-v14/tools/testing/selftests/landlock/
+__ linux-doc/landlock-v14/security/landlock/index.html
 
 
 [PATCH v13] -- Landlock LSM
