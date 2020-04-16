@@ -1,0 +1,39 @@
+digraph decoder_state_machine {
+    node [shape = doublecircle, label="Decoding"] Decoding;
+
+    node [shape = circle, label="Initialization"] Initialization;
+    node [shape = circle, label="Capture\nsetup"] CaptureSetup;
+    node [shape = circle, label="Dynamic\nResolution\nChange"] ResChange;
+    node [shape = circle, label="Stopped"] Stopped;
+    node [shape = circle, label="Drain"] Drain;
+    node [shape = circle, label="Seek"] Seek;
+    node [shape = circle, label="End of Stream"] EoS;
+
+    node [shape = point]; qi
+    qi -> Initialization [ label = "open()" ];
+
+    Initialization -> CaptureSetup [ label = "CAPTURE\nformat\nestablished" ];
+
+    CaptureSetup -> Stopped [ label = "CAPTURE\nbuffers\nready" ];
+
+    Decoding -> ResChange [ label = "Stream\nresolution\nchange" ];
+    Decoding -> Drain [ label = "V4L2_DEC_CMD_STOP" ];
+    Decoding -> EoS [ label = "EoS mark\nin the stream" ];
+    Decoding -> Seek [ label = "VIDIOC_STREAMOFF(OUTPUT)" ];
+    Decoding -> Stopped [ label = "VIDIOC_STREAMOFF(CAPTURE)" ];
+    Decoding -> Decoding;
+
+    ResChange -> CaptureSetup [ label = "CAPTURE\nformat\nestablished" ];
+    ResChange -> Seek [ label = "VIDIOC_STREAMOFF(OUTPUT)" ];
+
+    EoS -> Drain [ label = "Implicit\ndrain" ];
+
+    Drain -> Stopped [ label = "All CAPTURE\nbuffers dequeued\nor\nVIDIOC_STREAMOFF(CAPTURE)" ];
+    Drain -> Seek [ label = "VIDIOC_STREAMOFF(OUTPUT)" ];
+
+    Seek -> Decoding [ label = "VIDIOC_STREAMON(OUTPUT)" ];
+    Seek -> Initialization [ label = "VIDIOC_REQBUFS(OUTPUT, 0)" ];
+
+    Stopped -> Decoding [ label = "V4L2_DEC_CMD_START\nor\nVIDIOC_STREAMON(CAPTURE)" ];
+    Stopped -> Seek [ label = "VIDIOC_STREAMOFF(OUTPUT)" ];
+}

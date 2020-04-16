@@ -1,0 +1,635 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>unshare system call &mdash; The Linux Kernel 5.7.0-rc1+ documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Speculation Control" href="spec_ctrl.html" />
+    <link rel="prev" title="Seccomp BPF (SECure COMPuting with filters)" href="seccomp_filter.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.7.0-rc1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">The Linux kernel user-space API guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="no_new_privs.html">No New Privileges Flag</a></li>
+<li class="toctree-l2"><a class="reference internal" href="seccomp_filter.html">Seccomp BPF (SECure COMPuting with filters)</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">unshare system call</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#change-log">Change Log</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#contents">Contents</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#overview">1) Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#benefits">2) Benefits</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#per-security-context-namespaces">2.1 Per-security context namespaces</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#unsharing-of-virtual-memory-and-or-open-files">2.2 unsharing of virtual memory and/or open files</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#cost">3) Cost</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#requirements">4) Requirements</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#functional-specification">5) Functional Specification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#high-level-design">6) High Level Design</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#low-level-design">7) Low Level Design</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#reorganization-of-copy-functions">7.1) Reorganization of copy_* functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#unshare-system-call-service-function">7.2) unshare() system call service function</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#unshare-helper-functions">7.3) unshare_* helper functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#finally">7.4) Finally</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#test-specification">8) Test Specification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#future-work">9) Future Work</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="spec_ctrl.html">Speculation Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="accelerators/ocxl.html">OpenCAPI (Open Coherent Accelerator Processor Interface)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ioctl/index.html">IOCTLs</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../media/index.html">Linux Media Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">The Linux kernel user-space API guide</a> &raquo;</li>
+        
+      <li>unshare system call</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/userspace-api/unshare.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="unshare-system-call">
+<h1>unshare system call<a class="headerlink" href="#unshare-system-call" title="Permalink to this headline">¶</a></h1>
+<p>This document describes the new system call, unshare(). The document
+provides an overview of the feature, why it is needed, how it can
+be used, its interface specification, design, implementation and
+how it can be tested.</p>
+<div class="section" id="change-log">
+<h2>Change Log<a class="headerlink" href="#change-log" title="Permalink to this headline">¶</a></h2>
+<p>version 0.1  Initial document, Janak Desai (<a class="reference external" href="mailto:janak&#37;&#52;&#48;us&#46;ibm&#46;com">janak<span>&#64;</span>us<span>&#46;</span>ibm<span>&#46;</span>com</a>), Jan 11, 2006</p>
+</div>
+<div class="section" id="contents">
+<h2>Contents<a class="headerlink" href="#contents" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Overview</p></li>
+<li><p>Benefits</p></li>
+<li><p>Cost</p></li>
+<li><p>Requirements</p></li>
+<li><p>Functional Specification</p></li>
+<li><p>High Level Design</p></li>
+<li><p>Low Level Design</p></li>
+<li><p>Test Specification</p></li>
+<li><p>Future Work</p></li>
+</ol>
+</div></blockquote>
+</div>
+<div class="section" id="overview">
+<h2>1) Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>Most legacy operating system kernels support an abstraction of threads
+as multiple execution contexts within a process. These kernels provide
+special resources and mechanisms to maintain these “threads”. The Linux
+kernel, in a clever and simple manner, does not make distinction
+between processes and “threads”. The kernel allows processes to share
+resources and thus they can achieve legacy “threads” behavior without
+requiring additional data structures and mechanisms in the kernel. The
+power of implementing threads in this manner comes not only from
+its simplicity but also from allowing application programmers to work
+outside the confinement of all-or-nothing shared resources of legacy
+threads. On Linux, at the time of thread creation using the clone system
+call, applications can selectively choose which resources to share
+between threads.</p>
+<p>unshare() system call adds a primitive to the Linux thread model that
+allows threads to selectively ‘unshare’ any resources that were being
+shared at the time of their creation. unshare() was conceptualized by
+Al Viro in the August of 2000, on the Linux-Kernel mailing list, as part
+of the discussion on POSIX threads on Linux.  unshare() augments the
+usefulness of Linux threads for applications that would like to control
+shared resources without creating a new process. unshare() is a natural
+addition to the set of available primitives on Linux that implement
+the concept of process/thread as a virtual machine.</p>
+</div>
+<div class="section" id="benefits">
+<h2>2) Benefits<a class="headerlink" href="#benefits" title="Permalink to this headline">¶</a></h2>
+<p>unshare() would be useful to large application frameworks such as PAM
+where creating a new process to control sharing/unsharing of process
+resources is not possible. Since namespaces are shared by default
+when creating a new process using fork or clone, unshare() can benefit
+even non-threaded applications if they have a need to disassociate
+from default shared namespace. The following lists two use-cases
+where unshare() can be used.</p>
+<div class="section" id="per-security-context-namespaces">
+<h3>2.1 Per-security context namespaces<a class="headerlink" href="#per-security-context-namespaces" title="Permalink to this headline">¶</a></h3>
+<p>unshare() can be used to implement polyinstantiated directories using
+the kernel’s per-process namespace mechanism. Polyinstantiated directories,
+such as per-user and/or per-security context instance of /tmp, /var/tmp or
+per-security context instance of a user’s home directory, isolate user
+processes when working with these directories. Using unshare(), a PAM
+module can easily setup a private namespace for a user at login.
+Polyinstantiated directories are required for Common Criteria certification
+with Labeled System Protection Profile, however, with the availability
+of shared-tree feature in the Linux kernel, even regular Linux systems
+can benefit from setting up private namespaces at login and
+polyinstantiating /tmp, /var/tmp and other directories deemed
+appropriate by system administrators.</p>
+</div>
+<div class="section" id="unsharing-of-virtual-memory-and-or-open-files">
+<h3>2.2 unsharing of virtual memory and/or open files<a class="headerlink" href="#unsharing-of-virtual-memory-and-or-open-files" title="Permalink to this headline">¶</a></h3>
+<p>Consider a client/server application where the server is processing
+client requests by creating processes that share resources such as
+virtual memory and open files. Without unshare(), the server has to
+decide what needs to be shared at the time of creating the process
+which services the request. unshare() allows the server an ability to
+disassociate parts of the context during the servicing of the
+request. For large and complex middleware application frameworks, this
+ability to unshare() after the process was created can be very
+useful.</p>
+</div>
+</div>
+<div class="section" id="cost">
+<h2>3) Cost<a class="headerlink" href="#cost" title="Permalink to this headline">¶</a></h2>
+<p>In order to not duplicate code and to handle the fact that unshare()
+works on an active task (as opposed to clone/fork working on a newly
+allocated inactive task) unshare() had to make minor reorganizational
+changes to copy_* functions utilized by clone/fork system call.
+There is a cost associated with altering existing, well tested and
+stable code to implement a new feature that may not get exercised
+extensively in the beginning. However, with proper design and code
+review of the changes and creation of an unshare() test for the LTP
+the benefits of this new feature can exceed its cost.</p>
+</div>
+<div class="section" id="requirements">
+<h2>4) Requirements<a class="headerlink" href="#requirements" title="Permalink to this headline">¶</a></h2>
+<p>unshare() reverses sharing that was done using clone(2) system call,
+so unshare() should have a similar interface as clone(2). That is,
+since flags in clone(int flags, void *stack) specifies what should
+be shared, similar flags in unshare(int flags) should specify
+what should be unshared. Unfortunately, this may appear to invert
+the meaning of the flags from the way they are used in clone(2).
+However, there was no easy solution that was less confusing and that
+allowed incremental context unsharing in future without an ABI change.</p>
+<p>unshare() interface should accommodate possible future addition of
+new context flags without requiring a rebuild of old applications.
+If and when new context flags are added, unshare() design should allow
+incremental unsharing of those resources on an as needed basis.</p>
+</div>
+<div class="section" id="functional-specification">
+<h2>5) Functional Specification<a class="headerlink" href="#functional-specification" title="Permalink to this headline">¶</a></h2>
+<dl>
+<dt>NAME</dt><dd><p>unshare - disassociate parts of the process execution context</p>
+</dd>
+<dt>SYNOPSIS</dt><dd><p>#include &lt;sched.h&gt;</p>
+<p>int unshare(int flags);</p>
+</dd>
+<dt>DESCRIPTION</dt><dd><p>unshare() allows a process to disassociate parts of its execution
+context that are currently being shared with other processes. Part
+of execution context, such as the namespace, is shared by default
+when a new process is created using fork(2), while other parts,
+such as the virtual memory, open file descriptors, etc, may be
+shared by explicit request to share them when creating a process
+using clone(2).</p>
+<p>The main use of unshare() is to allow a process to control its
+shared execution context without creating a new process.</p>
+<p>The flags argument specifies one or bitwise-or’ed of several of
+the following constants.</p>
+<dl class="simple">
+<dt>CLONE_FS</dt><dd><p>If CLONE_FS is set, file system information of the caller
+is disassociated from the shared file system information.</p>
+</dd>
+<dt>CLONE_FILES</dt><dd><p>If CLONE_FILES is set, the file descriptor table of the
+caller is disassociated from the shared file descriptor
+table.</p>
+</dd>
+<dt>CLONE_NEWNS</dt><dd><p>If CLONE_NEWNS is set, the namespace of the caller is
+disassociated from the shared namespace.</p>
+</dd>
+<dt>CLONE_VM</dt><dd><p>If CLONE_VM is set, the virtual memory of the caller is
+disassociated from the shared virtual memory.</p>
+</dd>
+</dl>
+</dd>
+<dt>RETURN VALUE</dt><dd><p>On success, zero returned. On failure, -1 is returned and errno is</p>
+</dd>
+<dt>ERRORS</dt><dd><dl class="simple">
+<dt>EPERM   CLONE_NEWNS was specified by a non-root process (process</dt><dd><p>without CAP_SYS_ADMIN).</p>
+</dd>
+<dt>ENOMEM  Cannot allocate sufficient memory to copy parts of caller’s</dt><dd><p>context that need to be unshared.</p>
+</dd>
+</dl>
+<p>EINVAL  Invalid flag was specified as an argument.</p>
+</dd>
+<dt>CONFORMING TO</dt><dd><p>The unshare() call is Linux-specific and  should  not be used
+in programs intended to be portable.</p>
+</dd>
+<dt>SEE ALSO</dt><dd><p>clone(2), fork(2)</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="high-level-design">
+<h2>6) High Level Design<a class="headerlink" href="#high-level-design" title="Permalink to this headline">¶</a></h2>
+<p>Depending on the flags argument, the unshare() system call allocates
+appropriate process context structures, populates it with values from
+the current shared version, associates newly duplicated structures
+with the current task structure and releases corresponding shared
+versions. Helper functions of clone (copy_*) could not be used
+directly by unshare() because of the following two reasons.</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>clone operates on a newly allocated not-yet-active task
+structure, where as unshare() operates on the current active
+task. Therefore unshare() has to take appropriate task_lock()
+before associating newly duplicated context structures</p></li>
+<li><p>unshare() has to allocate and duplicate all context structures
+that are being unshared, before associating them with the
+current task and releasing older shared structures. Failure
+do so will create race conditions and/or oops when trying
+to backout due to an error. Consider the case of unsharing
+both virtual memory and namespace. After successfully unsharing
+vm, if the system call encounters an error while allocating
+new namespace structure, the error return code will have to
+reverse the unsharing of vm. As part of the reversal the
+system call will have to go back to older, shared, vm
+structure, which may not exist anymore.</p></li>
+</ol>
+</div></blockquote>
+<p>Therefore code from copy_* functions that allocated and duplicated
+current context structure was moved into new dup_* functions. Now,
+copy_* functions call dup_* functions to allocate and duplicate
+appropriate context structures and then associate them with the
+task structure that is being constructed. unshare() system call on
+the other hand performs the following:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Check flags to force missing, but implied, flags</p></li>
+<li><p>For each context structure, call the corresponding unshare()
+helper function to allocate and duplicate a new context
+structure, if the appropriate bit is set in the flags argument.</p></li>
+<li><p>If there is no error in allocation and duplication and there
+are new context structures then lock the current task structure,
+associate new context structures with the current task structure,
+and release the lock on the current task structure.</p></li>
+<li><p>Appropriately release older, shared, context structures.</p></li>
+</ol>
+</div></blockquote>
+</div>
+<div class="section" id="low-level-design">
+<h2>7) Low Level Design<a class="headerlink" href="#low-level-design" title="Permalink to this headline">¶</a></h2>
+<p>Implementation of unshare() can be grouped in the following 4 different
+items:</p>
+<blockquote>
+<div><ol class="loweralpha simple">
+<li><p>Reorganization of existing copy_* functions</p></li>
+<li><p>unshare() system call service function</p></li>
+<li><p>unshare() helper functions for each different process context</p></li>
+<li><p>Registration of system call number for different architectures</p></li>
+</ol>
+</div></blockquote>
+<div class="section" id="reorganization-of-copy-functions">
+<h3>7.1) Reorganization of copy_* functions<a class="headerlink" href="#reorganization-of-copy-functions" title="Permalink to this headline">¶</a></h3>
+<p>Each copy function such as copy_mm, copy_namespace, copy_files,
+etc, had roughly two components. The first component allocated
+and duplicated the appropriate structure and the second component
+linked it to the task structure passed in as an argument to the copy
+function. The first component was split into its own function.
+These dup_* functions allocated and duplicated the appropriate
+context structure. The reorganized copy_* functions invoked
+their corresponding dup_* functions and then linked the newly
+duplicated structures to the task structure with which the
+copy function was called.</p>
+</div>
+<div class="section" id="unshare-system-call-service-function">
+<h3>7.2) unshare() system call service function<a class="headerlink" href="#unshare-system-call-service-function" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><ul class="simple">
+<li><p>Check flags
+Force implied flags. If CLONE_THREAD is set force CLONE_VM.
+If CLONE_VM is set, force CLONE_SIGHAND. If CLONE_SIGHAND is
+set and signals are also being shared, force CLONE_THREAD. If
+CLONE_NEWNS is set, force CLONE_FS.</p></li>
+<li><p>For each context flag, invoke the corresponding unshare_*
+helper routine with flags passed into the system call and a
+reference to pointer pointing the new unshared structure</p></li>
+<li><p>If any new structures are created by unshare_* helper
+functions, take the task_lock() on the current task,
+modify appropriate context pointers, and release the
+task lock.</p></li>
+<li><p>For all newly unshared structures, release the corresponding
+older, shared, structures.</p></li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="unshare-helper-functions">
+<h3>7.3) unshare_* helper functions<a class="headerlink" href="#unshare-helper-functions" title="Permalink to this headline">¶</a></h3>
+<p>For unshare_* helpers corresponding to CLONE_SYSVSEM, CLONE_SIGHAND,
+and CLONE_THREAD, return -EINVAL since they are not implemented yet.
+For others, check the flag value to see if the unsharing is
+required for that structure. If it is, invoke the corresponding
+dup_* function to allocate and duplicate the structure and return
+a pointer to it.</p>
+</div>
+<div class="section" id="finally">
+<h3>7.4) Finally<a class="headerlink" href="#finally" title="Permalink to this headline">¶</a></h3>
+<p>Appropriately modify architecture specific code to register the
+new system call.</p>
+</div>
+</div>
+<div class="section" id="test-specification">
+<h2>8) Test Specification<a class="headerlink" href="#test-specification" title="Permalink to this headline">¶</a></h2>
+<p>The test for unshare() should test the following:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Valid flags: Test to check that clone flags for signal and
+signal handlers, for which unsharing is not implemented
+yet, return -EINVAL.</p></li>
+<li><p>Missing/implied flags: Test to make sure that if unsharing
+namespace without specifying unsharing of filesystem, correctly
+unshares both namespace and filesystem information.</p></li>
+<li><p>For each of the four (namespace, filesystem, files and vm)
+supported unsharing, verify that the system call correctly
+unshares the appropriate structure. Verify that unsharing
+them individually as well as in combination with each
+other works as expected.</p></li>
+<li><p>Concurrent execution: Use shared memory segments and futex on
+an address in the shm segment to synchronize execution of
+about 10 threads. Have a couple of threads execute execve,
+a couple _exit and the rest unshare with different combination
+of flags. Verify that unsharing is performed as expected and
+that there are no oops or hangs.</p></li>
+</ol>
+</div></blockquote>
+</div>
+<div class="section" id="future-work">
+<h2>9) Future Work<a class="headerlink" href="#future-work" title="Permalink to this headline">¶</a></h2>
+<p>The current implementation of unshare() does not allow unsharing of
+signals and signal handlers. Signals are complex to begin with and
+to unshare signals and/or signal handlers of a currently running
+process is even more complex. If in the future there is a specific
+need to allow unsharing of signals and/or signal handlers, it can
+be incrementally added to unshare() without affecting legacy
+applications using unshare().</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="spec_ctrl.html" class="btn btn-neutral float-right" title="Speculation Control" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="seccomp_filter.html" class="btn btn-neutral float-left" title="Seccomp BPF (SECure COMPuting with filters)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

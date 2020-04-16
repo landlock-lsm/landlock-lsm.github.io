@@ -1,0 +1,724 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Bug hunting &mdash; The Linux Kernel 5.7.0-rc1+ documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Bisecting a bug" href="bug-bisect.html" />
+    <link rel="prev" title="Security bugs" href="security-bugs.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.7.0-rc1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">The Linux kernel user’s and administrator’s guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="README.html">Linux kernel release 5.x &lt;http://kernel.org/&gt;</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel-parameters.html">The kernel’s command-line parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devices.html">Linux allocated devices (4.x+ version)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sysctl/index.html">Documentation for /proc/sys</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hw-vuln/index.html">Hardware vulnerabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reporting-bugs.html">Reporting bugs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="security-bugs.html">Security bugs</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Bug hunting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#where-is-the-oops-message-is-located">Where is the Oops message is located?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#finding-the-bug-s-location">Finding the bug’s location</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#gdb">gdb</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#objdump">objdump</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#reporting-the-bug">Reporting the bug</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#fixing-the-bug">Fixing the bug</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#notes-on-oops-tracing-with-klogd">Notes on Oops tracing with <code class="docutils literal notranslate"><span class="pre">klogd</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bug-bisect.html">Bisecting a bug</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tainted-kernels.html">Tainted kernels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ramoops.html">Ramoops oops/panic logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dynamic-debug-howto.html">Dynamic debug</a></li>
+<li class="toctree-l2"><a class="reference internal" href="init.html">Explaining the dreaded “No init found.” boot hang message</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kdump/index.html">Documentation for Kdump - The kexec-based Crash Dumping Solution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="perf/index.html">Performance monitor support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sysfs-rules.html">Rules on how to access information in sysfs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="acpi/index.html">ACPI Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="aoe/index.html">ATA over Ethernet (AoE)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="auxdisplay/index.html">Auxiliary Display Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bcache.html">A block layer cache (bcache)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="binderfs.html">The Android binderfs Filesystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="binfmt-misc.html">Kernel Support for miscellaneous Binary Formats (binfmt_misc)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="blockdev/index.html">The Linux RapidIO Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bootconfig.html">Boot Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="braille-console.html">Linux Braille Console</a></li>
+<li class="toctree-l2"><a class="reference internal" href="btmrvl.html">btmrvl driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cgroup-v1/index.html">Control Groups version 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cgroup-v2.html">Control Group v2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cifs/index.html">CIFS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="clearing-warn-once.html">Clearing WARN_ONCE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cpu-load.html">CPU load</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cputopology.html">How CPU topology info is exported via sysfs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dell_rbu.html">Dell Remote BIOS Update driver (dell_rbu)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="device-mapper/index.html">Device Mapper</a></li>
+<li class="toctree-l2"><a class="reference internal" href="edid.html">EDID</a></li>
+<li class="toctree-l2"><a class="reference internal" href="efi-stub.html">The EFI Boot Stub</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ext4.html">ext4 General Information</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nfs/index.html">NFS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gpio/index.html">gpio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="highuid.html">Notes on the change from 16-bit UIDs to 32-bit UIDs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hw_random.html">Linux support for random number generator in i8xx chipsets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="initrd.html">Using the initial RAM disk (initrd)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iostats.html">I/O statistics fields</a></li>
+<li class="toctree-l2"><a class="reference internal" href="java.html">Java(tm) Binary Kernel Support for Linux v1.03</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jfs.html">IBM’s Journaled File System (JFS) for Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel-per-CPU-kthreads.html">Reducing OS jitter due to per-cpu kthreads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="laptops/index.html">Laptop Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lcd-panel-cgram.html">Parallel port LCD/Keypad Panel support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ldm.html">LDM - Logical Disk Manager (Dynamic Disks)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lockup-watchdogs.html">Softlockup detector and hardlockup detector (aka nmi_watchdog)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="LSM/index.html">Linux Security Module Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="md.html">RAID arrays</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mm/index.html">Memory Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-signing.html">Kernel module signing facility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mono.html">Mono(tm) Binary Kernel Support for Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespaces/index.html">Namespaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="numastat.html">Numa policy hit/miss statistics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="parport.html">Parport</a></li>
+<li class="toctree-l2"><a class="reference internal" href="perf-security.html">Perf Events and tool security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pm/index.html">Power Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pnp.html">Linux Plug and Play Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rapidio.html">RapidIO Subsystem Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ras.html">Reliability, Availability and Serviceability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rtc.html">Real Time Clock (RTC) Drivers for Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="serial-console.html">Linux Serial Console</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svga.html">Video Mode Selection Support 2.13</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sysrq.html">Linux Magic System Request Key Hacks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="thunderbolt.html">USB4 and Thunderbolt</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ufs.html">Using UFS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="unicode.html">Unicode support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vga-softcursor.html">Software cursor for VGA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="video-output.html">Video Output Switcher Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wimax/index.html">WiMAX subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="xfs.html">The SGI XFS Filesystem</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../media/index.html">Linux Media Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">The Linux kernel user’s and administrator’s guide</a> &raquo;</li>
+        
+      <li>Bug hunting</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/admin-guide/bug-hunting.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="bug-hunting">
+<h1>Bug hunting<a class="headerlink" href="#bug-hunting" title="Permalink to this headline">¶</a></h1>
+<p>Kernel bug reports often come with a stack dump like the one below:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>------------[ cut here ]------------
+WARNING: CPU: 1 PID: 28102 at kernel/module.c:1108 module_put+0x57/0x70
+Modules linked in: dvb_usb_gp8psk(-) dvb_usb dvb_core nvidia_drm(PO) nvidia_modeset(PO) snd_hda_codec_hdmi snd_hda_intel snd_hda_codec snd_hwdep snd_hda_core snd_pcm snd_timer snd soundcore nvidia(PO) [last unloaded: rc_core]
+CPU: 1 PID: 28102 Comm: rmmod Tainted: P        WC O 4.8.4-build.1 #1
+Hardware name: MSI MS-7309/MS-7309, BIOS V1.12 02/23/2009
+ 00000000 c12ba080 00000000 00000000 c103ed6a c1616014 00000001 00006dc6
+ c1615862 00000454 c109e8a7 c109e8a7 00000009 ffffffff 00000000 f13f6a10
+ f5f5a600 c103ee33 00000009 00000000 00000000 c109e8a7 f80ca4d0 c109f617
+Call Trace:
+ [&lt;c12ba080&gt;] ? dump_stack+0x44/0x64
+ [&lt;c103ed6a&gt;] ? __warn+0xfa/0x120
+ [&lt;c109e8a7&gt;] ? module_put+0x57/0x70
+ [&lt;c109e8a7&gt;] ? module_put+0x57/0x70
+ [&lt;c103ee33&gt;] ? warn_slowpath_null+0x23/0x30
+ [&lt;c109e8a7&gt;] ? module_put+0x57/0x70
+ [&lt;f80ca4d0&gt;] ? gp8psk_fe_set_frontend+0x460/0x460 [dvb_usb_gp8psk]
+ [&lt;c109f617&gt;] ? symbol_put_addr+0x27/0x50
+ [&lt;f80bc9ca&gt;] ? dvb_usb_adapter_frontend_exit+0x3a/0x70 [dvb_usb]
+ [&lt;f80bb3bf&gt;] ? dvb_usb_exit+0x2f/0xd0 [dvb_usb]
+ [&lt;c13d03bc&gt;] ? usb_disable_endpoint+0x7c/0xb0
+ [&lt;f80bb48a&gt;] ? dvb_usb_device_exit+0x2a/0x50 [dvb_usb]
+ [&lt;c13d2882&gt;] ? usb_unbind_interface+0x62/0x250
+ [&lt;c136b514&gt;] ? __pm_runtime_idle+0x44/0x70
+ [&lt;c13620d8&gt;] ? __device_release_driver+0x78/0x120
+ [&lt;c1362907&gt;] ? driver_detach+0x87/0x90
+ [&lt;c1361c48&gt;] ? bus_remove_driver+0x38/0x90
+ [&lt;c13d1c18&gt;] ? usb_deregister+0x58/0xb0
+ [&lt;c109fbb0&gt;] ? SyS_delete_module+0x130/0x1f0
+ [&lt;c1055654&gt;] ? task_work_run+0x64/0x80
+ [&lt;c1000fa5&gt;] ? exit_to_usermode_loop+0x85/0x90
+ [&lt;c10013f0&gt;] ? do_fast_syscall_32+0x80/0x130
+ [&lt;c1549f43&gt;] ? sysenter_past_esp+0x40/0x6a
+---[ end trace 6ebc60ef3981792f ]---
+</pre></div>
+</div>
+<p>Such stack traces provide enough information to identify the line inside the
+Kernel’s source code where the bug happened. Depending on the severity of
+the issue, it may also contain the word <strong>Oops</strong>, as on this one:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>BUG: unable to handle kernel NULL pointer dereference at   (null)
+IP: [&lt;c06969d4&gt;] iret_exc+0x7d0/0xa59
+*pdpt = 000000002258a001 *pde = 0000000000000000
+Oops: 0002 [#1] PREEMPT SMP
+...
+</pre></div>
+</div>
+<p>Despite being an <strong>Oops</strong> or some other sort of stack trace, the offended
+line is usually required to identify and handle the bug. Along this chapter,
+we’ll refer to “Oops” for all kinds of stack traces that need to be analized.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">ksymoops</span></code> is useless on 2.6 or upper.  Please use the Oops in its original
+format (from <code class="docutils literal notranslate"><span class="pre">dmesg</span></code>, etc).  Ignore any references in this or other docs to
+“decoding the Oops” or “running it through ksymoops”.
+If you post an Oops from 2.6+ that has been run through <code class="docutils literal notranslate"><span class="pre">ksymoops</span></code>,
+people will just tell you to repost it.</p>
+</div>
+<div class="section" id="where-is-the-oops-message-is-located">
+<h2>Where is the Oops message is located?<a class="headerlink" href="#where-is-the-oops-message-is-located" title="Permalink to this headline">¶</a></h2>
+<p>Normally the Oops text is read from the kernel buffers by klogd and
+handed to <code class="docutils literal notranslate"><span class="pre">syslogd</span></code> which writes it to a syslog file, typically
+<code class="docutils literal notranslate"><span class="pre">/var/log/messages</span></code> (depends on <code class="docutils literal notranslate"><span class="pre">/etc/syslog.conf</span></code>). On systems with
+systemd, it may also be stored by the <code class="docutils literal notranslate"><span class="pre">journald</span></code> daemon, and accessed
+by running <code class="docutils literal notranslate"><span class="pre">journalctl</span></code> command.</p>
+<p>Sometimes <code class="docutils literal notranslate"><span class="pre">klogd</span></code> dies, in which case you can run <code class="docutils literal notranslate"><span class="pre">dmesg</span> <span class="pre">&gt;</span> <span class="pre">file</span></code> to
+read the data from the kernel buffers and save it.  Or you can
+<code class="docutils literal notranslate"><span class="pre">cat</span> <span class="pre">/proc/kmsg</span> <span class="pre">&gt;</span> <span class="pre">file</span></code>, however you have to break in to stop the transfer,
+<code class="docutils literal notranslate"><span class="pre">kmsg</span></code> is a “never ending file”.</p>
+<p>If the machine has crashed so badly that you cannot enter commands or
+the disk is not available then you have three options:</p>
+<ol class="arabic simple">
+<li><p>Hand copy the text from the screen and type it in after the machine
+has restarted.  Messy but it is the only option if you have not
+planned for a crash. Alternatively, you can take a picture of
+the screen with a digital camera - not nice, but better than
+nothing.  If the messages scroll off the top of the console, you
+may find that booting with a higher resolution (eg, <code class="docutils literal notranslate"><span class="pre">vga=791</span></code>)
+will allow you to read more of the text. (Caveat: This needs <code class="docutils literal notranslate"><span class="pre">vesafb</span></code>,
+so won’t help for ‘early’ oopses)</p></li>
+<li><p>Boot with a serial console (see
+<a class="reference internal" href="serial-console.html#serial-console"><span class="std std-ref">Documentation/admin-guide/serial-console.rst</span></a>),
+run a null modem to a second machine and capture the output there
+using your favourite communication program.  Minicom works well.</p></li>
+<li><p>Use Kdump (see Documentation/admin-guide/kdump/kdump.rst),
+extract the kernel ring buffer from old memory with using dmesg
+gdbmacro in Documentation/admin-guide/kdump/gdbmacros.txt.</p></li>
+</ol>
+</div>
+<div class="section" id="finding-the-bug-s-location">
+<h2>Finding the bug’s location<a class="headerlink" href="#finding-the-bug-s-location" title="Permalink to this headline">¶</a></h2>
+<p>Reporting a bug works best if you point the location of the bug at the
+Kernel source file. There are two methods for doing that. Usually, using
+<code class="docutils literal notranslate"><span class="pre">gdb</span></code> is easier, but the Kernel should be pre-compiled with debug info.</p>
+<div class="section" id="gdb">
+<h3>gdb<a class="headerlink" href="#gdb" title="Permalink to this headline">¶</a></h3>
+<p>The GNU debug (<code class="docutils literal notranslate"><span class="pre">gdb</span></code>) is the best way to figure out the exact file and line
+number of the OOPS from the <code class="docutils literal notranslate"><span class="pre">vmlinux</span></code> file.</p>
+<p>The usage of gdb works best on a kernel compiled with <code class="docutils literal notranslate"><span class="pre">CONFIG_DEBUG_INFO</span></code>.
+This can be set by running:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ ./scripts/config -d COMPILE_TEST -e DEBUG_KERNEL -e DEBUG_INFO
+</pre></div>
+</div>
+<p>On a kernel compiled with <code class="docutils literal notranslate"><span class="pre">CONFIG_DEBUG_INFO</span></code>, you can simply copy the
+EIP value from the OOPS:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>EIP:    0060:[&lt;c021e50e&gt;]    Not tainted VLI
+</pre></div>
+</div>
+<p>And use GDB to translate that to human-readable form:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ gdb vmlinux
+(gdb) l *0xc021e50e
+</pre></div>
+</div>
+<p>If you don’t have <code class="docutils literal notranslate"><span class="pre">CONFIG_DEBUG_INFO</span></code> enabled, you use the function
+offset from the OOPS:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>EIP is at vt_ioctl+0xda8/0x1482
+</pre></div>
+</div>
+<p>And recompile the kernel with <code class="docutils literal notranslate"><span class="pre">CONFIG_DEBUG_INFO</span></code> enabled:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ ./scripts/config -d COMPILE_TEST -e DEBUG_KERNEL -e DEBUG_INFO
+$ make vmlinux
+$ gdb vmlinux
+(gdb) l *vt_ioctl+0xda8
+0x1888 is in vt_ioctl (drivers/tty/vt/vt_ioctl.c:293).
+288   {
+289           struct vc_data *vc = NULL;
+290           int ret = 0;
+291
+292           console_lock();
+293           if (VT_BUSY(vc_num))
+294                   ret = -EBUSY;
+295           else if (vc_num)
+296                   vc = vc_deallocate(vc_num);
+297           console_unlock();
+</pre></div>
+</div>
+<p>or, if you want to be more verbose:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(gdb) p vt_ioctl
+$1 = {int (struct tty_struct *, unsigned int, unsigned long)} 0xae0 &lt;vt_ioctl&gt;
+(gdb) l *0xae0+0xda8
+</pre></div>
+</div>
+<p>You could, instead, use the object file:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ make drivers/tty/
+$ gdb drivers/tty/vt/vt_ioctl.o
+(gdb) l *vt_ioctl+0xda8
+</pre></div>
+</div>
+<p>If you have a call trace, such as:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Call Trace:
+ [&lt;ffffffff8802c8e9&gt;] :jbd:log_wait_commit+0xa3/0xf5
+ [&lt;ffffffff810482d9&gt;] autoremove_wake_function+0x0/0x2e
+ [&lt;ffffffff8802770b&gt;] :jbd:journal_stop+0x1be/0x1ee
+ ...
+</pre></div>
+</div>
+<p>this shows the problem likely in the :jbd: module. You can load that module
+in gdb and list the relevant code:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ gdb fs/jbd/jbd.ko
+(gdb) l *log_wait_commit+0xa3
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You can also do the same for any function call at the stack trace,
+like this one:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[&lt;f80bc9ca&gt;] ? dvb_usb_adapter_frontend_exit+0x3a/0x70 [dvb_usb]
+</pre></div>
+</div>
+<p>The position where the above call happened can be seen with:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ gdb drivers/media/usb/dvb-usb/dvb-usb.o
+(gdb) l *dvb_usb_adapter_frontend_exit+0x3a
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="objdump">
+<h3>objdump<a class="headerlink" href="#objdump" title="Permalink to this headline">¶</a></h3>
+<p>To debug a kernel, use objdump and look for the hex offset from the crash
+output to find the valid line of code/assembler. Without debug symbols, you
+will see the assembler code for the routine shown, but if your kernel has
+debug symbols the C code will also be available. (Debug symbols can be enabled
+in the kernel hacking menu of the menu configuration.) For example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ objdump -r -S -l --disassemble net/dccp/ipv4.o
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You need to be at the top level of the kernel tree for this to pick up
+your C files.</p>
+</div>
+<p>If you don’t have access to the code you can also debug on some crash dumps
+e.g. crash dump output as shown by Dave Miller:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>EIP is at  +0x14/0x4c0
+ ...
+Code: 44 24 04 e8 6f 05 00 00 e9 e8 fe ff ff 8d 76 00 8d bc 27 00 00
+00 00 55 57  56 53 81 ec bc 00 00 00 8b ac 24 d0 00 00 00 8b 5d 08
+&lt;8b&gt; 83 3c 01 00 00 89 44  24 14 8b 45 28 85 c0 89 44 24 18 0f 85
+
+Put the bytes into a &quot;foo.s&quot; file like this:
+
+       .text
+       .globl foo
+foo:
+       .byte  .... /* bytes from Code: part of OOPS dump */
+
+Compile it with &quot;gcc -c -o foo.o foo.s&quot; then look at the output of
+&quot;objdump --disassemble foo.o&quot;.
+
+Output:
+
+ip_queue_xmit:
+    push       %ebp
+    push       %edi
+    push       %esi
+    push       %ebx
+    sub        $0xbc, %esp
+    mov        0xd0(%esp), %ebp        ! %ebp = arg0 (skb)
+    mov        0x8(%ebp), %ebx         ! %ebx = skb-&gt;sk
+    mov        0x13c(%ebx), %eax       ! %eax = inet_sk(sk)-&gt;opt
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="reporting-the-bug">
+<h2>Reporting the bug<a class="headerlink" href="#reporting-the-bug" title="Permalink to this headline">¶</a></h2>
+<p>Once you find where the bug happened, by inspecting its location,
+you could either try to fix it yourself or report it upstream.</p>
+<p>In order to report it upstream, you should identify the mailing list
+used for the development of the affected code. This can be done by using
+the <code class="docutils literal notranslate"><span class="pre">get_maintainer.pl</span></code> script.</p>
+<p>For example, if you find a bug at the gspca’s sonixj.c file, you can get
+their maintainers with:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ ./scripts/get_maintainer.pl -f drivers/media/usb/gspca/sonixj.c
+Hans Verkuil &lt;hverkuil@xs4all.nl&gt; (odd fixer:GSPCA USB WEBCAM DRIVER,commit_signer:1/1=100%)
+Mauro Carvalho Chehab &lt;mchehab@kernel.org&gt; (maintainer:MEDIA INPUT INFRASTRUCTURE (V4L/DVB),commit_signer:1/1=100%)
+Tejun Heo &lt;tj@kernel.org&gt; (commit_signer:1/1=100%)
+Bhaktipriya Shridhar &lt;bhaktipriya96@gmail.com&gt; (commit_signer:1/1=100%,authored:1/1=100%,added_lines:4/4=100%,removed_lines:9/9=100%)
+linux-media@vger.kernel.org (open list:GSPCA USB WEBCAM DRIVER)
+linux-kernel@vger.kernel.org (open list)
+</pre></div>
+</div>
+<p>Please notice that it will point to:</p>
+<ul class="simple">
+<li><p>The last developers that touched on the source code. On the above example,
+Tejun and Bhaktipriya (in this specific case, none really envolved on the
+development of this file);</p></li>
+<li><p>The driver maintainer (Hans Verkuil);</p></li>
+<li><p>The subsystem maintainer (Mauro Carvalho Chehab);</p></li>
+<li><p>The driver and/or subsystem mailing list (<a class="reference external" href="mailto:linux-media&#37;&#52;&#48;vger&#46;kernel&#46;org">linux-media<span>&#64;</span>vger<span>&#46;</span>kernel<span>&#46;</span>org</a>);</p></li>
+<li><p>the Linux Kernel mailing list (<a class="reference external" href="mailto:linux-kernel&#37;&#52;&#48;vger&#46;kernel&#46;org">linux-kernel<span>&#64;</span>vger<span>&#46;</span>kernel<span>&#46;</span>org</a>).</p></li>
+</ul>
+<p>Usually, the fastest way to have your bug fixed is to report it to mailing
+list used for the development of the code (linux-media ML) copying the driver maintainer (Hans).</p>
+<p>If you are totally stumped as to whom to send the report, and
+<code class="docutils literal notranslate"><span class="pre">get_maintainer.pl</span></code> didn’t provide you anything useful, send it to
+<a class="reference external" href="mailto:linux-kernel&#37;&#52;&#48;vger&#46;kernel&#46;org">linux-kernel<span>&#64;</span>vger<span>&#46;</span>kernel<span>&#46;</span>org</a>.</p>
+<p>Thanks for your help in making Linux as stable as humanly possible.</p>
+</div>
+<div class="section" id="fixing-the-bug">
+<h2>Fixing the bug<a class="headerlink" href="#fixing-the-bug" title="Permalink to this headline">¶</a></h2>
+<p>If you know programming, you could help us by not only reporting the bug,
+but also providing us with a solution. After all, open source is about
+sharing what you do and don’t you want to be recognised for your genius?</p>
+<p>If you decide to take this way, once you have worked out a fix please submit
+it upstream.</p>
+<p>Please do read
+<a class="reference internal" href="../process/submitting-patches.html#submittingpatches"><span class="std std-ref">Documentation/process/submitting-patches.rst</span></a> though
+to help your code get accepted.</p>
+</div>
+<hr class="docutils" />
+<div class="section" id="notes-on-oops-tracing-with-klogd">
+<h2>Notes on Oops tracing with <code class="docutils literal notranslate"><span class="pre">klogd</span></code><a class="headerlink" href="#notes-on-oops-tracing-with-klogd" title="Permalink to this headline">¶</a></h2>
+<p>In order to help Linus and the other kernel developers there has been
+substantial support incorporated into <code class="docutils literal notranslate"><span class="pre">klogd</span></code> for processing protection
+faults.  In order to have full support for address resolution at least
+version 1.3-pl3 of the <code class="docutils literal notranslate"><span class="pre">sysklogd</span></code> package should be used.</p>
+<p>When a protection fault occurs the <code class="docutils literal notranslate"><span class="pre">klogd</span></code> daemon automatically
+translates important addresses in the kernel log messages to their
+symbolic equivalents.  This translated kernel message is then
+forwarded through whatever reporting mechanism <code class="docutils literal notranslate"><span class="pre">klogd</span></code> is using.  The
+protection fault message can be simply cut out of the message files
+and forwarded to the kernel developers.</p>
+<p>Two types of address resolution are performed by <code class="docutils literal notranslate"><span class="pre">klogd</span></code>.  The first is
+static translation and the second is dynamic translation.  Static
+translation uses the System.map file in much the same manner that
+ksymoops does.  In order to do static translation the <code class="docutils literal notranslate"><span class="pre">klogd</span></code> daemon
+must be able to find a system map file at daemon initialization time.
+See the klogd man page for information on how <code class="docutils literal notranslate"><span class="pre">klogd</span></code> searches for map
+files.</p>
+<p>Dynamic address translation is important when kernel loadable modules
+are being used.  Since memory for kernel modules is allocated from the
+kernel’s dynamic memory pools there are no fixed locations for either
+the start of the module or for functions and symbols in the module.</p>
+<p>The kernel supports system calls which allow a program to determine
+which modules are loaded and their location in memory.  Using these
+system calls the klogd daemon builds a symbol table which can be used
+to debug a protection fault which occurs in a loadable kernel module.</p>
+<p>At the very minimum klogd will provide the name of the module which
+generated the protection fault.  There may be additional symbolic
+information available if the developer of the loadable module chose to
+export symbol information from the module.</p>
+<p>Since the kernel module environment can be dynamic there must be a
+mechanism for notifying the <code class="docutils literal notranslate"><span class="pre">klogd</span></code> daemon when a change in module
+environment occurs.  There are command line options available which
+allow klogd to signal the currently executing daemon that symbol
+information should be refreshed.  See the <code class="docutils literal notranslate"><span class="pre">klogd</span></code> manual page for more
+information.</p>
+<p>A patch is included with the sysklogd distribution which modifies the
+<code class="docutils literal notranslate"><span class="pre">modules-2.0.0</span></code> package to automatically signal klogd whenever a module
+is loaded or unloaded.  Applying this patch provides essentially
+seamless support for debugging protection faults which occur with
+kernel loadable modules.</p>
+<p>The following is an example of a protection fault in a loadable module
+processed by <code class="docutils literal notranslate"><span class="pre">klogd</span></code>:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Aug 29 09:51:01 blizard kernel: Unable to handle kernel paging request at virtual address f15e97cc
+Aug 29 09:51:01 blizard kernel: current-&gt;tss.cr3 = 0062d000, %cr3 = 0062d000
+Aug 29 09:51:01 blizard kernel: *pde = 00000000
+Aug 29 09:51:01 blizard kernel: Oops: 0002
+Aug 29 09:51:01 blizard kernel: CPU:    0
+Aug 29 09:51:01 blizard kernel: EIP:    0010:[oops:_oops+16/3868]
+Aug 29 09:51:01 blizard kernel: EFLAGS: 00010212
+Aug 29 09:51:01 blizard kernel: eax: 315e97cc   ebx: 003a6f80   ecx: 001be77b   edx: 00237c0c
+Aug 29 09:51:01 blizard kernel: esi: 00000000   edi: bffffdb3   ebp: 00589f90   esp: 00589f8c
+Aug 29 09:51:01 blizard kernel: ds: 0018   es: 0018   fs: 002b   gs: 002b   ss: 0018
+Aug 29 09:51:01 blizard kernel: Process oops_test (pid: 3374, process nr: 21, stackpage=00589000)
+Aug 29 09:51:01 blizard kernel: Stack: 315e97cc 00589f98 0100b0b4 bffffed4 0012e38e 00240c64 003a6f80 00000001
+Aug 29 09:51:01 blizard kernel:        00000000 00237810 bfffff00 0010a7fa 00000003 00000001 00000000 bfffff00
+Aug 29 09:51:01 blizard kernel:        bffffdb3 bffffed4 ffffffda 0000002b 0007002b 0000002b 0000002b 00000036
+Aug 29 09:51:01 blizard kernel: Call Trace: [oops:_oops_ioctl+48/80] [_sys_ioctl+254/272] [_system_call+82/128]
+Aug 29 09:51:01 blizard kernel: Code: c7 00 05 00 00 00 eb 08 90 90 90 90 90 90 90 90 89 ec 5d c3
+</pre></div>
+</div>
+<hr class="docutils" />
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Dr. G.W. Wettstein           Oncology Research Div. Computing Facility
+Roger Maris Cancer Center    INTERNET: greg@wind.rmcc.com
+820 4th St. N.
+Fargo, ND  58122
+Phone: 701-234-7556
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="bug-bisect.html" class="btn btn-neutral float-right" title="Bisecting a bug" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="security-bugs.html" class="btn btn-neutral float-left" title="Security bugs" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

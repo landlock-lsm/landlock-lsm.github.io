@@ -1,0 +1,592 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>PMBus core driver and internal API &mdash; The Linux Kernel 5.7.0-rc1+ documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Kernel driver inspur-ipsps1" href="inspur-ipsps1.html" />
+    <link rel="prev" title="The Linux Hardware Monitoring kernel API" href="hwmon-kernel-api.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.7.0-rc1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../media/index.html">Linux Media Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Linux Hardware Monitoring</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="hwmon-kernel-api.html">The Linux Hardware Monitoring kernel API</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">PMBus core driver and internal API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pmbus-device-capabilities-auto-detection">PMBus device capabilities auto-detection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pmbus-internal-api">PMBus internal API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#standard-pmbus-commands">Standard PMBus commands</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#virtual-pmbus-commands">Virtual PMBus commands</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#pmbus-driver-information">PMBus driver information</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#api-functions">API functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#functions-provided-by-chip-driver">Functions provided by chip driver</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#functions-exported-by-core-driver">Functions exported by core driver</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#pmbus-driver-platform-data">PMBus driver platform data</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#flags">Flags</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="inspur-ipsps1.html">Kernel driver inspur-ipsps1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="submitting-patches.html">How to Get Your Patch Accepted Into the Hwmon Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sysfs-interface.html">Naming and data format standards for sysfs files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="userspace-tools.html">Userspace tools</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#hardware-monitoring-kernel-drivers">Hardware Monitoring Kernel Drivers</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Linux Hardware Monitoring</a> &raquo;</li>
+        
+      <li>PMBus core driver and internal API</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/hwmon/pmbus-core.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="pmbus-core-driver-and-internal-api">
+<h1>PMBus core driver and internal API<a class="headerlink" href="#pmbus-core-driver-and-internal-api" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>[from pmbus.org] The Power Management Bus (PMBus) is an open standard
+power-management protocol with a fully defined command language that facilitates
+communication with power converters and other devices in a power system. The
+protocol is implemented over the industry-standard SMBus serial interface and
+enables programming, control, and real-time monitoring of compliant power
+conversion products. This flexible and highly versatile standard allows for
+communication between devices based on both analog and digital technologies, and
+provides true interoperability which will reduce design complexity and shorten
+time to market for power system designers. Pioneered by leading power supply and
+semiconductor companies, this open power system standard is maintained and
+promoted by the PMBus Implementers Forum (PMBus-IF), comprising 30+ adopters
+with the objective to provide support to, and facilitate adoption among, users.</p>
+<p>Unfortunately, while PMBus commands are standardized, there are no mandatory
+commands, and manufacturers can add as many non-standard commands as they like.
+Also, different PMBUs devices act differently if non-supported commands are
+executed. Some devices return an error, some devices return 0xff or 0xffff and
+set a status error flag, and some devices may simply hang up.</p>
+<p>Despite all those difficulties, a generic PMBus device driver is still useful
+and supported since kernel version 2.6.39. However, it was necessary to support
+device specific extensions in addition to the core PMBus driver, since it is
+simply unknown what new device specific functionality PMBus device developers
+come up with next.</p>
+<p>To make device specific extensions as scalable as possible, and to avoid having
+to modify the core PMBus driver repeatedly for new devices, the PMBus driver was
+split into core, generic, and device specific code. The core code (in
+pmbus_core.c) provides generic functionality. The generic code (in pmbus.c)
+provides support for generic PMBus devices. Device specific code is responsible
+for device specific initialization and, if needed, maps device specific
+functionality into generic functionality. This is to some degree comparable
+to PCI code, where generic code is augmented as needed with quirks for all kinds
+of devices.</p>
+</div>
+<div class="section" id="pmbus-device-capabilities-auto-detection">
+<h2>PMBus device capabilities auto-detection<a class="headerlink" href="#pmbus-device-capabilities-auto-detection" title="Permalink to this headline">¶</a></h2>
+<p>For generic PMBus devices, code in pmbus.c attempts to auto-detect all supported
+PMBus commands. Auto-detection is somewhat limited, since there are simply too
+many variables to consider. For example, it is almost impossible to autodetect
+which PMBus commands are paged and which commands are replicated across all
+pages (see the PMBus specification for details on multi-page PMBus devices).</p>
+<p>For this reason, it often makes sense to provide a device specific driver if not
+all commands can be auto-detected. The data structures in this driver can be
+used to inform the core driver about functionality supported by individual
+chips.</p>
+<p>Some commands are always auto-detected. This applies to all limit commands
+(lcrit, min, max, and crit attributes) as well as associated alarm attributes.
+Limits and alarm attributes are auto-detected because there are simply too many
+possible combinations to provide a manual configuration interface.</p>
+</div>
+<div class="section" id="pmbus-internal-api">
+<h2>PMBus internal API<a class="headerlink" href="#pmbus-internal-api" title="Permalink to this headline">¶</a></h2>
+<p>The API between core and device specific PMBus code is defined in
+drivers/hwmon/pmbus/pmbus.h. In addition to the internal API, pmbus.h defines
+standard PMBus commands and virtual PMBus commands.</p>
+<div class="section" id="standard-pmbus-commands">
+<h3>Standard PMBus commands<a class="headerlink" href="#standard-pmbus-commands" title="Permalink to this headline">¶</a></h3>
+<p>Standard PMBus commands (commands values 0x00 to 0xff) are defined in the PMBUs
+specification.</p>
+</div>
+<div class="section" id="virtual-pmbus-commands">
+<h3>Virtual PMBus commands<a class="headerlink" href="#virtual-pmbus-commands" title="Permalink to this headline">¶</a></h3>
+<p>Virtual PMBus commands are provided to enable support for non-standard
+functionality which has been implemented by several chip vendors and is thus
+desirable to support.</p>
+<p>Virtual PMBus commands start with command value 0x100 and can thus easily be
+distinguished from standard PMBus commands (which can not have values larger
+than 0xff). Support for virtual PMBus commands is device specific and thus has
+to be implemented in device specific code.</p>
+<p>Virtual commands are named PMBUS_VIRT_xxx and start with PMBUS_VIRT_BASE. All
+virtual commands are word sized.</p>
+<p>There are currently two types of virtual commands.</p>
+<ul class="simple">
+<li><p>READ commands are read-only; writes are either ignored or return an error.</p></li>
+<li><p>RESET commands are read/write. Reading reset registers returns zero
+(used for detection), writing any value causes the associated history to be
+reset.</p></li>
+</ul>
+<p>Virtual commands have to be handled in device specific driver code. Chip driver
+code returns non-negative values if a virtual command is supported, or a
+negative error code if not. The chip driver may return -ENODATA or any other
+Linux error code in this case, though an error code other than -ENODATA is
+handled more efficiently and thus preferred. Either case, the calling PMBus
+core code will abort if the chip driver returns an error code when reading
+or writing virtual registers (in other words, the PMBus core code will never
+send a virtual command to a chip).</p>
+</div>
+<div class="section" id="pmbus-driver-information">
+<h3>PMBus driver information<a class="headerlink" href="#pmbus-driver-information" title="Permalink to this headline">¶</a></h3>
+<p>PMBus driver information, defined in struct pmbus_driver_info, is the main means
+for device specific drivers to pass information to the core PMBus driver.
+Specifically, it provides the following information.</p>
+<ul class="simple">
+<li><p>For devices supporting its data in Direct Data Format, it provides coefficients
+for converting register values into normalized data. This data is usually
+provided by chip manufacturers in device datasheets.</p></li>
+<li><p>Supported chip functionality can be provided to the core driver. This may be
+necessary for chips which react badly if non-supported commands are executed,
+and/or to speed up device detection and initialization.</p></li>
+<li><p>Several function entry points are provided to support overriding and/or
+augmenting generic command execution. This functionality can be used to map
+non-standard PMBus commands to standard commands, or to augment standard
+command return values with device specific information.</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="api-functions">
+<h2>API functions<a class="headerlink" href="#api-functions" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="functions-provided-by-chip-driver">
+<h3>Functions provided by chip driver<a class="headerlink" href="#functions-provided-by-chip-driver" title="Permalink to this headline">¶</a></h3>
+<p>All functions return the command return value (read) or zero (write) if
+successful. A return value of -ENODATA indicates that there is no manufacturer
+specific command, but that a standard PMBus command may exist. Any other
+negative return value indicates that the commands does not exist for this
+chip, and that no attempt should be made to read or write the standard
+command.</p>
+<p>As mentioned above, an exception to this rule applies to virtual commands,
+which <em>must</em> be handled in driver specific code. See “Virtual PMBus Commands”
+above for more details.</p>
+<p>Command execution in the core PMBus driver code is as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>if (chip_access_function) {
+        status = chip_access_function();
+        if (status != -ENODATA)
+                return status;
+}
+if (command &gt;= PMBUS_VIRT_BASE) /* For word commands/registers only */
+        return -EINVAL;
+return generic_access();
+</pre></div>
+</div>
+<p>Chip drivers may provide pointers to the following functions in struct
+pmbus_driver_info. All functions are optional.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int (*read_byte_data)(struct i2c_client *client, int page, int reg);
+</pre></div>
+</div>
+<p>Read byte from page &lt;page&gt;, register &lt;reg&gt;.
+&lt;page&gt; may be -1, which means “current page”.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int (*read_word_data)(struct i2c_client *client, int page, int phase,
+                      int reg);
+</pre></div>
+</div>
+<p>Read word from page &lt;page&gt;, phase &lt;pase&gt;, register &lt;reg&gt;. If the chip does not
+support multiple phases, the phase parameter can be ignored. If the chip
+supports multiple phases, a phase value of 0xff indicates all phases.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int (*write_word_data)(struct i2c_client *client, int page, int reg,
+                       u16 word);
+</pre></div>
+</div>
+<p>Write word to page &lt;page&gt;, register &lt;reg&gt;.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int (*write_byte)(struct i2c_client *client, int page, u8 value);
+</pre></div>
+</div>
+<p>Write byte to page &lt;page&gt;, register &lt;reg&gt;.
+&lt;page&gt; may be -1, which means “current page”.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int (*identify)(struct i2c_client *client, struct pmbus_driver_info *info);
+</pre></div>
+</div>
+<p>Determine supported PMBus functionality. This function is only necessary
+if a chip driver supports multiple chips, and the chip functionality is not
+pre-determined. It is currently only used by the generic pmbus driver
+(pmbus.c).</p>
+</div>
+<div class="section" id="functions-exported-by-core-driver">
+<h3>Functions exported by core driver<a class="headerlink" href="#functions-exported-by-core-driver" title="Permalink to this headline">¶</a></h3>
+<p>Chip drivers are expected to use the following functions to read or write
+PMBus registers. Chip drivers may also use direct I2C commands. If direct I2C
+commands are used, the chip driver code must not directly modify the current
+page, since the selected page is cached in the core driver and the core driver
+will assume that it is selected. Using pmbus_set_page() to select a new page
+is mandatory.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int pmbus_set_page(struct i2c_client *client, u8 page, u8 phase);
+</pre></div>
+</div>
+<p>Set PMBus page register to &lt;page&gt; and &lt;phase&gt; for subsequent commands.
+If the chip does not support multiple phases, the phase parameter is
+ignored. Otherwise, a phase value of 0xff selects all phases.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int pmbus_read_word_data(struct i2c_client *client, u8 page, u8 phase,
+                         u8 reg);
+</pre></div>
+</div>
+<p>Read word data from &lt;page&gt;, &lt;phase&gt;, &lt;reg&gt;. Similar to
+<a class="reference internal" href="../driver-api/i2c.html#c.i2c_smbus_read_word_data" title="i2c_smbus_read_word_data"><code class="xref c c-func docutils literal notranslate"><span class="pre">i2c_smbus_read_word_data()</span></code></a>, but selects page and phase first. If the chip does
+not support multiple phases, the phase parameter is ignored. Otherwise, a phase
+value of 0xff selects all phases.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int pmbus_write_word_data(struct i2c_client *client, u8 page, u8 reg,
+                          u16 word);
+</pre></div>
+</div>
+<p>Write word data to &lt;page&gt;, &lt;reg&gt;. Similar to <a class="reference internal" href="../driver-api/i2c.html#c.i2c_smbus_write_word_data" title="i2c_smbus_write_word_data"><code class="xref c c-func docutils literal notranslate"><span class="pre">i2c_smbus_write_word_data()</span></code></a>, but
+selects page first.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int pmbus_read_byte_data(struct i2c_client *client, int page, u8 reg);
+</pre></div>
+</div>
+<p>Read byte data from &lt;page&gt;, &lt;reg&gt;. Similar to <a class="reference internal" href="../driver-api/i2c.html#c.i2c_smbus_read_byte_data" title="i2c_smbus_read_byte_data"><code class="xref c c-func docutils literal notranslate"><span class="pre">i2c_smbus_read_byte_data()</span></code></a>, but
+selects page first. &lt;page&gt; may be -1, which means “current page”.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int pmbus_write_byte(struct i2c_client *client, int page, u8 value);
+</pre></div>
+</div>
+<p>Write byte data to &lt;page&gt;, &lt;reg&gt;. Similar to <a class="reference internal" href="../driver-api/i2c.html#c.i2c_smbus_write_byte" title="i2c_smbus_write_byte"><code class="xref c c-func docutils literal notranslate"><span class="pre">i2c_smbus_write_byte()</span></code></a>, but
+selects page first. &lt;page&gt; may be -1, which means “current page”.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void pmbus_clear_faults(struct i2c_client *client);
+</pre></div>
+</div>
+<p>Execute PMBus “Clear Fault” command on all chip pages.
+This function calls the device specific write_byte function if defined.
+Therefore, it must _not_ be called from that function.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>bool pmbus_check_byte_register(struct i2c_client *client, int page, int reg);
+</pre></div>
+</div>
+<p>Check if byte register exists. Return true if the register exists, false
+otherwise.
+This function calls the device specific write_byte function if defined to
+obtain the chip status. Therefore, it must _not_ be called from that function.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>bool pmbus_check_word_register(struct i2c_client *client, int page, int reg);
+</pre></div>
+</div>
+<p>Check if word register exists. Return true if the register exists, false
+otherwise.
+This function calls the device specific write_byte function if defined to
+obtain the chip status. Therefore, it must _not_ be called from that function.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int pmbus_do_probe(struct i2c_client *client, const struct i2c_device_id *id,
+                   struct pmbus_driver_info *info);
+</pre></div>
+</div>
+<p>Execute probe function. Similar to standard probe function for other drivers,
+with the pointer to struct pmbus_driver_info as additional argument. Calls
+identify function if supported. Must only be called from device probe
+function.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void pmbus_do_remove(struct i2c_client *client);
+</pre></div>
+</div>
+<p>Execute driver remove function. Similar to standard driver remove function.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>const struct pmbus_driver_info
+      *pmbus_get_driver_info(struct i2c_client *client);
+</pre></div>
+</div>
+<p>Return pointer to struct pmbus_driver_info as passed to pmbus_do_probe().</p>
+</div>
+</div>
+<div class="section" id="pmbus-driver-platform-data">
+<h2>PMBus driver platform data<a class="headerlink" href="#pmbus-driver-platform-data" title="Permalink to this headline">¶</a></h2>
+<p>PMBus platform data is defined in include/linux/pmbus.h. Platform data
+currently only provides a flag field with a single bit used:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>#define PMBUS_SKIP_STATUS_CHECK (1 &lt;&lt; 0)
+
+struct pmbus_platform_data {
+        u32 flags;              /* Device specific flags */
+};
+</pre></div>
+</div>
+<div class="section" id="flags">
+<h3>Flags<a class="headerlink" href="#flags" title="Permalink to this headline">¶</a></h3>
+<dl class="simple">
+<dt>PMBUS_SKIP_STATUS_CHECK</dt><dd><p>During register detection, skip checking the status register for
+communication or command errors.</p>
+</dd>
+</dl>
+<p>Some PMBus chips respond with valid data when trying to read an unsupported
+register. For such chips, checking the status register is mandatory when
+trying to determine if a chip register exists or not.
+Other PMBus chips don’t support the STATUS_CML register, or report
+communication errors for no explicable reason. For such chips, checking the
+status register must be disabled.</p>
+<p>Some i2c controllers do not support single-byte commands (write commands with
+no data, <a class="reference internal" href="../driver-api/i2c.html#c.i2c_smbus_write_byte" title="i2c_smbus_write_byte"><code class="xref c c-func docutils literal notranslate"><span class="pre">i2c_smbus_write_byte()</span></code></a>). With such controllers, clearing the status
+register is impossible, and the PMBUS_SKIP_STATUS_CHECK flag must be set.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="inspur-ipsps1.html" class="btn btn-neutral float-right" title="Kernel driver inspur-ipsps1" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="hwmon-kernel-api.html" class="btn btn-neutral float-left" title="The Linux Hardware Monitoring kernel API" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
