@@ -20,7 +20,7 @@
 # -- Project information -----------------------------------------------------
 
 project = u'Landlock'
-copyright = u'2017-2020, Mickaël Salaün'
+copyright = u'2016-2020, Mickaël Salaün'
 author = u'Mickaël Salaün'
 
 # The short X.Y version
