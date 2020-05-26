@@ -1,0 +1,742 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>I2C muxes and complex topologies &mdash; The Linux Kernel 5.7.0-rc7+ documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Kernel driver i2c-mux-gpio" href="muxes/i2c-mux-gpio.html" />
+    <link rel="prev" title="Kernel driver scx200_acb" href="busses/scx200_acb.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.7.0-rc7
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">I2C/SMBus Subsystem</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#introduction">Introduction</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="summary.html">Introduction to I2C and SMBus</a></li>
+<li class="toctree-l3"><a class="reference internal" href="i2c-protocol.html">The I2C Protocol</a></li>
+<li class="toctree-l3"><a class="reference internal" href="smbus-protocol.html">The SMBus Protocol</a></li>
+<li class="toctree-l3"><a class="reference internal" href="instantiating-devices.html">How to instantiate I2C devices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="busses/index.html">I2C Bus Drivers</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">I2C muxes and complex topologies</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#etc">Etc</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#locking">Locking</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#complex-examples">Complex Examples</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="muxes/i2c-mux-gpio.html">Kernel driver i2c-mux-gpio</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#writing-device-drivers">Writing device drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#debugging">Debugging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#slave-i2c">Slave I2C</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#advanced-topics">Advanced topics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#legacy-documentation">Legacy documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../media/index.html">Linux Media Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">I2C/SMBus Subsystem</a> &raquo;</li>
+        
+      <li>I2C muxes and complex topologies</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/i2c/i2c-topology.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="i2c-muxes-and-complex-topologies">
+<h1>I2C muxes and complex topologies<a class="headerlink" href="#i2c-muxes-and-complex-topologies" title="Permalink to this headline">¶</a></h1>
+<p>There are a couple of reasons for building more complex I2C topologies
+than a straight-forward I2C bus with one adapter and one or more devices.</p>
+<ol class="arabic simple">
+<li><p>A mux may be needed on the bus to prevent address collisions.</p></li>
+<li><p>The bus may be accessible from some external bus master, and arbitration
+may be needed to determine if it is ok to access the bus.</p></li>
+<li><p>A device (particularly RF tuners) may want to avoid the digital noise
+from the I2C bus, at least most of the time, and sits behind a gate
+that has to be operated before the device can be accessed.</p></li>
+</ol>
+<div class="section" id="etc">
+<h2>Etc<a class="headerlink" href="#etc" title="Permalink to this headline">¶</a></h2>
+<p>These constructs are represented as I2C adapter trees by Linux, where
+each adapter has a parent adapter (except the root adapter) and zero or
+more child adapters. The root adapter is the actual adapter that issues
+I2C transfers, and all adapters with a parent are part of an “i2c-mux”
+object (quoted, since it can also be an arbitrator or a gate).</p>
+<p>Depending of the particular mux driver, something happens when there is
+an I2C transfer on one of its child adapters. The mux driver can
+obviously operate a mux, but it can also do arbitration with an external
+bus master or open a gate. The mux driver has two operations for this,
+select and deselect. select is called before the transfer and (the
+optional) deselect is called after the transfer.</p>
+</div>
+<div class="section" id="locking">
+<h2>Locking<a class="headerlink" href="#locking" title="Permalink to this headline">¶</a></h2>
+<p>There are two variants of locking available to I2C muxes, they can be
+mux-locked or parent-locked muxes. As is evident from below, it can be
+useful to know if a mux is mux-locked or if it is parent-locked. The
+following list was correct at the time of writing:</p>
+<p>In drivers/i2c/muxes/:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 67%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>i2c-arb-gpio-challenge</p></td>
+<td><p>Parent-locked</p></td>
+</tr>
+<tr class="row-even"><td><p>i2c-mux-gpio</p></td>
+<td><p>Normally parent-locked, mux-locked iff
+all involved gpio pins are controlled by the
+same I2C root adapter that they mux.</p></td>
+</tr>
+<tr class="row-odd"><td><p>i2c-mux-gpmux</p></td>
+<td><p>Normally parent-locked, mux-locked iff
+specified in device-tree.</p></td>
+</tr>
+<tr class="row-even"><td><p>i2c-mux-ltc4306</p></td>
+<td><p>Mux-locked</p></td>
+</tr>
+<tr class="row-odd"><td><p>i2c-mux-mlxcpld</p></td>
+<td><p>Parent-locked</p></td>
+</tr>
+<tr class="row-even"><td><p>i2c-mux-pca9541</p></td>
+<td><p>Parent-locked</p></td>
+</tr>
+<tr class="row-odd"><td><p>i2c-mux-pca954x</p></td>
+<td><p>Parent-locked</p></td>
+</tr>
+<tr class="row-even"><td><p>i2c-mux-pinctrl</p></td>
+<td><p>Normally parent-locked, mux-locked iff
+all involved pinctrl devices are controlled
+by the same I2C root adapter that they mux.</p></td>
+</tr>
+<tr class="row-odd"><td><p>i2c-mux-reg</p></td>
+<td><p>Parent-locked</p></td>
+</tr>
+</tbody>
+</table>
+<p>In drivers/iio/:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 67%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>gyro/mpu3050</p></td>
+<td><p>Mux-locked</p></td>
+</tr>
+<tr class="row-even"><td><p>imu/inv_mpu6050/</p></td>
+<td><p>Mux-locked</p></td>
+</tr>
+</tbody>
+</table>
+<p>In drivers/media/:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 34%" />
+<col style="width: 66%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>dvb-frontends/lgdt3306a</p></td>
+<td><p>Mux-locked</p></td>
+</tr>
+<tr class="row-even"><td><p>dvb-frontends/m88ds3103</p></td>
+<td><p>Parent-locked</p></td>
+</tr>
+<tr class="row-odd"><td><p>dvb-frontends/rtl2830</p></td>
+<td><p>Parent-locked</p></td>
+</tr>
+<tr class="row-even"><td><p>dvb-frontends/rtl2832</p></td>
+<td><p>Mux-locked</p></td>
+</tr>
+<tr class="row-odd"><td><p>dvb-frontends/si2168</p></td>
+<td><p>Mux-locked</p></td>
+</tr>
+<tr class="row-even"><td><p>usb/cx231xx/</p></td>
+<td><p>Parent-locked</p></td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="mux-locked-muxes">
+<h3>Mux-locked muxes<a class="headerlink" href="#mux-locked-muxes" title="Permalink to this headline">¶</a></h3>
+<p>Mux-locked muxes does not lock the entire parent adapter during the
+full select-transfer-deselect transaction, only the muxes on the parent
+adapter are locked. Mux-locked muxes are mostly interesting if the
+select and/or deselect operations must use I2C transfers to complete
+their tasks. Since the parent adapter is not fully locked during the
+full transaction, unrelated I2C transfers may interleave the different
+stages of the transaction. This has the benefit that the mux driver
+may be easier and cleaner to implement, but it has some caveats.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 5%" />
+<col style="width: 95%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>ML1.</p></td>
+<td><p>If you build a topology with a mux-locked mux being the parent
+of a parent-locked mux, this might break the expectation from the
+parent-locked mux that the root adapter is locked during the
+transaction.</p></td>
+</tr>
+<tr class="row-even"><td><p>ML2.</p></td>
+<td><p>It is not safe to build arbitrary topologies with two (or more)
+mux-locked muxes that are not siblings, when there are address
+collisions between the devices on the child adapters of these
+non-sibling muxes.</p>
+<p>I.e. the select-transfer-deselect transaction targeting e.g. device
+address 0x42 behind mux-one may be interleaved with a similar
+operation targeting device address 0x42 behind mux-two. The
+intension with such a topology would in this hypothetical example
+be that mux-one and mux-two should not be selected simultaneously,
+but mux-locked muxes do not guarantee that in all topologies.</p>
+</td>
+</tr>
+<tr class="row-odd"><td><p>ML3.</p></td>
+<td><p>A mux-locked mux cannot be used by a driver for auto-closing
+gates/muxes, i.e. something that closes automatically after a given
+number (one, in most cases) of I2C transfers. Unrelated I2C transfers
+may creep in and close prematurely.</p></td>
+</tr>
+<tr class="row-even"><td><p>ML4.</p></td>
+<td><p>If any non-I2C operation in the mux driver changes the I2C mux state,
+the driver has to lock the root adapter during that operation.
+Otherwise garbage may appear on the bus as seen from devices
+behind the mux, when an unrelated I2C transfer is in flight during
+the non-I2C mux-changing operation.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="mux-locked-example">
+<h3>Mux-locked Example<a class="headerlink" href="#mux-locked-example" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>               .----------.     .--------.
+.--------.     |   mux-   |-----| dev D1 |
+|  root  |--+--|  locked  |     &#39;--------&#39;
+&#39;--------&#39;  |  |  mux M1  |--.  .--------.
+            |  &#39;----------&#39;  &#39;--| dev D2 |
+            |  .--------.       &#39;--------&#39;
+            &#39;--| dev D3 |
+               &#39;--------&#39;
+</pre></div>
+</div>
+<p>When there is an access to D1, this happens:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Someone issues an I2C transfer to D1.</p></li>
+<li><p>M1 locks muxes on its parent (the root adapter in this case).</p></li>
+<li><p>M1 calls -&gt;select to ready the mux.</p></li>
+<li><p>M1 (presumably) does some I2C transfers as part of its select.
+These transfers are normal I2C transfers that locks the parent
+adapter.</p></li>
+<li><p>M1 feeds the I2C transfer from step 1 to its parent adapter as a
+normal I2C transfer that locks the parent adapter.</p></li>
+<li><p>M1 calls -&gt;deselect, if it has one.</p></li>
+<li><p>Same rules as in step 4, but for -&gt;deselect.</p></li>
+<li><p>M1 unlocks muxes on its parent.</p></li>
+</ol>
+</div></blockquote>
+<p>This means that accesses to D2 are lockout out for the full duration
+of the entire operation. But accesses to D3 are possibly interleaved
+at any point.</p>
+</div>
+<div class="section" id="parent-locked-muxes">
+<h3>Parent-locked muxes<a class="headerlink" href="#parent-locked-muxes" title="Permalink to this headline">¶</a></h3>
+<p>Parent-locked muxes lock the parent adapter during the full select-
+transfer-deselect transaction. The implication is that the mux driver
+has to ensure that any and all I2C transfers through that parent
+adapter during the transaction are unlocked I2C transfers (using e.g.
+__i2c_transfer), or a deadlock will follow. There are a couple of
+caveats.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 6%" />
+<col style="width: 94%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>PL1.</p></td>
+<td><p>If you build a topology with a parent-locked mux being the child
+of another mux, this might break a possible assumption from the
+child mux that the root adapter is unused between its select op
+and the actual transfer (e.g. if the child mux is auto-closing
+and the parent mux issues I2C transfers as part of its select).
+This is especially the case if the parent mux is mux-locked, but
+it may also happen if the parent mux is parent-locked.</p></td>
+</tr>
+<tr class="row-even"><td><p>PL2.</p></td>
+<td><p>If select/deselect calls out to other subsystems such as gpio,
+pinctrl, regmap or iio, it is essential that any I2C transfers
+caused by these subsystems are unlocked. This can be convoluted to
+accomplish, maybe even impossible if an acceptably clean solution
+is sought.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="parent-locked-example">
+<h3>Parent-locked Example<a class="headerlink" href="#parent-locked-example" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>               .----------.     .--------.
+.--------.     |  parent- |-----| dev D1 |
+|  root  |--+--|  locked  |     &#39;--------&#39;
+&#39;--------&#39;  |  |  mux M1  |--.  .--------.
+            |  &#39;----------&#39;  &#39;--| dev D2 |
+            |  .--------.       &#39;--------&#39;
+            &#39;--| dev D3 |
+               &#39;--------&#39;
+</pre></div>
+</div>
+<p>When there is an access to D1, this happens:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Someone issues an I2C transfer to D1.</p></li>
+<li><p>M1 locks muxes on its parent (the root adapter in this case).</p></li>
+<li><p>M1 locks its parent adapter.</p></li>
+<li><p>M1 calls -&gt;select to ready the mux.</p></li>
+<li><p>If M1 does any I2C transfers (on this root adapter) as part of
+its select, those transfers must be unlocked I2C transfers so
+that they do not deadlock the root adapter.</p></li>
+<li><p>M1 feeds the I2C transfer from step 1 to the root adapter as an
+unlocked I2C transfer, so that it does not deadlock the parent
+adapter.</p></li>
+<li><p>M1 calls -&gt;deselect, if it has one.</p></li>
+<li><p>Same rules as in step 5, but for -&gt;deselect.</p></li>
+<li><p>M1 unlocks its parent adapter.</p></li>
+<li><p>M1 unlocks muxes on its parent.</p></li>
+</ol>
+</div></blockquote>
+<p>This means that accesses to both D2 and D3 are locked out for the full
+duration of the entire operation.</p>
+</div>
+</div>
+<div class="section" id="complex-examples">
+<h2>Complex Examples<a class="headerlink" href="#complex-examples" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="parent-locked-mux-as-parent-of-parent-locked-mux">
+<h3>Parent-locked mux as parent of parent-locked mux<a class="headerlink" href="#parent-locked-mux-as-parent-of-parent-locked-mux" title="Permalink to this headline">¶</a></h3>
+<p>This is a useful topology, but it can be bad:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>               .----------.     .----------.     .--------.
+.--------.     |  parent- |-----|  parent- |-----| dev D1 |
+|  root  |--+--|  locked  |     |  locked  |     &#39;--------&#39;
+&#39;--------&#39;  |  |  mux M1  |--.  |  mux M2  |--.  .--------.
+            |  &#39;----------&#39;  |  &#39;----------&#39;  &#39;--| dev D2 |
+            |  .--------.    |  .--------.       &#39;--------&#39;
+            &#39;--| dev D4 |    &#39;--| dev D3 |
+               &#39;--------&#39;       &#39;--------&#39;
+</pre></div>
+</div>
+<p>When any device is accessed, all other devices are locked out for
+the full duration of the operation (both muxes lock their parent,
+and specifically when M2 requests its parent to lock, M1 passes
+the buck to the root adapter).</p>
+<p>This topology is bad if M2 is an auto-closing mux and M1-&gt;select
+issues any unlocked I2C transfers on the root adapter that may leak
+through and be seen by the M2 adapter, thus closing M2 prematurely.</p>
+</div>
+<div class="section" id="mux-locked-mux-as-parent-of-mux-locked-mux">
+<h3>Mux-locked mux as parent of mux-locked mux<a class="headerlink" href="#mux-locked-mux-as-parent-of-mux-locked-mux" title="Permalink to this headline">¶</a></h3>
+<p>This is a good topology:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>               .----------.     .----------.     .--------.
+.--------.     |   mux-   |-----|   mux-   |-----| dev D1 |
+|  root  |--+--|  locked  |     |  locked  |     &#39;--------&#39;
+&#39;--------&#39;  |  |  mux M1  |--.  |  mux M2  |--.  .--------.
+            |  &#39;----------&#39;  |  &#39;----------&#39;  &#39;--| dev D2 |
+            |  .--------.    |  .--------.       &#39;--------&#39;
+            &#39;--| dev D4 |    &#39;--| dev D3 |
+               &#39;--------&#39;       &#39;--------&#39;
+</pre></div>
+</div>
+<p>When device D1 is accessed, accesses to D2 are locked out for the
+full duration of the operation (muxes on the top child adapter of M1
+are locked). But accesses to D3 and D4 are possibly interleaved at
+any point. Accesses to D3 locks out D1 and D2, but accesses to D4
+are still possibly interleaved.</p>
+</div>
+<div class="section" id="mux-locked-mux-as-parent-of-parent-locked-mux">
+<h3>Mux-locked mux as parent of parent-locked mux<a class="headerlink" href="#mux-locked-mux-as-parent-of-parent-locked-mux" title="Permalink to this headline">¶</a></h3>
+<p>This is probably a bad topology:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>               .----------.     .----------.     .--------.
+.--------.     |   mux-   |-----|  parent- |-----| dev D1 |
+|  root  |--+--|  locked  |     |  locked  |     &#39;--------&#39;
+&#39;--------&#39;  |  |  mux M1  |--.  |  mux M2  |--.  .--------.
+            |  &#39;----------&#39;  |  &#39;----------&#39;  &#39;--| dev D2 |
+            |  .--------.    |  .--------.       &#39;--------&#39;
+            &#39;--| dev D4 |    &#39;--| dev D3 |
+               &#39;--------&#39;       &#39;--------&#39;
+</pre></div>
+</div>
+<p>When device D1 is accessed, accesses to D2 and D3 are locked out
+for the full duration of the operation (M1 locks child muxes on the
+root adapter). But accesses to D4 are possibly interleaved at any
+point.</p>
+<p>This kind of topology is generally not suitable and should probably
+be avoided. The reason is that M2 probably assumes that there will
+be no I2C transfers during its calls to -&gt;select and -&gt;deselect, and
+if there are, any such transfers might appear on the slave side of M2
+as partial I2C transfers, i.e. garbage or worse. This might cause
+device lockups and/or other problems.</p>
+<p>The topology is especially troublesome if M2 is an auto-closing
+mux. In that case, any interleaved accesses to D4 might close M2
+prematurely, as might any I2C transfers part of M1-&gt;select.</p>
+<p>But if M2 is not making the above stated assumption, and if M2 is not
+auto-closing, the topology is fine.</p>
+</div>
+<div class="section" id="parent-locked-mux-as-parent-of-mux-locked-mux">
+<h3>Parent-locked mux as parent of mux-locked mux<a class="headerlink" href="#parent-locked-mux-as-parent-of-mux-locked-mux" title="Permalink to this headline">¶</a></h3>
+<p>This is a good topology:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>               .----------.     .----------.     .--------.
+.--------.     |  parent- |-----|   mux-   |-----| dev D1 |
+|  root  |--+--|  locked  |     |  locked  |     &#39;--------&#39;
+&#39;--------&#39;  |  |  mux M1  |--.  |  mux M2  |--.  .--------.
+            |  &#39;----------&#39;  |  &#39;----------&#39;  &#39;--| dev D2 |
+            |  .--------.    |  .--------.       &#39;--------&#39;
+            &#39;--| dev D4 |    &#39;--| dev D3 |
+               &#39;--------&#39;       &#39;--------&#39;
+</pre></div>
+</div>
+<p>When D1 is accessed, accesses to D2 are locked out for the full
+duration of the operation (muxes on the top child adapter of M1
+are locked). Accesses to D3 and D4 are possibly interleaved at
+any point, just as is expected for mux-locked muxes.</p>
+<p>When D3 or D4 are accessed, everything else is locked out. For D3
+accesses, M1 locks the root adapter. For D4 accesses, the root
+adapter is locked directly.</p>
+</div>
+<div class="section" id="two-mux-locked-sibling-muxes">
+<h3>Two mux-locked sibling muxes<a class="headerlink" href="#two-mux-locked-sibling-muxes" title="Permalink to this headline">¶</a></h3>
+<p>This is a good topology:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>                                .--------.
+               .----------.  .--| dev D1 |
+               |   mux-   |--&#39;  &#39;--------&#39;
+            .--|  locked  |     .--------.
+            |  |  mux M1  |-----| dev D2 |
+            |  &#39;----------&#39;     &#39;--------&#39;
+            |  .----------.     .--------.
+.--------.  |  |   mux-   |-----| dev D3 |
+|  root  |--+--|  locked  |     &#39;--------&#39;
+&#39;--------&#39;  |  |  mux M2  |--.  .--------.
+            |  &#39;----------&#39;  &#39;--| dev D4 |
+            |  .--------.       &#39;--------&#39;
+            &#39;--| dev D5 |
+               &#39;--------&#39;
+</pre></div>
+</div>
+<p>When D1 is accessed, accesses to D2, D3 and D4 are locked out. But
+accesses to D5 may be interleaved at any time.</p>
+</div>
+<div class="section" id="two-parent-locked-sibling-muxes">
+<h3>Two parent-locked sibling muxes<a class="headerlink" href="#two-parent-locked-sibling-muxes" title="Permalink to this headline">¶</a></h3>
+<p>This is a good topology:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>                                .--------.
+               .----------.  .--| dev D1 |
+               |  parent- |--&#39;  &#39;--------&#39;
+            .--|  locked  |     .--------.
+            |  |  mux M1  |-----| dev D2 |
+            |  &#39;----------&#39;     &#39;--------&#39;
+            |  .----------.     .--------.
+.--------.  |  |  parent- |-----| dev D3 |
+|  root  |--+--|  locked  |     &#39;--------&#39;
+&#39;--------&#39;  |  |  mux M2  |--.  .--------.
+            |  &#39;----------&#39;  &#39;--| dev D4 |
+            |  .--------.       &#39;--------&#39;
+            &#39;--| dev D5 |
+               &#39;--------&#39;
+</pre></div>
+</div>
+<p>When any device is accessed, accesses to all other devices are locked
+out.</p>
+</div>
+<div class="section" id="mux-locked-and-parent-locked-sibling-muxes">
+<h3>Mux-locked and parent-locked sibling muxes<a class="headerlink" href="#mux-locked-and-parent-locked-sibling-muxes" title="Permalink to this headline">¶</a></h3>
+<p>This is a good topology:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>                                .--------.
+               .----------.  .--| dev D1 |
+               |   mux-   |--&#39;  &#39;--------&#39;
+            .--|  locked  |     .--------.
+            |  |  mux M1  |-----| dev D2 |
+            |  &#39;----------&#39;     &#39;--------&#39;
+            |  .----------.     .--------.
+.--------.  |  |  parent- |-----| dev D3 |
+|  root  |--+--|  locked  |     &#39;--------&#39;
+&#39;--------&#39;  |  |  mux M2  |--.  .--------.
+            |  &#39;----------&#39;  &#39;--| dev D4 |
+            |  .--------.       &#39;--------&#39;
+            &#39;--| dev D5 |
+               &#39;--------&#39;
+</pre></div>
+</div>
+<p>When D1 or D2 are accessed, accesses to D3 and D4 are locked out while
+accesses to D5 may interleave. When D3 or D4 are accessed, accesses to
+all other devices are locked out.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="muxes/i2c-mux-gpio.html" class="btn btn-neutral float-right" title="Kernel driver i2c-mux-gpio" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="busses/scx200_acb.html" class="btn btn-neutral float-left" title="Kernel driver scx200_acb" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

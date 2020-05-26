@@ -1,0 +1,512 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>16. Microarchitectural Data Sampling (MDS) mitigation &mdash; The Linux Kernel 5.7.0-rc7+ documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="17. The Linux Microcode Loader" href="microcode.html" />
+    <link rel="prev" title="15. Page Table Isolation (PTI)" href="pti.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.7.0-rc7
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../media/index.html">Linux Media Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">x86-specific Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="boot.html">1. The Linux/x86 Boot Protocol</a></li>
+<li class="toctree-l2"><a class="reference internal" href="topology.html">2. x86 Topology</a></li>
+<li class="toctree-l2"><a class="reference internal" href="exception-tables.html">3. Kernel level exception handling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel-stacks.html">4. Kernel Stacks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="entry_64.html">5. Kernel Entries</a></li>
+<li class="toctree-l2"><a class="reference internal" href="earlyprintk.html">6. Early Printk</a></li>
+<li class="toctree-l2"><a class="reference internal" href="orc-unwinder.html">7. ORC unwinder</a></li>
+<li class="toctree-l2"><a class="reference internal" href="zero-page.html">8. Zero Page</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tlb.html">9. The TLB</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mtrr.html">10. MTRR (Memory Type Range Register) control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pat.html">11. PAT (Page Attribute Table)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="intel-iommu.html">12. Linux IOMMU Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="intel_txt.html">13. Intel(R) TXT Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="amd-memory-encryption.html">14. AMD Memory Encryption</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pti.html">15. Page Table Isolation (PTI)</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">16. Microarchitectural Data Sampling (MDS) mitigation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">16.1. Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#exposure-assumptions">16.2. Exposure assumptions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mitigation-strategy">16.3. Mitigation strategy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#kernel-internal-mitigation-modes">16.4. Kernel internal mitigation modes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mitigation-points">16.5. Mitigation points</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#return-to-user-space">16.5.1. 1. Return to user space</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#c-state-transition">16.5.2. 2. C-State transition</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="microcode.html">17. The Linux Microcode Loader</a></li>
+<li class="toctree-l2"><a class="reference internal" href="resctrl_ui.html">18. User Interface for Resource Control feature</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tsx_async_abort.html">19. TSX Async Abort (TAA) mitigation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="usb-legacy-support.html">20. USB Legacy support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="i386/index.html">21. i386 Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="x86_64/index.html">22. x86_64 Support</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">x86-specific Documentation</a> &raquo;</li>
+        
+      <li><span class="section-number">16. </span>Microarchitectural Data Sampling (MDS) mitigation</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/x86/mds.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="microarchitectural-data-sampling-mds-mitigation">
+<h1><span class="section-number">16. </span>Microarchitectural Data Sampling (MDS) mitigation<a class="headerlink" href="#microarchitectural-data-sampling-mds-mitigation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="overview">
+<span id="mds"></span><h2><span class="section-number">16.1. </span>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>Microarchitectural Data Sampling (MDS) is a family of side channel attacks
+on internal buffers in Intel CPUs. The variants are:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Microarchitectural Store Buffer Data Sampling (MSBDS) (CVE-2018-12126)</p></li>
+<li><p>Microarchitectural Fill Buffer Data Sampling (MFBDS) (CVE-2018-12130)</p></li>
+<li><p>Microarchitectural Load Port Data Sampling (MLPDS) (CVE-2018-12127)</p></li>
+<li><p>Microarchitectural Data Sampling Uncacheable Memory (MDSUM) (CVE-2019-11091)</p></li>
+</ul>
+</div></blockquote>
+<p>MSBDS leaks Store Buffer Entries which can be speculatively forwarded to a
+dependent load (store-to-load forwarding) as an optimization. The forward
+can also happen to a faulting or assisting load operation for a different
+memory address, which can be exploited under certain conditions. Store
+buffers are partitioned between Hyper-Threads so cross thread forwarding is
+not possible. But if a thread enters or exits a sleep state the store
+buffer is repartitioned which can expose data from one thread to the other.</p>
+<p>MFBDS leaks Fill Buffer Entries. Fill buffers are used internally to manage
+L1 miss situations and to hold data which is returned or sent in response
+to a memory or I/O operation. Fill buffers can forward data to a load
+operation and also write data to the cache. When the fill buffer is
+deallocated it can retain the stale data of the preceding operations which
+can then be forwarded to a faulting or assisting load operation, which can
+be exploited under certain conditions. Fill buffers are shared between
+Hyper-Threads so cross thread leakage is possible.</p>
+<p>MLPDS leaks Load Port Data. Load ports are used to perform load operations
+from memory or I/O. The received data is then forwarded to the register
+file or a subsequent operation. In some implementations the Load Port can
+contain stale data from a previous operation which can be forwarded to
+faulting or assisting loads under certain conditions, which again can be
+exploited eventually. Load ports are shared between Hyper-Threads so cross
+thread leakage is possible.</p>
+<p>MDSUM is a special case of MSBDS, MFBDS and MLPDS. An uncacheable load from
+memory that takes a fault or assist can leave data in a microarchitectural
+structure that may later be observed using one of the same methods used by
+MSBDS, MFBDS or MLPDS.</p>
+</div>
+<div class="section" id="exposure-assumptions">
+<h2><span class="section-number">16.2. </span>Exposure assumptions<a class="headerlink" href="#exposure-assumptions" title="Permalink to this headline">¶</a></h2>
+<p>It is assumed that attack code resides in user space or in a guest with one
+exception. The rationale behind this assumption is that the code construct
+needed for exploiting MDS requires:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>to control the load to trigger a fault or assist</p></li>
+<li><p>to have a disclosure gadget which exposes the speculatively accessed
+data for consumption through a side channel.</p></li>
+<li><p>to control the pointer through which the disclosure gadget exposes the
+data</p></li>
+</ul>
+</div></blockquote>
+<p>The existence of such a construct in the kernel cannot be excluded with
+100% certainty, but the complexity involved makes it extremly unlikely.</p>
+<p>There is one exception, which is untrusted BPF. The functionality of
+untrusted BPF is limited, but it needs to be thoroughly investigated
+whether it can be used to create such a construct.</p>
+</div>
+<div class="section" id="mitigation-strategy">
+<h2><span class="section-number">16.3. </span>Mitigation strategy<a class="headerlink" href="#mitigation-strategy" title="Permalink to this headline">¶</a></h2>
+<p>All variants have the same mitigation strategy at least for the single CPU
+thread case (SMT off): Force the CPU to clear the affected buffers.</p>
+<p>This is achieved by using the otherwise unused and obsolete VERW
+instruction in combination with a microcode update. The microcode clears
+the affected CPU buffers when the VERW instruction is executed.</p>
+<p>For virtualization there are two ways to achieve CPU buffer
+clearing. Either the modified VERW instruction or via the L1D Flush
+command. The latter is issued when L1TF mitigation is enabled so the extra
+VERW can be avoided. If the CPU is not affected by L1TF then VERW needs to
+be issued.</p>
+<p>If the VERW instruction with the supplied segment selector argument is
+executed on a CPU without the microcode update there is no side effect
+other than a small number of pointlessly wasted CPU cycles.</p>
+<p>This does not protect against cross Hyper-Thread attacks except for MSBDS
+which is only exploitable cross Hyper-thread when one of the Hyper-Threads
+enters a C-state.</p>
+<p>The kernel provides a function to invoke the buffer clearing:</p>
+<blockquote>
+<div><p>mds_clear_cpu_buffers()</p>
+</div></blockquote>
+<p>The mitigation is invoked on kernel/userspace, hypervisor/guest and C-state
+(idle) transitions.</p>
+<p>As a special quirk to address virtualization scenarios where the host has
+the microcode updated, but the hypervisor does not (yet) expose the
+MD_CLEAR CPUID bit to guests, the kernel issues the VERW instruction in the
+hope that it might actually clear the buffers. The state is reflected
+accordingly.</p>
+<p>According to current knowledge additional mitigations inside the kernel
+itself are not required because the necessary gadgets to expose the leaked
+data cannot be controlled in a way which allows exploitation from malicious
+user space or VM guests.</p>
+</div>
+<div class="section" id="kernel-internal-mitigation-modes">
+<h2><span class="section-number">16.4. </span>Kernel internal mitigation modes<a class="headerlink" href="#kernel-internal-mitigation-modes" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><table class="docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>off</p></td>
+<td><p>Mitigation is disabled. Either the CPU is not affected or
+mds=off is supplied on the kernel command line</p></td>
+</tr>
+<tr class="row-even"><td><p>full</p></td>
+<td><p>Mitigation is enabled. CPU is affected and MD_CLEAR is
+advertised in CPUID.</p></td>
+</tr>
+<tr class="row-odd"><td><p>vmwerv</p></td>
+<td><p>Mitigation is enabled. CPU is affected and MD_CLEAR is not
+advertised in CPUID. That is mainly for virtualization
+scenarios where the host has the updated microcode but the
+hypervisor does not expose MD_CLEAR in CPUID. It’s a best
+effort approach without guarantee.</p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>If the CPU is affected and mds=off is not supplied on the kernel command
+line then the kernel selects the appropriate mitigation mode depending on
+the availability of the MD_CLEAR CPUID bit.</p>
+</div>
+<div class="section" id="mitigation-points">
+<h2><span class="section-number">16.5. </span>Mitigation points<a class="headerlink" href="#mitigation-points" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="return-to-user-space">
+<h3><span class="section-number">16.5.1. </span>1. Return to user space<a class="headerlink" href="#return-to-user-space" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><p>When transitioning from kernel to user space the CPU buffers are flushed
+on affected CPUs when the mitigation is not disabled on the kernel
+command line. The migitation is enabled through the static key
+mds_user_clear.</p>
+<p>The mitigation is invoked in prepare_exit_to_usermode() which covers
+all but one of the kernel to user space transitions.  The exception
+is when we return from a Non Maskable Interrupt (NMI), which is
+handled directly in do_nmi().</p>
+<dl class="simple">
+<dt>(The reason that NMI is special is that prepare_exit_to_usermode() can</dt><dd><p>enable IRQs.  In NMI context, NMIs are blocked, and we don’t want to
+enable IRQs with NMIs blocked.)</p>
+</dd>
+</dl>
+</div></blockquote>
+</div>
+<div class="section" id="c-state-transition">
+<h3><span class="section-number">16.5.2. </span>2. C-State transition<a class="headerlink" href="#c-state-transition" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><p>When a CPU goes idle and enters a C-State the CPU buffers need to be
+cleared on affected CPUs when SMT is active. This addresses the
+repartitioning of the store buffer when one of the Hyper-Threads enters
+a C-State.</p>
+<p>When SMT is inactive, i.e. either the CPU does not support it or all
+sibling threads are offline CPU buffer clearing is not required.</p>
+<p>The idle clearing is enabled on CPUs which are only affected by MSBDS
+and not by any other MDS variant. The other MDS variants cannot be
+protected against cross Hyper-Thread attacks because the Fill Buffer and
+the Load Ports are shared. So on CPUs affected by other variants, the
+idle clearing would be a window dressing exercise and is therefore not
+activated.</p>
+<p>The invocation is controlled by the static key mds_idle_clear which is
+switched depending on the chosen mitigation mode and the SMT state of
+the system.</p>
+<p>The buffer clear is only invoked before entering the C-State to prevent
+that stale data from the idling CPU from spilling to the Hyper-Thread
+sibling after the store buffer got repartitioned and all entries are
+available to the non idle sibling.</p>
+<p>When coming out of idle the store buffer is partitioned again so each
+sibling has half of it available. The back from idle CPU could be then
+speculatively exposed to contents of the sibling. The buffers are
+flushed either on exit to user space or on VMENTER so malicious code
+in user space or the guest cannot speculatively access them.</p>
+<p>The mitigation is hooked into all variants of halt()/mwait(), but does
+not cover the legacy ACPI IO-Port mechanism because the ACPI idle driver
+has been superseded by the intel_idle driver around 2010 and is
+preferred on all affected CPUs which are expected to gain the MD_CLEAR
+functionality in microcode. Aside of that the IO-Port mechanism is a
+legacy interface which is only used on older systems which are either
+not affected or do not receive microcode updates anymore.</p>
+</div></blockquote>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="microcode.html" class="btn btn-neutral float-right" title="17. The Linux Microcode Loader" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="pti.html" class="btn btn-neutral float-left" title="15. Page Table Isolation (PTI)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

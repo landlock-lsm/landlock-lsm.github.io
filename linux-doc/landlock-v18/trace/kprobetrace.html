@@ -1,0 +1,563 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Kprobe-based Event Tracing &mdash; The Linux Kernel 5.7.0-rc7+ documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Uprobe-tracer: Uprobe-based Event Tracing" href="uprobetracer.html" />
+    <link rel="prev" title="Using ftrace to hook to functions" href="ftrace-uses.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.7.0-rc7
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Linux Tracing Technologies</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="ftrace-design.html">Function Tracer Design</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tracepoint-analysis.html">Notes on Analysing Behaviour Using Events and Tracepoints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ftrace.html">ftrace - Function Tracer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ftrace-uses.html">Using ftrace to hook to functions</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Kprobe-based Event Tracing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#synopsis-of-kprobe-events">Synopsis of kprobe_events</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#types">Types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#user-memory-access">User Memory Access</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#per-probe-event-filtering">Per-Probe Event Filtering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#event-profiling">Event Profiling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#kernel-boot-parameter">Kernel Boot Parameter</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#usage-examples">Usage examples</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="uprobetracer.html">Uprobe-tracer: Uprobe-based Event Tracing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tracepoints.html">Using the Linux Kernel Tracepoints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="events.html">Event Tracing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="events-kmem.html">Subsystem Trace Points: kmem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="events-power.html">Subsystem Trace Points: power</a></li>
+<li class="toctree-l2"><a class="reference internal" href="events-nmi.html">NMI Trace Events</a></li>
+<li class="toctree-l2"><a class="reference internal" href="events-msr.html">MSR Trace Events</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mmiotrace.html">In-kernel memory-mapped I/O tracing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="histogram.html">Event Histograms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="boottime-trace.html">Boot-time tracing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hwlat_detector.html">Hardware Latency Detector</a></li>
+<li class="toctree-l2"><a class="reference internal" href="intel_th.html">Intel(R) Trace Hub (TH)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stm.html">System Trace Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sys-t.html">MIPI SyS-T over STP</a></li>
+<li class="toctree-l2"><a class="reference internal" href="coresight/index.html">CoreSight - ARM Hardware Trace</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../media/index.html">Linux Media Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Linux Tracing Technologies</a> &raquo;</li>
+        
+      <li>Kprobe-based Event Tracing</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/trace/kprobetrace.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="kprobe-based-event-tracing">
+<h1>Kprobe-based Event Tracing<a class="headerlink" href="#kprobe-based-event-tracing" title="Permalink to this headline">¶</a></h1>
+<dl class="field-list simple">
+<dt class="field-odd">Author</dt>
+<dd class="field-odd"><p>Masami Hiramatsu</p>
+</dd>
+</dl>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>These events are similar to tracepoint based events. Instead of Tracepoint,
+this is based on kprobes (kprobe and kretprobe). So it can probe wherever
+kprobes can probe (this means, all functions except those with
+__kprobes/nokprobe_inline annotation and those marked NOKPROBE_SYMBOL).
+Unlike the Tracepoint based event, this can be added and removed
+dynamically, on the fly.</p>
+<p>To enable this feature, build your kernel with CONFIG_KPROBE_EVENTS=y.</p>
+<p>Similar to the events tracer, this doesn’t need to be activated via
+current_tracer. Instead of that, add probe points via
+/sys/kernel/debug/tracing/kprobe_events, and enable it via
+/sys/kernel/debug/tracing/events/kprobes/&lt;EVENT&gt;/enable.</p>
+<p>You can also use /sys/kernel/debug/tracing/dynamic_events instead of
+kprobe_events. That interface will provide unified access to other
+dynamic events too.</p>
+</div>
+<div class="section" id="synopsis-of-kprobe-events">
+<h2>Synopsis of kprobe_events<a class="headerlink" href="#synopsis-of-kprobe-events" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span> p[:[GRP/]EVENT] [MOD:]SYM[+offs]|MEMADDR [FETCHARGS]  : Set a probe
+ r[MAXACTIVE][:[GRP/]EVENT] [MOD:]SYM[+0] [FETCHARGS]  : Set a return probe
+ -:[GRP/]EVENT                                         : Clear a probe
+
+GRP            : Group name. If omitted, use &quot;kprobes&quot; for it.
+EVENT          : Event name. If omitted, the event name is generated
+                 based on SYM+offs or MEMADDR.
+MOD            : Module name which has given SYM.
+SYM[+offs]     : Symbol+offset where the probe is inserted.
+MEMADDR        : Address where the probe is inserted.
+MAXACTIVE      : Maximum number of instances of the specified function that
+                 can be probed simultaneously, or 0 for the default value
+                 as defined in Documentation/kprobes.txt section 1.3.1.
+
+FETCHARGS      : Arguments. Each probe can have up to 128 args.
+ %REG          : Fetch register REG
+ @ADDR         : Fetch memory at ADDR (ADDR should be in kernel)
+ @SYM[+|-offs] : Fetch memory at SYM +|- offs (SYM should be a data symbol)
+ $stackN       : Fetch Nth entry of stack (N &gt;= 0)
+ $stack        : Fetch stack address.
+ $argN         : Fetch the Nth function argument. (N &gt;= 1) (\*1)
+ $retval       : Fetch return value.(\*2)
+ $comm         : Fetch current task comm.
+ +|-[u]OFFS(FETCHARG) : Fetch memory at FETCHARG +|- OFFS address.(\*3)(\*4)
+ \IMM          : Store an immediate value to the argument.
+ NAME=FETCHARG : Set NAME as the argument name of FETCHARG.
+ FETCHARG:TYPE : Set TYPE as the type of FETCHARG. Currently, basic types
+                 (u8/u16/u32/u64/s8/s16/s32/s64), hexadecimal types
+                 (x8/x16/x32/x64), &quot;string&quot;, &quot;ustring&quot; and bitfield
+                 are supported.
+
+ (\*1) only for the probe on function entry (offs == 0).
+ (\*2) only for return probe.
+ (\*3) this is useful for fetching a field of data structures.
+ (\*4) &quot;u&quot; means user-space dereference. See :ref:`user_mem_access`.
+</pre></div>
+</div>
+</div>
+<div class="section" id="types">
+<h2>Types<a class="headerlink" href="#types" title="Permalink to this headline">¶</a></h2>
+<p>Several types are supported for fetch-args. Kprobe tracer will access memory
+by given type. Prefix ‘s’ and ‘u’ means those types are signed and unsigned
+respectively. ‘x’ prefix implies it is unsigned. Traced arguments are shown
+in decimal (‘s’ and ‘u’) or hexadecimal (‘x’). Without type casting, ‘x32’
+or ‘x64’ is used depends on the architecture (e.g. x86-32 uses x32, and
+x86-64 uses x64).
+These value types can be an array. To record array data, you can add ‘[N]’
+(where N is a fixed number, less than 64) to the base type.
+E.g. ‘x16[4]’ means an array of x16 (2bytes hex) with 4 elements.
+Note that the array can be applied to memory type fetchargs, you can not
+apply it to registers/stack-entries etc. (for example, ‘$stack1:x8[8]’ is
+wrong, but ‘+8($stack):x8[8]’ is OK.)
+String type is a special type, which fetches a “null-terminated” string from
+kernel space. This means it will fail and store NULL if the string container
+has been paged out. “ustring” type is an alternative of string for user-space.
+See <a class="reference internal" href="#user-mem-access"><span class="std std-ref">User Memory Access</span></a> for more info..
+The string array type is a bit different from other types. For other base
+types, &lt;base-type&gt;[1] is equal to &lt;base-type&gt; (e.g. +0(%di):x32[1] is same
+as +0(%di):x32.) But string[1] is not equal to string. The string type itself
+represents “char array”, but string array type represents “char * array”.
+So, for example, +0(%di):string[1] is equal to +0(+0(%di)):string.
+Bitfield is another special type, which takes 3 parameters, bit-width, bit-
+offset, and container-size (usually 32). The syntax is:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>b&lt;bit-width&gt;@&lt;bit-offset&gt;/&lt;container-size&gt;
+</pre></div>
+</div>
+<p>Symbol type(‘symbol’) is an alias of u32 or u64 type (depends on BITS_PER_LONG)
+which shows given pointer in “symbol+offset” style.
+For $comm, the default type is “string”; any other type is invalid.</p>
+</div>
+<div class="section" id="user-memory-access">
+<span id="user-mem-access"></span><h2>User Memory Access<a class="headerlink" href="#user-memory-access" title="Permalink to this headline">¶</a></h2>
+<p>Kprobe events supports user-space memory access. For that purpose, you can use
+either user-space dereference syntax or ‘ustring’ type.</p>
+<p>The user-space dereference syntax allows you to access a field of a data
+structure in user-space. This is done by adding the “u” prefix to the
+dereference syntax. For example, +u4(%si) means it will read memory from the
+address in the register %si offset by 4, and the memory is expected to be in
+user-space. You can use this for strings too, e.g. +u0(%si):string will read
+a string from the address in the register %si that is expected to be in user-
+space. ‘ustring’ is a shortcut way of performing the same task. That is,
++0(%si):ustring is equivalent to +u0(%si):string.</p>
+<p>Note that kprobe-event provides the user-memory access syntax but it doesn’t
+use it transparently. This means if you use normal dereference or string type
+for user memory, it might fail, and may always fail on some archs. The user
+has to carefully check if the target data is in kernel or user space.</p>
+</div>
+<div class="section" id="per-probe-event-filtering">
+<h2>Per-Probe Event Filtering<a class="headerlink" href="#per-probe-event-filtering" title="Permalink to this headline">¶</a></h2>
+<p>Per-probe event filtering feature allows you to set different filter on each
+probe and gives you what arguments will be shown in trace buffer. If an event
+name is specified right after ‘p:’ or ‘r:’ in kprobe_events, it adds an event
+under tracing/events/kprobes/&lt;EVENT&gt;, at the directory you can see ‘id’,
+‘enable’, ‘format’, ‘filter’ and ‘trigger’.</p>
+<dl class="simple">
+<dt>enable:</dt><dd><p>You can enable/disable the probe by writing 1 or 0 on it.</p>
+</dd>
+<dt>format:</dt><dd><p>This shows the format of this probe event.</p>
+</dd>
+<dt>filter:</dt><dd><p>You can write filtering rules of this event.</p>
+</dd>
+<dt>id:</dt><dd><p>This shows the id of this probe event.</p>
+</dd>
+<dt>trigger:</dt><dd><p>This allows to install trigger commands which are executed when the event is
+hit (for details, see Documentation/trace/events.rst, section 6).</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="event-profiling">
+<h2>Event Profiling<a class="headerlink" href="#event-profiling" title="Permalink to this headline">¶</a></h2>
+<p>You can check the total number of probe hits and probe miss-hits via
+/sys/kernel/debug/tracing/kprobe_profile.
+The first column is event name, the second is the number of probe hits,
+the third is the number of probe miss-hits.</p>
+</div>
+<div class="section" id="kernel-boot-parameter">
+<h2>Kernel Boot Parameter<a class="headerlink" href="#kernel-boot-parameter" title="Permalink to this headline">¶</a></h2>
+<p>You can add and enable new kprobe events when booting up the kernel by
+“kprobe_event=” parameter. The parameter accepts a semicolon-delimited
+kprobe events, which format is similar to the kprobe_events.
+The difference is that the probe definition parameters are comma-delimited
+instead of space. For example, adding myprobe event on do_sys_open like below</p>
+<blockquote>
+<div><p>p:myprobe do_sys_open dfd=%ax filename=%dx flags=%cx mode=+4($stack)</p>
+</div></blockquote>
+<p>should be below for kernel boot parameter (just replace spaces with comma)</p>
+<blockquote>
+<div><p>p:myprobe,do_sys_open,dfd=%ax,filename=%dx,flags=%cx,mode=+4($stack)</p>
+</div></blockquote>
+</div>
+<div class="section" id="usage-examples">
+<h2>Usage examples<a class="headerlink" href="#usage-examples" title="Permalink to this headline">¶</a></h2>
+<p>To add a probe as a new event, write a new definition to kprobe_events
+as below:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>echo &#39;p:myprobe do_sys_open dfd=%ax filename=%dx flags=%cx mode=+4($stack)&#39; &gt; /sys/kernel/debug/tracing/kprobe_events
+</pre></div>
+</div>
+<p>This sets a kprobe on the top of do_sys_open() function with recording
+1st to 4th arguments as “myprobe” event. Note, which register/stack entry is
+assigned to each function argument depends on arch-specific ABI. If you unsure
+the ABI, please try to use probe subcommand of perf-tools (you can find it
+under tools/perf/).
+As this example shows, users can choose more familiar names for each arguments.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>echo &#39;r:myretprobe do_sys_open $retval&#39; &gt;&gt; /sys/kernel/debug/tracing/kprobe_events
+</pre></div>
+</div>
+<p>This sets a kretprobe on the return point of do_sys_open() function with
+recording return value as “myretprobe” event.
+You can see the format of these events via
+/sys/kernel/debug/tracing/events/kprobes/&lt;EVENT&gt;/format.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>cat /sys/kernel/debug/tracing/events/kprobes/myprobe/format
+name: myprobe
+ID: 780
+format:
+        field:unsigned short common_type;       offset:0;       size:2; signed:0;
+        field:unsigned char common_flags;       offset:2;       size:1; signed:0;
+        field:unsigned char common_preempt_count;       offset:3; size:1;signed:0;
+        field:int common_pid;   offset:4;       size:4; signed:1;
+
+        field:unsigned long __probe_ip; offset:12;      size:4; signed:0;
+        field:int __probe_nargs;        offset:16;      size:4; signed:1;
+        field:unsigned long dfd;        offset:20;      size:4; signed:0;
+        field:unsigned long filename;   offset:24;      size:4; signed:0;
+        field:unsigned long flags;      offset:28;      size:4; signed:0;
+        field:unsigned long mode;       offset:32;      size:4; signed:0;
+
+
+print fmt: &quot;(%lx) dfd=%lx filename=%lx flags=%lx mode=%lx&quot;, REC-&gt;__probe_ip,
+REC-&gt;dfd, REC-&gt;filename, REC-&gt;flags, REC-&gt;mode
+</pre></div>
+</div>
+<p>You can see that the event has 4 arguments as in the expressions you specified.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>echo &gt; /sys/kernel/debug/tracing/kprobe_events
+</pre></div>
+</div>
+<p>This clears all probe points.</p>
+<p>Or,</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>echo -:myprobe &gt;&gt; kprobe_events
+</pre></div>
+</div>
+<p>This clears probe points selectively.</p>
+<p>Right after definition, each event is disabled by default. For tracing these
+events, you need to enable it.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>echo 1 &gt; /sys/kernel/debug/tracing/events/kprobes/myprobe/enable
+echo 1 &gt; /sys/kernel/debug/tracing/events/kprobes/myretprobe/enable
+</pre></div>
+</div>
+<p>Use the following command to start tracing in an interval.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo 1 &gt; tracing_on
+Open something...
+# echo 0 &gt; tracing_on
+</pre></div>
+</div>
+<p>And you can see the traced information via /sys/kernel/debug/tracing/trace.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>cat /sys/kernel/debug/tracing/trace
+# tracer: nop
+#
+#           TASK-PID    CPU#    TIMESTAMP  FUNCTION
+#              | |       |          |         |
+           &lt;...&gt;-1447  [001] 1038282.286875: myprobe: (do_sys_open+0x0/0xd6) dfd=3 filename=7fffd1ec4440 flags=8000 mode=0
+           &lt;...&gt;-1447  [001] 1038282.286878: myretprobe: (sys_openat+0xc/0xe &lt;- do_sys_open) $retval=fffffffffffffffe
+           &lt;...&gt;-1447  [001] 1038282.286885: myprobe: (do_sys_open+0x0/0xd6) dfd=ffffff9c filename=40413c flags=8000 mode=1b6
+           &lt;...&gt;-1447  [001] 1038282.286915: myretprobe: (sys_open+0x1b/0x1d &lt;- do_sys_open) $retval=3
+           &lt;...&gt;-1447  [001] 1038282.286969: myprobe: (do_sys_open+0x0/0xd6) dfd=ffffff9c filename=4041c6 flags=98800 mode=10
+           &lt;...&gt;-1447  [001] 1038282.286976: myretprobe: (sys_open+0x1b/0x1d &lt;- do_sys_open) $retval=3
+</pre></div>
+</div>
+<p>Each line shows when the kernel hits an event, and &lt;- SYMBOL means kernel
+returns from SYMBOL(e.g. “sys_open+0x1b/0x1d &lt;- do_sys_open” means kernel
+returns from do_sys_open to sys_open+0x1b).</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="uprobetracer.html" class="btn btn-neutral float-right" title="Uprobe-tracer: Uprobe-based Event Tracing" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="ftrace-uses.html" class="btn btn-neutral float-left" title="Using ftrace to hook to functions" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
