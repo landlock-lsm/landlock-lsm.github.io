@@ -1,0 +1,918 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>The padata parallel execution mechanism &mdash; The Linux Kernel 5.8.0-rc4+ documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="RCU concepts" href="../RCU/index.html" />
+    <link rel="prev" title="Semantics and Behavior of Local Atomic Operations" href="local_ops.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.8.0-rc4
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Core API Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="index.html#core-utilities">Core utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#data-structures-and-low-level-utilities">Data structures and low-level utilities</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#concurrency-primitives">Concurrency primitives</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="atomic_ops.html">Semantics and Behavior of Atomic and Bitmask Operations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="refcount-vs-atomic.html">refcount_t API compared to atomic_t</a></li>
+<li class="toctree-l3"><a class="reference internal" href="irq/index.html">IRQs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="local_ops.html">Semantics and Behavior of Local Atomic Operations</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">The padata parallel execution mechanism</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#running-serialized-jobs">Running Serialized Jobs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#running-multithreaded-jobs">Running Multithreaded Jobs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#interface">Interface</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../RCU/index.html">RCU concepts</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#low-level-hardware-management">Low-level hardware management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#memory-management">Memory management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#interfaces-for-kernel-debugging">Interfaces for kernel debugging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#everything-else">Everything else</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Core API Documentation</a> &raquo;</li>
+        
+      <li>The padata parallel execution mechanism</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/core-api/padata.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="the-padata-parallel-execution-mechanism">
+<h1>The padata parallel execution mechanism<a class="headerlink" href="#the-padata-parallel-execution-mechanism" title="Permalink to this headline">¶</a></h1>
+<dl class="field-list simple">
+<dt class="field-odd">Date</dt>
+<dd class="field-odd"><p>May 2020</p>
+</dd>
+</dl>
+<p>Padata is a mechanism by which the kernel can farm jobs out to be done in
+parallel on multiple CPUs while optionally retaining their ordering.</p>
+<p>It was originally developed for IPsec, which needs to perform encryption and
+decryption on large numbers of packets without reordering those packets.  This
+is currently the sole consumer of padata’s serialized job support.</p>
+<p>Padata also supports multithreaded jobs, splitting up the job evenly while load
+balancing and coordinating between threads.</p>
+<div class="section" id="running-serialized-jobs">
+<h2>Running Serialized Jobs<a class="headerlink" href="#running-serialized-jobs" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="initializing">
+<h3>Initializing<a class="headerlink" href="#initializing" title="Permalink to this headline">¶</a></h3>
+<p>The first step in using padata to run serialized jobs is to set up a
+padata_instance structure for overall control of how jobs are to be run:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>#include &lt;linux/padata.h&gt;
+
+struct padata_instance *padata_alloc_possible(const char *name);
+</pre></div>
+</div>
+<p>‘name’ simply identifies the instance.</p>
+<p>There are functions for enabling and disabling the instance:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int padata_start(struct padata_instance *pinst);
+void padata_stop(struct padata_instance *pinst);
+</pre></div>
+</div>
+<p>These functions are setting or clearing the “PADATA_INIT” flag; if that flag is
+not set, other functions will refuse to work.  <a class="reference internal" href="#c.padata_start" title="padata_start"><code class="xref c c-func docutils literal notranslate"><span class="pre">padata_start()</span></code></a> returns zero on
+success (flag set) or -EINVAL if the padata cpumask contains no active CPU
+(flag not set).  <a class="reference internal" href="#c.padata_stop" title="padata_stop"><code class="xref c c-func docutils literal notranslate"><span class="pre">padata_stop()</span></code></a> clears the flag and blocks until the padata
+instance is unused.</p>
+<p>Finally, complete padata initialization by allocating a padata_shell:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct padata_shell *padata_alloc_shell(struct padata_instance *pinst);
+</pre></div>
+</div>
+<p>A padata_shell is used to submit a job to padata and allows a series of such
+jobs to be serialized independently.  A padata_instance may have one or more
+padata_shells associated with it, each allowing a separate series of jobs.</p>
+</div>
+<div class="section" id="modifying-cpumasks">
+<h3>Modifying cpumasks<a class="headerlink" href="#modifying-cpumasks" title="Permalink to this headline">¶</a></h3>
+<p>The CPUs used to run jobs can be changed in two ways, programatically with
+<a class="reference internal" href="#c.padata_set_cpumask" title="padata_set_cpumask"><code class="xref c c-func docutils literal notranslate"><span class="pre">padata_set_cpumask()</span></code></a> or via sysfs.  The former is defined:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int padata_set_cpumask(struct padata_instance *pinst, int cpumask_type,
+                       cpumask_var_t cpumask);
+</pre></div>
+</div>
+<p>Here cpumask_type is one of PADATA_CPU_PARALLEL or PADATA_CPU_SERIAL, where a
+parallel cpumask describes which processors will be used to execute jobs
+submitted to this instance in parallel and a serial cpumask defines which
+processors are allowed to be used as the serialization callback processor.
+cpumask specifies the new cpumask to use.</p>
+<p>There may be sysfs files for an instance’s cpumasks.  For example, pcrypt’s
+live in /sys/kernel/pcrypt/&lt;instance-name&gt;.  Within an instance’s directory
+there are two files, parallel_cpumask and serial_cpumask, and either cpumask
+may be changed by echoing a bitmask into the file, for example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>echo f &gt; /sys/kernel/pcrypt/pencrypt/parallel_cpumask
+</pre></div>
+</div>
+<p>Reading one of these files shows the user-supplied cpumask, which may be
+different from the ‘usable’ cpumask.</p>
+<p>Padata maintains two pairs of cpumasks internally, the user-supplied cpumasks
+and the ‘usable’ cpumasks.  (Each pair consists of a parallel and a serial
+cpumask.)  The user-supplied cpumasks default to all possible CPUs on instance
+allocation and may be changed as above.  The usable cpumasks are always a
+subset of the user-supplied cpumasks and contain only the online CPUs in the
+user-supplied masks; these are the cpumasks padata actually uses.  So it is
+legal to supply a cpumask to padata that contains offline CPUs.  Once an
+offline CPU in the user-supplied cpumask comes online, padata is going to use
+it.</p>
+<p>Changing the CPU masks are expensive operations, so it should not be done with
+great frequency.</p>
+</div>
+<div class="section" id="running-a-job">
+<h3>Running A Job<a class="headerlink" href="#running-a-job" title="Permalink to this headline">¶</a></h3>
+<p>Actually submitting work to the padata instance requires the creation of a
+padata_priv structure, which represents one job:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct padata_priv {
+    /* Other stuff here... */
+    void                    (*parallel)(struct padata_priv *padata);
+    void                    (*serial)(struct padata_priv *padata);
+};
+</pre></div>
+</div>
+<p>This structure will almost certainly be embedded within some larger
+structure specific to the work to be done.  Most of its fields are private to
+padata, but the structure should be zeroed at initialisation time, and the
+parallel() and serial() functions should be provided.  Those functions will
+be called in the process of getting the work done as we will see
+momentarily.</p>
+<p>The submission of the job is done with:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int padata_do_parallel(struct padata_shell *ps,
+                       struct padata_priv *padata, int *cb_cpu);
+</pre></div>
+</div>
+<p>The ps and padata structures must be set up as described above; cb_cpu
+points to the preferred CPU to be used for the final callback when the job is
+done; it must be in the current instance’s CPU mask (if not the cb_cpu pointer
+is updated to point to the CPU actually chosen).  The return value from
+<a class="reference internal" href="#c.padata_do_parallel" title="padata_do_parallel"><code class="xref c c-func docutils literal notranslate"><span class="pre">padata_do_parallel()</span></code></a> is zero on success, indicating that the job is in
+progress. -EBUSY means that somebody, somewhere else is messing with the
+instance’s CPU mask, while -EINVAL is a complaint about cb_cpu not being in the
+serial cpumask, no online CPUs in the parallel or serial cpumasks, or a stopped
+instance.</p>
+<p>Each job submitted to <a class="reference internal" href="#c.padata_do_parallel" title="padata_do_parallel"><code class="xref c c-func docutils literal notranslate"><span class="pre">padata_do_parallel()</span></code></a> will, in turn, be passed to
+exactly one call to the above-mentioned parallel() function, on one CPU, so
+true parallelism is achieved by submitting multiple jobs.  parallel() runs with
+software interrupts disabled and thus cannot sleep.  The parallel()
+function gets the padata_priv structure pointer as its lone parameter;
+information about the actual work to be done is probably obtained by using
+<a class="reference internal" href="../driver-api/basics.html#c.container_of" title="container_of"><code class="xref c c-func docutils literal notranslate"><span class="pre">container_of()</span></code></a> to find the enclosing structure.</p>
+<p>Note that parallel() has no return value; the padata subsystem assumes that
+parallel() will take responsibility for the job from this point.  The job
+need not be completed during this call, but, if parallel() leaves work
+outstanding, it should be prepared to be called again with a new job before
+the previous one completes.</p>
+</div>
+<div class="section" id="serializing-jobs">
+<h3>Serializing Jobs<a class="headerlink" href="#serializing-jobs" title="Permalink to this headline">¶</a></h3>
+<p>When a job does complete, parallel() (or whatever function actually finishes
+the work) should inform padata of the fact with a call to:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void padata_do_serial(struct padata_priv *padata);
+</pre></div>
+</div>
+<p>At some point in the future, <a class="reference internal" href="#c.padata_do_serial" title="padata_do_serial"><code class="xref c c-func docutils literal notranslate"><span class="pre">padata_do_serial()</span></code></a> will trigger a call to the
+serial() function in the padata_priv structure.  That call will happen on
+the CPU requested in the initial call to <a class="reference internal" href="#c.padata_do_parallel" title="padata_do_parallel"><code class="xref c c-func docutils literal notranslate"><span class="pre">padata_do_parallel()</span></code></a>; it, too, is
+run with local software interrupts disabled.
+Note that this call may be deferred for a while since the padata code takes
+pains to ensure that jobs are completed in the order in which they were
+submitted.</p>
+</div>
+<div class="section" id="destroying">
+<h3>Destroying<a class="headerlink" href="#destroying" title="Permalink to this headline">¶</a></h3>
+<p>Cleaning up a padata instance predictably involves calling the three free
+functions that correspond to the allocation in reverse:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void padata_free_shell(struct padata_shell *ps);
+void padata_stop(struct padata_instance *pinst);
+void padata_free(struct padata_instance *pinst);
+</pre></div>
+</div>
+<p>It is the user’s responsibility to ensure all outstanding jobs are complete
+before any of the above are called.</p>
+</div>
+</div>
+<div class="section" id="running-multithreaded-jobs">
+<h2>Running Multithreaded Jobs<a class="headerlink" href="#running-multithreaded-jobs" title="Permalink to this headline">¶</a></h2>
+<p>A multithreaded job has a main thread and zero or more helper threads, with the
+main thread participating in the job and then waiting until all helpers have
+finished.  padata splits the job into units called chunks, where a chunk is a
+piece of the job that one thread completes in one call to the thread function.</p>
+<p>A user has to do three things to run a multithreaded job.  First, describe the
+job by defining a padata_mt_job structure, which is explained in the Interface
+section.  This includes a pointer to the thread function, which padata will
+call each time it assigns a job chunk to a thread.  Then, define the thread
+function, which accepts three arguments, <code class="docutils literal notranslate"><span class="pre">start</span></code>, <code class="docutils literal notranslate"><span class="pre">end</span></code>, and <code class="docutils literal notranslate"><span class="pre">arg</span></code>, where
+the first two delimit the range that the thread operates on and the last is a
+pointer to the job’s shared state, if any.  Prepare the shared state, which is
+typically allocated on the main thread’s stack.  Last, call
+<a class="reference internal" href="#c.padata_do_multithreaded" title="padata_do_multithreaded"><code class="xref c c-func docutils literal notranslate"><span class="pre">padata_do_multithreaded()</span></code></a>, which will return once the job is finished.</p>
+</div>
+<div class="section" id="interface">
+<h2>Interface<a class="headerlink" href="#interface" title="Permalink to this headline">¶</a></h2>
+<dl class="type">
+<dt id="c.padata_priv">
+struct <code class="sig-name descname">padata_priv</code><a class="headerlink" href="#c.padata_priv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents one job</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct padata_priv {
+  struct list_head        list;
+  struct parallel_data    *pd;
+  int cb_cpu;
+  unsigned int            seq_nr;
+  int info;
+  void (*parallel)(struct padata_priv *padata);
+  void (*serial)(struct padata_priv *padata);
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">list</span></code></dt><dd><p>List entry, to attach to the padata lists.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">pd</span></code></dt><dd><p>Pointer to the internal control structure.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">cb_cpu</span></code></dt><dd><p>Callback cpu for serializatioon.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">seq_nr</span></code></dt><dd><p>Sequence number of the parallelized data object.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">info</span></code></dt><dd><p>Used to pass information from the parallel to the serial function.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">parallel</span></code></dt><dd><p>Parallel execution function.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">serial</span></code></dt><dd><p>Serial complete function.</p>
+</dd>
+</dl>
+<dl class="type">
+<dt id="c.padata_list">
+struct <code class="sig-name descname">padata_list</code><a class="headerlink" href="#c.padata_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>one per work type per CPU</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct padata_list {
+  struct list_head        list;
+  spinlock_t lock;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">list</span></code></dt><dd><p>List head.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">lock</span></code></dt><dd><p>List lock.</p>
+</dd>
+</dl>
+<dl class="type">
+<dt id="c.padata_serial_queue">
+struct <code class="sig-name descname">padata_serial_queue</code><a class="headerlink" href="#c.padata_serial_queue" title="Permalink to this definition">¶</a></dt>
+<dd><p>The percpu padata serial queue</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct padata_serial_queue {
+  struct padata_list    serial;
+  struct work_struct    work;
+  struct parallel_data *pd;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">serial</span></code></dt><dd><p>List to wait for serialization after reordering.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">work</span></code></dt><dd><p>work struct for serialization.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">pd</span></code></dt><dd><p>Backpointer to the internal control structure.</p>
+</dd>
+</dl>
+<dl class="type">
+<dt id="c.padata_parallel_queue">
+struct <code class="sig-name descname">padata_parallel_queue</code><a class="headerlink" href="#c.padata_parallel_queue" title="Permalink to this definition">¶</a></dt>
+<dd><p>The percpu padata parallel queue</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct padata_parallel_queue {
+  struct padata_list    reorder;
+  atomic_t num_obj;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">reorder</span></code></dt><dd><p>List to wait for reordering after parallel processing.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">num_obj</span></code></dt><dd><p>Number of objects that are processed by this cpu.</p>
+</dd>
+</dl>
+<dl class="type">
+<dt id="c.padata_cpumask">
+struct <code class="sig-name descname">padata_cpumask</code><a class="headerlink" href="#c.padata_cpumask" title="Permalink to this definition">¶</a></dt>
+<dd><p>The cpumasks for the parallel/serial workers</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct padata_cpumask {
+  cpumask_var_t pcpu;
+  cpumask_var_t cbcpu;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">pcpu</span></code></dt><dd><p>cpumask for the parallel workers.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">cbcpu</span></code></dt><dd><p>cpumask for the serial (callback) workers.</p>
+</dd>
+</dl>
+<dl class="type">
+<dt id="c.parallel_data">
+struct <code class="sig-name descname">parallel_data</code><a class="headerlink" href="#c.parallel_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Internal control structure, covers everything that depends on the cpumask in use.</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct parallel_data {
+  struct padata_shell             *ps;
+  struct padata_parallel_queue    __percpu *pqueue;
+  struct padata_serial_queue      __percpu *squeue;
+  atomic_t refcnt;
+  unsigned int                    seq_nr;
+  unsigned int                    processed;
+  int cpu;
+  struct padata_cpumask           cpumask;
+  struct work_struct              reorder_work;
+  spinlock_t ____cacheline_aligned lock;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">ps</span></code></dt><dd><p>padata_shell object.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">pqueue</span></code></dt><dd><p>percpu padata queues used for parallelization.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">squeue</span></code></dt><dd><p>percpu padata queues used for serialuzation.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">refcnt</span></code></dt><dd><p>Number of objects holding a reference on this parallel_data.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">seq_nr</span></code></dt><dd><p>Sequence number of the parallelized data object.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">processed</span></code></dt><dd><p>Number of already processed objects.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">cpu</span></code></dt><dd><p>Next CPU to be processed.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">cpumask</span></code></dt><dd><p>The cpumasks in use for parallel and serial workers.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">reorder_work</span></code></dt><dd><p>work struct for reordering.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">lock</span></code></dt><dd><p>Reorder lock.</p>
+</dd>
+</dl>
+<dl class="type">
+<dt id="c.padata_shell">
+struct <code class="sig-name descname">padata_shell</code><a class="headerlink" href="#c.padata_shell" title="Permalink to this definition">¶</a></dt>
+<dd><p>Wrapper around struct parallel_data, its purpose is to allow the underlying control structure to be replaced on the fly using RCU.</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct padata_shell {
+  struct padata_instance          *pinst;
+  struct parallel_data __rcu      *pd;
+  struct parallel_data            *opd;
+  struct list_head                list;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">pinst</span></code></dt><dd><p>padat instance.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">pd</span></code></dt><dd><p>Actual parallel_data structure which may be substituted on the fly.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">opd</span></code></dt><dd><p>Pointer to old pd to be freed by padata_replace.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">list</span></code></dt><dd><p>List entry in padata_instance list.</p>
+</dd>
+</dl>
+<dl class="type">
+<dt id="c.padata_mt_job">
+struct <code class="sig-name descname">padata_mt_job</code><a class="headerlink" href="#c.padata_mt_job" title="Permalink to this definition">¶</a></dt>
+<dd><p>represents one multithreaded job</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct padata_mt_job {
+  void (*thread_fn)(unsigned long start, unsigned long end, void *arg);
+  void *fn_arg;
+  unsigned long           start;
+  unsigned long           size;
+  unsigned long           align;
+  unsigned long           min_chunk;
+  int max_threads;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">thread_fn</span></code></dt><dd><p>Called for each chunk of work that a padata thread does.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">fn_arg</span></code></dt><dd><p>The thread function argument.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">start</span></code></dt><dd><p>The start of the job (units are job-specific).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">size</span></code></dt><dd><p>size of this node’s work (units are job-specific).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">align</span></code></dt><dd><p>Ranges passed to the thread function fall on this boundary, with the
+possible exceptions of the beginning and end of the job.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">min_chunk</span></code></dt><dd><p>The minimum chunk size in job-specific units.  This allows
+the client to communicate the minimum amount of work that’s
+appropriate for one worker thread to do at once.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">max_threads</span></code></dt><dd><p>Max threads to use for the job, actual number may be less
+depending on task size and minimum chunk size.</p>
+</dd>
+</dl>
+<dl class="type">
+<dt id="c.padata_instance">
+struct <code class="sig-name descname">padata_instance</code><a class="headerlink" href="#c.padata_instance" title="Permalink to this definition">¶</a></dt>
+<dd><p>The overall control structure.</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct padata_instance {
+  struct hlist_node               cpu_online_node;
+  struct hlist_node               cpu_dead_node;
+  struct workqueue_struct         *parallel_wq;
+  struct workqueue_struct         *serial_wq;
+  struct list_head                pslist;
+  struct padata_cpumask           cpumask;
+  struct padata_cpumask           rcpumask;
+  struct kobject                   kobj;
+  struct mutex                     lock;
+  u8 flags;
+#define PADATA_INIT     1;
+#define PADATA_RESET    2;
+#define PADATA_INVALID  4;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">cpu_online_node</span></code></dt><dd><p>Linkage for CPU online callback.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">cpu_dead_node</span></code></dt><dd><p>Linkage for CPU offline callback.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">parallel_wq</span></code></dt><dd><p>The workqueue used for parallel work.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">serial_wq</span></code></dt><dd><p>The workqueue used for serial work.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">pslist</span></code></dt><dd><p>List of padata_shell objects attached to this instance.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">cpumask</span></code></dt><dd><p>User supplied cpumasks for parallel and serial works.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">rcpumask</span></code></dt><dd><p>Actual cpumasks based on user cpumask and cpu_online_mask.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">kobj</span></code></dt><dd><p>padata instance kernel object.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">lock</span></code></dt><dd><p>padata instance lock.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">flags</span></code></dt><dd><p>padata flags.</p>
+</dd>
+</dl>
+<dl class="function">
+<dt id="c.padata_do_parallel">
+int <code class="sig-name descname">padata_do_parallel</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.padata_shell" title="padata_shell">padata_shell</a> *<em> ps</em>, struct <a class="reference internal" href="#c.padata_priv" title="padata_priv">padata_priv</a> *<em> padata</em>, int *<em> cb_cpu</em><span class="sig-paren">)</span><a class="headerlink" href="#c.padata_do_parallel" title="Permalink to this definition">¶</a></dt>
+<dd><p>padata parallelization function</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">padata_shell</span> <span class="pre">*</span> <span class="pre">ps</span></code></dt><dd><p>padatashell</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">padata_priv</span> <span class="pre">*</span> <span class="pre">padata</span></code></dt><dd><p>object to be parallelized</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">*</span> <span class="pre">cb_cpu</span></code></dt><dd><p>pointer to the CPU that the serialization callback function should
+run on.  If it’s not in the serial cpumask of <strong>pinst</strong>
+(i.e. cpumask.cbcpu), this function selects a fallback CPU and if
+none found, returns -EINVAL.</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>The parallelization callback function will run with BHs off.</p>
+<p><strong>Note</strong></p>
+<p>Every object which is parallelized by padata_do_parallel
+must be seen by padata_do_serial.</p>
+<p><strong>Return</strong></p>
+<p>0 on success or else negative error code.</p>
+<dl class="function">
+<dt id="c.padata_do_serial">
+void <code class="sig-name descname">padata_do_serial</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.padata_priv" title="padata_priv">padata_priv</a> *<em> padata</em><span class="sig-paren">)</span><a class="headerlink" href="#c.padata_do_serial" title="Permalink to this definition">¶</a></dt>
+<dd><p>padata serialization function</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">padata_priv</span> <span class="pre">*</span> <span class="pre">padata</span></code></dt><dd><p>object to be serialized.</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>padata_do_serial must be called for every parallelized object.
+The serialization callback function will run with BHs off.</p>
+<dl class="function">
+<dt id="c.padata_do_multithreaded">
+void <code class="sig-name descname">padata_do_multithreaded</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.padata_mt_job" title="padata_mt_job">padata_mt_job</a> *<em> job</em><span class="sig-paren">)</span><a class="headerlink" href="#c.padata_do_multithreaded" title="Permalink to this definition">¶</a></dt>
+<dd><p>run a multithreaded job</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">padata_mt_job</span> <span class="pre">*</span> <span class="pre">job</span></code></dt><dd><p>Description of the job.</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>See the definition of struct padata_mt_job for more details.</p>
+<dl class="function">
+<dt id="c.padata_set_cpumask">
+int <code class="sig-name descname">padata_set_cpumask</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.padata_instance" title="padata_instance">padata_instance</a> *<em> pinst</em>, int<em> cpumask_type</em>, cpumask_var_t<em> cpumask</em><span class="sig-paren">)</span><a class="headerlink" href="#c.padata_set_cpumask" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sets specified by <strong>cpumask_type</strong> cpumask to the value equivalent to <strong>cpumask</strong>.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">padata_instance</span> <span class="pre">*</span> <span class="pre">pinst</span></code></dt><dd><p>padata instance</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">cpumask_type</span></code></dt><dd><p>PADATA_CPU_SERIAL or PADATA_CPU_PARALLEL corresponding
+to parallel and serial cpumasks respectively.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">cpumask_var_t</span> <span class="pre">cpumask</span></code></dt><dd><p>the cpumask to use</p>
+</dd>
+</dl>
+<p><strong>Return</strong></p>
+<p>0 on success or negative error code</p>
+<dl class="function">
+<dt id="c.padata_start">
+int <code class="sig-name descname">padata_start</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.padata_instance" title="padata_instance">padata_instance</a> *<em> pinst</em><span class="sig-paren">)</span><a class="headerlink" href="#c.padata_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>start the parallel processing</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">padata_instance</span> <span class="pre">*</span> <span class="pre">pinst</span></code></dt><dd><p>padata instance to start</p>
+</dd>
+</dl>
+<p><strong>Return</strong></p>
+<p>0 on success or negative error code</p>
+<dl class="function">
+<dt id="c.padata_stop">
+void <code class="sig-name descname">padata_stop</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.padata_instance" title="padata_instance">padata_instance</a> *<em> pinst</em><span class="sig-paren">)</span><a class="headerlink" href="#c.padata_stop" title="Permalink to this definition">¶</a></dt>
+<dd><p>stop the parallel processing</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">padata_instance</span> <span class="pre">*</span> <span class="pre">pinst</span></code></dt><dd><p>padata instance to stop</p>
+</dd>
+</dl>
+<dl class="function">
+<dt id="c.padata_alloc">
+struct <a class="reference internal" href="#c.padata_instance" title="padata_instance">padata_instance</a> * <code class="sig-name descname">padata_alloc</code><span class="sig-paren">(</span>const char *<em> name</em>, const struct cpumask *<em> pcpumask</em>, const struct cpumask *<em> cbcpumask</em><span class="sig-paren">)</span><a class="headerlink" href="#c.padata_alloc" title="Permalink to this definition">¶</a></dt>
+<dd><p>allocate and initialize a padata instance and specify cpumasks for serial and parallel workers.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">const</span> <span class="pre">char</span> <span class="pre">*</span> <span class="pre">name</span></code></dt><dd><p>used to identify the instance</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">const</span> <span class="pre">struct</span> <span class="pre">cpumask</span> <span class="pre">*</span> <span class="pre">pcpumask</span></code></dt><dd><p>cpumask that will be used for padata parallelization</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">const</span> <span class="pre">struct</span> <span class="pre">cpumask</span> <span class="pre">*</span> <span class="pre">cbcpumask</span></code></dt><dd><p>cpumask that will be used for padata serialization</p>
+</dd>
+</dl>
+<p><strong>Return</strong></p>
+<p>new instance on success, NULL on error</p>
+<dl class="function">
+<dt id="c.padata_alloc_possible">
+struct <a class="reference internal" href="#c.padata_instance" title="padata_instance">padata_instance</a> * <code class="sig-name descname">padata_alloc_possible</code><span class="sig-paren">(</span>const char *<em> name</em><span class="sig-paren">)</span><a class="headerlink" href="#c.padata_alloc_possible" title="Permalink to this definition">¶</a></dt>
+<dd><p>Allocate and initialize padata instance. Use the cpu_possible_mask for serial and parallel workers.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">const</span> <span class="pre">char</span> <span class="pre">*</span> <span class="pre">name</span></code></dt><dd><p>used to identify the instance</p>
+</dd>
+</dl>
+<p><strong>Return</strong></p>
+<p>new instance on success, NULL on error</p>
+<dl class="function">
+<dt id="c.padata_free">
+void <code class="sig-name descname">padata_free</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.padata_instance" title="padata_instance">padata_instance</a> *<em> pinst</em><span class="sig-paren">)</span><a class="headerlink" href="#c.padata_free" title="Permalink to this definition">¶</a></dt>
+<dd><p>free a padata instance</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">padata_instance</span> <span class="pre">*</span> <span class="pre">pinst</span></code></dt><dd><p>padata instance to free</p>
+</dd>
+</dl>
+<dl class="function">
+<dt id="c.padata_alloc_shell">
+struct <a class="reference internal" href="#c.padata_shell" title="padata_shell">padata_shell</a> * <code class="sig-name descname">padata_alloc_shell</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.padata_instance" title="padata_instance">padata_instance</a> *<em> pinst</em><span class="sig-paren">)</span><a class="headerlink" href="#c.padata_alloc_shell" title="Permalink to this definition">¶</a></dt>
+<dd><p>Allocate and initialize padata shell.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">padata_instance</span> <span class="pre">*</span> <span class="pre">pinst</span></code></dt><dd><p>Parent padata_instance object.</p>
+</dd>
+</dl>
+<p><strong>Return</strong></p>
+<p>new shell on success, NULL on error</p>
+<dl class="function">
+<dt id="c.padata_free_shell">
+void <code class="sig-name descname">padata_free_shell</code><span class="sig-paren">(</span>struct <a class="reference internal" href="#c.padata_shell" title="padata_shell">padata_shell</a> *<em> ps</em><span class="sig-paren">)</span><a class="headerlink" href="#c.padata_free_shell" title="Permalink to this definition">¶</a></dt>
+<dd><p>free a padata shell</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">padata_shell</span> <span class="pre">*</span> <span class="pre">ps</span></code></dt><dd><p>padata shell to free</p>
+</dd>
+</dl>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../RCU/index.html" class="btn btn-neutral float-right" title="RCU concepts" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="local_ops.html" class="btn btn-neutral float-left" title="Semantics and Behavior of Local Atomic Operations" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
