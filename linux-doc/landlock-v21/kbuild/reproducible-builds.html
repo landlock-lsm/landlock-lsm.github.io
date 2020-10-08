@@ -1,0 +1,423 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Reproducible builds &mdash; The Linux Kernel  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="GCC plugin infrastructure" href="gcc-plugins.html" />
+    <link rel="prev" title="Recursion issues" href="issues.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.9.0-rc8
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Kernel Build System</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="kconfig-language.html">Kconfig Language</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kconfig-macro-language.html">Kconfig macro language</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kbuild.html">Kbuild</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kconfig.html">Kconfig make config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="makefiles.html">Linux Kernel Makefiles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html">Building External Modules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="headers_install.html">Exporting kernel headers for use by userspace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="issues.html">Recursion issues</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Reproducible builds</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#timestamps">Timestamps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#user-host">User, host</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#absolute-filenames">Absolute filenames</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#generated-files-in-source-packages">Generated files in source packages</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-signing">Module signing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#structure-randomisation">Structure randomisation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#debug-info-conflicts">Debug info conflicts</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="gcc-plugins.html">GCC plugin infrastructure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="llvm.html">Building Linux with Clang/LLVM</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Kernel Build System</a> &raquo;</li>
+        
+      <li>Reproducible builds</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/kbuild/reproducible-builds.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="reproducible-builds">
+<h1>Reproducible builds<a class="headerlink" href="#reproducible-builds" title="Permalink to this headline">¶</a></h1>
+<p>It is generally desirable that building the same source code with
+the same set of tools is reproducible, i.e. the output is always
+exactly the same.  This makes it possible to verify that the build
+infrastructure for a binary distribution or embedded system has not
+been subverted.  This can also make it easier to verify that a source
+or tool change does not make any difference to the resulting binaries.</p>
+<p>The <a class="reference external" href="https://reproducible-builds.org/">Reproducible Builds project</a> has more information about this
+general topic.  This document covers the various reasons why building
+the kernel may be unreproducible, and how to avoid them.</p>
+<div class="section" id="timestamps">
+<h2>Timestamps<a class="headerlink" href="#timestamps" title="Permalink to this headline">¶</a></h2>
+<p>The kernel embeds timestamps in three places:</p>
+<ul class="simple">
+<li>The version string exposed by <code class="docutils literal notranslate"><span class="pre">uname()</span></code> and included in
+<code class="docutils literal notranslate"><span class="pre">/proc/version</span></code></li>
+<li>File timestamps in the embedded initramfs</li>
+<li>If enabled via <code class="docutils literal notranslate"><span class="pre">CONFIG_IKHEADERS</span></code>, file timestamps of kernel
+headers embedded in the kernel or respective module,
+exposed via <code class="docutils literal notranslate"><span class="pre">/sys/kernel/kheaders.tar.xz</span></code></li>
+</ul>
+<p>By default the timestamp is the current time and in the case of
+<code class="docutils literal notranslate"><span class="pre">kheaders</span></code> the various files’ modification times. This must
+be overridden using the <a class="reference external" href="kbuild.html#kbuild-build-timestamp">KBUILD_BUILD_TIMESTAMP</a> variable.
+If you are building from a git commit, you could use its commit date.</p>
+<p>The kernel does <em>not</em> use the <code class="docutils literal notranslate"><span class="pre">__DATE__</span></code> and <code class="docutils literal notranslate"><span class="pre">__TIME__</span></code> macros,
+and enables warnings if they are used.  If you incorporate external
+code that does use these, you must override the timestamp they
+correspond to by setting the <a class="reference external" href="https://reproducible-builds.org/docs/source-date-epoch/">SOURCE_DATE_EPOCH</a> environment
+variable.</p>
+</div>
+<div class="section" id="user-host">
+<h2>User, host<a class="headerlink" href="#user-host" title="Permalink to this headline">¶</a></h2>
+<p>The kernel embeds the building user and host names in
+<code class="docutils literal notranslate"><span class="pre">/proc/version</span></code>.  These must be overridden using the
+<a class="reference external" href="kbuild.html#kbuild-build-user-kbuild-build-host">KBUILD_BUILD_USER and KBUILD_BUILD_HOST</a> variables.  If you are
+building from a git commit, you could use its committer address.</p>
+</div>
+<div class="section" id="absolute-filenames">
+<h2>Absolute filenames<a class="headerlink" href="#absolute-filenames" title="Permalink to this headline">¶</a></h2>
+<p>When the kernel is built out-of-tree, debug information may include
+absolute filenames for the source files.  This must be overridden by
+including the <code class="docutils literal notranslate"><span class="pre">-fdebug-prefix-map</span></code> option in the <a class="reference external" href="kbuild.html#kcflags">KCFLAGS</a> variable.</p>
+<p>Depending on the compiler used, the <code class="docutils literal notranslate"><span class="pre">__FILE__</span></code> macro may also expand
+to an absolute filename in an out-of-tree build.  Kbuild automatically
+uses the <code class="docutils literal notranslate"><span class="pre">-fmacro-prefix-map</span></code> option to prevent this, if it is
+supported.</p>
+<p>The Reproducible Builds web site has more information about these
+<a class="reference external" href="https://reproducible-builds.org/docs/build-path/">prefix-map options</a>.</p>
+</div>
+<div class="section" id="generated-files-in-source-packages">
+<h2>Generated files in source packages<a class="headerlink" href="#generated-files-in-source-packages" title="Permalink to this headline">¶</a></h2>
+<p>The build processes for some programs under the <code class="docutils literal notranslate"><span class="pre">tools/</span></code>
+subdirectory do not completely support out-of-tree builds.  This may
+cause a later source package build using e.g. <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">rpm-pkg</span></code> to
+include generated files.  You should ensure the source tree is
+pristine by running <code class="docutils literal notranslate"><span class="pre">make</span> <span class="pre">mrproper</span></code> or <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">clean</span> <span class="pre">-d</span> <span class="pre">-f</span> <span class="pre">-x</span></code> before
+building a source package.</p>
+</div>
+<div class="section" id="module-signing">
+<h2>Module signing<a class="headerlink" href="#module-signing" title="Permalink to this headline">¶</a></h2>
+<p>If you enable <code class="docutils literal notranslate"><span class="pre">CONFIG_MODULE_SIG_ALL</span></code>, the default behaviour is to
+generate a different temporary key for each build, resulting in the
+modules being unreproducible.  However, including a signing key with
+your source would presumably defeat the purpose of signing modules.</p>
+<p>One approach to this is to divide up the build process so that the
+unreproducible parts can be treated as sources:</p>
+<ol class="arabic simple">
+<li>Generate a persistent signing key.  Add the certificate for the key
+to the kernel source.</li>
+<li>Set the <code class="docutils literal notranslate"><span class="pre">CONFIG_SYSTEM_TRUSTED_KEYS</span></code> symbol to include the
+signing key’s certificate, set <code class="docutils literal notranslate"><span class="pre">CONFIG_MODULE_SIG_KEY</span></code> to an
+empty string, and disable <code class="docutils literal notranslate"><span class="pre">CONFIG_MODULE_SIG_ALL</span></code>.
+Build the kernel and modules.</li>
+<li>Create detached signatures for the modules, and publish them as
+sources.</li>
+<li>Perform a second build that attaches the module signatures.  It
+can either rebuild the modules or use the output of step 2.</li>
+</ol>
+</div>
+<div class="section" id="structure-randomisation">
+<h2>Structure randomisation<a class="headerlink" href="#structure-randomisation" title="Permalink to this headline">¶</a></h2>
+<p>If you enable <code class="docutils literal notranslate"><span class="pre">CONFIG_GCC_PLUGIN_RANDSTRUCT</span></code>, you will need to
+pre-generate the random seed in
+<code class="docutils literal notranslate"><span class="pre">scripts/gcc-plugins/randomize_layout_seed.h</span></code> so the same value
+is used in rebuilds.</p>
+</div>
+<div class="section" id="debug-info-conflicts">
+<h2>Debug info conflicts<a class="headerlink" href="#debug-info-conflicts" title="Permalink to this headline">¶</a></h2>
+<p>This is not a problem of unreproducibility, but of generated files
+being <em>too</em> reproducible.</p>
+<p>Once you set all the necessary variables for a reproducible build, a
+vDSO’s debug information may be identical even for different kernel
+versions.  This can result in file conflicts between debug information
+packages for the different kernel versions.</p>
+<p>To avoid this, you can make the vDSO different for different
+kernel versions by including an arbitrary string of “salt” in it.
+This is specified by the Kconfig symbol <code class="docutils literal notranslate"><span class="pre">CONFIG_BUILD_SALT</span></code>.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="gcc-plugins.html" class="btn btn-neutral float-right" title="GCC plugin infrastructure" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="issues.html" class="btn btn-neutral float-left" title="Recursion issues" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

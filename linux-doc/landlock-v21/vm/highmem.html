@@ -1,0 +1,471 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>High Memory Handling &mdash; The Linux Kernel  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Heterogeneous Memory Management (HMM)" href="hmm.html" />
+    <link rel="prev" title="Frontswap" href="frontswap.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.9.0-rc8
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Linux Memory Management Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="index.html#user-guides-for-mm-features">User guides for MM features</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#kernel-developers-mm-documentation">Kernel developers MM documentation</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="active_mm.html">Active MM</a></li>
+<li class="toctree-l3"><a class="reference internal" href="balance.html">Memory Balancing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cleancache.html">Cleancache</a></li>
+<li class="toctree-l3"><a class="reference internal" href="free_page_reporting.html">Free Page Reporting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="frontswap.html">Frontswap</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">High Memory Handling</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#what-is-high-memory">What Is High Memory?</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#temporary-virtual-mappings">Temporary Virtual Mappings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#using-kmap-atomic">Using kmap_atomic</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cost-of-temporary-mappings">Cost of Temporary Mappings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#i386-pae">i386 PAE</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="hmm.html">Heterogeneous Memory Management (HMM)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hwpoison.html">hwpoison</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hugetlbfs_reserv.html">Hugetlbfs Reservation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ksm.html">Kernel Samepage Merging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="memory-model.html">Physical Memory Model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mmu_notifier.html">When do you need to notify inside page table lock ?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="numa.html">What is NUMA?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overcommit-accounting.html">Overcommit Accounting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="page_migration.html">Page migration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="page_frags.html">Page fragments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="page_owner.html">page owner: Tracking about who allocated each page</a></li>
+<li class="toctree-l3"><a class="reference internal" href="remap_file_pages.html">remap_file_pages() system call</a></li>
+<li class="toctree-l3"><a class="reference internal" href="slub.html">Short users guide for SLUB</a></li>
+<li class="toctree-l3"><a class="reference internal" href="split_page_table_lock.html">Split page table lock</a></li>
+<li class="toctree-l3"><a class="reference internal" href="transhuge.html">Transparent Hugepage Support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="unevictable-lru.html">Unevictable LRU Infrastructure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="z3fold.html">z3fold</a></li>
+<li class="toctree-l3"><a class="reference internal" href="zsmalloc.html">zsmalloc</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Linux Memory Management Documentation</a> &raquo;</li>
+        
+      <li>High Memory Handling</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/vm/highmem.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="high-memory-handling">
+<span id="highmem"></span><h1>High Memory Handling<a class="headerlink" href="#high-memory-handling" title="Permalink to this headline">¶</a></h1>
+<p>By: Peter Zijlstra &lt;<a class="reference external" href="mailto:a&#46;p&#46;zijlstra&#37;&#52;&#48;chello&#46;nl">a<span>&#46;</span>p<span>&#46;</span>zijlstra<span>&#64;</span>chello<span>&#46;</span>nl</a>&gt;</p>
+<div class="contents local topic" id="contents">
+<ul class="simple">
+<li><a class="reference internal" href="#what-is-high-memory" id="id1">What Is High Memory?</a></li>
+<li><a class="reference internal" href="#temporary-virtual-mappings" id="id2">Temporary Virtual Mappings</a></li>
+<li><a class="reference internal" href="#using-kmap-atomic" id="id3">Using kmap_atomic</a></li>
+<li><a class="reference internal" href="#cost-of-temporary-mappings" id="id4">Cost of Temporary Mappings</a></li>
+<li><a class="reference internal" href="#i386-pae" id="id5">i386 PAE</a></li>
+</ul>
+</div>
+<div class="section" id="what-is-high-memory">
+<h2><a class="toc-backref" href="#id1">What Is High Memory?</a><a class="headerlink" href="#what-is-high-memory" title="Permalink to this headline">¶</a></h2>
+<p>High memory (highmem) is used when the size of physical memory approaches or
+exceeds the maximum size of virtual memory.  At that point it becomes
+impossible for the kernel to keep all of the available physical memory mapped
+at all times.  This means the kernel needs to start using temporary mappings of
+the pieces of physical memory that it wants to access.</p>
+<p>The part of (physical) memory not covered by a permanent mapping is what we
+refer to as ‘highmem’.  There are various architecture dependent constraints on
+where exactly that border lies.</p>
+<p>In the i386 arch, for example, we choose to map the kernel into every process’s
+VM space so that we don’t have to pay the full TLB invalidation costs for
+kernel entry/exit.  This means the available virtual memory space (4GiB on
+i386) has to be divided between user and kernel space.</p>
+<p>The traditional split for architectures using this approach is 3:1, 3GiB for
+userspace and the top 1GiB for kernel space:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>+--------+ 0xffffffff
+| Kernel |
++--------+ 0xc0000000
+|        |
+| User   |
+|        |
++--------+ 0x00000000
+</pre></div>
+</div>
+<p>This means that the kernel can at most map 1GiB of physical memory at any one
+time, but because we need virtual address space for other things - including
+temporary maps to access the rest of the physical memory - the actual direct
+map will typically be less (usually around ~896MiB).</p>
+<p>Other architectures that have mm context tagged TLBs can have separate kernel
+and user maps.  Some hardware (like some ARMs), however, have limited virtual
+space when they use mm context tags.</p>
+</div>
+<div class="section" id="temporary-virtual-mappings">
+<h2><a class="toc-backref" href="#id2">Temporary Virtual Mappings</a><a class="headerlink" href="#temporary-virtual-mappings" title="Permalink to this headline">¶</a></h2>
+<p>The kernel contains several ways of creating temporary mappings:</p>
+<ul>
+<li><p class="first"><a class="reference internal" href="../core-api/mm-api.html#c.vmap" title="vmap"><code class="xref c c-func docutils literal notranslate"><span class="pre">vmap()</span></code></a>.  This can be used to make a long duration mapping of multiple
+physical pages into a contiguous virtual space.  It needs global
+synchronization to unmap.</p>
+</li>
+<li><p class="first">kmap().  This permits a short duration mapping of a single page.  It needs
+global synchronization, but is amortized somewhat.  It is also prone to
+deadlocks when using in a nested fashion, and so it is not recommended for
+new code.</p>
+</li>
+<li><p class="first">kmap_atomic().  This permits a very short duration mapping of a single
+page.  Since the mapping is restricted to the CPU that issued it, it
+performs well, but the issuing task is therefore required to stay on that
+CPU until it has finished, lest some other task displace its mappings.</p>
+<p>kmap_atomic() may also be used by interrupt contexts, since it is does not
+sleep and the caller may not sleep until after kunmap_atomic() is called.</p>
+<p>It may be assumed that k[un]map_atomic() won’t fail.</p>
+</li>
+</ul>
+</div>
+<div class="section" id="using-kmap-atomic">
+<h2><a class="toc-backref" href="#id3">Using kmap_atomic</a><a class="headerlink" href="#using-kmap-atomic" title="Permalink to this headline">¶</a></h2>
+<p>When and where to use kmap_atomic() is straightforward.  It is used when code
+wants to access the contents of a page that might be allocated from high memory
+(see __GFP_HIGHMEM), for example a page in the pagecache.  The API has two
+functions, and they can be used in a manner similar to the following:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>/* Find the page of interest. */
+struct page *page = find_get_page(mapping, offset);
+
+/* Gain access to the contents of that page. */
+void *vaddr = kmap_atomic(page);
+
+/* Do something to the contents of that page. */
+memset(vaddr, 0, PAGE_SIZE);
+
+/* Unmap that page. */
+kunmap_atomic(vaddr);
+</pre></div>
+</div>
+<p>Note that the kunmap_atomic() call takes the result of the kmap_atomic() call
+not the argument.</p>
+<p>If you need to map two pages because you want to copy from one page to
+another you need to keep the kmap_atomic calls strictly nested, like:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>vaddr1 = kmap_atomic(page1);
+vaddr2 = kmap_atomic(page2);
+
+memcpy(vaddr1, vaddr2, PAGE_SIZE);
+
+kunmap_atomic(vaddr2);
+kunmap_atomic(vaddr1);
+</pre></div>
+</div>
+</div>
+<div class="section" id="cost-of-temporary-mappings">
+<h2><a class="toc-backref" href="#id4">Cost of Temporary Mappings</a><a class="headerlink" href="#cost-of-temporary-mappings" title="Permalink to this headline">¶</a></h2>
+<p>The cost of creating temporary mappings can be quite high.  The arch has to
+manipulate the kernel’s page tables, the data TLB and/or the MMU’s registers.</p>
+<p>If CONFIG_HIGHMEM is not set, then the kernel will try and create a mapping
+simply with a bit of arithmetic that will convert the page struct address into
+a pointer to the page contents rather than juggling mappings about.  In such a
+case, the unmap operation may be a null operation.</p>
+<p>If CONFIG_MMU is not set, then there can be no temporary mappings and no
+highmem.  In such a case, the arithmetic approach will also be used.</p>
+</div>
+<div class="section" id="i386-pae">
+<h2><a class="toc-backref" href="#id5">i386 PAE</a><a class="headerlink" href="#i386-pae" title="Permalink to this headline">¶</a></h2>
+<p>The i386 arch, under some circumstances, will permit you to stick up to 64GiB
+of RAM into your 32-bit machine.  This has a number of consequences:</p>
+<ul class="simple">
+<li>Linux needs a page-frame structure for each page in the system and the
+pageframes need to live in the permanent mapping, which means:</li>
+<li>you can have 896M/sizeof(struct page) page-frames at most; with struct
+page being 32-bytes that would end up being something in the order of 112G
+worth of pages; the kernel, however, needs to store more than just
+page-frames in that memory…</li>
+<li>PAE makes your page tables larger - which slows the system down as more
+data has to be accessed to traverse in TLB fills and the like.  One
+advantage is that PAE has more PTE bits and can provide advanced features
+like NX and PAT.</li>
+</ul>
+<p>The general recommendation is that you don’t use more than 8GiB on a 32-bit
+machine - although more might work for you and your workload, you’re pretty
+much on your own - don’t expect kernel developers to really care much if things
+come apart.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="hmm.html" class="btn btn-neutral float-right" title="Heterogeneous Memory Management (HMM)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="frontswap.html" class="btn btn-neutral float-left" title="Frontswap" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

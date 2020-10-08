@@ -1,0 +1,718 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Runtime locking correctness validator &mdash; The Linux Kernel  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Lock Statistics" href="lockstat.html" />
+    <link rel="prev" title="Lock types and their rules" href="locktypes.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.9.0-rc8
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">locking</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="locktypes.html">Lock types and their rules</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Runtime locking correctness validator</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#lock-class">Lock-class</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#state">State</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#single-lock-state-rules">Single-lock state rules:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#multi-lock-dependency-rules">Multi-lock dependency rules:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#exception-nested-data-dependencies-leading-to-nested-locking">Exception: Nested data dependencies leading to nested locking</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#annotations">Annotations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#proof-of-100-correctness">Proof of 100% correctness:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#performance">Performance:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#troubleshooting">Troubleshooting:</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="lockstat.html">Lock Statistics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="locktorture.html">Kernel Lock Torture Test Operation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mutex-design.html">Generic Mutex Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rt-mutex-design.html">RT-mutex implementation design</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rt-mutex.html">RT-mutex subsystem with PI support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="seqlock.html">Sequence counters and sequential locks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinlocks.html">Locking lessons</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ww-mutex-design.html">Wound/Wait Deadlock-Proof Mutex Design</a></li>
+<li class="toctree-l2"><a class="reference internal" href="preempt-locking.html">Proper Locking Under a Preemptible Kernel: Keeping Kernel Code Preempt-Safe</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pi-futex.html">Lightweight PI-futexes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="futex-requeue-pi.html">Futex Requeue PI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hwspinlock.html">Hardware Spinlock Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="percpu-rw-semaphore.html">Percpu rw semaphores</a></li>
+<li class="toctree-l2"><a class="reference internal" href="robust-futexes.html">A description of what robust futexes are</a></li>
+<li class="toctree-l2"><a class="reference internal" href="robust-futex-ABI.html">The robust futex ABI</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">locking</a> &raquo;</li>
+        
+      <li>Runtime locking correctness validator</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/locking/lockdep-design.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="runtime-locking-correctness-validator">
+<h1>Runtime locking correctness validator<a class="headerlink" href="#runtime-locking-correctness-validator" title="Permalink to this headline">¶</a></h1>
+<p>started by Ingo Molnar &lt;<a class="reference external" href="mailto:mingo&#37;&#52;&#48;redhat&#46;com">mingo<span>&#64;</span>redhat<span>&#46;</span>com</a>&gt;</p>
+<p>additions by Arjan van de Ven &lt;<a class="reference external" href="mailto:arjan&#37;&#52;&#48;linux&#46;intel&#46;com">arjan<span>&#64;</span>linux<span>&#46;</span>intel<span>&#46;</span>com</a>&gt;</p>
+<div class="section" id="lock-class">
+<h2>Lock-class<a class="headerlink" href="#lock-class" title="Permalink to this headline">¶</a></h2>
+<p>The basic object the validator operates upon is a ‘class’ of locks.</p>
+<p>A class of locks is a group of locks that are logically the same with
+respect to locking rules, even if the locks may have multiple (possibly
+tens of thousands of) instantiations. For example a lock in the inode
+struct is one class, while each inode has its own instantiation of that
+lock class.</p>
+<p>The validator tracks the ‘usage state’ of lock-classes, and it tracks
+the dependencies between different lock-classes. Lock usage indicates
+how a lock is used with regard to its IRQ contexts, while lock
+dependency can be understood as lock order, where L1 -&gt; L2 suggests that
+a task is attempting to acquire L2 while holding L1. From lockdep’s
+perspective, the two locks (L1 and L2) are not necessarily related; that
+dependency just means the order ever happened. The validator maintains a
+continuing effort to prove lock usages and dependencies are correct or
+the validator will shoot a splat if incorrect.</p>
+<p>A lock-class’s behavior is constructed by its instances collectively:
+when the first instance of a lock-class is used after bootup the class
+gets registered, then all (subsequent) instances will be mapped to the
+class and hence their usages and dependecies will contribute to those of
+the class. A lock-class does not go away when a lock instance does, but
+it can be removed if the memory space of the lock class (static or
+dynamic) is reclaimed, this happens for example when a module is
+unloaded or a workqueue is destroyed.</p>
+</div>
+<div class="section" id="state">
+<h2>State<a class="headerlink" href="#state" title="Permalink to this headline">¶</a></h2>
+<p>The validator tracks lock-class usage history and divides the usage into
+(4 usages * n STATEs + 1) categories:</p>
+<p>where the 4 usages can be:
+- ‘ever held in STATE context’
+- ‘ever held as readlock in STATE context’
+- ‘ever held with STATE enabled’
+- ‘ever held as readlock with STATE enabled’</p>
+<p>where the n STATEs are coded in kernel/locking/lockdep_states.h and as of
+now they include:
+- hardirq
+- softirq</p>
+<p>where the last 1 category is:
+- ‘ever used’                                       [ == !unused        ]</p>
+<p>When locking rules are violated, these usage bits are presented in the
+locking error messages, inside curlies, with a total of 2 * n STATEs bits.
+A contrived example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>modprobe/2287 is trying to acquire lock:
+ (&amp;sio_locks[i].lock){-.-.}, at: [&lt;c02867fd&gt;] mutex_lock+0x21/0x24
+
+but task is already holding lock:
+ (&amp;sio_locks[i].lock){-.-.}, at: [&lt;c02867fd&gt;] mutex_lock+0x21/0x24
+</pre></div>
+</div>
+<p>For a given lock, the bit positions from left to right indicate the usage
+of the lock and readlock (if exists), for each of the n STATEs listed
+above respectively, and the character displayed at each bit position
+indicates:</p>
+<blockquote>
+<div><table border="1" class="docutils">
+<colgroup>
+<col width="6%" />
+<col width="94%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>‘.’</td>
+<td>acquired while irqs disabled and not in irq context</td>
+</tr>
+<tr class="row-even"><td>‘-‘</td>
+<td>acquired in irq context</td>
+</tr>
+<tr class="row-odd"><td>‘+’</td>
+<td>acquired with irqs enabled</td>
+</tr>
+<tr class="row-even"><td>‘?’</td>
+<td>acquired in irq context with irqs enabled.</td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>The bits are illustrated with an example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>(&amp;sio_locks[i].lock){-.-.}, at: [&lt;c02867fd&gt;] mutex_lock+0x21/0x24
+                     ||||
+                     ||| \-&gt; softirq disabled and not in softirq context
+                     || \--&gt; acquired in softirq context
+                     | \---&gt; hardirq disabled and not in hardirq context
+                      \----&gt; acquired in hardirq context
+</pre></div>
+</div>
+<p>For a given STATE, whether the lock is ever acquired in that STATE
+context and whether that STATE is enabled yields four possible cases as
+shown in the table below. The bit character is able to indicate which
+exact case is for the lock as of the reporting time.</p>
+<blockquote>
+<div><table border="1" class="docutils">
+<colgroup>
+<col width="34%" />
+<col width="32%" />
+<col width="34%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td>&#160;</td>
+<td>irq enabled</td>
+<td>irq disabled</td>
+</tr>
+<tr class="row-even"><td>ever in irq</td>
+<td>?</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-odd"><td>never in irq</td>
+<td><ul class="first last simple">
+<li></li>
+</ul>
+</td>
+<td>.</td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>The character ‘-‘ suggests irq is disabled because if otherwise the
+charactor ‘?’ would have been shown instead. Similar deduction can be
+applied for ‘+’ too.</p>
+<p>Unused locks (e.g., mutexes) cannot be part of the cause of an error.</p>
+</div>
+<div class="section" id="single-lock-state-rules">
+<h2>Single-lock state rules:<a class="headerlink" href="#single-lock-state-rules" title="Permalink to this headline">¶</a></h2>
+<p>A lock is irq-safe means it was ever used in an irq context, while a lock
+is irq-unsafe means it was ever acquired with irq enabled.</p>
+<p>A softirq-unsafe lock-class is automatically hardirq-unsafe as well. The
+following states must be exclusive: only one of them is allowed to be set
+for any lock-class based on its usage:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;hardirq-safe&gt; or &lt;hardirq-unsafe&gt;
+&lt;softirq-safe&gt; or &lt;softirq-unsafe&gt;
+</pre></div>
+</div>
+<p>This is because if a lock can be used in irq context (irq-safe) then it
+cannot be ever acquired with irq enabled (irq-unsafe). Otherwise, a
+deadlock may happen. For example, in the scenario that after this lock
+was acquired but before released, if the context is interrupted this
+lock will be attempted to acquire twice, which creates a deadlock,
+referred to as lock recursion deadlock.</p>
+<p>The validator detects and reports lock usage that violates these
+single-lock state rules.</p>
+</div>
+<div class="section" id="multi-lock-dependency-rules">
+<h2>Multi-lock dependency rules:<a class="headerlink" href="#multi-lock-dependency-rules" title="Permalink to this headline">¶</a></h2>
+<p>The same lock-class must not be acquired twice, because this could lead
+to lock recursion deadlocks.</p>
+<p>Furthermore, two locks can not be taken in inverse order:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;L1&gt; -&gt; &lt;L2&gt;
+&lt;L2&gt; -&gt; &lt;L1&gt;
+</pre></div>
+</div>
+<p>because this could lead to a deadlock - referred to as lock inversion
+deadlock - as attempts to acquire the two locks form a circle which
+could lead to the two contexts waiting for each other permanently. The
+validator will find such dependency circle in arbitrary complexity,
+i.e., there can be any other locking sequence between the acquire-lock
+operations; the validator will still find whether these locks can be
+acquired in a circular fashion.</p>
+<p>Furthermore, the following usage based lock dependencies are not allowed
+between any two lock-classes:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;hardirq-safe&gt;   -&gt;  &lt;hardirq-unsafe&gt;
+&lt;softirq-safe&gt;   -&gt;  &lt;softirq-unsafe&gt;
+</pre></div>
+</div>
+<p>The first rule comes from the fact that a hardirq-safe lock could be
+taken by a hardirq context, interrupting a hardirq-unsafe lock - and
+thus could result in a lock inversion deadlock. Likewise, a softirq-safe
+lock could be taken by an softirq context, interrupting a softirq-unsafe
+lock.</p>
+<p>The above rules are enforced for any locking sequence that occurs in the
+kernel: when acquiring a new lock, the validator checks whether there is
+any rule violation between the new lock and any of the held locks.</p>
+<p>When a lock-class changes its state, the following aspects of the above
+dependency rules are enforced:</p>
+<ul class="simple">
+<li>if a new hardirq-safe lock is discovered, we check whether it
+took any hardirq-unsafe lock in the past.</li>
+<li>if a new softirq-safe lock is discovered, we check whether it took
+any softirq-unsafe lock in the past.</li>
+<li>if a new hardirq-unsafe lock is discovered, we check whether any
+hardirq-safe lock took it in the past.</li>
+<li>if a new softirq-unsafe lock is discovered, we check whether any
+softirq-safe lock took it in the past.</li>
+</ul>
+<p>(Again, we do these checks too on the basis that an interrupt context
+could interrupt _any_ of the irq-unsafe or hardirq-unsafe locks, which
+could lead to a lock inversion deadlock - even if that lock scenario did
+not trigger in practice yet.)</p>
+</div>
+<div class="section" id="exception-nested-data-dependencies-leading-to-nested-locking">
+<h2>Exception: Nested data dependencies leading to nested locking<a class="headerlink" href="#exception-nested-data-dependencies-leading-to-nested-locking" title="Permalink to this headline">¶</a></h2>
+<p>There are a few cases where the Linux kernel acquires more than one
+instance of the same lock-class. Such cases typically happen when there
+is some sort of hierarchy within objects of the same type. In these
+cases there is an inherent “natural” ordering between the two objects
+(defined by the properties of the hierarchy), and the kernel grabs the
+locks in this fixed order on each of the objects.</p>
+<p>An example of such an object hierarchy that results in “nested locking”
+is that of a “whole disk” block-dev object and a “partition” block-dev
+object; the partition is “part of” the whole device and as long as one
+always takes the whole disk lock as a higher lock than the partition
+lock, the lock ordering is fully correct. The validator does not
+automatically detect this natural ordering, as the locking rule behind
+the ordering is not static.</p>
+<p>In order to teach the validator about this correct usage model, new
+versions of the various locking primitives were added that allow you to
+specify a “nesting level”. An example call, for the block device mutex,
+looks like this:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>enum bdev_bd_mutex_lock_class
+{
+     BD_MUTEX_NORMAL,
+     BD_MUTEX_WHOLE,
+     BD_MUTEX_PARTITION
+};
+</pre></div>
+</div>
+<p>mutex_lock_nested(&amp;bdev-&gt;bd_contains-&gt;bd_mutex, BD_MUTEX_PARTITION);</p>
+<p>In this case the locking is done on a bdev object that is known to be a
+partition.</p>
+<p>The validator treats a lock that is taken in such a nested fashion as a
+separate (sub)class for the purposes of validation.</p>
+<p>Note: When changing code to use the _nested() primitives, be careful and
+check really thoroughly that the hierarchy is correctly mapped; otherwise
+you can get false positives or false negatives.</p>
+</div>
+<div class="section" id="annotations">
+<h2>Annotations<a class="headerlink" href="#annotations" title="Permalink to this headline">¶</a></h2>
+<p>Two constructs can be used to annotate and check where and if certain locks
+must be held: lockdep_assert_held*(&amp;lock) and lockdep_*pin_lock(&amp;lock).</p>
+<p>As the name suggests, lockdep_assert_held* family of macros assert that a
+particular lock is held at a certain time (and generate a WARN() otherwise).
+This annotation is largely used all over the kernel, e.g. kernel/sched/
+core.c:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void update_rq_clock(struct rq *rq)
+{
+      s64 delta;
+
+      lockdep_assert_held(&amp;rq-&gt;lock);
+      [...]
+}
+</pre></div>
+</div>
+<p>where holding rq-&gt;lock is required to safely update a rq’s clock.</p>
+<p>The other family of macros is lockdep_*pin_lock(), which is admittedly only
+used for rq-&gt;lock ATM. Despite their limited adoption these annotations
+generate a WARN() if the lock of interest is “accidentally” unlocked. This turns
+out to be especially helpful to debug code with callbacks, where an upper
+layer assumes a lock remains taken, but a lower layer thinks it can maybe drop
+and reacquire the lock (“unwittingly” introducing races). lockdep_pin_lock()
+returns a ‘struct pin_cookie’ that is then used by lockdep_unpin_lock() to check
+that nobody tampered with the lock, e.g. kernel/sched/sched.h:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>static inline void rq_pin_lock(struct rq *rq, struct rq_flags *rf)
+{
+      rf-&gt;cookie = lockdep_pin_lock(&amp;rq-&gt;lock);
+      [...]
+}
+
+static inline void rq_unpin_lock(struct rq *rq, struct rq_flags *rf)
+{
+      [...]
+      lockdep_unpin_lock(&amp;rq-&gt;lock, rf-&gt;cookie);
+}
+</pre></div>
+</div>
+<p>While comments about locking requirements might provide useful information,
+the runtime checks performed by annotations are invaluable when debugging
+locking problems and they carry the same level of details when inspecting
+code.  Always prefer annotations when in doubt!</p>
+</div>
+<div class="section" id="proof-of-100-correctness">
+<h2>Proof of 100% correctness:<a class="headerlink" href="#proof-of-100-correctness" title="Permalink to this headline">¶</a></h2>
+<p>The validator achieves perfect, mathematical ‘closure’ (proof of locking
+correctness) in the sense that for every simple, standalone single-task
+locking sequence that occurred at least once during the lifetime of the
+kernel, the validator proves it with a 100% certainty that no
+combination and timing of these locking sequences can cause any class of
+lock related deadlock. <a class="footnote-reference" href="#id2" id="id1">[1]</a></p>
+<p>I.e. complex multi-CPU and multi-task locking scenarios do not have to
+occur in practice to prove a deadlock: only the simple ‘component’
+locking chains have to occur at least once (anytime, in any
+task/context) for the validator to be able to prove correctness. (For
+example, complex deadlocks that would normally need more than 3 CPUs and
+a very unlikely constellation of tasks, irq-contexts and timings to
+occur, can be detected on a plain, lightly loaded single-CPU system as
+well!)</p>
+<p>This radically decreases the complexity of locking related QA of the
+kernel: what has to be done during QA is to trigger as many “simple”
+single-task locking dependencies in the kernel as possible, at least
+once, to prove locking correctness - instead of having to trigger every
+possible combination of locking interaction between CPUs, combined with
+every possible hardirq and softirq nesting scenario (which is impossible
+to do in practice).</p>
+<table class="docutils footnote" frame="void" id="id2" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>assuming that the validator itself is 100% correct, and no other
+part of the system corrupts the state of the validator in any way.
+We also assume that all NMI/SMM paths [which could interrupt
+even hardirq-disabled codepaths] are correct and do not interfere
+with the validator. We also assume that the 64-bit ‘chain hash’
+value is unique for every lock-chain in the system. Also, lock
+recursion must not be higher than 20.</td></tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="performance">
+<h2>Performance:<a class="headerlink" href="#performance" title="Permalink to this headline">¶</a></h2>
+<p>The above rules require <strong>massive</strong> amounts of runtime checking. If we did
+that for every lock taken and for every irqs-enable event, it would
+render the system practically unusably slow. The complexity of checking
+is O(N^2), so even with just a few hundred lock-classes we’d have to do
+tens of thousands of checks for every event.</p>
+<p>This problem is solved by checking any given ‘locking scenario’ (unique
+sequence of locks taken after each other) only once. A simple stack of
+held locks is maintained, and a lightweight 64-bit hash value is
+calculated, which hash is unique for every lock chain. The hash value,
+when the chain is validated for the first time, is then put into a hash
+table, which hash-table can be checked in a lockfree manner. If the
+locking chain occurs again later on, the hash table tells us that we
+don’t have to validate the chain again.</p>
+</div>
+<div class="section" id="troubleshooting">
+<h2>Troubleshooting:<a class="headerlink" href="#troubleshooting" title="Permalink to this headline">¶</a></h2>
+<p>The validator tracks a maximum of MAX_LOCKDEP_KEYS number of lock classes.
+Exceeding this number will trigger the following lockdep warning:</p>
+<blockquote>
+<div>(DEBUG_LOCKS_WARN_ON(id &gt;= MAX_LOCKDEP_KEYS))</div></blockquote>
+<p>By default, MAX_LOCKDEP_KEYS is currently set to 8191, and typical
+desktop systems have less than 1,000 lock classes, so this warning
+normally results from lock-class leakage or failure to properly
+initialize locks.  These two problems are illustrated below:</p>
+<ol class="arabic">
+<li><p class="first">Repeated module loading and unloading while running the validator
+will result in lock-class leakage.  The issue here is that each
+load of the module will create a new set of lock classes for
+that module’s locks, but module unloading does not remove old
+classes (see below discussion of reuse of lock classes for why).
+Therefore, if that module is loaded and unloaded repeatedly,
+the number of lock classes will eventually reach the maximum.</p>
+</li>
+<li><p class="first">Using structures such as arrays that have large numbers of
+locks that are not explicitly initialized.  For example,
+a hash table with 8192 buckets where each bucket has its own
+spinlock_t will consume 8192 lock classes -unless- each spinlock
+is explicitly initialized at runtime, for example, using the
+run-time spin_lock_init() as opposed to compile-time initializers
+such as __SPIN_LOCK_UNLOCKED().  Failure to properly initialize
+the per-bucket spinlocks would guarantee lock-class overflow.
+In contrast, a loop that called spin_lock_init() on each lock
+would place all 8192 locks into a single lock class.</p>
+<p>The moral of this story is that you should always explicitly
+initialize your locks.</p>
+</li>
+</ol>
+<p>One might argue that the validator should be modified to allow
+lock classes to be reused.  However, if you are tempted to make this
+argument, first review the code and think through the changes that would
+be required, keeping in mind that the lock classes to be removed are
+likely to be linked into the lock-dependency graph.  This turns out to
+be harder to do than to say.</p>
+<p>Of course, if you do run out of lock classes, the next thing to do is
+to find the offending lock classes.  First, the following command gives
+you the number of lock classes currently in use along with the maximum:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>grep &quot;lock-classes&quot; /proc/lockdep_stats
+</pre></div>
+</div>
+<p>This command produces the following output on a modest system:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>lock-classes:                          748 [max: 8191]
+</pre></div>
+</div>
+<p>If the number allocated (748 above) increases continually over time,
+then there is likely a leak.  The following command can be used to
+identify the leaking lock classes:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>grep &quot;BD&quot; /proc/lockdep
+</pre></div>
+</div>
+<p>Run the command and save the output, then compare against the output from
+a later run of this command to identify the leakers.  This same output
+can also help you find situations where runtime lock initialization has
+been omitted.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="lockstat.html" class="btn btn-neutral float-right" title="Lock Statistics" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="locktypes.html" class="btn btn-neutral float-left" title="Lock types and their rules" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

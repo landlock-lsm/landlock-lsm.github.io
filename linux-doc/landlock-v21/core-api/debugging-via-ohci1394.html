@@ -1,0 +1,475 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Using physical DMA provided by OHCI-1394 FireWire controllers for debugging &mdash; The Linux Kernel  documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Reed-Solomon Library Programming Interface" href="librs.html" />
+    <link rel="prev" title="The Linux Kernel Tracepoint API" href="tracepoint.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.9.0-rc8
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Core API Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="index.html#core-utilities">Core utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#data-structures-and-low-level-utilities">Data structures and low-level utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#concurrency-primitives">Concurrency primitives</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#low-level-hardware-management">Low-level hardware management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#memory-management">Memory management</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#interfaces-for-kernel-debugging">Interfaces for kernel debugging</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="debug-objects.html">The object-lifetime debugging infrastructure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tracepoint.html">The Linux Kernel Tracepoint API</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Using physical DMA provided by OHCI-1394 FireWire controllers for debugging</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#drivers">Drivers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tools">Tools</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#getting-started">Getting Started</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#notes">Notes</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#everything-else">Everything else</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="index.html">Core API Documentation</a> &raquo;</li>
+        
+      <li>Using physical DMA provided by OHCI-1394 FireWire controllers for debugging</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/core-api/debugging-via-ohci1394.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="using-physical-dma-provided-by-ohci-1394-firewire-controllers-for-debugging">
+<h1>Using physical DMA provided by OHCI-1394 FireWire controllers for debugging<a class="headerlink" href="#using-physical-dma-provided-by-ohci-1394-firewire-controllers-for-debugging" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>Basically all FireWire controllers which are in use today are compliant
+to the OHCI-1394 specification which defines the controller to be a PCI
+bus master which uses DMA to offload data transfers from the CPU and has
+a “Physical Response Unit” which executes specific requests by employing
+PCI-Bus master DMA after applying filters defined by the OHCI-1394 driver.</p>
+<p>Once properly configured, remote machines can send these requests to
+ask the OHCI-1394 controller to perform read and write requests on
+physical system memory and, for read requests, send the result of
+the physical memory read back to the requester.</p>
+<p>With that, it is possible to debug issues by reading interesting memory
+locations such as buffers like the printk buffer or the process table.</p>
+<p>Retrieving a full system memory dump is also possible over the FireWire,
+using data transfer rates in the order of 10MB/s or more.</p>
+<p>With most FireWire controllers, memory access is limited to the low 4 GB
+of physical address space.  This can be a problem on IA64 machines where
+memory is located mostly above that limit, but it is rarely a problem on
+more common hardware such as x86, x86-64 and PowerPC.</p>
+<p>At least LSI FW643e and FW643e2 controllers are known to support access to
+physical addresses above 4 GB, but this feature is currently not enabled by
+Linux.</p>
+<p>Together with a early initialization of the OHCI-1394 controller for debugging,
+this facility proved most useful for examining long debugs logs in the printk
+buffer on to debug early boot problems in areas like ACPI where the system
+fails to boot and other means for debugging (serial port) are either not
+available (notebooks) or too slow for extensive debug information (like ACPI).</p>
+</div>
+<div class="section" id="drivers">
+<h2>Drivers<a class="headerlink" href="#drivers" title="Permalink to this headline">¶</a></h2>
+<p>The firewire-ohci driver in drivers/firewire uses filtered physical
+DMA by default, which is more secure but not suitable for remote debugging.
+Pass the remote_dma=1 parameter to the driver to get unfiltered physical DMA.</p>
+<p>Because the firewire-ohci driver depends on the PCI enumeration to be
+completed, an initialization routine which runs pretty early has been
+implemented for x86.  This routine runs long before console_init() can be
+called, i.e. before the printk buffer appears on the console.</p>
+<p>To activate it, enable CONFIG_PROVIDE_OHCI1394_DMA_INIT (Kernel hacking menu:
+Remote debugging over FireWire early on boot) and pass the parameter
+“ohci1394_dma=early” to the recompiled kernel on boot.</p>
+</div>
+<div class="section" id="tools">
+<h2>Tools<a class="headerlink" href="#tools" title="Permalink to this headline">¶</a></h2>
+<p>firescope - Originally developed by Benjamin Herrenschmidt, Andi Kleen ported
+it from PowerPC to x86 and x86_64 and added functionality, firescope can now
+be used to view the printk buffer of a remote machine, even with live update.</p>
+<p>Bernhard Kaindl enhanced firescope to support accessing 64-bit machines
+from 32-bit firescope and vice versa:
+- <a class="reference external" href="http://v3.sk/~lkundrak/firescope/">http://v3.sk/~lkundrak/firescope/</a></p>
+<p>and he implemented fast system dump (alpha version - read README.txt):
+- <a class="reference external" href="http://halobates.de/firewire/firedump-0.1.tar.bz2">http://halobates.de/firewire/firedump-0.1.tar.bz2</a></p>
+<p>There is also a gdb proxy for firewire which allows to use gdb to access
+data which can be referenced from symbols found by gdb in vmlinux:
+- <a class="reference external" href="http://halobates.de/firewire/fireproxy-0.33.tar.bz2">http://halobates.de/firewire/fireproxy-0.33.tar.bz2</a></p>
+<p>The latest version of this gdb proxy (fireproxy-0.34) can communicate (not
+yet stable) with kgdb over an memory-based communication module (kgdbom).</p>
+</div>
+<div class="section" id="getting-started">
+<h2>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
+<p>The OHCI-1394 specification regulates that the OHCI-1394 controller must
+disable all physical DMA on each bus reset.</p>
+<p>This means that if you want to debug an issue in a system state where
+interrupts are disabled and where no polling of the OHCI-1394 controller
+for bus resets takes place, you have to establish any FireWire cable
+connections and fully initialize all FireWire hardware __before__ the
+system enters such state.</p>
+<p>Step-by-step instructions for using firescope with early OHCI initialization:</p>
+<ol class="arabic">
+<li><p class="first">Verify that your hardware is supported:</p>
+<p>Load the firewire-ohci module and check your kernel logs.
+You should see a line similar to:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>firewire_ohci 0000:15:00.1: added OHCI v1.0 device as card 2, 4 IR + 4 IT
+... contexts, quirks 0x11
+</pre></div>
+</div>
+<p>when loading the driver. If you have no supported controller, many PCI,
+CardBus and even some Express cards which are fully compliant to OHCI-1394
+specification are available. If it requires no driver for Windows operating
+systems, it most likely is. Only specialized shops have cards which are not
+compliant, they are based on TI PCILynx chips and require drivers for Windows
+operating systems.</p>
+<p>The mentioned kernel log message contains the string “physUB” if the
+controller implements a writable Physical Upper Bound register.  This is
+required for physical DMA above 4 GB (but not utilized by Linux yet).</p>
+</li>
+<li><p class="first">Establish a working FireWire cable connection:</p>
+<p>Any FireWire cable, as long at it provides electrically and mechanically
+stable connection and has matching connectors (there are small 4-pin and
+large 6-pin FireWire ports) will do.</p>
+<p>If an driver is running on both machines you should see a line like:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>firewire_core 0000:15:00.1: created device fw1: GUID 00061b0020105917, S400
+</pre></div>
+</div>
+<p>on both machines in the kernel log when the cable is plugged in
+and connects the two machines.</p>
+</li>
+<li><p class="first">Test physical DMA using firescope:</p>
+<p>On the debug host, make sure that /dev/fw* is accessible,
+then start firescope:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>    $ firescope
+    Port 0 (/dev/fw1) opened, 2 nodes detected
+
+    FireScope
+    ---------
+    Target : &lt;unspecified&gt;
+    Gen    : 1
+    [Ctrl-T] choose target
+    [Ctrl-H] this menu
+    [Ctrl-Q] quit
+
+------&gt; Press Ctrl-T now, the output should be similar to:
+
+    2 nodes available, local node is: 0
+     0: ffc0, uuid: 00000000 00000000 [LOCAL]
+     1: ffc1, uuid: 00279000 ba4bb801
+</pre></div>
+</div>
+<p>Besides the [LOCAL] node, it must show another node without error message.</p>
+</li>
+<li><p class="first">Prepare for debugging with early OHCI-1394 initialization:</p>
+<p>4.1) Kernel compilation and installation on debug target</p>
+<p>Compile the kernel to be debugged with CONFIG_PROVIDE_OHCI1394_DMA_INIT
+(Kernel hacking: Provide code for enabling DMA over FireWire early on boot)
+enabled and install it on the machine to be debugged (debug target).</p>
+<p>4.2) Transfer the System.map of the debugged kernel to the debug host</p>
+<p>Copy the System.map of the kernel be debugged to the debug host (the host
+which is connected to the debugged machine over the FireWire cable).</p>
+</li>
+<li><p class="first">Retrieving the printk buffer contents:</p>
+<p>With the FireWire cable connected, the OHCI-1394 driver on the debugging
+host loaded, reboot the debugged machine, booting the kernel which has
+CONFIG_PROVIDE_OHCI1394_DMA_INIT enabled, with the option ohci1394_dma=early.</p>
+<p>Then, on the debugging host, run firescope, for example by using -A:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>firescope -A System.map-of-debug-target-kernel
+</pre></div>
+</div>
+<p>Note: -A automatically attaches to the first non-local node. It only works
+reliably if only connected two machines are connected using FireWire.</p>
+<p>After having attached to the debug target, press Ctrl-D to view the
+complete printk buffer or Ctrl-U to enter auto update mode and get an
+updated live view of recent kernel messages logged on the debug target.</p>
+<p>Call “firescope -h” to get more information on firescope’s options.</p>
+</li>
+</ol>
+</div>
+<div class="section" id="notes">
+<h2>Notes<a class="headerlink" href="#notes" title="Permalink to this headline">¶</a></h2>
+<p>Documentation and specifications: <a class="reference external" href="http://halobates.de/firewire/">http://halobates.de/firewire/</a></p>
+<p>FireWire is a trademark of Apple Inc. - for more information please refer to:
+<a class="reference external" href="https://en.wikipedia.org/wiki/FireWire">https://en.wikipedia.org/wiki/FireWire</a></p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="librs.html" class="btn btn-neutral float-right" title="Reed-Solomon Library Programming Interface" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="tracepoint.html" class="btn btn-neutral float-left" title="The Linux Kernel Tracepoint API" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
