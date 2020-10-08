@@ -17,8 +17,9 @@ process, including unprivileged ones, to securely restrict themselves.
 [PATCH v21] -- Landlock LSM
 ---------------------------
 
-`code`__ -- `sandbox manager example`__ -- `tests`__ -- `documentation`__
+`LKML`__ -- `code`__ -- `sandbox manager example`__ -- `tests`__ -- `documentation`__
 
+__ https://lore.kernel.org/lkml/20201008153103.1155388-1-mic@digikod.net/
 __ https://github.com/landlock-lsm/linux/commits/landlock-v21
 __ https://github.com/landlock-lsm/linux/blob/landlock-v21/samples/landlock/sandboxer.c
 __ https://github.com/landlock-lsm/linux/blob/landlock-v21/tools/testing/selftests/landlock/
