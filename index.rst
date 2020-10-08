@@ -17,7 +17,7 @@ process, including unprivileged ones, to securely restrict themselves.
 [PATCH v20] -- Landlock LSM
 ---------------------------
 
-`LKML`__ -- `code`__ -- `sandbox manager example`__ -- `ptrace tests`__ -- `documentation`__
+`LKML`__ -- `code`__ -- `sandbox manager example`__ -- `tests`__ -- `documentation`__
 
 __ https://lore.kernel.org/lkml/20200802215903.91936-1-mic@digikod.net/
 __ https://github.com/landlock-lsm/linux/commits/landlock-v20
@@ -29,7 +29,7 @@ __ linux-doc/landlock-v20/security/landlock/index.html
 [PATCH v19] -- Landlock LSM
 ---------------------------
 
-`LKML`__ -- `code`__ -- `sandbox manager example`__ -- `ptrace tests`__ -- `documentation`__
+`LKML`__ -- `code`__ -- `sandbox manager example`__ -- `tests`__ -- `documentation`__
 
 __ https://lore.kernel.org/lkml/20200707180955.53024-1-mic@digikod.net/
 __ https://github.com/landlock-lsm/linux/commits/landlock-v19
@@ -41,7 +41,7 @@ __ linux-doc/landlock-v19/security/landlock/index.html
 [PATCH v18] -- Landlock LSM
 ---------------------------
 
-`LKML`__ -- `code`__ -- `sandbox manager example`__ -- `ptrace tests`__ -- `documentation`__
+`LKML`__ -- `code`__ -- `sandbox manager example`__ -- `tests`__ -- `documentation`__
 
 __ https://lore.kernel.org/lkml/20200526205322.23465-1-mic@digikod.net/
 __ https://github.com/landlock-lsm/linux/commits/landlock-v18
@@ -53,7 +53,7 @@ __ linux-doc/landlock-v18/security/landlock/index.html
 [PATCH v17] -- Landlock LSM
 ---------------------------
 
-`LKML`__ -- `code`__ -- `sandbox manager example`__ -- `ptrace tests`__ -- `documentation`__
+`LKML`__ -- `code`__ -- `sandbox manager example`__ -- `tests`__ -- `documentation`__
 
 __ https://lore.kernel.org/lkml/20200511192156.1618284-1-mic@digikod.net/
 __ https://github.com/landlock-lsm/linux/commits/landlock-v17
@@ -65,7 +65,7 @@ __ linux-doc/landlock-v17/security/landlock/index.html
 [PATCH v16] -- Landlock LSM
 ---------------------------
 
-`LKML`__ -- `code`__ -- `sandbox manager example`__ -- `ptrace tests`__ -- `documentation`__
+`LKML`__ -- `code`__ -- `sandbox manager example`__ -- `tests`__ -- `documentation`__
 
 __ https://lore.kernel.org/lkml/20200416103955.145757-1-mic@digikod.net/
 __ https://github.com/landlock-lsm/linux/commits/landlock-v16
@@ -77,7 +77,7 @@ __ linux-doc/landlock-v16/security/landlock/index.html
 [PATCH v15] -- Landlock LSM
 ---------------------------
 
-`LKML`__ -- `code`__ -- `sandbox manager example`__ -- `ptrace tests`__ -- `documentation`__
+`LKML`__ -- `code`__ -- `sandbox manager example`__ -- `tests`__ -- `documentation`__
 
 __ https://lore.kernel.org/lkml/20200326202731.693608-1-mic@digikod.net/
 __ https://github.com/landlock-lsm/linux/commits/landlock-v15
@@ -89,7 +89,7 @@ __ linux-doc/landlock-v15/security/landlock/index.html
 [PATCH v14] -- Landlock LSM
 ---------------------------
 
-`LKML`__ -- `code`__ -- `sandbox manager example`__ -- `ptrace tests`__ -- `documentation`__
+`LKML`__ -- `code`__ -- `sandbox manager example`__ -- `tests`__ -- `documentation`__
 
 __ https://lore.kernel.org/lkml/20200224160215.4136-1-mic@digikod.net/
 __ https://github.com/landlock-lsm/linux/commits/landlock-v14
