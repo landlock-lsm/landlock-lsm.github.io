@@ -1,0 +1,420 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Scheduler Nice Design &mdash; The Linux Kernel 5.10.0-rc1+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Real-Time group scheduling" href="sched-rt-group.html" />
+    <link rel="prev" title="Energy Aware Scheduling" href="sched-energy.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.10.0-rc1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Linux Scheduler</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="completion.html">Completions - “wait for completion” barrier APIs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sched-arch.html">CPU Scheduler implementation hints for architecture specific code</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sched-bwc.html">CFS Bandwidth Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sched-deadline.html">Deadline Task Scheduling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sched-design-CFS.html">CFS Scheduler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sched-domains.html">Scheduler Domains</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sched-capacity.html">Capacity Aware Scheduling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sched-energy.html">Energy Aware Scheduling</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Scheduler Nice Design</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sched-rt-group.html">Real-Time group scheduling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sched-stats.html">Scheduler Statistics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="text_files.html">Scheduler pelt c program</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="index.html">Linux Scheduler</a> &raquo;</li>
+        
+      <li>Scheduler Nice Design</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/scheduler/sched-nice-design.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="scheduler-nice-design">
+<h1>Scheduler Nice Design<a class="headerlink" href="#scheduler-nice-design" title="Permalink to this headline">¶</a></h1>
+<p>This document explains the thinking about the revamped and streamlined
+nice-levels implementation in the new Linux scheduler.</p>
+<p>Nice levels were always pretty weak under Linux and people continuously
+pestered us to make nice +19 tasks use up much less CPU time.</p>
+<p>Unfortunately that was not that easy to implement under the old
+scheduler, (otherwise we’d have done it long ago) because nice level
+support was historically coupled to timeslice length, and timeslice
+units were driven by the HZ tick, so the smallest timeslice was 1/HZ.</p>
+<p>In the O(1) scheduler (in 2003) we changed negative nice levels to be
+much stronger than they were before in 2.4 (and people were happy about
+that change), and we also intentionally calibrated the linear timeslice
+rule so that nice +19 level would be _exactly_ 1 jiffy. To better
+understand it, the timeslice graph went like this (cheesy ASCII art
+alert!):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>                  A
+            \     | [timeslice length]
+             \    |
+              \   |
+               \  |
+                \ |
+                 \|___100msecs
+                  |^ . _
+                  |      ^ . _
+                  |            ^ . _
+-*----------------------------------*-----&gt; [nice level]
+-20               |                +19
+                  |
+                  |
+</pre></div>
+</div>
+<p>So that if someone wanted to really renice tasks, +19 would give a much
+bigger hit than the normal linear rule would do. (The solution of
+changing the ABI to extend priorities was discarded early on.)</p>
+<p>This approach worked to some degree for some time, but later on with
+HZ=1000 it caused 1 jiffy to be 1 msec, which meant 0.1% CPU usage which
+we felt to be a bit excessive. Excessive _not_ because it’s too small of
+a CPU utilization, but because it causes too frequent (once per
+millisec) rescheduling. (and would thus trash the cache, etc. Remember,
+this was long ago when hardware was weaker and caches were smaller, and
+people were running number crunching apps at nice +19.)</p>
+<p>So for HZ=1000 we changed nice +19 to 5msecs, because that felt like the
+right minimal granularity - and this translates to 5% CPU utilization.
+But the fundamental HZ-sensitive property for nice+19 still remained,
+and we never got a single complaint about nice +19 being too _weak_ in
+terms of CPU utilization, we only got complaints about it (still) being
+too _strong_ :-)</p>
+<p>To sum it up: we always wanted to make nice levels more consistent, but
+within the constraints of HZ and jiffies and their nasty design level
+coupling to timeslices and granularity it was not really viable.</p>
+<p>The second (less frequent but still periodically occurring) complaint
+about Linux’s nice level support was its assymetry around the origo
+(which you can see demonstrated in the picture above), or more
+accurately: the fact that nice level behavior depended on the _absolute_
+nice level as well, while the nice API itself is fundamentally
+“relative”:</p>
+<blockquote>
+<div><p>int nice(int inc);</p>
+<p>asmlinkage long sys_nice(int increment)</p>
+</div></blockquote>
+<p>(the first one is the glibc API, the second one is the syscall API.)
+Note that the ‘inc’ is relative to the current nice level. Tools like
+bash’s “nice” command mirror this relative API.</p>
+<p>With the old scheduler, if you for example started a niced task with +1
+and another task with +2, the CPU split between the two tasks would
+depend on the nice level of the parent shell - if it was at nice -10 the
+CPU split was different than if it was at +5 or +10.</p>
+<p>A third complaint against Linux’s nice level support was that negative
+nice levels were not ‘punchy enough’, so lots of people had to resort to
+run audio (and other multimedia) apps under RT priorities such as
+SCHED_FIFO. But this caused other problems: SCHED_FIFO is not starvation
+proof, and a buggy SCHED_FIFO app can also lock up the system for good.</p>
+<p>The new scheduler in v2.6.23 addresses all three types of complaints:</p>
+<p>To address the first complaint (of nice levels being not “punchy”
+enough), the scheduler was decoupled from ‘time slice’ and HZ concepts
+(and granularity was made a separate concept from nice levels) and thus
+it was possible to implement better and more consistent nice +19
+support: with the new scheduler nice +19 tasks get a HZ-independent
+1.5%, instead of the variable 3%-5%-9% range they got in the old
+scheduler.</p>
+<p>To address the second complaint (of nice levels not being consistent),
+the new scheduler makes nice(1) have the same CPU utilization effect on
+tasks, regardless of their absolute nice levels. So on the new
+scheduler, running a nice +10 and a nice 11 task has the same CPU
+utilization “split” between them as running a nice -5 and a nice -4
+task. (one will get 55% of the CPU, the other 45%.) That is why nice
+levels were changed to be “multiplicative” (or exponential) - that way
+it does not matter which nice level you start out from, the ‘relative
+result’ will always be the same.</p>
+<p>The third complaint (of negative nice levels not being “punchy” enough
+and forcing audio apps to run under the more dangerous SCHED_FIFO
+scheduling policy) is addressed by the new scheduler almost
+automatically: stronger negative nice levels are an automatic
+side-effect of the recalibrated dynamic range of nice levels.</p>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="sched-rt-group.html" class="btn btn-neutral float-right" title="Real-Time group scheduling" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="sched-energy.html" class="btn btn-neutral float-left" title="Energy Aware Scheduling" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

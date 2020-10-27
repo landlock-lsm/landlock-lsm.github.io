@@ -1,0 +1,1084 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Writing a MUSB Glue Layer &mdash; The Linux Kernel 5.10.0-rc1+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="USB Type-C connector class" href="typec.html" />
+    <link rel="prev" title="Synopsys DesignWare Core SuperSpeed USB 3.0 Controller" href="dwc3.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.10.0-rc1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">The Linux driver implementer’s API guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../driver-model/index.html">Driver Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../basics.html">Driver Basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../infrastructure.html">Device drivers infrastructure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ioctl.html">ioctl based interfaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../early-userspace/index.html">Early Userspace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pm/index.html">CPU and Device Power Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../clk.html">The Common Clk Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../device-io.html">Bus-Independent Device Accesses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dma-buf.html">Buffer Sharing and Synchronization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../device_link.html">Device links</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../component.html">Component Helper for Aggregate Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../message-based.html">Message-based devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../infiniband.html">InfiniBand and Remote DMA (RDMA) Interfaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../frame-buffer.html">Frame Buffer Library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../regulator.html">Voltage and current regulator API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../input.html">Input Subsystem</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">Linux USB API</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="usb.html">The Linux-USB Host Side API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gadget.html">USB Gadget API for Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="anchors.html">USB Anchors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bulk-streams.html">USB bulk streams</a></li>
+<li class="toctree-l3"><a class="reference internal" href="callbacks.html">USB core callbacks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dma.html">USB DMA</a></li>
+<li class="toctree-l3"><a class="reference internal" href="URB.html">USB Request Block (URB)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="power-management.html">Power Management for USB</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hotplug.html">USB hotplugging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="persist.html">USB device persistence during system suspend</a></li>
+<li class="toctree-l3"><a class="reference internal" href="error-codes.html">USB Error codes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="writing_usb_driver.html">Writing USB Device Drivers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dwc3.html">Synopsys DesignWare Core SuperSpeed USB 3.0 Controller</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Writing a MUSB Glue Layer</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#linux-musb-basics">Linux MUSB Basics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#handling-irqs">Handling IRQs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#device-platform-data">Device Platform Data</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#device-quirks">Device Quirks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#conclusion">Conclusion</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#acknowledgements">Acknowledgements</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#resources">Resources</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="typec.html">USB Type-C connector class</a></li>
+<li class="toctree-l3"><a class="reference internal" href="typec_bus.html">API for USB Type-C Alternate Mode drivers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="usb3-debug-port.html">USB3 debug port</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../firewire.html">Firewire (IEEE 1394) driver Interface Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pci/index.html">The Linux PCI driver implementer’s API guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../spi.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../i2c.html">I<sup>2</sup>C and SMBus Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ipmb.html">IPMB Driver for a Satellite MC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ipmi.html">The Linux IPMI Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../i3c/index.html">I3C subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../interconnect.html">Generic System Interconnect Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../devfreq.html">Device Frequency Scaling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../hsi.html">High Speed Synchronous Serial Interface (HSI)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../edac.html">Error Detection And Correction (EDAC) Devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../scsi.html">SCSI Interfaces Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../libata.html">libATA Developer’s Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../target.html">target and iSCSI Interfaces Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mailbox.html">The Common Mailbox Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mtdnand.html">MTD NAND Driver Programming Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../miscellaneous.html">Parallel Port Devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../miscellaneous.html#x50-uart-driver">16x50 UART Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../miscellaneous.html#pulse-width-modulation-pwm">Pulse-Width Modulation (PWM)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mei/index.html">Intel(R) Management Engine Interface (Intel(R) MEI)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mtd/index.html">Memory Technology Device (MTD)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mmc/index.html">MMC/SD/SDIO card support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../nvdimm/index.html">Non-Volatile Memory Device (NVDIMM)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../w1.html">W1: Dallas’ 1-wire bus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../rapidio/index.html">The Linux RapidIO Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../s390-drivers.html">Writing s390 channel device drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../vme.html">VME Device Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../80211/index.html">Linux 802.11 Driver Developer’s Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../uio-howto.html">The Userspace I/O HOWTO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../firmware/index.html">Linux Firmware API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pinctl.html">PINCTRL (PIN CONTROL) subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../gpio/index.html">General Purpose Input/Output (GPIO)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../md/index.html">RAID</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../media/index.html">Media subsystem kernel internal API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../misc_devices.html">Miscellaneous Devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../nfc/index.html">Near Field Communication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dmaengine/index.html">DMAEngine documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../slimbus.html">Linux kernel SLIMbus support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../soundwire/index.html">SoundWire Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../thermal/index.html">Thermal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga/index.html">FPGA Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../acpi/index.html">ACPI Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../backlight/lp855x-driver.html">Kernel driver lp855x</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../connector.html">Kernel Connector</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../console.html">Console Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dcdbas.html">Dell Systems Management Base Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../eisa.html">EISA bus support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../isa.html">ISA Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../isapnp.html">ISA Plug &amp; Play support by Jaroslav Kysela &lt;perex&#64;suse.cz&gt;</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../io-mapping.html">The io_mapping functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../io_ordering.html">Ordering I/O writes to memory-mapped addresses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../generic-counter.html">Generic Counter Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../lightnvm-pblk.html">pblk: Physical Block Device Target</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../memory-devices/index.html">Memory Controller drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../men-chameleon-bus.html">MEN Chameleon Bus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ntb.html">NTB Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../nvmem.html">NVMEM Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../parport-lowlevel.html">PARPORT interface documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pps.html">PPS - Pulse Per Second</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ptp.html">PTP hardware clock infrastructure for Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../phy/index.html">Generic PHY Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pti_intel_mid.html">Intel MID PTI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pwm.html">Pulse Width Modulation (PWM) interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pldmfw/index.html">PLDM Firmware Flash Update Library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pldmfw/index.html#overview-of-the-pldmfw-library">Overview of the <code class="docutils literal notranslate"><span class="pre">pldmfw</span></code> library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../rfkill.html">rfkill - RF kill switch support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../serial/index.html">Support for Serial devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sm501.html">SM501 Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../switchtec.html">Linux Switchtec Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sync_file.html">Sync File API Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../vfio-mediated-device.html">VFIO Mediated devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../vfio.html">VFIO - “Virtual Function I/O” </a></li>
+<li class="toctree-l2"><a class="reference internal" href="../xilinx/index.html">Xilinx FPGA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../xillybus.html">Xillybus driver for generic FPGA interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../zorro.html">Writing Device Drivers for Zorro Devices</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">The Linux driver implementer’s API guide</a> &raquo;</li>
+        
+          <li><a href="index.html">Linux USB API</a> &raquo;</li>
+        
+      <li>Writing a MUSB Glue Layer</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/driver-api/usb/writing_musb_glue_layer.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="writing-a-musb-glue-layer">
+<h1>Writing a MUSB Glue Layer<a class="headerlink" href="#writing-a-musb-glue-layer" title="Permalink to this headline">¶</a></h1>
+<dl class="field-list simple">
+<dt class="field-odd">Author</dt>
+<dd class="field-odd"><p>Apelete Seketeli</p>
+</dd>
+</dl>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>The Linux MUSB subsystem is part of the larger Linux USB subsystem. It
+provides support for embedded USB Device Controllers (UDC) that do not
+use Universal Host Controller Interface (UHCI) or Open Host Controller
+Interface (OHCI).</p>
+<p>Instead, these embedded UDC rely on the USB On-the-Go (OTG)
+specification which they implement at least partially. The silicon
+reference design used in most cases is the Multipoint USB Highspeed
+Dual-Role Controller (MUSB HDRC) found in the Mentor Graphics Inventra™
+design.</p>
+<p>As a self-taught exercise I have written an MUSB glue layer for the
+Ingenic JZ4740 SoC, modelled after the many MUSB glue layers in the
+kernel source tree. This layer can be found at
+<code class="docutils literal notranslate"><span class="pre">drivers/usb/musb/jz4740.c</span></code>. In this documentation I will walk through the
+basics of the <code class="docutils literal notranslate"><span class="pre">jz4740.c</span></code> glue layer, explaining the different pieces and
+what needs to be done in order to write your own device glue layer.</p>
+</div>
+<div class="section" id="linux-musb-basics">
+<span id="musb-basics"></span><h2>Linux MUSB Basics<a class="headerlink" href="#linux-musb-basics" title="Permalink to this headline">¶</a></h2>
+<p>To get started on the topic, please read USB On-the-Go Basics (see
+Resources) which provides an introduction of USB OTG operation at the
+hardware level. A couple of wiki pages by Texas Instruments and Analog
+Devices also provide an overview of the Linux kernel MUSB configuration,
+albeit focused on some specific devices provided by these companies.
+Finally, getting acquainted with the USB specification at USB home page
+may come in handy, with practical instance provided through the Writing
+USB Device Drivers documentation (again, see Resources).</p>
+<p>Linux USB stack is a layered architecture in which the MUSB controller
+hardware sits at the lowest. The MUSB controller driver abstract the
+MUSB controller hardware to the Linux USB stack:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>    ------------------------
+    |                      | &lt;------- drivers/usb/gadget
+    | Linux USB Core Stack | &lt;------- drivers/usb/host
+    |                      | &lt;------- drivers/usb/core
+    ------------------------
+               ⬍
+   --------------------------
+   |                        | &lt;------ drivers/usb/musb/musb_gadget.c
+   | MUSB Controller driver | &lt;------ drivers/usb/musb/musb_host.c
+   |                        | &lt;------ drivers/usb/musb/musb_core.c
+   --------------------------
+               ⬍
+---------------------------------
+| MUSB Platform Specific Driver |
+|                               | &lt;-- drivers/usb/musb/jz4740.c
+|       aka &quot;Glue Layer&quot;        |
+---------------------------------
+               ⬍
+---------------------------------
+|   MUSB Controller Hardware    |
+---------------------------------
+</pre></div>
+</div>
+<p>As outlined above, the glue layer is actually the platform specific code
+sitting in between the controller driver and the controller hardware.</p>
+<p>Just like a Linux USB driver needs to register itself with the Linux USB
+subsystem, the MUSB glue layer needs first to register itself with the
+MUSB controller driver. This will allow the controller driver to know
+about which device the glue layer supports and which functions to call
+when a supported device is detected or released; remember we are talking
+about an embedded controller chip here, so no insertion or removal at
+run-time.</p>
+<p>All of this information is passed to the MUSB controller driver through
+a <code class="xref c c-type docutils literal notranslate"><span class="pre">platform_driver</span></code> structure defined in the glue layer as:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>static struct platform_driver jz4740_driver = {
+    .probe      = jz4740_probe,
+    .remove     = jz4740_remove,
+    .driver     = {
+        .name   = &quot;musb-jz4740&quot;,
+    },
+};
+</pre></div>
+</div>
+<p>The probe and remove function pointers are called when a matching device
+is detected and, respectively, released. The name string describes the
+device supported by this glue layer. In the current case it matches a
+platform_device structure declared in <code class="docutils literal notranslate"><span class="pre">arch/mips/jz4740/platform.c</span></code>. Note
+that we are not using device tree bindings here.</p>
+<p>In order to register itself to the controller driver, the glue layer
+goes through a few steps, basically allocating the controller hardware
+resources and initialising a couple of circuits. To do so, it needs to
+keep track of the information used throughout these steps. This is done
+by defining a private <code class="docutils literal notranslate"><span class="pre">jz4740_glue</span></code> structure:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct jz4740_glue {
+    struct device           *dev;
+    struct platform_device  *musb;
+    struct clk      *clk;
+};
+</pre></div>
+</div>
+<p>The dev and musb members are both device structure variables. The first
+one holds generic information about the device, since it’s the basic
+device structure, and the latter holds information more closely related
+to the subsystem the device is registered to. The clk variable keeps
+information related to the device clock operation.</p>
+<p>Let’s go through the steps of the probe function that leads the glue
+layer to register itself to the controller driver.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>For the sake of readability each function will be split in logical
+parts, each part being shown as if it was independent from the others.</p>
+</div>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">static</span> <span class="kt">int</span> <span class="n">jz4740_probe</span><span class="p">(</span><span class="k">struct</span> <span class="nc">platform_device</span> <span class="o">*</span><span class="n">pdev</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="nc">platform_device</span>      <span class="o">*</span><span class="n">musb</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="nc">jz4740_glue</span>      <span class="o">*</span><span class="n">glue</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="nc">clk</span>                      <span class="o">*</span><span class="n">clk</span><span class="p">;</span>
+    <span class="kt">int</span>             <span class="n">ret</span><span class="p">;</span>
+
+<span class="hll">    <span class="n">glue</span> <span class="o">=</span> <span class="n">devm_kzalloc</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pdev</span><span class="o">-&gt;</span><span class="n">dev</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="n">glue</span><span class="p">),</span> <span class="n">GFP_KERNEL</span><span class="p">);</span>
+</span>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">glue</span><span class="p">)</span>
+        <span class="k">return</span> <span class="o">-</span><span class="n">ENOMEM</span><span class="p">;</span>
+
+<span class="hll">    <span class="n">musb</span> <span class="o">=</span> <span class="n">platform_device_alloc</span><span class="p">(</span><span class="s">&quot;musb-hdrc&quot;</span><span class="p">,</span> <span class="n">PLATFORM_DEVID_AUTO</span><span class="p">);</span>
+</span>    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">musb</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">dev_err</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pdev</span><span class="o">-&gt;</span><span class="n">dev</span><span class="p">,</span> <span class="s">&quot;failed to allocate musb device</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+        <span class="k">return</span> <span class="o">-</span><span class="n">ENOMEM</span><span class="p">;</span>
+    <span class="p">}</span>
+
+<span class="hll">    <span class="n">clk</span> <span class="o">=</span> <span class="n">devm_clk_get</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pdev</span><span class="o">-&gt;</span><span class="n">dev</span><span class="p">,</span> <span class="s">&quot;udc&quot;</span><span class="p">);</span>
+</span>    <span class="k">if</span> <span class="p">(</span><span class="n">IS_ERR</span><span class="p">(</span><span class="n">clk</span><span class="p">))</span> <span class="p">{</span>
+        <span class="n">dev_err</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pdev</span><span class="o">-&gt;</span><span class="n">dev</span><span class="p">,</span> <span class="s">&quot;failed to get clock</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="n">PTR_ERR</span><span class="p">(</span><span class="n">clk</span><span class="p">);</span>
+        <span class="k">goto</span> <span class="n">err_platform_device_put</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">ret</span> <span class="o">=</span> <span class="n">clk_prepare_enable</span><span class="p">(</span><span class="n">clk</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">ret</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">dev_err</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pdev</span><span class="o">-&gt;</span><span class="n">dev</span><span class="p">,</span> <span class="s">&quot;failed to enable clock</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+        <span class="k">goto</span> <span class="n">err_platform_device_put</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">musb</span><span class="o">-&gt;</span><span class="n">dev</span><span class="p">.</span><span class="n">parent</span>        <span class="o">=</span> <span class="o">&amp;</span><span class="n">pdev</span><span class="o">-&gt;</span><span class="n">dev</span><span class="p">;</span>
+
+    <span class="n">glue</span><span class="o">-&gt;</span><span class="n">dev</span>           <span class="o">=</span> <span class="o">&amp;</span><span class="n">pdev</span><span class="o">-&gt;</span><span class="n">dev</span><span class="p">;</span>
+    <span class="n">glue</span><span class="o">-&gt;</span><span class="n">musb</span>          <span class="o">=</span> <span class="n">musb</span><span class="p">;</span>
+    <span class="n">glue</span><span class="o">-&gt;</span><span class="n">clk</span>           <span class="o">=</span> <span class="n">clk</span><span class="p">;</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+
+<span class="nl">err_platform_device_put</span><span class="p">:</span>
+    <span class="n">platform_device_put</span><span class="p">(</span><span class="n">musb</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">ret</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The first few lines of the probe function allocate and assign the glue,
+musb and clk variables. The <code class="docutils literal notranslate"><span class="pre">GFP_KERNEL</span></code> flag (line 8) allows the
+allocation process to sleep and wait for memory, thus being usable in a
+locking situation. The <code class="docutils literal notranslate"><span class="pre">PLATFORM_DEVID_AUTO</span></code> flag (line 12) allows
+automatic allocation and management of device IDs in order to avoid
+device namespace collisions with explicit IDs. With <a class="reference internal" href="../../core-api/kernel-api.html#c.devm_clk_get" title="devm_clk_get"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_clk_get()</span></code></a>
+(line 18) the glue layer allocates the clock – the <code class="docutils literal notranslate"><span class="pre">devm_</span></code> prefix
+indicates that <a class="reference internal" href="../../core-api/kernel-api.html#c.clk_get" title="clk_get"><code class="xref c c-func docutils literal notranslate"><span class="pre">clk_get()</span></code></a> is managed: it automatically frees the
+allocated clock resource data when the device is released – and enable
+it.</p>
+<p>Then comes the registration steps:</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">static</span> <span class="kt">int</span> <span class="n">jz4740_probe</span><span class="p">(</span><span class="k">struct</span> <span class="nc">platform_device</span> <span class="o">*</span><span class="n">pdev</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="hll">    <span class="k">struct</span> <span class="nc">musb_hdrc_platform_data</span>  <span class="o">*</span><span class="n">pdata</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">jz4740_musb_platform_data</span><span class="p">;</span>
+</span>
+<span class="hll">    <span class="n">pdata</span><span class="o">-&gt;</span><span class="n">platform_ops</span>     <span class="o">=</span> <span class="o">&amp;</span><span class="n">jz4740_musb_ops</span><span class="p">;</span>
+</span>
+<span class="hll">    <span class="n">platform_set_drvdata</span><span class="p">(</span><span class="n">pdev</span><span class="p">,</span> <span class="n">glue</span><span class="p">);</span>
+</span>
+<span class="hll">    <span class="n">ret</span> <span class="o">=</span> <span class="n">platform_device_add_resources</span><span class="p">(</span><span class="n">musb</span><span class="p">,</span> <span class="n">pdev</span><span class="o">-&gt;</span><span class="n">resource</span><span class="p">,</span>
+</span>                        <span class="n">pdev</span><span class="o">-&gt;</span><span class="n">num_resources</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">ret</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">dev_err</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pdev</span><span class="o">-&gt;</span><span class="n">dev</span><span class="p">,</span> <span class="s">&quot;failed to add resources</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+        <span class="k">goto</span> <span class="n">err_clk_disable</span><span class="p">;</span>
+    <span class="p">}</span>
+
+<span class="hll">    <span class="n">ret</span> <span class="o">=</span> <span class="n">platform_device_add_data</span><span class="p">(</span><span class="n">musb</span><span class="p">,</span> <span class="n">pdata</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="o">*</span><span class="n">pdata</span><span class="p">));</span>
+</span>    <span class="k">if</span> <span class="p">(</span><span class="n">ret</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">dev_err</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pdev</span><span class="o">-&gt;</span><span class="n">dev</span><span class="p">,</span> <span class="s">&quot;failed to add platform_data</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+        <span class="k">goto</span> <span class="n">err_clk_disable</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+
+<span class="nl">err_clk_disable</span><span class="p">:</span>
+    <span class="n">clk_disable_unprepare</span><span class="p">(</span><span class="n">clk</span><span class="p">);</span>
+<span class="nl">err_platform_device_put</span><span class="p">:</span>
+    <span class="n">platform_device_put</span><span class="p">(</span><span class="n">musb</span><span class="p">);</span>
+    <span class="k">return</span> <span class="n">ret</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The first step is to pass the device data privately held by the glue
+layer on to the controller driver through <code class="xref c c-func docutils literal notranslate"><span class="pre">platform_set_drvdata()</span></code>
+(line 7). Next is passing on the device resources information, also privately
+held at that point, through <a class="reference internal" href="../infrastructure.html#c.platform_device_add_resources" title="platform_device_add_resources"><code class="xref c c-func docutils literal notranslate"><span class="pre">platform_device_add_resources()</span></code></a> (line 9).</p>
+<p>Finally comes passing on the platform specific data to the controller
+driver (line 16). Platform data will be discussed in
+<a class="reference internal" href="#musb-dev-platform-data"><span class="std std-ref">Device Platform Data</span></a>, but here we are looking at the
+<code class="docutils literal notranslate"><span class="pre">platform_ops</span></code> function pointer (line 5) in <code class="docutils literal notranslate"><span class="pre">musb_hdrc_platform_data</span></code>
+structure (line 3). This function pointer allows the MUSB controller
+driver to know which function to call for device operation:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>static const struct musb_platform_ops jz4740_musb_ops = {
+    .init       = jz4740_musb_init,
+    .exit       = jz4740_musb_exit,
+};
+</pre></div>
+</div>
+<p>Here we have the minimal case where only init and exit functions are
+called by the controller driver when needed. Fact is the JZ4740 MUSB
+controller is a basic controller, lacking some features found in other
+controllers, otherwise we may also have pointers to a few other
+functions like a power management function or a function to switch
+between OTG and non-OTG modes, for instance.</p>
+<p>At that point of the registration process, the controller driver
+actually calls the init function:</p>
+<blockquote>
+<div><div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">static</span> <span class="kt">int</span> <span class="n">jz4740_musb_init</span><span class="p">(</span><span class="k">struct</span> <span class="nc">musb</span> <span class="o">*</span><span class="n">musb</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">musb</span><span class="o">-&gt;</span><span class="n">xceiv</span> <span class="o">=</span> <span class="n">usb_get_phy</span><span class="p">(</span><span class="n">USB_PHY_TYPE_USB2</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">musb</span><span class="o">-&gt;</span><span class="n">xceiv</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">pr_err</span><span class="p">(</span><span class="s">&quot;HS UDC: no transceiver configured</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+        <span class="k">return</span> <span class="o">-</span><span class="n">ENODEV</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="cm">/* Silicon does not implement ConfigData register.</span>
+<span class="cm">     * Set dyn_fifo to avoid reading EP config from hardware.</span>
+<span class="cm">     */</span>
+<span class="hll">    <span class="n">musb</span><span class="o">-&gt;</span><span class="n">dyn_fifo</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+</span>
+<span class="hll">    <span class="n">musb</span><span class="o">-&gt;</span><span class="n">isr</span> <span class="o">=</span> <span class="n">jz4740_musb_interrupt</span><span class="p">;</span>
+</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>The goal of <code class="docutils literal notranslate"><span class="pre">jz4740_musb_init()</span></code> is to get hold of the transceiver
+driver data of the MUSB controller hardware and pass it on to the MUSB
+controller driver, as usual. The transceiver is the circuitry inside the
+controller hardware responsible for sending/receiving the USB data.
+Since it is an implementation of the physical layer of the OSI model,
+the transceiver is also referred to as PHY.</p>
+<p>Getting hold of the <code class="docutils literal notranslate"><span class="pre">MUSB</span> <span class="pre">PHY</span></code> driver data is done with <code class="docutils literal notranslate"><span class="pre">usb_get_phy()</span></code>
+which returns a pointer to the structure containing the driver instance
+data. The next couple of instructions (line 12 and 14) are used as a
+quirk and to setup IRQ handling respectively. Quirks and IRQ handling
+will be discussed later in <a class="reference internal" href="#musb-dev-quirks"><span class="std std-ref">Device Quirks</span></a> and
+<a class="reference internal" href="#musb-handling-irqs"><span class="std std-ref">Handling IRQs</span></a></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>static int jz4740_musb_exit(struct musb *musb)
+{
+    usb_put_phy(musb-&gt;xceiv);
+
+    return 0;
+}
+</pre></div>
+</div>
+<p>Acting as the counterpart of init, the exit function releases the MUSB
+PHY driver when the controller hardware itself is about to be released.</p>
+<p>Again, note that init and exit are fairly simple in this case due to the
+basic set of features of the JZ4740 controller hardware. When writing an
+musb glue layer for a more complex controller hardware, you might need
+to take care of more processing in those two functions.</p>
+<p>Returning from the init function, the MUSB controller driver jumps back
+into the probe function:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>static int jz4740_probe(struct platform_device *pdev)
+{
+    ret = platform_device_add(musb);
+    if (ret) {
+        dev_err(&amp;pdev-&gt;dev, &quot;failed to register musb device\n&quot;);
+        goto err_clk_disable;
+    }
+
+    return 0;
+
+err_clk_disable:
+    clk_disable_unprepare(clk);
+err_platform_device_put:
+    platform_device_put(musb);
+    return ret;
+}
+</pre></div>
+</div>
+<p>This is the last part of the device registration process where the glue
+layer adds the controller hardware device to Linux kernel device
+hierarchy: at this stage, all known information about the device is
+passed on to the Linux USB core stack:</p>
+<blockquote>
+<div><div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">static</span> <span class="kt">int</span> <span class="n">jz4740_remove</span><span class="p">(</span><span class="k">struct</span> <span class="nc">platform_device</span> <span class="o">*</span><span class="n">pdev</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">struct</span> <span class="nc">jz4740_glue</span>  <span class="o">*</span><span class="n">glue</span> <span class="o">=</span> <span class="n">platform_get_drvdata</span><span class="p">(</span><span class="n">pdev</span><span class="p">);</span>
+
+<span class="hll">    <span class="n">platform_device_unregister</span><span class="p">(</span><span class="n">glue</span><span class="o">-&gt;</span><span class="n">musb</span><span class="p">);</span>
+</span><span class="hll">    <span class="n">clk_disable_unprepare</span><span class="p">(</span><span class="n">glue</span><span class="o">-&gt;</span><span class="n">clk</span><span class="p">);</span>
+</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>Acting as the counterpart of probe, the remove function unregister the
+MUSB controller hardware (line 5) and disable the clock (line 6),
+allowing it to be gated.</p>
+</div>
+<div class="section" id="handling-irqs">
+<span id="musb-handling-irqs"></span><h2>Handling IRQs<a class="headerlink" href="#handling-irqs" title="Permalink to this headline">¶</a></h2>
+<p>Additionally to the MUSB controller hardware basic setup and
+registration, the glue layer is also responsible for handling the IRQs:</p>
+<blockquote>
+<div><div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">static</span> <span class="n">irqreturn_t</span> <span class="n">jz4740_musb_interrupt</span><span class="p">(</span><span class="kt">int</span> <span class="n">irq</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">__hci</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">unsigned</span> <span class="kt">long</span>   <span class="n">flags</span><span class="p">;</span>
+    <span class="n">irqreturn_t</span>     <span class="n">retval</span> <span class="o">=</span> <span class="n">IRQ_NONE</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="nc">musb</span>     <span class="o">*</span><span class="n">musb</span> <span class="o">=</span> <span class="n">__hci</span><span class="p">;</span>
+
+<span class="hll">    <span class="n">spin_lock_irqsave</span><span class="p">(</span><span class="o">&amp;</span><span class="n">musb</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">,</span> <span class="n">flags</span><span class="p">);</span>
+</span>
+<span class="hll">    <span class="n">musb</span><span class="o">-&gt;</span><span class="n">int_usb</span> <span class="o">=</span> <span class="n">musb_readb</span><span class="p">(</span><span class="n">musb</span><span class="o">-&gt;</span><span class="n">mregs</span><span class="p">,</span> <span class="n">MUSB_INTRUSB</span><span class="p">);</span>
+</span><span class="hll">    <span class="n">musb</span><span class="o">-&gt;</span><span class="n">int_tx</span> <span class="o">=</span> <span class="n">musb_readw</span><span class="p">(</span><span class="n">musb</span><span class="o">-&gt;</span><span class="n">mregs</span><span class="p">,</span> <span class="n">MUSB_INTRTX</span><span class="p">);</span>
+</span><span class="hll">    <span class="n">musb</span><span class="o">-&gt;</span><span class="n">int_rx</span> <span class="o">=</span> <span class="n">musb_readw</span><span class="p">(</span><span class="n">musb</span><span class="o">-&gt;</span><span class="n">mregs</span><span class="p">,</span> <span class="n">MUSB_INTRRX</span><span class="p">);</span>
+</span>
+    <span class="cm">/*</span>
+<span class="hll"><span class="cm">     * The controller is gadget only, the state of the host mode IRQ bits is</span>
+</span><span class="cm">     * undefined. Mask them to make sure that the musb driver core will</span>
+<span class="cm">     * never see them set</span>
+<span class="cm">     */</span>
+    <span class="n">musb</span><span class="o">-&gt;</span><span class="n">int_usb</span> <span class="o">&amp;=</span> <span class="n">MUSB_INTR_SUSPEND</span> <span class="o">|</span> <span class="n">MUSB_INTR_RESUME</span> <span class="o">|</span>
+        <span class="n">MUSB_INTR_RESET</span> <span class="o">|</span> <span class="n">MUSB_INTR_SOF</span><span class="p">;</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">musb</span><span class="o">-&gt;</span><span class="n">int_usb</span> <span class="o">||</span> <span class="n">musb</span><span class="o">-&gt;</span><span class="n">int_tx</span> <span class="o">||</span> <span class="n">musb</span><span class="o">-&gt;</span><span class="n">int_rx</span><span class="p">)</span>
+        <span class="n">retval</span> <span class="o">=</span> <span class="n">musb_interrupt</span><span class="p">(</span><span class="n">musb</span><span class="p">);</span>
+
+<span class="hll">    <span class="n">spin_unlock_irqrestore</span><span class="p">(</span><span class="o">&amp;</span><span class="n">musb</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">,</span> <span class="n">flags</span><span class="p">);</span>
+</span>
+    <span class="k">return</span> <span class="n">retval</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>Here the glue layer mostly has to read the relevant hardware registers
+and pass their values on to the controller driver which will handle the
+actual event that triggered the IRQ.</p>
+<p>The interrupt handler critical section is protected by the
+<code class="xref c c-func docutils literal notranslate"><span class="pre">spin_lock_irqsave()</span></code> and counterpart <code class="xref c c-func docutils literal notranslate"><span class="pre">spin_unlock_irqrestore()</span></code>
+functions (line 7 and 24 respectively), which prevent the interrupt
+handler code to be run by two different threads at the same time.</p>
+<p>Then the relevant interrupt registers are read (line 9 to 11):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">MUSB_INTRUSB</span></code>: indicates which USB interrupts are currently active,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">MUSB_INTRTX</span></code>: indicates which of the interrupts for TX endpoints are
+currently active,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">MUSB_INTRRX</span></code>: indicates which of the interrupts for TX endpoints are
+currently active.</p></li>
+</ul>
+<p>Note that <code class="xref c c-func docutils literal notranslate"><span class="pre">musb_readb()</span></code> is used to read 8-bit registers at most, while
+<code class="xref c c-func docutils literal notranslate"><span class="pre">musb_readw()</span></code> allows us to read at most 16-bit registers. There are
+other functions that can be used depending on the size of your device
+registers. See <code class="docutils literal notranslate"><span class="pre">musb_io.h</span></code> for more information.</p>
+<p>Instruction on line 18 is another quirk specific to the JZ4740 USB
+device controller, which will be discussed later in <a class="reference internal" href="#musb-dev-quirks"><span class="std std-ref">Device Quirks</span></a>.</p>
+<p>The glue layer still needs to register the IRQ handler though. Remember
+the instruction on line 14 of the init function:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>static int jz4740_musb_init(struct musb *musb)
+{
+    musb-&gt;isr = jz4740_musb_interrupt;
+
+    return 0;
+}
+</pre></div>
+</div>
+<p>This instruction sets a pointer to the glue layer IRQ handler function,
+in order for the controller hardware to call the handler back when an
+IRQ comes from the controller hardware. The interrupt handler is now
+implemented and registered.</p>
+</div>
+<div class="section" id="device-platform-data">
+<span id="musb-dev-platform-data"></span><h2>Device Platform Data<a class="headerlink" href="#device-platform-data" title="Permalink to this headline">¶</a></h2>
+<p>In order to write an MUSB glue layer, you need to have some data
+describing the hardware capabilities of your controller hardware, which
+is called the platform data.</p>
+<p>Platform data is specific to your hardware, though it may cover a broad
+range of devices, and is generally found somewhere in the <code class="docutils literal notranslate"><span class="pre">arch/</span></code>
+directory, depending on your device architecture.</p>
+<p>For instance, platform data for the JZ4740 SoC is found in
+<code class="docutils literal notranslate"><span class="pre">arch/mips/jz4740/platform.c</span></code>. In the <code class="docutils literal notranslate"><span class="pre">platform.c</span></code> file each device of the
+JZ4740 SoC is described through a set of structures.</p>
+<p>Here is the part of <code class="docutils literal notranslate"><span class="pre">arch/mips/jz4740/platform.c</span></code> that covers the USB
+Device Controller (UDC):</p>
+<blockquote>
+<div><div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="cm">/* USB Device Controller */</span>
+<span class="hll"><span class="k">struct</span> <span class="nc">platform_device</span> <span class="n">jz4740_udc_xceiv_device</span> <span class="o">=</span> <span class="p">{</span>
+</span>    <span class="p">.</span><span class="n">name</span> <span class="o">=</span> <span class="s">&quot;usb_phy_gen_xceiv&quot;</span><span class="p">,</span>
+    <span class="p">.</span><span class="n">id</span>   <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+<span class="p">};</span>
+
+<span class="hll"><span class="k">static</span> <span class="k">struct</span> <span class="nc">resource</span> <span class="n">jz4740_udc_resources</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span>
+</span>    <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="p">.</span><span class="n">start</span> <span class="o">=</span> <span class="n">JZ4740_UDC_BASE_ADDR</span><span class="p">,</span>
+        <span class="p">.</span><span class="n">end</span>   <span class="o">=</span> <span class="n">JZ4740_UDC_BASE_ADDR</span> <span class="o">+</span> <span class="mh">0x10000</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="p">.</span><span class="n">flags</span> <span class="o">=</span> <span class="n">IORESOURCE_MEM</span><span class="p">,</span>
+    <span class="p">},</span>
+    <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+<span class="hll">        <span class="p">.</span><span class="n">start</span> <span class="o">=</span> <span class="n">JZ4740_IRQ_UDC</span><span class="p">,</span>
+</span><span class="hll">        <span class="p">.</span><span class="n">end</span>   <span class="o">=</span> <span class="n">JZ4740_IRQ_UDC</span><span class="p">,</span>
+</span><span class="hll">        <span class="p">.</span><span class="n">flags</span> <span class="o">=</span> <span class="n">IORESOURCE_IRQ</span><span class="p">,</span>
+</span><span class="hll">        <span class="p">.</span><span class="n">name</span>  <span class="o">=</span> <span class="s">&quot;mc&quot;</span><span class="p">,</span>
+</span>    <span class="p">},</span>
+<span class="p">};</span>
+
+<span class="hll"><span class="k">struct</span> <span class="nc">platform_device</span> <span class="n">jz4740_udc_device</span> <span class="o">=</span> <span class="p">{</span>
+</span><span class="hll">    <span class="p">.</span><span class="n">name</span> <span class="o">=</span> <span class="s">&quot;musb-jz4740&quot;</span><span class="p">,</span>
+</span>    <span class="p">.</span><span class="n">id</span>   <span class="o">=</span> <span class="mi">-1</span><span class="p">,</span>
+    <span class="p">.</span><span class="n">dev</span>  <span class="o">=</span> <span class="p">{</span>
+<span class="hll">        <span class="p">.</span><span class="n">dma_mask</span>          <span class="o">=</span> <span class="o">&amp;</span><span class="n">jz4740_udc_device</span><span class="p">.</span><span class="n">dev</span><span class="p">.</span><span class="n">coherent_dma_mask</span><span class="p">,</span>
+</span><span class="hll">        <span class="p">.</span><span class="n">coherent_dma_mask</span> <span class="o">=</span> <span class="n">DMA_BIT_MASK</span><span class="p">(</span><span class="mi">32</span><span class="p">),</span>
+</span>    <span class="p">},</span>
+<span class="hll">    <span class="p">.</span><span class="n">num_resources</span> <span class="o">=</span> <span class="n">ARRAY_SIZE</span><span class="p">(</span><span class="n">jz4740_udc_resources</span><span class="p">),</span>
+</span><span class="hll">    <span class="p">.</span><span class="n">resource</span>      <span class="o">=</span> <span class="n">jz4740_udc_resources</span><span class="p">,</span>
+</span><span class="p">};</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>The <code class="docutils literal notranslate"><span class="pre">jz4740_udc_xceiv_device</span></code> platform device structure (line 2)
+describes the UDC transceiver with a name and id number.</p>
+<p>At the time of this writing, note that <code class="docutils literal notranslate"><span class="pre">usb_phy_gen_xceiv</span></code> is the
+specific name to be used for all transceivers that are either built-in
+with reference USB IP or autonomous and doesn’t require any PHY
+programming. You will need to set <code class="docutils literal notranslate"><span class="pre">CONFIG_NOP_USB_XCEIV=y</span></code> in the
+kernel configuration to make use of the corresponding transceiver
+driver. The id field could be set to -1 (equivalent to
+<code class="docutils literal notranslate"><span class="pre">PLATFORM_DEVID_NONE</span></code>), -2 (equivalent to <code class="docutils literal notranslate"><span class="pre">PLATFORM_DEVID_AUTO</span></code>) or
+start with 0 for the first device of this kind if we want a specific id
+number.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">jz4740_udc_resources</span></code> resource structure (line 7) defines the UDC
+registers base addresses.</p>
+<p>The first array (line 9 to 11) defines the UDC registers base memory
+addresses: start points to the first register memory address, end points
+to the last register memory address and the flags member defines the
+type of resource we are dealing with. So <code class="docutils literal notranslate"><span class="pre">IORESOURCE_MEM</span></code> is used to
+define the registers memory addresses. The second array (line 14 to 17)
+defines the UDC IRQ registers addresses. Since there is only one IRQ
+register available for the JZ4740 UDC, start and end point at the same
+address. The <code class="docutils literal notranslate"><span class="pre">IORESOURCE_IRQ</span></code> flag tells that we are dealing with IRQ
+resources, and the name <code class="docutils literal notranslate"><span class="pre">mc</span></code> is in fact hard-coded in the MUSB core in
+order for the controller driver to retrieve this IRQ resource by
+querying it by its name.</p>
+<p>Finally, the <code class="docutils literal notranslate"><span class="pre">jz4740_udc_device</span></code> platform device structure (line 21)
+describes the UDC itself.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">musb-jz4740</span></code> name (line 22) defines the MUSB driver that is used
+for this device; remember this is in fact the name that we used in the
+<code class="docutils literal notranslate"><span class="pre">jz4740_driver</span></code> platform driver structure in <a class="reference internal" href="#musb-basics"><span class="std std-ref">Linux MUSB Basics</span></a>.
+The id field (line 23) is set to -1 (equivalent to <code class="docutils literal notranslate"><span class="pre">PLATFORM_DEVID_NONE</span></code>)
+since we do not need an id for the device: the MUSB controller driver was
+already set to allocate an automatic id in <a class="reference internal" href="#musb-basics"><span class="std std-ref">Linux MUSB Basics</span></a>. In the dev field
+we care for DMA related information here. The <code class="docutils literal notranslate"><span class="pre">dma_mask</span></code> field (line 25)
+defines the width of the DMA mask that is going to be used, and
+<code class="docutils literal notranslate"><span class="pre">coherent_dma_mask</span></code> (line 26) has the same purpose but for the
+<code class="docutils literal notranslate"><span class="pre">alloc_coherent</span></code> DMA mappings: in both cases we are using a 32 bits mask.
+Then the resource field (line 29) is simply a pointer to the resource
+structure defined before, while the <code class="docutils literal notranslate"><span class="pre">num_resources</span></code> field (line 28) keeps
+track of the number of arrays defined in the resource structure (in this
+case there were two resource arrays defined before).</p>
+<p>With this quick overview of the UDC platform data at the <code class="docutils literal notranslate"><span class="pre">arch/</span></code> level now
+done, let’s get back to the MUSB glue layer specific platform data in
+<code class="docutils literal notranslate"><span class="pre">drivers/usb/musb/jz4740.c</span></code>:</p>
+<blockquote>
+<div><div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">static</span> <span class="k">struct</span> <span class="nc">musb_hdrc_config</span> <span class="n">jz4740_musb_config</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="cm">/* Silicon does not implement USB OTG. */</span>
+<span class="hll">    <span class="p">.</span><span class="n">multipoint</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+</span>    <span class="cm">/* Max EPs scanned, driver will decide which EP can be used. */</span>
+<span class="hll">    <span class="p">.</span><span class="n">num_eps</span>    <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+</span>    <span class="cm">/* RAMbits needed to configure EPs from table */</span>
+<span class="hll">    <span class="p">.</span><span class="n">ram_bits</span>   <span class="o">=</span> <span class="mi">9</span><span class="p">,</span>
+</span><span class="hll">    <span class="p">.</span><span class="n">fifo_cfg</span> <span class="o">=</span> <span class="n">jz4740_musb_fifo_cfg</span><span class="p">,</span>
+</span><span class="hll">    <span class="p">.</span><span class="n">fifo_cfg_size</span> <span class="o">=</span> <span class="n">ARRAY_SIZE</span><span class="p">(</span><span class="n">jz4740_musb_fifo_cfg</span><span class="p">),</span>
+</span><span class="p">};</span>
+<span class="hll">
+</span><span class="k">static</span> <span class="k">struct</span> <span class="nc">musb_hdrc_platform_data</span> <span class="n">jz4740_musb_platform_data</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="p">.</span><span class="n">mode</span>   <span class="o">=</span> <span class="n">MUSB_PERIPHERAL</span><span class="p">,</span>
+    <span class="p">.</span><span class="n">config</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">jz4740_musb_config</span><span class="p">,</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>First the glue layer configures some aspects of the controller driver
+operation related to the controller hardware specifics. This is done
+through the <code class="docutils literal notranslate"><span class="pre">jz4740_musb_config</span></code> <code class="xref c c-type docutils literal notranslate"><span class="pre">musb_hdrc_config</span></code> structure.</p>
+<p>Defining the OTG capability of the controller hardware, the multipoint
+member (line 3) is set to 0 (equivalent to false) since the JZ4740 UDC
+is not OTG compatible. Then <code class="docutils literal notranslate"><span class="pre">num_eps</span></code> (line 5) defines the number of USB
+endpoints of the controller hardware, including endpoint 0: here we have
+3 endpoints + endpoint 0. Next is <code class="docutils literal notranslate"><span class="pre">ram_bits</span></code> (line 7) which is the width
+of the RAM address bus for the MUSB controller hardware. This
+information is needed when the controller driver cannot automatically
+configure endpoints by reading the relevant controller hardware
+registers. This issue will be discussed when we get to device quirks in
+<a class="reference internal" href="#musb-dev-quirks"><span class="std std-ref">Device Quirks</span></a>. Last two fields (line 8 and 9) are also
+about device quirks: <code class="docutils literal notranslate"><span class="pre">fifo_cfg</span></code> points to the USB endpoints configuration
+table and <code class="docutils literal notranslate"><span class="pre">fifo_cfg_size</span></code> keeps track of the size of the number of
+entries in that configuration table. More on that later in
+<a class="reference internal" href="#musb-dev-quirks"><span class="std std-ref">Device Quirks</span></a>.</p>
+<p>Then this configuration is embedded inside <code class="docutils literal notranslate"><span class="pre">jz4740_musb_platform_data</span></code>
+<code class="xref c c-type docutils literal notranslate"><span class="pre">musb_hdrc_platform_data</span></code> structure (line 11): config is a pointer to
+the configuration structure itself, and mode tells the controller driver
+if the controller hardware may be used as <code class="docutils literal notranslate"><span class="pre">MUSB_HOST</span></code> only,
+<code class="docutils literal notranslate"><span class="pre">MUSB_PERIPHERAL</span></code> only or <code class="docutils literal notranslate"><span class="pre">MUSB_OTG</span></code> which is a dual mode.</p>
+<p>Remember that <code class="docutils literal notranslate"><span class="pre">jz4740_musb_platform_data</span></code> is then used to convey
+platform data information as we have seen in the probe function in
+<a class="reference internal" href="#musb-basics"><span class="std std-ref">Linux MUSB Basics</span></a>.</p>
+</div>
+<div class="section" id="device-quirks">
+<span id="musb-dev-quirks"></span><h2>Device Quirks<a class="headerlink" href="#device-quirks" title="Permalink to this headline">¶</a></h2>
+<p>Completing the platform data specific to your device, you may also need
+to write some code in the glue layer to work around some device specific
+limitations. These quirks may be due to some hardware bugs, or simply be
+the result of an incomplete implementation of the USB On-the-Go
+specification.</p>
+<p>The JZ4740 UDC exhibits such quirks, some of which we will discuss here
+for the sake of insight even though these might not be found in the
+controller hardware you are working on.</p>
+<p>Let’s get back to the init function first:</p>
+<blockquote>
+<div><div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">static</span> <span class="kt">int</span> <span class="n">jz4740_musb_init</span><span class="p">(</span><span class="k">struct</span> <span class="nc">musb</span> <span class="o">*</span><span class="n">musb</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="n">musb</span><span class="o">-&gt;</span><span class="n">xceiv</span> <span class="o">=</span> <span class="n">usb_get_phy</span><span class="p">(</span><span class="n">USB_PHY_TYPE_USB2</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">musb</span><span class="o">-&gt;</span><span class="n">xceiv</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">pr_err</span><span class="p">(</span><span class="s">&quot;HS UDC: no transceiver configured</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">);</span>
+        <span class="k">return</span> <span class="o">-</span><span class="n">ENODEV</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="cm">/* Silicon does not implement ConfigData register.</span>
+<span class="cm">     * Set dyn_fifo to avoid reading EP config from hardware.</span>
+<span class="cm">     */</span>
+<span class="hll">    <span class="n">musb</span><span class="o">-&gt;</span><span class="n">dyn_fifo</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+</span>
+    <span class="n">musb</span><span class="o">-&gt;</span><span class="n">isr</span> <span class="o">=</span> <span class="n">jz4740_musb_interrupt</span><span class="p">;</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>Instruction on line 12 helps the MUSB controller driver to work around
+the fact that the controller hardware is missing registers that are used
+for USB endpoints configuration.</p>
+<p>Without these registers, the controller driver is unable to read the
+endpoints configuration from the hardware, so we use line 12 instruction
+to bypass reading the configuration from silicon, and rely on a
+hard-coded table that describes the endpoints configuration instead:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>static struct musb_fifo_cfg jz4740_musb_fifo_cfg[] = {
+    { .hw_ep_num = 1, .style = FIFO_TX, .maxpacket = 512, },
+    { .hw_ep_num = 1, .style = FIFO_RX, .maxpacket = 512, },
+    { .hw_ep_num = 2, .style = FIFO_TX, .maxpacket = 64, },
+};
+</pre></div>
+</div>
+<p>Looking at the configuration table above, we see that each endpoints is
+described by three fields: <code class="docutils literal notranslate"><span class="pre">hw_ep_num</span></code> is the endpoint number, style is
+its direction (either <code class="docutils literal notranslate"><span class="pre">FIFO_TX</span></code> for the controller driver to send packets
+in the controller hardware, or <code class="docutils literal notranslate"><span class="pre">FIFO_RX</span></code> to receive packets from
+hardware), and maxpacket defines the maximum size of each data packet
+that can be transmitted over that endpoint. Reading from the table, the
+controller driver knows that endpoint 1 can be used to send and receive
+USB data packets of 512 bytes at once (this is in fact a bulk in/out
+endpoint), and endpoint 2 can be used to send data packets of 64 bytes
+at once (this is in fact an interrupt endpoint).</p>
+<p>Note that there is no information about endpoint 0 here: that one is
+implemented by default in every silicon design, with a predefined
+configuration according to the USB specification. For more examples of
+endpoint configuration tables, see <code class="docutils literal notranslate"><span class="pre">musb_core.c</span></code>.</p>
+<p>Let’s now get back to the interrupt handler function:</p>
+<blockquote>
+<div><div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">static</span> <span class="n">irqreturn_t</span> <span class="n">jz4740_musb_interrupt</span><span class="p">(</span><span class="kt">int</span> <span class="n">irq</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">__hci</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">unsigned</span> <span class="kt">long</span>   <span class="n">flags</span><span class="p">;</span>
+    <span class="n">irqreturn_t</span>     <span class="n">retval</span> <span class="o">=</span> <span class="n">IRQ_NONE</span><span class="p">;</span>
+    <span class="k">struct</span> <span class="nc">musb</span>     <span class="o">*</span><span class="n">musb</span> <span class="o">=</span> <span class="n">__hci</span><span class="p">;</span>
+
+    <span class="n">spin_lock_irqsave</span><span class="p">(</span><span class="o">&amp;</span><span class="n">musb</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">,</span> <span class="n">flags</span><span class="p">);</span>
+
+    <span class="n">musb</span><span class="o">-&gt;</span><span class="n">int_usb</span> <span class="o">=</span> <span class="n">musb_readb</span><span class="p">(</span><span class="n">musb</span><span class="o">-&gt;</span><span class="n">mregs</span><span class="p">,</span> <span class="n">MUSB_INTRUSB</span><span class="p">);</span>
+    <span class="n">musb</span><span class="o">-&gt;</span><span class="n">int_tx</span> <span class="o">=</span> <span class="n">musb_readw</span><span class="p">(</span><span class="n">musb</span><span class="o">-&gt;</span><span class="n">mregs</span><span class="p">,</span> <span class="n">MUSB_INTRTX</span><span class="p">);</span>
+    <span class="n">musb</span><span class="o">-&gt;</span><span class="n">int_rx</span> <span class="o">=</span> <span class="n">musb_readw</span><span class="p">(</span><span class="n">musb</span><span class="o">-&gt;</span><span class="n">mregs</span><span class="p">,</span> <span class="n">MUSB_INTRRX</span><span class="p">);</span>
+
+    <span class="cm">/*</span>
+<span class="cm">     * The controller is gadget only, the state of the host mode IRQ bits is</span>
+<span class="cm">     * undefined. Mask them to make sure that the musb driver core will</span>
+<span class="cm">     * never see them set</span>
+<span class="cm">     */</span>
+<span class="hll">    <span class="n">musb</span><span class="o">-&gt;</span><span class="n">int_usb</span> <span class="o">&amp;=</span> <span class="n">MUSB_INTR_SUSPEND</span> <span class="o">|</span> <span class="n">MUSB_INTR_RESUME</span> <span class="o">|</span>
+</span><span class="hll">        <span class="n">MUSB_INTR_RESET</span> <span class="o">|</span> <span class="n">MUSB_INTR_SOF</span><span class="p">;</span>
+</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">musb</span><span class="o">-&gt;</span><span class="n">int_usb</span> <span class="o">||</span> <span class="n">musb</span><span class="o">-&gt;</span><span class="n">int_tx</span> <span class="o">||</span> <span class="n">musb</span><span class="o">-&gt;</span><span class="n">int_rx</span><span class="p">)</span>
+        <span class="n">retval</span> <span class="o">=</span> <span class="n">musb_interrupt</span><span class="p">(</span><span class="n">musb</span><span class="p">);</span>
+
+    <span class="n">spin_unlock_irqrestore</span><span class="p">(</span><span class="o">&amp;</span><span class="n">musb</span><span class="o">-&gt;</span><span class="n">lock</span><span class="p">,</span> <span class="n">flags</span><span class="p">);</span>
+
+    <span class="k">return</span> <span class="n">retval</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div></blockquote>
+<p>Instruction on line 18 above is a way for the controller driver to work
+around the fact that some interrupt bits used for USB host mode
+operation are missing in the <code class="docutils literal notranslate"><span class="pre">MUSB_INTRUSB</span></code> register, thus left in an
+undefined hardware state, since this MUSB controller hardware is used in
+peripheral mode only. As a consequence, the glue layer masks these
+missing bits out to avoid parasite interrupts by doing a logical AND
+operation between the value read from <code class="docutils literal notranslate"><span class="pre">MUSB_INTRUSB</span></code> and the bits that
+are actually implemented in the register.</p>
+<p>These are only a couple of the quirks found in the JZ4740 USB device
+controller. Some others were directly addressed in the MUSB core since
+the fixes were generic enough to provide a better handling of the issues
+for others controller hardware eventually.</p>
+</div>
+<div class="section" id="conclusion">
+<h2>Conclusion<a class="headerlink" href="#conclusion" title="Permalink to this headline">¶</a></h2>
+<p>Writing a Linux MUSB glue layer should be a more accessible task, as
+this documentation tries to show the ins and outs of this exercise.</p>
+<p>The JZ4740 USB device controller being fairly simple, I hope its glue
+layer serves as a good example for the curious mind. Used with the
+current MUSB glue layers, this documentation should provide enough
+guidance to get started; should anything gets out of hand, the linux-usb
+mailing list archive is another helpful resource to browse through.</p>
+</div>
+<div class="section" id="acknowledgements">
+<h2>Acknowledgements<a class="headerlink" href="#acknowledgements" title="Permalink to this headline">¶</a></h2>
+<p>Many thanks to Lars-Peter Clausen and Maarten ter Huurne for answering
+my questions while I was writing the JZ4740 glue layer and for helping
+me out getting the code in good shape.</p>
+<p>I would also like to thank the Qi-Hardware community at large for its
+cheerful guidance and support.</p>
+</div>
+<div class="section" id="resources">
+<h2>Resources<a class="headerlink" href="#resources" title="Permalink to this headline">¶</a></h2>
+<p>USB Home Page: <a class="reference external" href="https://www.usb.org">https://www.usb.org</a></p>
+<p>linux-usb Mailing List Archives: <a class="reference external" href="https://marc.info/?l=linux-usb">https://marc.info/?l=linux-usb</a></p>
+<p>USB On-the-Go Basics:
+<a class="reference external" href="https://www.maximintegrated.com/app-notes/index.mvp/id/1822">https://www.maximintegrated.com/app-notes/index.mvp/id/1822</a></p>
+<p><a class="reference internal" href="writing_usb_driver.html#writing-usb-driver"><span class="std std-ref">Writing USB Device Drivers</span></a></p>
+<p>Texas Instruments USB Configuration Wiki Page:
+<a class="reference external" href="http://processors.wiki.ti.com/index.php/Usbgeneralpage">http://processors.wiki.ti.com/index.php/Usbgeneralpage</a></p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="typec.html" class="btn btn-neutral float-right" title="USB Type-C connector class" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="dwc3.html" class="btn btn-neutral float-left" title="Synopsys DesignWare Core SuperSpeed USB 3.0 Controller" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

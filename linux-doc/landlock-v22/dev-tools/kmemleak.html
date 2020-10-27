@@ -1,0 +1,601 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Kernel Memory Leak Detector &mdash; The Linux Kernel 5.10.0-rc1+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="The Kernel Concurrency Sanitizer (KCSAN)" href="kcsan.html" />
+    <link rel="prev" title="The Undefined Behavior Sanitizer - UBSAN" href="ubsan.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.10.0-rc1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Development tools for the kernel</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="coccinelle.html">Coccinelle</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sparse.html">Sparse</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kcov.html">kcov: code coverage for fuzzing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gcov.html">Using gcov with the Linux kernel</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kasan.html">The Kernel Address Sanitizer (KASAN)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ubsan.html">The Undefined Behavior Sanitizer - UBSAN</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Kernel Memory Leak Detector</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#usage">Usage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#basic-algorithm">Basic Algorithm</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#testing-specific-sections-with-kmemleak">Testing specific sections with kmemleak</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#freeing-kmemleak-internal-objects">Freeing kmemleak internal objects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#kmemleak-api">Kmemleak API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dealing-with-false-positives-negatives">Dealing with false positives/negatives</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#limitations-and-drawbacks">Limitations and Drawbacks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#testing-with-kmemleak-test">Testing with kmemleak-test</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="kcsan.html">The Kernel Concurrency Sanitizer (KCSAN)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gdb-kernel-debugging.html">Debugging kernel and modules via gdb</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kgdb.html">Using kgdb, kdb and the kernel debugger internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kselftest.html">Linux Kernel Selftests</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kunit/index.html">KUnit - Unit Testing for the Linux Kernel</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="index.html">Development tools for the kernel</a> &raquo;</li>
+        
+      <li>Kernel Memory Leak Detector</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/dev-tools/kmemleak.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="kernel-memory-leak-detector">
+<h1>Kernel Memory Leak Detector<a class="headerlink" href="#kernel-memory-leak-detector" title="Permalink to this headline">¶</a></h1>
+<p>Kmemleak provides a way of detecting possible kernel memory leaks in a
+way similar to a <a class="reference external" href="https://en.wikipedia.org/wiki/Tracing_garbage_collection">tracing garbage collector</a>,
+with the difference that the orphan objects are not freed but only
+reported via /sys/kernel/debug/kmemleak. A similar method is used by the
+Valgrind tool (<code class="docutils literal notranslate"><span class="pre">memcheck</span> <span class="pre">--leak-check</span></code>) to detect the memory leaks in
+user-space applications.</p>
+<div class="section" id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h2>
+<p>CONFIG_DEBUG_KMEMLEAK in “Kernel hacking” has to be enabled. A kernel
+thread scans the memory every 10 minutes (by default) and prints the
+number of new unreferenced objects found. If the <code class="docutils literal notranslate"><span class="pre">debugfs</span></code> isn’t already
+mounted, mount with:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># mount -t debugfs nodev /sys/kernel/debug/
+</pre></div>
+</div>
+<p>To display the details of all the possible scanned memory leaks:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># cat /sys/kernel/debug/kmemleak
+</pre></div>
+</div>
+<p>To trigger an intermediate memory scan:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo scan &gt; /sys/kernel/debug/kmemleak
+</pre></div>
+</div>
+<p>To clear the list of all current possible memory leaks:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo clear &gt; /sys/kernel/debug/kmemleak
+</pre></div>
+</div>
+<p>New leaks will then come up upon reading <code class="docutils literal notranslate"><span class="pre">/sys/kernel/debug/kmemleak</span></code>
+again.</p>
+<p>Note that the orphan objects are listed in the order they were allocated
+and one object at the beginning of the list may cause other subsequent
+objects to be reported as orphan.</p>
+<p>Memory scanning parameters can be modified at run-time by writing to the
+<code class="docutils literal notranslate"><span class="pre">/sys/kernel/debug/kmemleak</span></code> file. The following parameters are supported:</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>off</dt><dd><p>disable kmemleak (irreversible)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>stack=on</dt><dd><p>enable the task stacks scanning (default)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>stack=off</dt><dd><p>disable the tasks stacks scanning</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>scan=on</dt><dd><p>start the automatic memory scanning thread (default)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>scan=off</dt><dd><p>stop the automatic memory scanning thread</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>scan=&lt;secs&gt;</dt><dd><p>set the automatic memory scanning period in seconds
+(default 600, 0 to stop the automatic scanning)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>scan</dt><dd><p>trigger a memory scan</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>clear</dt><dd><p>clear list of current memory leak suspects, done by
+marking all current reported unreferenced objects grey,
+or free all kmemleak objects if kmemleak has been disabled.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>dump=&lt;addr&gt;</dt><dd><p>dump information about the object found at &lt;addr&gt;</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Kmemleak can also be disabled at boot-time by passing <code class="docutils literal notranslate"><span class="pre">kmemleak=off</span></code> on
+the kernel command line.</p>
+<p>Memory may be allocated or freed before kmemleak is initialised and
+these actions are stored in an early log buffer. The size of this buffer
+is configured via the CONFIG_DEBUG_KMEMLEAK_MEM_POOL_SIZE option.</p>
+<p>If CONFIG_DEBUG_KMEMLEAK_DEFAULT_OFF are enabled, the kmemleak is
+disabled by default. Passing <code class="docutils literal notranslate"><span class="pre">kmemleak=on</span></code> on the kernel command
+line enables the function.</p>
+<p>If you are getting errors like “Error while writing to stdout” or “write_loop:
+Invalid argument”, make sure kmemleak is properly enabled.</p>
+</div>
+<div class="section" id="basic-algorithm">
+<h2>Basic Algorithm<a class="headerlink" href="#basic-algorithm" title="Permalink to this headline">¶</a></h2>
+<p>The memory allocations via <a class="reference internal" href="../core-api/mm-api.html#c.kmalloc" title="kmalloc"><code class="xref c c-func docutils literal notranslate"><span class="pre">kmalloc()</span></code></a>, <a class="reference internal" href="../core-api/mm-api.html#c.vmalloc" title="vmalloc"><code class="xref c c-func docutils literal notranslate"><span class="pre">vmalloc()</span></code></a>,
+<a class="reference internal" href="../core-api/mm-api.html#c.kmem_cache_alloc" title="kmem_cache_alloc"><code class="xref c c-func docutils literal notranslate"><span class="pre">kmem_cache_alloc()</span></code></a> and
+friends are traced and the pointers, together with additional
+information like size and stack trace, are stored in a rbtree.
+The corresponding freeing function calls are tracked and the pointers
+removed from the kmemleak data structures.</p>
+<p>An allocated block of memory is considered orphan if no pointer to its
+start address or to any location inside the block can be found by
+scanning the memory (including saved registers). This means that there
+might be no way for the kernel to pass the address of the allocated
+block to a freeing function and therefore the block is considered a
+memory leak.</p>
+<p>The scanning algorithm steps:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>mark all objects as white (remaining white objects will later be
+considered orphan)</p></li>
+<li><p>scan the memory starting with the data section and stacks, checking
+the values against the addresses stored in the rbtree. If
+a pointer to a white object is found, the object is added to the
+gray list</p></li>
+<li><p>scan the gray objects for matching addresses (some white objects
+can become gray and added at the end of the gray list) until the
+gray set is finished</p></li>
+<li><p>the remaining white objects are considered orphan and reported via
+/sys/kernel/debug/kmemleak</p></li>
+</ol>
+</div></blockquote>
+<p>Some allocated memory blocks have pointers stored in the kernel’s
+internal data structures and they cannot be detected as orphans. To
+avoid this, kmemleak can also store the number of values pointing to an
+address inside the block address range that need to be found so that the
+block is not considered a leak. One example is __vmalloc().</p>
+</div>
+<div class="section" id="testing-specific-sections-with-kmemleak">
+<h2>Testing specific sections with kmemleak<a class="headerlink" href="#testing-specific-sections-with-kmemleak" title="Permalink to this headline">¶</a></h2>
+<p>Upon initial bootup your /sys/kernel/debug/kmemleak output page may be
+quite extensive. This can also be the case if you have very buggy code
+when doing development. To work around these situations you can use the
+‘clear’ command to clear all reported unreferenced objects from the
+/sys/kernel/debug/kmemleak output. By issuing a ‘scan’ after a ‘clear’
+you can find new unreferenced objects; this should help with testing
+specific sections of code.</p>
+<p>To test a critical section on demand with a clean kmemleak do:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo clear &gt; /sys/kernel/debug/kmemleak
+... test your kernel or modules ...
+# echo scan &gt; /sys/kernel/debug/kmemleak
+</pre></div>
+</div>
+<p>Then as usual to get your report with:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># cat /sys/kernel/debug/kmemleak
+</pre></div>
+</div>
+</div>
+<div class="section" id="freeing-kmemleak-internal-objects">
+<h2>Freeing kmemleak internal objects<a class="headerlink" href="#freeing-kmemleak-internal-objects" title="Permalink to this headline">¶</a></h2>
+<p>To allow access to previously found memory leaks after kmemleak has been
+disabled by the user or due to an fatal error, internal kmemleak objects
+won’t be freed when kmemleak is disabled, and those objects may occupy
+a large part of physical memory.</p>
+<p>In this situation, you may reclaim memory with:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo clear &gt; /sys/kernel/debug/kmemleak
+</pre></div>
+</div>
+</div>
+<div class="section" id="kmemleak-api">
+<h2>Kmemleak API<a class="headerlink" href="#kmemleak-api" title="Permalink to this headline">¶</a></h2>
+<p>See the include/linux/kmemleak.h header for the functions prototype.</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">kmemleak_init</span></code>              - initialize kmemleak</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">kmemleak_alloc</span></code>             - notify of a memory block allocation</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">kmemleak_alloc_percpu</span></code>      - notify of a percpu memory block allocation</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">kmemleak_vmalloc</span></code>           - notify of a <a class="reference internal" href="../core-api/mm-api.html#c.vmalloc" title="vmalloc"><code class="xref c c-func docutils literal notranslate"><span class="pre">vmalloc()</span></code></a> memory allocation</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">kmemleak_free</span></code>              - notify of a memory block freeing</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">kmemleak_free_part</span></code>         - notify of a partial memory block freeing</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">kmemleak_free_percpu</span></code>       - notify of a percpu memory block freeing</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">kmemleak_update_trace</span></code>      - update object allocation stack trace</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">kmemleak_not_leak</span></code>  - mark an object as not a leak</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">kmemleak_ignore</span></code>            - do not scan or report an object as leak</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">kmemleak_scan_area</span></code>         - add scan areas inside a memory block</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">kmemleak_no_scan</span></code>   - do not scan a memory block</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">kmemleak_erase</span></code>             - erase an old value in a pointer variable</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">kmemleak_alloc_recursive</span></code> - as kmemleak_alloc but checks the recursiveness</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">kmemleak_free_recursive</span></code>    - as kmemleak_free but checks the recursiveness</p></li>
+</ul>
+<p>The following functions take a physical address as the object pointer
+and only perform the corresponding action if the address has a lowmem
+mapping:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">kmemleak_alloc_phys</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">kmemleak_free_part_phys</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">kmemleak_not_leak_phys</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">kmemleak_ignore_phys</span></code></p></li>
+</ul>
+</div>
+<div class="section" id="dealing-with-false-positives-negatives">
+<h2>Dealing with false positives/negatives<a class="headerlink" href="#dealing-with-false-positives-negatives" title="Permalink to this headline">¶</a></h2>
+<p>The false negatives are real memory leaks (orphan objects) but not
+reported by kmemleak because values found during the memory scanning
+point to such objects. To reduce the number of false negatives, kmemleak
+provides the kmemleak_ignore, kmemleak_scan_area, kmemleak_no_scan and
+kmemleak_erase functions (see above). The task stacks also increase the
+amount of false negatives and their scanning is not enabled by default.</p>
+<p>The false positives are objects wrongly reported as being memory leaks
+(orphan). For objects known not to be leaks, kmemleak provides the
+kmemleak_not_leak function. The kmemleak_ignore could also be used if
+the memory block is known not to contain other pointers and it will no
+longer be scanned.</p>
+<p>Some of the reported leaks are only transient, especially on SMP
+systems, because of pointers temporarily stored in CPU registers or
+stacks. Kmemleak defines MSECS_MIN_AGE (defaulting to 1000) representing
+the minimum age of an object to be reported as a memory leak.</p>
+</div>
+<div class="section" id="limitations-and-drawbacks">
+<h2>Limitations and Drawbacks<a class="headerlink" href="#limitations-and-drawbacks" title="Permalink to this headline">¶</a></h2>
+<p>The main drawback is the reduced performance of memory allocation and
+freeing. To avoid other penalties, the memory scanning is only performed
+when the /sys/kernel/debug/kmemleak file is read. Anyway, this tool is
+intended for debugging purposes where the performance might not be the
+most important requirement.</p>
+<p>To keep the algorithm simple, kmemleak scans for values pointing to any
+address inside a block’s address range. This may lead to an increased
+number of false negatives. However, it is likely that a real memory leak
+will eventually become visible.</p>
+<p>Another source of false negatives is the data stored in non-pointer
+values. In a future version, kmemleak could only scan the pointer
+members in the allocated structures. This feature would solve many of
+the false negative cases described above.</p>
+<p>The tool can report false positives. These are cases where an allocated
+block doesn’t need to be freed (some cases in the init_call functions),
+the pointer is calculated by other methods than the usual container_of
+macro or the pointer is stored in a location not scanned by kmemleak.</p>
+<p>Page allocations and ioremap are not tracked.</p>
+</div>
+<div class="section" id="testing-with-kmemleak-test">
+<h2>Testing with kmemleak-test<a class="headerlink" href="#testing-with-kmemleak-test" title="Permalink to this headline">¶</a></h2>
+<p>To check if you have all set up to use kmemleak, you can use the kmemleak-test
+module, a module that deliberately leaks memory. Set CONFIG_DEBUG_KMEMLEAK_TEST
+as module (it can’t be used as built-in) and boot the kernel with kmemleak
+enabled. Load the module and perform a scan with:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># modprobe kmemleak-test
+# echo scan &gt; /sys/kernel/debug/kmemleak
+</pre></div>
+</div>
+<p>Note that the you may not get results instantly or on the first scanning. When
+kmemleak gets results, it’ll log <code class="docutils literal notranslate"><span class="pre">kmemleak:</span> <span class="pre">&lt;count</span> <span class="pre">of</span> <span class="pre">leaks&gt;</span> <span class="pre">new</span> <span class="pre">suspected</span>
+<span class="pre">memory</span> <span class="pre">leaks</span></code>. Then read the file to see then:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># cat /sys/kernel/debug/kmemleak
+unreferenced object 0xffff89862ca702e8 (size 32):
+  comm &quot;modprobe&quot;, pid 2088, jiffies 4294680594 (age 375.486s)
+  hex dump (first 32 bytes):
+    6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b  kkkkkkkkkkkkkkkk
+    6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b 6b a5  kkkkkkkkkkkkkkk.
+  backtrace:
+    [&lt;00000000e0a73ec7&gt;] 0xffffffffc01d2036
+    [&lt;000000000c5d2a46&gt;] do_one_initcall+0x41/0x1df
+    [&lt;0000000046db7e0a&gt;] do_init_module+0x55/0x200
+    [&lt;00000000542b9814&gt;] load_module+0x203c/0x2480
+    [&lt;00000000c2850256&gt;] __do_sys_finit_module+0xba/0xe0
+    [&lt;000000006564e7ef&gt;] do_syscall_64+0x43/0x110
+    [&lt;000000007c873fa6&gt;] entry_SYSCALL_64_after_hwframe+0x44/0xa9
+...
+</pre></div>
+</div>
+<p>Removing the module with <code class="docutils literal notranslate"><span class="pre">rmmod</span> <span class="pre">kmemleak_test</span></code> should also trigger some
+kmemleak results.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="kcsan.html" class="btn btn-neutral float-right" title="The Kernel Concurrency Sanitizer (KCSAN)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="ubsan.html" class="btn btn-neutral float-left" title="The Undefined Behavior Sanitizer - UBSAN" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

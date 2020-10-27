@@ -1,0 +1,932 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Coresight - HW Assisted Tracing on ARM &mdash; The Linux Kernel 5.10.0-rc1+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Coresight CPU Debug Module" href="coresight-cpu-debug.html" />
+    <link rel="prev" title="CoreSight - ARM Hardware Trace" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.10.0-rc1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Linux Tracing Technologies</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../ftrace-design.html">Function Tracer Design</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tracepoint-analysis.html">Notes on Analysing Behaviour Using Events and Tracepoints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ftrace.html">ftrace - Function Tracer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ftrace-uses.html">Using ftrace to hook to functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../kprobes.html">Kernel Probes (Kprobes)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../kprobetrace.html">Kprobe-based Event Tracing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../uprobetracer.html">Uprobe-tracer: Uprobe-based Event Tracing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tracepoints.html">Using the Linux Kernel Tracepoints</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../events.html">Event Tracing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../events-kmem.html">Subsystem Trace Points: kmem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../events-power.html">Subsystem Trace Points: power</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../events-nmi.html">NMI Trace Events</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../events-msr.html">MSR Trace Events</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mmiotrace.html">In-kernel memory-mapped I/O tracing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../histogram.html">Event Histograms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../histogram-design.html">Histogram Design Notes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../boottime-trace.html">Boot-time tracing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../hwlat_detector.html">Hardware Latency Detector</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../intel_th.html">Intel(R) Trace Hub (TH)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ring-buffer-design.html">Lockless Ring Buffer Design</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../stm.html">System Trace Module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sys-t.html">MIPI SyS-T over STP</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">CoreSight - ARM Hardware Trace</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Coresight - HW Assisted Tracing on ARM</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#acronyms-and-classification">Acronyms and Classification</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#device-tree-bindings">Device Tree Bindings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#framework-and-implementation">Framework and implementation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#device-naming-scheme">Device Naming scheme</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#topology-representation">Topology Representation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#how-to-use-the-tracer-modules">How to use the tracer modules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#generating-coverage-files-for-feedback-directed-optimization-autofdo">Generating coverage files for Feedback Directed Optimization: AutoFDO</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#how-to-use-the-stm-module">How to use the STM module</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#the-cti-ctm-modules">The CTI &amp; CTM Modules</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="coresight-cpu-debug.html">Coresight CPU Debug Module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="coresight-ect.html">CoreSight Embedded Cross Trigger (CTI &amp; CTM).</a></li>
+<li class="toctree-l3"><a class="reference internal" href="coresight-etm4x-reference.html">ETMv4 sysfs linux driver programming reference.</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">Linux Tracing Technologies</a> &raquo;</li>
+        
+          <li><a href="index.html">CoreSight - ARM Hardware Trace</a> &raquo;</li>
+        
+      <li>Coresight - HW Assisted Tracing on ARM</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/trace/coresight/coresight.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="coresight-hw-assisted-tracing-on-arm">
+<h1>Coresight - HW Assisted Tracing on ARM<a class="headerlink" href="#coresight-hw-assisted-tracing-on-arm" title="Permalink to this headline">¶</a></h1>
+<blockquote>
+<div><dl class="field-list simple">
+<dt class="field-odd">Author</dt>
+<dd class="field-odd"><p>Mathieu Poirier &lt;<a class="reference external" href="mailto:mathieu&#46;poirier&#37;&#52;&#48;linaro&#46;org">mathieu<span>&#46;</span>poirier<span>&#64;</span>linaro<span>&#46;</span>org</a>&gt;</p>
+</dd>
+<dt class="field-even">Date</dt>
+<dd class="field-even"><p>September 11th, 2014</p>
+</dd>
+</dl>
+</div></blockquote>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>Coresight is an umbrella of technologies allowing for the debugging of ARM
+based SoC.  It includes solutions for JTAG and HW assisted tracing.  This
+document is concerned with the latter.</p>
+<p>HW assisted tracing is becoming increasingly useful when dealing with systems
+that have many SoCs and other components like GPU and DMA engines.  ARM has
+developed a HW assisted tracing solution by means of different components, each
+being added to a design at synthesis time to cater to specific tracing needs.
+Components are generally categorised as source, link and sinks and are
+(usually) discovered using the AMBA bus.</p>
+<p>“Sources” generate a compressed stream representing the processor instruction
+path based on tracing scenarios as configured by users.  From there the stream
+flows through the coresight system (via ATB bus) using links that are connecting
+the emanating source to a sink(s).  Sinks serve as endpoints to the coresight
+implementation, either storing the compressed stream in a memory buffer or
+creating an interface to the outside world where data can be transferred to a
+host without fear of filling up the onboard coresight memory buffer.</p>
+<p>At typical coresight system would look like this:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span> *****************************************************************
+**************************** AMBA AXI  ****************************===||
+ *****************************************************************    ||
+       ^                    ^                            |            ||
+       |                    |                            *            **
+    0000000    :::::     0000000    :::::    :::::    @@@@@@@    ||||||||||||
+    0 CPU 0&lt;--&gt;: C :     0 CPU 0&lt;--&gt;: C :    : C :    @ STM @    || System ||
+ |-&gt;0000000    : T :  |-&gt;0000000    : T :    : T :&lt;---&gt;@@@@@     || Memory ||
+ |  #######&lt;--&gt;: I :  |  #######&lt;--&gt;: I :    : I :      @@@&lt;-|   ||||||||||||
+ |  # ETM #    :::::  |  # PTM #    :::::    :::::       @   |
+ |   #####      ^ ^   |   #####      ^ !      ^ !        .   |   |||||||||
+ | |-&gt;###       | !   | |-&gt;###       | !      | !        .   |   || DAP ||
+ | |   #        | !   | |   #        | !      | !        .   |   |||||||||
+ | |   .        | !   | |   .        | !      | !        .   |      |  |
+ | |   .        | !   | |   .        | !      | !        .   |      |  *
+ | |   .        | !   | |   .        | !      | !        .   |      | SWD/
+ | |   .        | !   | |   .        | !      | !        .   |      | JTAG
+ *****************************************************************&lt;-|
+*************************** AMBA Debug APB ************************
+ *****************************************************************
+  |    .          !         .          !        !        .    |
+  |    .          *         .          *        *        .    |
+ *****************************************************************
+******************** Cross Trigger Matrix (CTM) *******************
+ *****************************************************************
+  |    .     ^              .                            .    |
+  |    *     !              *                            *    |
+ *****************************************************************
+****************** AMBA Advanced Trace Bus (ATB) ******************
+ *****************************************************************
+  |          !                        ===============         |
+  |          *                         ===== F =====&lt;---------|
+  |   :::::::::                         ==== U ====
+  |--&gt;:: CTI ::&lt;!!                       === N ===
+  |   :::::::::  !                        == N ==
+  |    ^         *                        == E ==
+  |    !  &amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;       IIIIIII         == L ==
+  |------&gt;&amp;&amp; ETB &amp;&amp;&lt;......II     I        =======
+  |    !  &amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;       II     I           .
+  |    !                    I     I          .
+  |    !                    I REP I&lt;..........
+  |    !                    I     I
+  |    !!&gt;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;       II     I           *Source: ARM ltd.
+  |------&gt;&amp; TPIU  &amp;&lt;......II    I            DAP = Debug Access Port
+          &amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;&amp;       IIIIIII            ETM = Embedded Trace Macrocell
+              ;                              PTM = Program Trace Macrocell
+              ;                              CTI = Cross Trigger Interface
+              *                              ETB = Embedded Trace Buffer
+         To trace port                       TPIU= Trace Port Interface Unit
+                                             SWD = Serial Wire Debug
+</pre></div>
+</div>
+<p>While on target configuration of the components is done via the APB bus,
+all trace data are carried out-of-band on the ATB bus.  The CTM provides
+a way to aggregate and distribute signals between CoreSight components.</p>
+<p>The coresight framework provides a central point to represent, configure and
+manage coresight devices on a platform.  This first implementation centers on
+the basic tracing functionality, enabling components such ETM/PTM, funnel,
+replicator, TMC, TPIU and ETB.  Future work will enable more
+intricate IP blocks such as STM and CTI.</p>
+</div>
+<div class="section" id="acronyms-and-classification">
+<h2>Acronyms and Classification<a class="headerlink" href="#acronyms-and-classification" title="Permalink to this headline">¶</a></h2>
+<p>Acronyms:</p>
+<dl class="simple">
+<dt>PTM:</dt><dd><p>Program Trace Macrocell</p>
+</dd>
+<dt>ETM:</dt><dd><p>Embedded Trace Macrocell</p>
+</dd>
+<dt>STM:</dt><dd><p>System trace Macrocell</p>
+</dd>
+<dt>ETB:</dt><dd><p>Embedded Trace Buffer</p>
+</dd>
+<dt>ITM:</dt><dd><p>Instrumentation Trace Macrocell</p>
+</dd>
+<dt>TPIU:</dt><dd><p>Trace Port Interface Unit</p>
+</dd>
+<dt>TMC-ETR:</dt><dd><p>Trace Memory Controller, configured as Embedded Trace Router</p>
+</dd>
+<dt>TMC-ETF:</dt><dd><p>Trace Memory Controller, configured as Embedded Trace FIFO</p>
+</dd>
+<dt>CTI:</dt><dd><p>Cross Trigger Interface</p>
+</dd>
+</dl>
+<p>Classification:</p>
+<dl class="simple">
+<dt>Source:</dt><dd><p>ETMv3.x ETMv4, PTMv1.0, PTMv1.1, STM, STM500, ITM</p>
+</dd>
+<dt>Link:</dt><dd><p>Funnel, replicator (intelligent or not), TMC-ETR</p>
+</dd>
+<dt>Sinks:</dt><dd><p>ETBv1.0, ETB1.1, TPIU, TMC-ETF</p>
+</dd>
+<dt>Misc:</dt><dd><p>CTI</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="device-tree-bindings">
+<h2>Device Tree Bindings<a class="headerlink" href="#device-tree-bindings" title="Permalink to this headline">¶</a></h2>
+<p>See Documentation/devicetree/bindings/arm/coresight.txt for details.</p>
+<p>As of this writing drivers for ITM, STMs and CTIs are not provided but are
+expected to be added as the solution matures.</p>
+</div>
+<div class="section" id="framework-and-implementation">
+<h2>Framework and implementation<a class="headerlink" href="#framework-and-implementation" title="Permalink to this headline">¶</a></h2>
+<p>The coresight framework provides a central point to represent, configure and
+manage coresight devices on a platform.  Any coresight compliant device can
+register with the framework for as long as they use the right APIs:</p>
+<dl class="c function">
+<dt id="c.coresight_register">
+<em class="property">struct</em> coresight_device *<code class="sig-name descname">coresight_register</code><span class="sig-paren">(</span><em class="property">struct</em> coresight_desc *<em>desc</em><span class="sig-paren">)</span>;<a class="headerlink" href="#c.coresight_register" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<dl class="c function">
+<dt id="c.coresight_unregister">
+void <code class="sig-name descname">coresight_unregister</code><span class="sig-paren">(</span><em class="property">struct</em> coresight_device *<em>csdev</em><span class="sig-paren">)</span>;<a class="headerlink" href="#c.coresight_unregister" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p>The registering function is taking a <code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">coresight_desc</span> <span class="pre">*desc</span></code> and
+register the device with the core framework. The unregister function takes
+a reference to a <code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">coresight_device</span> <span class="pre">*csdev</span></code> obtained at registration time.</p>
+<p>If everything goes well during the registration process the new devices will
+show up under /sys/bus/coresight/devices, as showns here for a TC2 platform:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>root:~# ls /sys/bus/coresight/devices/
+replicator  20030000.tpiu    2201c000.ptm  2203c000.etm  2203e000.etm
+20010000.etb         20040000.funnel  2201d000.ptm  2203d000.etm
+root:~#
+</pre></div>
+</div>
+<p>The functions take a <code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">coresight_device</span></code>, which looks like this:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct coresight_desc {
+        enum coresight_dev_type type;
+        struct coresight_dev_subtype subtype;
+        const struct coresight_ops *ops;
+        struct coresight_platform_data *pdata;
+        struct device *dev;
+        const struct attribute_group **groups;
+};
+</pre></div>
+</div>
+<p>The “coresight_dev_type” identifies what the device is, i.e, source link or
+sink while the “coresight_dev_subtype” will characterise that type further.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">coresight_ops</span></code> is mandatory and will tell the framework how to
+perform base operations related to the components, each component having
+a different set of requirement. For that <code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">coresight_ops_sink</span></code>,
+<code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">coresight_ops_link</span></code> and <code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">coresight_ops_source</span></code> have been
+provided.</p>
+<p>The next field <code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">coresight_platform_data</span> <span class="pre">*pdata</span></code> is acquired by calling
+<code class="docutils literal notranslate"><span class="pre">of_get_coresight_platform_data()</span></code>, as part of the driver’s _probe routine and
+<code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">device</span> <span class="pre">*dev</span></code> gets the device reference embedded in the <code class="docutils literal notranslate"><span class="pre">amba_device</span></code>:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>static int etm_probe(struct amba_device *adev, const struct amba_id *id)
+{
+ ...
+ ...
+ drvdata-&gt;dev = &amp;adev-&gt;dev;
+ ...
+}
+</pre></div>
+</div>
+<p>Specific class of device (source, link, or sink) have generic operations
+that can be performed on them (see <code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">coresight_ops</span></code>). The <code class="docutils literal notranslate"><span class="pre">**groups</span></code>
+is a list of sysfs entries pertaining to operations
+specific to that component only.  “Implementation defined” customisations are
+expected to be accessed and controlled using those entries.</p>
+</div>
+<div class="section" id="device-naming-scheme">
+<h2>Device Naming scheme<a class="headerlink" href="#device-naming-scheme" title="Permalink to this headline">¶</a></h2>
+<p>The devices that appear on the “coresight” bus were named the same as their
+parent devices, i.e, the real devices that appears on AMBA bus or the platform bus.
+Thus the names were based on the Linux Open Firmware layer naming convention,
+which follows the base physical address of the device followed by the device
+type. e.g:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>root:~# ls /sys/bus/coresight/devices/
+ 20010000.etf  20040000.funnel      20100000.stm     22040000.etm
+ 22140000.etm  230c0000.funnel      23240000.etm     20030000.tpiu
+ 20070000.etr  20120000.replicator  220c0000.funnel
+ 23040000.etm  23140000.etm         23340000.etm
+</pre></div>
+</div>
+<p>However, with the introduction of ACPI support, the names of the real
+devices are a bit cryptic and non-obvious. Thus, a new naming scheme was
+introduced to use more generic names based on the type of the device. The
+following rules apply:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>1) Devices that are bound to CPUs, are named based on the CPU logical
+   number.
+
+   e.g, ETM bound to CPU0 is named &quot;etm0&quot;
+
+2) All other devices follow a pattern, &quot;&lt;device_type_prefix&gt;N&quot;, where :
+
+      &lt;device_type_prefix&gt;    - A prefix specific to the type of the device
+      N                       - a sequential number assigned based on the order
+                                of probing.
+
+      e.g, tmc_etf0, tmc_etr0, funnel0, funnel1
+</pre></div>
+</div>
+<p>Thus, with the new scheme the devices could appear as</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>root:~# ls /sys/bus/coresight/devices/
+ etm0     etm1     etm2         etm3  etm4      etm5      funnel0
+ funnel1  funnel2  replicator0  stm0  tmc_etf0  tmc_etr0  tpiu0
+</pre></div>
+</div>
+<p>Some of the examples below might refer to old naming scheme and some
+to the newer scheme, to give a confirmation that what you see on your
+system is not unexpected. One must use the “names” as they appear on
+the system under specified locations.</p>
+</div>
+<div class="section" id="topology-representation">
+<h2>Topology Representation<a class="headerlink" href="#topology-representation" title="Permalink to this headline">¶</a></h2>
+<p>Each CoreSight component has a <code class="docutils literal notranslate"><span class="pre">connections</span></code> directory which will contain
+links to other CoreSight components. This allows the user to explore the trace
+topology and for larger systems, determine the most appropriate sink for a
+given source. The connection information can also be used to establish
+which CTI devices are connected to a given component. This directory contains a
+<code class="docutils literal notranslate"><span class="pre">nr_links</span></code> attribute detailing the number of links in the directory.</p>
+<p>For an ETM source, in this case <code class="docutils literal notranslate"><span class="pre">etm0</span></code> on a Juno platform, a typical
+arrangement will be:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>linaro-developer:~# ls - l /sys/bus/coresight/devices/etm0/connections
+&lt;file details&gt;  cti_cpu0 -&gt; ../../../23020000.cti/cti_cpu0
+&lt;file details&gt;  nr_links
+&lt;file details&gt;  out:0 -&gt; ../../../230c0000.funnel/funnel2
+</pre></div>
+</div>
+<p>Following the out port to <code class="docutils literal notranslate"><span class="pre">funnel2</span></code>:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>linaro-developer:~# ls -l /sys/bus/coresight/devices/funnel2/connections
+&lt;file details&gt; in:0 -&gt; ../../../23040000.etm/etm0
+&lt;file details&gt; in:1 -&gt; ../../../23140000.etm/etm3
+&lt;file details&gt; in:2 -&gt; ../../../23240000.etm/etm4
+&lt;file details&gt; in:3 -&gt; ../../../23340000.etm/etm5
+&lt;file details&gt; nr_links
+&lt;file details&gt; out:0 -&gt; ../../../20040000.funnel/funnel0
+</pre></div>
+</div>
+<p>And again to <code class="docutils literal notranslate"><span class="pre">funnel0</span></code>:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>linaro-developer:~# ls -l /sys/bus/coresight/devices/funnel0/connections
+&lt;file details&gt; in:0 -&gt; ../../../220c0000.funnel/funnel1
+&lt;file details&gt; in:1 -&gt; ../../../230c0000.funnel/funnel2
+&lt;file details&gt; nr_links
+&lt;file details&gt; out:0 -&gt; ../../../20010000.etf/tmc_etf0
+</pre></div>
+</div>
+<p>Finding the first sink <code class="docutils literal notranslate"><span class="pre">tmc_etf0</span></code>. This can be used to collect data
+as a sink, or as a link to propagate further along the chain:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>linaro-developer:~# ls -l /sys/bus/coresight/devices/tmc_etf0/connections
+&lt;file details&gt; cti_sys0 -&gt; ../../../20020000.cti/cti_sys0
+&lt;file details&gt; in:0 -&gt; ../../../20040000.funnel/funnel0
+&lt;file details&gt; nr_links
+&lt;file details&gt; out:0 -&gt; ../../../20150000.funnel/funnel4
+</pre></div>
+</div>
+<p>via <code class="docutils literal notranslate"><span class="pre">funnel4</span></code>:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>linaro-developer:~# ls -l /sys/bus/coresight/devices/funnel4/connections
+&lt;file details&gt; in:0 -&gt; ../../../20010000.etf/tmc_etf0
+&lt;file details&gt; in:1 -&gt; ../../../20140000.etf/tmc_etf1
+&lt;file details&gt; nr_links
+&lt;file details&gt; out:0 -&gt; ../../../20120000.replicator/replicator0
+</pre></div>
+</div>
+<p>and a <code class="docutils literal notranslate"><span class="pre">replicator0</span></code>:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>linaro-developer:~# ls -l /sys/bus/coresight/devices/replicator0/connections
+&lt;file details&gt; in:0 -&gt; ../../../20150000.funnel/funnel4
+&lt;file details&gt; nr_links
+&lt;file details&gt; out:0 -&gt; ../../../20030000.tpiu/tpiu0
+&lt;file details&gt; out:1 -&gt; ../../../20070000.etr/tmc_etr0
+</pre></div>
+</div>
+<p>Arriving at the final sink in the chain, <code class="docutils literal notranslate"><span class="pre">tmc_etr0</span></code>:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>linaro-developer:~# ls -l /sys/bus/coresight/devices/tmc_etr0/connections
+&lt;file details&gt; cti_sys0 -&gt; ../../../20020000.cti/cti_sys0
+&lt;file details&gt; in:0 -&gt; ../../../20120000.replicator/replicator0
+&lt;file details&gt; nr_links
+</pre></div>
+</div>
+<p>As described below, when using sysfs it is sufficient to enable a sink and
+a source for successful trace. The framework will correctly enable all
+intermediate links as required.</p>
+<p>Note: <code class="docutils literal notranslate"><span class="pre">cti_sys0</span></code> appears in two of the connections lists above.
+CTIs can connect to multiple devices and are arranged in a star topology
+via the CTM. See (<a class="reference internal" href="coresight-ect.html"><span class="doc">CoreSight Embedded Cross Trigger (CTI &amp; CTM).</span></a>) <a class="footnote-reference brackets" href="#fourth" id="id1">4</a> for further details.
+Looking at this device we see 4 connections:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>linaro-developer:~# ls -l /sys/bus/coresight/devices/cti_sys0/connections
+&lt;file details&gt; nr_links
+&lt;file details&gt; stm0 -&gt; ../../../20100000.stm/stm0
+&lt;file details&gt; tmc_etf0 -&gt; ../../../20010000.etf/tmc_etf0
+&lt;file details&gt; tmc_etr0 -&gt; ../../../20070000.etr/tmc_etr0
+&lt;file details&gt; tpiu0 -&gt; ../../../20030000.tpiu/tpiu0
+</pre></div>
+</div>
+</div>
+<div class="section" id="how-to-use-the-tracer-modules">
+<h2>How to use the tracer modules<a class="headerlink" href="#how-to-use-the-tracer-modules" title="Permalink to this headline">¶</a></h2>
+<p>There are two ways to use the Coresight framework:</p>
+<ol class="arabic simple">
+<li><p>using the perf cmd line tools.</p></li>
+<li><p>interacting directly with the Coresight devices using the sysFS interface.</p></li>
+</ol>
+<p>Preference is given to the former as using the sysFS interface
+requires a deep understanding of the Coresight HW.  The following sections
+provide details on using both methods.</p>
+<ol class="arabic simple">
+<li><p>Using the sysFS interface:</p></li>
+</ol>
+<p>Before trace collection can start, a coresight sink needs to be identified.
+There is no limit on the amount of sinks (nor sources) that can be enabled at
+any given moment.  As a generic operation, all device pertaining to the sink
+class will have an “active” entry in sysfs:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>root:/sys/bus/coresight/devices# ls
+replicator  20030000.tpiu    2201c000.ptm  2203c000.etm  2203e000.etm
+20010000.etb         20040000.funnel  2201d000.ptm  2203d000.etm
+root:/sys/bus/coresight/devices# ls 20010000.etb
+enable_sink  status  trigger_cntr
+root:/sys/bus/coresight/devices# echo 1 &gt; 20010000.etb/enable_sink
+root:/sys/bus/coresight/devices# cat 20010000.etb/enable_sink
+1
+root:/sys/bus/coresight/devices#
+</pre></div>
+</div>
+<p>At boot time the current etm3x driver will configure the first address
+comparator with “_stext” and “_etext”, essentially tracing any instruction
+that falls within that range.  As such “enabling” a source will immediately
+trigger a trace capture:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>root:/sys/bus/coresight/devices# echo 1 &gt; 2201c000.ptm/enable_source
+root:/sys/bus/coresight/devices# cat 2201c000.ptm/enable_source
+1
+root:/sys/bus/coresight/devices# cat 20010000.etb/status
+Depth:          0x2000
+Status:         0x1
+RAM read ptr:   0x0
+RAM wrt ptr:    0x19d3   &lt;----- The write pointer is moving
+Trigger cnt:    0x0
+Control:        0x1
+Flush status:   0x0
+Flush ctrl:     0x2001
+root:/sys/bus/coresight/devices#
+</pre></div>
+</div>
+<p>Trace collection is stopped the same way:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>root:/sys/bus/coresight/devices# echo 0 &gt; 2201c000.ptm/enable_source
+root:/sys/bus/coresight/devices#
+</pre></div>
+</div>
+<p>The content of the ETB buffer can be harvested directly from /dev:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>root:/sys/bus/coresight/devices# dd if=/dev/20010000.etb \
+of=~/cstrace.bin
+64+0 records in
+64+0 records out
+32768 bytes (33 kB) copied, 0.00125258 s, 26.2 MB/s
+root:/sys/bus/coresight/devices#
+</pre></div>
+</div>
+<p>The file cstrace.bin can be decompressed using “ptm2human”, DS-5 or Trace32.</p>
+<p>Following is a DS-5 output of an experimental loop that increments a variable up
+to a certain value.  The example is simple and yet provides a glimpse of the
+wealth of possibilities that coresight provides.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Info                                    Tracing enabled
+Instruction     106378866       0x8026B53C      E52DE004        false   PUSH     {lr}
+Instruction     0       0x8026B540      E24DD00C        false   SUB      sp,sp,#0xc
+Instruction     0       0x8026B544      E3A03000        false   MOV      r3,#0
+Instruction     0       0x8026B548      E58D3004        false   STR      r3,[sp,#4]
+Instruction     0       0x8026B54C      E59D3004        false   LDR      r3,[sp,#4]
+Instruction     0       0x8026B550      E3530004        false   CMP      r3,#4
+Instruction     0       0x8026B554      E2833001        false   ADD      r3,r3,#1
+Instruction     0       0x8026B558      E58D3004        false   STR      r3,[sp,#4]
+Instruction     0       0x8026B55C      DAFFFFFA        true    BLE      {pc}-0x10 ; 0x8026b54c
+Timestamp                                       Timestamp: 17106715833
+Instruction     319     0x8026B54C      E59D3004        false   LDR      r3,[sp,#4]
+Instruction     0       0x8026B550      E3530004        false   CMP      r3,#4
+Instruction     0       0x8026B554      E2833001        false   ADD      r3,r3,#1
+Instruction     0       0x8026B558      E58D3004        false   STR      r3,[sp,#4]
+Instruction     0       0x8026B55C      DAFFFFFA        true    BLE      {pc}-0x10 ; 0x8026b54c
+Instruction     9       0x8026B54C      E59D3004        false   LDR      r3,[sp,#4]
+Instruction     0       0x8026B550      E3530004        false   CMP      r3,#4
+Instruction     0       0x8026B554      E2833001        false   ADD      r3,r3,#1
+Instruction     0       0x8026B558      E58D3004        false   STR      r3,[sp,#4]
+Instruction     0       0x8026B55C      DAFFFFFA        true    BLE      {pc}-0x10 ; 0x8026b54c
+Instruction     7       0x8026B54C      E59D3004        false   LDR      r3,[sp,#4]
+Instruction     0       0x8026B550      E3530004        false   CMP      r3,#4
+Instruction     0       0x8026B554      E2833001        false   ADD      r3,r3,#1
+Instruction     0       0x8026B558      E58D3004        false   STR      r3,[sp,#4]
+Instruction     0       0x8026B55C      DAFFFFFA        true    BLE      {pc}-0x10 ; 0x8026b54c
+Instruction     7       0x8026B54C      E59D3004        false   LDR      r3,[sp,#4]
+Instruction     0       0x8026B550      E3530004        false   CMP      r3,#4
+Instruction     0       0x8026B554      E2833001        false   ADD      r3,r3,#1
+Instruction     0       0x8026B558      E58D3004        false   STR      r3,[sp,#4]
+Instruction     0       0x8026B55C      DAFFFFFA        true    BLE      {pc}-0x10 ; 0x8026b54c
+Instruction     10      0x8026B54C      E59D3004        false   LDR      r3,[sp,#4]
+Instruction     0       0x8026B550      E3530004        false   CMP      r3,#4
+Instruction     0       0x8026B554      E2833001        false   ADD      r3,r3,#1
+Instruction     0       0x8026B558      E58D3004        false   STR      r3,[sp,#4]
+Instruction     0       0x8026B55C      DAFFFFFA        true    BLE      {pc}-0x10 ; 0x8026b54c
+Instruction     6       0x8026B560      EE1D3F30        false   MRC      p15,#0x0,r3,c13,c0,#1
+Instruction     0       0x8026B564      E1A0100D        false   MOV      r1,sp
+Instruction     0       0x8026B568      E3C12D7F        false   BIC      r2,r1,#0x1fc0
+Instruction     0       0x8026B56C      E3C2203F        false   BIC      r2,r2,#0x3f
+Instruction     0       0x8026B570      E59D1004        false   LDR      r1,[sp,#4]
+Instruction     0       0x8026B574      E59F0010        false   LDR      r0,[pc,#16] ; [0x8026B58C] = 0x80550368
+Instruction     0       0x8026B578      E592200C        false   LDR      r2,[r2,#0xc]
+Instruction     0       0x8026B57C      E59221D0        false   LDR      r2,[r2,#0x1d0]
+Instruction     0       0x8026B580      EB07A4CF        true    BL       {pc}+0x1e9344 ; 0x804548c4
+Info                                    Tracing enabled
+Instruction     13570831        0x8026B584      E28DD00C        false   ADD      sp,sp,#0xc
+Instruction     0       0x8026B588      E8BD8000        true    LDM      sp!,{pc}
+Timestamp                                       Timestamp: 17107041535
+</pre></div>
+</div>
+<ol class="arabic simple" start="2">
+<li><p>Using perf framework:</p></li>
+</ol>
+<p>Coresight tracers are represented using the Perf framework’s Performance
+Monitoring Unit (PMU) abstraction.  As such the perf framework takes charge of
+controlling when tracing gets enabled based on when the process of interest is
+scheduled.  When configured in a system, Coresight PMUs will be listed when
+queried by the perf command line tool:</p>
+<blockquote>
+<div><p><a class="reference external" href="mailto:linaro&#37;&#52;&#48;linaro-nano">linaro<span>&#64;</span>linaro-nano</a>:~$ ./perf list pmu</p>
+<blockquote>
+<div><p>List of pre-defined events (to be used in -e):</p>
+<p>cs_etm//                                    [Kernel PMU event]</p>
+</div></blockquote>
+<p><a class="reference external" href="mailto:linaro&#37;&#52;&#48;linaro-nano">linaro<span>&#64;</span>linaro-nano</a>:~$</p>
+</div></blockquote>
+<p>Regardless of the number of tracers available in a system (usually equal to the
+amount of processor cores), the “cs_etm” PMU will be listed only once.</p>
+<p>A Coresight PMU works the same way as any other PMU, i.e the name of the PMU is
+listed along with configuration options within forward slashes ‘/’.  Since a
+Coresight system will typically have more than one sink, the name of the sink to
+work with needs to be specified as an event option.
+On newer kernels the available sinks are listed in sysFS under
+($SYSFS)/bus/event_source/devices/cs_etm/sinks/:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>root@localhost:/sys/bus/event_source/devices/cs_etm/sinks# ls
+tmc_etf0  tmc_etr0  tpiu0
+</pre></div>
+</div>
+<p>On older kernels, this may need to be found from the list of coresight devices,
+available under ($SYSFS)/bus/coresight/devices/:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>root:~# ls /sys/bus/coresight/devices/
+ etm0     etm1     etm2         etm3  etm4      etm5      funnel0
+ funnel1  funnel2  replicator0  stm0  tmc_etf0  tmc_etr0  tpiu0
+root@linaro-nano:~# perf record -e cs_etm/@tmc_etr0/u --per-thread program
+</pre></div>
+</div>
+<p>As mentioned above in section “Device Naming scheme”, the names of the devices could
+look different from what is used in the example above. One must use the device names
+as it appears under the sysFS.</p>
+<p>The syntax within the forward slashes ‘/’ is important.  The ‘&#64;’ character
+tells the parser that a sink is about to be specified and that this is the sink
+to use for the trace session.</p>
+<p>More information on the above and other example on how to use Coresight with
+the perf tools can be found in the “HOWTO.md” file of the openCSD gitHub
+repository <a class="footnote-reference brackets" href="#third" id="id2">3</a>.</p>
+<p>2.1) AutoFDO analysis using the perf tools:</p>
+<p>perf can be used to record and analyze trace of programs.</p>
+<p>Execution can be recorded using ‘perf record’ with the cs_etm event,
+specifying the name of the sink to record to, e.g:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>perf record -e cs_etm/@tmc_etr0/u --per-thread
+</pre></div>
+</div>
+<p>The ‘perf report’ and ‘perf script’ commands can be used to analyze execution,
+synthesizing instruction and branch events from the instruction trace.
+‘perf inject’ can be used to replace the trace data with the synthesized events.
+The –itrace option controls the type and frequency of synthesized events
+(see perf documentation).</p>
+<p>Note that only 64-bit programs are currently supported - further work is
+required to support instruction decode of 32-bit Arm programs.</p>
+</div>
+<div class="section" id="generating-coverage-files-for-feedback-directed-optimization-autofdo">
+<h2>Generating coverage files for Feedback Directed Optimization: AutoFDO<a class="headerlink" href="#generating-coverage-files-for-feedback-directed-optimization-autofdo" title="Permalink to this headline">¶</a></h2>
+<p>‘perf inject’ accepts the –itrace option in which case tracing data is
+removed and replaced with the synthesized events. e.g.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>perf inject --itrace --strip -i perf.data -o perf.data.new
+</pre></div>
+</div>
+<p>Below is an example of using ARM ETM for autoFDO.  It requires autofdo
+(<a class="reference external" href="https://github.com/google/autofdo">https://github.com/google/autofdo</a>) and gcc version 5.  The bubble
+sort example is from the AutoFDO tutorial (<a class="reference external" href="https://gcc.gnu.org/wiki/AutoFDO/Tutorial">https://gcc.gnu.org/wiki/AutoFDO/Tutorial</a>).</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ gcc-5 -O3 sort.c -o sort
+$ taskset -c 2 ./sort
+Bubble sorting array of 30000 elements
+5910 ms
+
+$ perf record -e cs_etm/@tmc_etr0/u --per-thread taskset -c 2 ./sort
+Bubble sorting array of 30000 elements
+12543 ms
+[ perf record: Woken up 35 times to write data ]
+[ perf record: Captured and wrote 69.640 MB perf.data ]
+
+$ perf inject -i perf.data -o inj.data --itrace=il64 --strip
+$ create_gcov --binary=./sort --profile=inj.data --gcov=sort.gcov -gcov_version=1
+$ gcc-5 -O3 -fauto-profile=sort.gcov sort.c -o sort_autofdo
+$ taskset -c 2 ./sort_autofdo
+Bubble sorting array of 30000 elements
+5806 ms
+</pre></div>
+</div>
+</div>
+<div class="section" id="how-to-use-the-stm-module">
+<h2>How to use the STM module<a class="headerlink" href="#how-to-use-the-stm-module" title="Permalink to this headline">¶</a></h2>
+<p>Using the System Trace Macrocell module is the same as the tracers - the only
+difference is that clients are driving the trace capture rather
+than the program flow through the code.</p>
+<p>As with any other CoreSight component, specifics about the STM tracer can be
+found in sysfs with more information on each entry being found in <a class="footnote-reference brackets" href="#first" id="id3">1</a>:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>root@genericarmv8:~# ls /sys/bus/coresight/devices/stm0
+enable_source   hwevent_select  port_enable     subsystem       uevent
+hwevent_enable  mgmt            port_select     traceid
+root@genericarmv8:~#
+</pre></div>
+</div>
+<p>Like any other source a sink needs to be identified and the STM enabled before
+being used:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>root@genericarmv8:~# echo 1 &gt; /sys/bus/coresight/devices/tmc_etf0/enable_sink
+root@genericarmv8:~# echo 1 &gt; /sys/bus/coresight/devices/stm0/enable_source
+</pre></div>
+</div>
+<p>From there user space applications can request and use channels using the devfs
+interface provided for that purpose by the generic STM API:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>root@genericarmv8:~# ls -l /dev/stm0
+crw-------    1 root     root       10,  61 Jan  3 18:11 /dev/stm0
+root@genericarmv8:~#
+</pre></div>
+</div>
+<p>Details on how to use the generic STM API can be found here:- <a class="reference internal" href="../stm.html"><span class="doc">System Trace Module</span></a> <a class="footnote-reference brackets" href="#second" id="id4">2</a>.</p>
+</div>
+<div class="section" id="the-cti-ctm-modules">
+<h2>The CTI &amp; CTM Modules<a class="headerlink" href="#the-cti-ctm-modules" title="Permalink to this headline">¶</a></h2>
+<p>The CTI (Cross Trigger Interface) provides a set of trigger signals between
+individual CTIs and components, and can propagate these between all CTIs via
+channels on the CTM (Cross Trigger Matrix).</p>
+<p>A separate documentation file is provided to explain the use of these devices.
+(<a class="reference internal" href="coresight-ect.html"><span class="doc">CoreSight Embedded Cross Trigger (CTI &amp; CTM).</span></a>) <a class="footnote-reference brackets" href="#fourth" id="id5">4</a>.</p>
+<dl class="footnote brackets">
+<dt class="label" id="first"><span class="brackets"><a class="fn-backref" href="#id3">1</a></span></dt>
+<dd><p>Documentation/ABI/testing/sysfs-bus-coresight-devices-stm</p>
+</dd>
+<dt class="label" id="second"><span class="brackets"><a class="fn-backref" href="#id4">2</a></span></dt>
+<dd><p><a class="reference internal" href="../stm.html"><span class="doc">System Trace Module</span></a></p>
+</dd>
+<dt class="label" id="third"><span class="brackets"><a class="fn-backref" href="#id2">3</a></span></dt>
+<dd><p><a class="reference external" href="https://github.com/Linaro/perf-opencsd">https://github.com/Linaro/perf-opencsd</a></p>
+</dd>
+<dt class="label" id="fourth"><span class="brackets">4</span><span class="fn-backref">(<a href="#id1">1</a>,<a href="#id5">2</a>)</span></dt>
+<dd><p><a class="reference internal" href="coresight-ect.html"><span class="doc">CoreSight Embedded Cross Trigger (CTI &amp; CTM).</span></a></p>
+</dd>
+</dl>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="coresight-cpu-debug.html" class="btn btn-neutral float-right" title="Coresight CPU Debug Module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral float-left" title="CoreSight - ARM Hardware Trace" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

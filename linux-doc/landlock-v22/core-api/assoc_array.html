@@ -1,0 +1,843 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Generic Associative Array Implementation &mdash; The Linux Kernel 5.10.0-rc1+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="XArray" href="xarray.html" />
+    <link rel="prev" title="Adding reference counters (krefs) to kernel objects" href="kref.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.10.0-rc1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Core API Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="index.html#core-utilities">Core utilities</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#data-structures-and-low-level-utilities">Data structures and low-level utilities</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="kobject.html">Everything you never wanted to know about kobjects, ksets, and ktypes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="kref.html">Adding reference counters (krefs) to kernel objects</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Generic Associative Array Implementation</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#the-public-api">The Public API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#internal-workings">Internal Workings</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="xarray.html">XArray</a></li>
+<li class="toctree-l3"><a class="reference internal" href="idr.html">ID Allocation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="circular-buffers.html">Circular Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rbtree.html">Red-black Trees (rbtree) in Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generic-radix-tree.html">Generic radix trees/sparse arrays</a></li>
+<li class="toctree-l3"><a class="reference internal" href="packing.html">Generic bitfield packing and unpacking functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bus-virt-phys-mapping.html">How to access I/O mapped memory from within device drivers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="this_cpu_ops.html">this_cpu operations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="timekeeping.html">ktime accessors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="errseq.html">The errseq_t datatype</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#concurrency-primitives">Concurrency primitives</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#low-level-hardware-management">Low-level hardware management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#memory-management">Memory management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#interfaces-for-kernel-debugging">Interfaces for kernel debugging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#everything-else">Everything else</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="index.html">Core API Documentation</a> &raquo;</li>
+        
+      <li>Generic Associative Array Implementation</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/core-api/assoc_array.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="generic-associative-array-implementation">
+<h1>Generic Associative Array Implementation<a class="headerlink" href="#generic-associative-array-implementation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>This associative array implementation is an object container with the following
+properties:</p>
+<ol class="arabic">
+<li><p>Objects are opaque pointers.  The implementation does not care where they
+point (if anywhere) or what they point to (if anything).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Pointers to objects _must_ be zero in the least significant bit.</p>
+</div>
+</li>
+<li><p>Objects do not need to contain linkage blocks for use by the array.  This
+permits an object to be located in multiple arrays simultaneously.
+Rather, the array is made up of metadata blocks that point to objects.</p></li>
+<li><p>Objects require index keys to locate them within the array.</p></li>
+<li><p>Index keys must be unique.  Inserting an object with the same key as one
+already in the array will replace the old object.</p></li>
+<li><p>Index keys can be of any length and can be of different lengths.</p></li>
+<li><p>Index keys should encode the length early on, before any variation due to
+length is seen.</p></li>
+<li><p>Index keys can include a hash to scatter objects throughout the array.</p></li>
+<li><p>The array can iterated over.  The objects will not necessarily come out in
+key order.</p></li>
+<li><p>The array can be iterated over while it is being modified, provided the
+RCU readlock is being held by the iterator.  Note, however, under these
+circumstances, some objects may be seen more than once.  If this is a
+problem, the iterator should lock against modification.  Objects will not
+be missed, however, unless deleted.</p></li>
+<li><p>Objects in the array can be looked up by means of their index key.</p></li>
+<li><p>Objects can be looked up while the array is being modified, provided the
+RCU readlock is being held by the thread doing the look up.</p></li>
+</ol>
+<p>The implementation uses a tree of 16-pointer nodes internally that are indexed
+on each level by nibbles from the index key in the same manner as in a radix
+tree.  To improve memory efficiency, shortcuts can be emplaced to skip over
+what would otherwise be a series of single-occupancy nodes.  Further, nodes
+pack leaf object pointers into spare space in the node rather than making an
+extra branch until as such time an object needs to be added to a full node.</p>
+</div>
+<div class="section" id="the-public-api">
+<h2>The Public API<a class="headerlink" href="#the-public-api" title="Permalink to this headline">¶</a></h2>
+<p>The public API can be found in <code class="docutils literal notranslate"><span class="pre">&lt;linux/assoc_array.h&gt;</span></code>.  The associative
+array is rooted on the following structure:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct assoc_array {
+        ...
+};
+</pre></div>
+</div>
+<p>The code is selected by enabling <code class="docutils literal notranslate"><span class="pre">CONFIG_ASSOCIATIVE_ARRAY</span></code> with:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>./script/config -e ASSOCIATIVE_ARRAY
+</pre></div>
+</div>
+<div class="section" id="edit-script">
+<h3>Edit Script<a class="headerlink" href="#edit-script" title="Permalink to this headline">¶</a></h3>
+<p>The insertion and deletion functions produce an ‘edit script’ that can later be
+applied to effect the changes without risking <code class="docutils literal notranslate"><span class="pre">ENOMEM</span></code>. This retains the
+preallocated metadata blocks that will be installed in the internal tree and
+keeps track of the metadata blocks that will be removed from the tree when the
+script is applied.</p>
+<p>This is also used to keep track of dead blocks and dead objects after the
+script has been applied so that they can be freed later.  The freeing is done
+after an RCU grace period has passed - thus allowing access functions to
+proceed under the RCU read lock.</p>
+<p>The script appears as outside of the API as a pointer of the type:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct assoc_array_edit;
+</pre></div>
+</div>
+<p>There are two functions for dealing with the script:</p>
+<ol class="arabic">
+<li><p>Apply an edit script:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void assoc_array_apply_edit(struct assoc_array_edit *edit);
+</pre></div>
+</div>
+</li>
+</ol>
+<p>This will perform the edit functions, interpolating various write barriers
+to permit accesses under the RCU read lock to continue.  The edit script
+will then be passed to <code class="docutils literal notranslate"><span class="pre">call_rcu()</span></code> to free it and any dead stuff it points
+to.</p>
+<ol class="arabic" start="2">
+<li><p>Cancel an edit script:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void assoc_array_cancel_edit(struct assoc_array_edit *edit);
+</pre></div>
+</div>
+</li>
+</ol>
+<p>This frees the edit script and all preallocated memory immediately. If
+this was for insertion, the new object is _not_ released by this function,
+but must rather be released by the caller.</p>
+<p>These functions are guaranteed not to fail.</p>
+</div>
+<div class="section" id="operations-table">
+<h3>Operations Table<a class="headerlink" href="#operations-table" title="Permalink to this headline">¶</a></h3>
+<p>Various functions take a table of operations:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct assoc_array_ops {
+        ...
+};
+</pre></div>
+</div>
+<p>This points to a number of methods, all of which need to be provided:</p>
+<ol class="arabic">
+<li><p>Get a chunk of index key from caller data:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>unsigned long (*get_key_chunk)(const void *index_key, int level);
+</pre></div>
+</div>
+</li>
+</ol>
+<p>This should return a chunk of caller-supplied index key starting at the
+<em>bit</em> position given by the level argument.  The level argument will be a
+multiple of <code class="docutils literal notranslate"><span class="pre">ASSOC_ARRAY_KEY_CHUNK_SIZE</span></code> and the function should return
+<code class="docutils literal notranslate"><span class="pre">ASSOC_ARRAY_KEY_CHUNK_SIZE</span> <span class="pre">bits</span></code>.  No error is possible.</p>
+<ol class="arabic" start="2">
+<li><p>Get a chunk of an object’s index key:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>unsigned long (*get_object_key_chunk)(const void *object, int level);
+</pre></div>
+</div>
+</li>
+</ol>
+<p>As the previous function, but gets its data from an object in the array
+rather than from a caller-supplied index key.</p>
+<ol class="arabic" start="3">
+<li><p>See if this is the object we’re looking for:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>bool (*compare_object)(const void *object, const void *index_key);
+</pre></div>
+</div>
+</li>
+</ol>
+<p>Compare the object against an index key and return <code class="docutils literal notranslate"><span class="pre">true</span></code> if it matches and
+<code class="docutils literal notranslate"><span class="pre">false</span></code> if it doesn’t.</p>
+<ol class="arabic" start="4">
+<li><p>Diff the index keys of two objects:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int (*diff_objects)(const void *object, const void *index_key);
+</pre></div>
+</div>
+</li>
+</ol>
+<p>Return the bit position at which the index key of the specified object
+differs from the given index key or -1 if they are the same.</p>
+<ol class="arabic" start="5">
+<li><p>Free an object:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void (*free_object)(void *object);
+</pre></div>
+</div>
+</li>
+</ol>
+<p>Free the specified object.  Note that this may be called an RCU grace period
+after <code class="docutils literal notranslate"><span class="pre">assoc_array_apply_edit()</span></code> was called, so <code class="docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code> may be
+necessary on module unloading.</p>
+</div>
+<div class="section" id="manipulation-functions">
+<h3>Manipulation Functions<a class="headerlink" href="#manipulation-functions" title="Permalink to this headline">¶</a></h3>
+<p>There are a number of functions for manipulating an associative array:</p>
+<ol class="arabic">
+<li><p>Initialise an associative array:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void assoc_array_init(struct assoc_array *array);
+</pre></div>
+</div>
+</li>
+</ol>
+<p>This initialises the base structure for an associative array.  It can’t fail.</p>
+<ol class="arabic" start="2">
+<li><p>Insert/replace an object in an associative array:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct assoc_array_edit *
+assoc_array_insert(struct assoc_array *array,
+                   const struct assoc_array_ops *ops,
+                   const void *index_key,
+                   void *object);
+</pre></div>
+</div>
+</li>
+</ol>
+<p>This inserts the given object into the array.  Note that the least
+significant bit of the pointer must be zero as it’s used to type-mark
+pointers internally.</p>
+<p>If an object already exists for that key then it will be replaced with the
+new object and the old one will be freed automatically.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">index_key</span></code> argument should hold index key information and is
+passed to the methods in the ops table when they are called.</p>
+<p>This function makes no alteration to the array itself, but rather returns
+an edit script that must be applied.  <code class="docutils literal notranslate"><span class="pre">-ENOMEM</span></code> is returned in the case of
+an out-of-memory error.</p>
+<p>The caller should lock exclusively against other modifiers of the array.</p>
+<ol class="arabic" start="3">
+<li><p>Delete an object from an associative array:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct assoc_array_edit *
+assoc_array_delete(struct assoc_array *array,
+                   const struct assoc_array_ops *ops,
+                   const void *index_key);
+</pre></div>
+</div>
+</li>
+</ol>
+<p>This deletes an object that matches the specified data from the array.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">index_key</span></code> argument should hold index key information and is
+passed to the methods in the ops table when they are called.</p>
+<p>This function makes no alteration to the array itself, but rather returns
+an edit script that must be applied.  <code class="docutils literal notranslate"><span class="pre">-ENOMEM</span></code> is returned in the case of
+an out-of-memory error.  <code class="docutils literal notranslate"><span class="pre">NULL</span></code> will be returned if the specified object is
+not found within the array.</p>
+<p>The caller should lock exclusively against other modifiers of the array.</p>
+<ol class="arabic" start="4">
+<li><p>Delete all objects from an associative array:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct assoc_array_edit *
+assoc_array_clear(struct assoc_array *array,
+                  const struct assoc_array_ops *ops);
+</pre></div>
+</div>
+</li>
+</ol>
+<p>This deletes all the objects from an associative array and leaves it
+completely empty.</p>
+<p>This function makes no alteration to the array itself, but rather returns
+an edit script that must be applied.  <code class="docutils literal notranslate"><span class="pre">-ENOMEM</span></code> is returned in the case of
+an out-of-memory error.</p>
+<p>The caller should lock exclusively against other modifiers of the array.</p>
+<ol class="arabic" start="5">
+<li><p>Destroy an associative array, deleting all objects:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void assoc_array_destroy(struct assoc_array *array,
+                         const struct assoc_array_ops *ops);
+</pre></div>
+</div>
+</li>
+</ol>
+<p>This destroys the contents of the associative array and leaves it
+completely empty.  It is not permitted for another thread to be traversing
+the array under the RCU read lock at the same time as this function is
+destroying it as no RCU deferral is performed on memory release -
+something that would require memory to be allocated.</p>
+<p>The caller should lock exclusively against other modifiers and accessors
+of the array.</p>
+<ol class="arabic" start="6">
+<li><p>Garbage collect an associative array:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int assoc_array_gc(struct assoc_array *array,
+                   const struct assoc_array_ops *ops,
+                   bool (*iterator)(void *object, void *iterator_data),
+                   void *iterator_data);
+</pre></div>
+</div>
+</li>
+</ol>
+<p>This iterates over the objects in an associative array and passes each one to
+<code class="docutils literal notranslate"><span class="pre">iterator()</span></code>.  If <code class="docutils literal notranslate"><span class="pre">iterator()</span></code> returns <code class="docutils literal notranslate"><span class="pre">true</span></code>, the object is kept.  If it
+returns <code class="docutils literal notranslate"><span class="pre">false</span></code>, the object will be freed.  If the <code class="docutils literal notranslate"><span class="pre">iterator()</span></code> function
+returns <code class="docutils literal notranslate"><span class="pre">true</span></code>, it must perform any appropriate refcount incrementing on the
+object before returning.</p>
+<p>The internal tree will be packed down if possible as part of the iteration
+to reduce the number of nodes in it.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">iterator_data</span></code> is passed directly to <code class="docutils literal notranslate"><span class="pre">iterator()</span></code> and is otherwise
+ignored by the function.</p>
+<p>The function will return <code class="docutils literal notranslate"><span class="pre">0</span></code> if successful and <code class="docutils literal notranslate"><span class="pre">-ENOMEM</span></code> if there wasn’t
+enough memory.</p>
+<p>It is possible for other threads to iterate over or search the array under
+the RCU read lock while this function is in progress.  The caller should
+lock exclusively against other modifiers of the array.</p>
+</div>
+<div class="section" id="access-functions">
+<h3>Access Functions<a class="headerlink" href="#access-functions" title="Permalink to this headline">¶</a></h3>
+<p>There are two functions for accessing an associative array:</p>
+<ol class="arabic">
+<li><p>Iterate over all the objects in an associative array:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int assoc_array_iterate(const struct assoc_array *array,
+                        int (*iterator)(const void *object,
+                                        void *iterator_data),
+                        void *iterator_data);
+</pre></div>
+</div>
+</li>
+</ol>
+<p>This passes each object in the array to the iterator callback function.
+<code class="docutils literal notranslate"><span class="pre">iterator_data</span></code> is private data for that function.</p>
+<p>This may be used on an array at the same time as the array is being
+modified, provided the RCU read lock is held.  Under such circumstances,
+it is possible for the iteration function to see some objects twice.  If
+this is a problem, then modification should be locked against.  The
+iteration algorithm should not, however, miss any objects.</p>
+<p>The function will return <code class="docutils literal notranslate"><span class="pre">0</span></code> if no objects were in the array or else it will
+return the result of the last iterator function called.  Iteration stops
+immediately if any call to the iteration function results in a non-zero
+return.</p>
+<ol class="arabic" start="2">
+<li><p>Find an object in an associative array:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void *assoc_array_find(const struct assoc_array *array,
+                       const struct assoc_array_ops *ops,
+                       const void *index_key);
+</pre></div>
+</div>
+</li>
+</ol>
+<p>This walks through the array’s internal tree directly to the object
+specified by the index key..</p>
+<p>This may be used on an array at the same time as the array is being
+modified, provided the RCU read lock is held.</p>
+<p>The function will return the object if found (and set <code class="docutils literal notranslate"><span class="pre">*_type</span></code> to the object
+type) or will return <code class="docutils literal notranslate"><span class="pre">NULL</span></code> if the object was not found.</p>
+</div>
+<div class="section" id="index-key-form">
+<h3>Index Key Form<a class="headerlink" href="#index-key-form" title="Permalink to this headline">¶</a></h3>
+<p>The index key can be of any form, but since the algorithms aren’t told how long
+the key is, it is strongly recommended that the index key includes its length
+very early on before any variation due to the length would have an effect on
+comparisons.</p>
+<p>This will cause leaves with different length keys to scatter away from each
+other - and those with the same length keys to cluster together.</p>
+<p>It is also recommended that the index key begin with a hash of the rest of the
+key to maximise scattering throughout keyspace.</p>
+<p>The better the scattering, the wider and lower the internal tree will be.</p>
+<p>Poor scattering isn’t too much of a problem as there are shortcuts and nodes
+can contain mixtures of leaves and metadata pointers.</p>
+<p>The index key is read in chunks of machine word.  Each chunk is subdivided into
+one nibble (4 bits) per level, so on a 32-bit CPU this is good for 8 levels and
+on a 64-bit CPU, 16 levels.  Unless the scattering is really poor, it is
+unlikely that more than one word of any particular index key will have to be
+used.</p>
+</div>
+</div>
+<div class="section" id="internal-workings">
+<h2>Internal Workings<a class="headerlink" href="#internal-workings" title="Permalink to this headline">¶</a></h2>
+<p>The associative array data structure has an internal tree.  This tree is
+constructed of two types of metadata blocks: nodes and shortcuts.</p>
+<p>A node is an array of slots.  Each slot can contain one of four things:</p>
+<ul class="simple">
+<li><p>A NULL pointer, indicating that the slot is empty.</p></li>
+<li><p>A pointer to an object (a leaf).</p></li>
+<li><p>A pointer to a node at the next level.</p></li>
+<li><p>A pointer to a shortcut.</p></li>
+</ul>
+<div class="section" id="basic-internal-tree-layout">
+<h3>Basic Internal Tree Layout<a class="headerlink" href="#basic-internal-tree-layout" title="Permalink to this headline">¶</a></h3>
+<p>Ignoring shortcuts for the moment, the nodes form a multilevel tree.  The index
+key space is strictly subdivided by the nodes in the tree and nodes occur on
+fixed levels.  For example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Level: 0               1               2               3
+       =============== =============== =============== ===============
+                                                       NODE D
+                       NODE B          NODE C  +------&gt;+---+
+               +------&gt;+---+   +------&gt;+---+   |       | 0 |
+       NODE A  |       | 0 |   |       | 0 |   |       +---+
+       +---+   |       +---+   |       +---+   |       :   :
+       | 0 |   |       :   :   |       :   :   |       +---+
+       +---+   |       +---+   |       +---+   |       | f |
+       | 1 |---+       | 3 |---+       | 7 |---+       +---+
+       +---+           +---+           +---+
+       :   :           :   :           | 8 |---+
+       +---+           +---+           +---+   |       NODE E
+       | e |---+       | f |           :   :   +------&gt;+---+
+       +---+   |       +---+           +---+           | 0 |
+       | f |   |                       | f |           +---+
+       +---+   |                       +---+           :   :
+               |       NODE F                          +---+
+               +------&gt;+---+                           | f |
+                       | 0 |           NODE G          +---+
+                       +---+   +------&gt;+---+
+                       :   :   |       | 0 |
+                       +---+   |       +---+
+                       | 6 |---+       :   :
+                       +---+           +---+
+                       :   :           | f |
+                       +---+           +---+
+                       | f |
+                       +---+
+</pre></div>
+</div>
+<p>In the above example, there are 7 nodes (A-G), each with 16 slots (0-f).
+Assuming no other meta data nodes in the tree, the key space is divided
+thusly:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>KEY PREFIX      NODE
+==========      ====
+137*            D
+138*            E
+13[0-69-f]*     C
+1[0-24-f]*      B
+e6*             G
+e[0-57-f]*      F
+[02-df]*        A
+</pre></div>
+</div>
+<p>So, for instance, keys with the following example index keys will be found in
+the appropriate nodes:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>INDEX KEY       PREFIX  NODE
+=============== ======= ====
+13694892892489  13      C
+13795289025897  137     D
+13889dde88793   138     E
+138bbb89003093  138     E
+1394879524789   12      C
+1458952489      1       B
+9431809de993ba  -       A
+b4542910809cd   -       A
+e5284310def98   e       F
+e68428974237    e6      G
+e7fffcbd443     e       F
+f3842239082     -       A
+</pre></div>
+</div>
+<p>To save memory, if a node can hold all the leaves in its portion of keyspace,
+then the node will have all those leaves in it and will not have any metadata
+pointers - even if some of those leaves would like to be in the same slot.</p>
+<p>A node can contain a heterogeneous mix of leaves and metadata pointers.
+Metadata pointers must be in the slots that match their subdivisions of key
+space.  The leaves can be in any slot not occupied by a metadata pointer.  It
+is guaranteed that none of the leaves in a node will match a slot occupied by a
+metadata pointer.  If the metadata pointer is there, any leaf whose key matches
+the metadata key prefix must be in the subtree that the metadata pointer points
+to.</p>
+<p>In the above example list of index keys, node A will contain:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>SLOT    CONTENT         INDEX KEY (PREFIX)
+====    =============== ==================
+1       PTR TO NODE B   1*
+any     LEAF            9431809de993ba
+any     LEAF            b4542910809cd
+e       PTR TO NODE F   e*
+any     LEAF            f3842239082
+</pre></div>
+</div>
+<p>and node B:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>3   PTR TO NODE C   13*
+any LEAF            1458952489
+</pre></div>
+</div>
+</div>
+<div class="section" id="shortcuts">
+<h3>Shortcuts<a class="headerlink" href="#shortcuts" title="Permalink to this headline">¶</a></h3>
+<p>Shortcuts are metadata records that jump over a piece of keyspace.  A shortcut
+is a replacement for a series of single-occupancy nodes ascending through the
+levels.  Shortcuts exist to save memory and to speed up traversal.</p>
+<p>It is possible for the root of the tree to be a shortcut - say, for example,
+the tree contains at least 17 nodes all with key prefix <code class="docutils literal notranslate"><span class="pre">1111</span></code>.  The
+insertion algorithm will insert a shortcut to skip over the <code class="docutils literal notranslate"><span class="pre">1111</span></code> keyspace
+in a single bound and get to the fourth level where these actually become
+different.</p>
+</div>
+<div class="section" id="splitting-and-collapsing-nodes">
+<h3>Splitting And Collapsing Nodes<a class="headerlink" href="#splitting-and-collapsing-nodes" title="Permalink to this headline">¶</a></h3>
+<p>Each node has a maximum capacity of 16 leaves and metadata pointers.  If the
+insertion algorithm finds that it is trying to insert a 17th object into a
+node, that node will be split such that at least two leaves that have a common
+key segment at that level end up in a separate node rooted on that slot for
+that common key segment.</p>
+<p>If the leaves in a full node and the leaf that is being inserted are
+sufficiently similar, then a shortcut will be inserted into the tree.</p>
+<p>When the number of objects in the subtree rooted at a node falls to 16 or
+fewer, then the subtree will be collapsed down to a single node - and this will
+ripple towards the root if possible.</p>
+</div>
+<div class="section" id="non-recursive-iteration">
+<h3>Non-Recursive Iteration<a class="headerlink" href="#non-recursive-iteration" title="Permalink to this headline">¶</a></h3>
+<p>Each node and shortcut contains a back pointer to its parent and the number of
+slot in that parent that points to it.  None-recursive iteration uses these to
+proceed rootwards through the tree, going to the parent node, slot N + 1 to
+make sure progress is made without the need for a stack.</p>
+<p>The backpointers, however, make simultaneous alteration and iteration tricky.</p>
+</div>
+<div class="section" id="simultaneous-alteration-and-iteration">
+<h3>Simultaneous Alteration And Iteration<a class="headerlink" href="#simultaneous-alteration-and-iteration" title="Permalink to this headline">¶</a></h3>
+<p>There are a number of cases to consider:</p>
+<ol class="arabic">
+<li><p>Simple insert/replace.  This involves simply replacing a NULL or old
+matching leaf pointer with the pointer to the new leaf after a barrier.
+The metadata blocks don’t change otherwise.  An old leaf won’t be freed
+until after the RCU grace period.</p></li>
+<li><p>Simple delete.  This involves just clearing an old matching leaf.  The
+metadata blocks don’t change otherwise.  The old leaf won’t be freed until
+after the RCU grace period.</p></li>
+<li><p>Insertion replacing part of a subtree that we haven’t yet entered.  This
+may involve replacement of part of that subtree - but that won’t affect
+the iteration as we won’t have reached the pointer to it yet and the
+ancestry blocks are not replaced (the layout of those does not change).</p></li>
+<li><p>Insertion replacing nodes that we’re actively processing.  This isn’t a
+problem as we’ve passed the anchoring pointer and won’t switch onto the
+new layout until we follow the back pointers - at which point we’ve
+already examined the leaves in the replaced node (we iterate over all the
+leaves in a node before following any of its metadata pointers).</p>
+<p>We might, however, re-see some leaves that have been split out into a new
+branch that’s in a slot further along than we were at.</p>
+</li>
+<li><p>Insertion replacing nodes that we’re processing a dependent branch of.
+This won’t affect us until we follow the back pointers.  Similar to (4).</p></li>
+<li><p>Deletion collapsing a branch under us.  This doesn’t affect us because the
+back pointers will get us back to the parent of the new node before we
+could see the new node.  The entire collapsed subtree is thrown away
+unchanged - and will still be rooted on the same slot, so we shouldn’t
+process it a second time as we’ll go back to slot + 1.</p></li>
+</ol>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Under some circumstances, we need to simultaneously change the parent
+pointer and the parent slot pointer on a node (say, for example, we
+inserted another node before it and moved it up a level).  We cannot do
+this without locking against a read - so we have to replace that node too.</p>
+<p>However, when we’re changing a shortcut into a node this isn’t a problem
+as shortcuts only have one slot and so the parent slot number isn’t used
+when traversing backwards over one.  This means that it’s okay to change
+the slot number first - provided suitable barriers are used to make sure
+the parent slot number is read after the back pointer.</p>
+</div>
+<p>Obsolete blocks and leaves are freed up after an RCU grace period has passed,
+so as long as anyone doing walking or iteration holds the RCU read lock, the
+old superstructure should not go away on them.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="xarray.html" class="btn btn-neutral float-right" title="XArray" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="kref.html" class="btn btn-neutral float-left" title="Adding reference counters (krefs) to kernel objects" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

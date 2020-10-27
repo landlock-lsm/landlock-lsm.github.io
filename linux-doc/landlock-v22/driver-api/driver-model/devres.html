@@ -1,0 +1,792 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Devres - Managed Device Resource &mdash; The Linux Kernel 5.10.0-rc1+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Device Drivers" href="driver.html" />
+    <link rel="prev" title="The Basic Device Structure" href="device.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.10.0-rc1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">The Linux driver implementer’s API guide</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">Driver Model</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="binding.html">Driver Binding</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bus.html">Bus Types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="class.html">Device Classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="design-patterns.html">Device Driver Design Patterns</a></li>
+<li class="toctree-l3"><a class="reference internal" href="device.html">The Basic Device Structure</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Devres - Managed Device Resource</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#intro">1. Intro</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#devres">2. Devres</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#devres-group">3. Devres group</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#details">4. Details</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#overhead">5. Overhead</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#list-of-managed-interfaces">6. List of managed interfaces</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="driver.html">Device Drivers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overview.html">The Linux Kernel Device Model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="platform.html">Platform Devices and Drivers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="porting.html">Porting Drivers to the New Driver Model</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../basics.html">Driver Basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../infrastructure.html">Device drivers infrastructure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ioctl.html">ioctl based interfaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../early-userspace/index.html">Early Userspace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pm/index.html">CPU and Device Power Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../clk.html">The Common Clk Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../device-io.html">Bus-Independent Device Accesses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dma-buf.html">Buffer Sharing and Synchronization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../device_link.html">Device links</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../component.html">Component Helper for Aggregate Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../message-based.html">Message-based devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../infiniband.html">InfiniBand and Remote DMA (RDMA) Interfaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../frame-buffer.html">Frame Buffer Library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../regulator.html">Voltage and current regulator API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../input.html">Input Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usb/index.html">Linux USB API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../firewire.html">Firewire (IEEE 1394) driver Interface Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pci/index.html">The Linux PCI driver implementer’s API guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../spi.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../i2c.html">I<sup>2</sup>C and SMBus Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ipmb.html">IPMB Driver for a Satellite MC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ipmi.html">The Linux IPMI Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../i3c/index.html">I3C subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../interconnect.html">Generic System Interconnect Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../devfreq.html">Device Frequency Scaling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../hsi.html">High Speed Synchronous Serial Interface (HSI)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../edac.html">Error Detection And Correction (EDAC) Devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../scsi.html">SCSI Interfaces Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../libata.html">libATA Developer’s Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../target.html">target and iSCSI Interfaces Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mailbox.html">The Common Mailbox Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mtdnand.html">MTD NAND Driver Programming Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../miscellaneous.html">Parallel Port Devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../miscellaneous.html#x50-uart-driver">16x50 UART Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../miscellaneous.html#pulse-width-modulation-pwm">Pulse-Width Modulation (PWM)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mei/index.html">Intel(R) Management Engine Interface (Intel(R) MEI)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mtd/index.html">Memory Technology Device (MTD)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mmc/index.html">MMC/SD/SDIO card support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../nvdimm/index.html">Non-Volatile Memory Device (NVDIMM)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../w1.html">W1: Dallas’ 1-wire bus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../rapidio/index.html">The Linux RapidIO Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../s390-drivers.html">Writing s390 channel device drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../vme.html">VME Device Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../80211/index.html">Linux 802.11 Driver Developer’s Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../uio-howto.html">The Userspace I/O HOWTO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../firmware/index.html">Linux Firmware API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pinctl.html">PINCTRL (PIN CONTROL) subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../gpio/index.html">General Purpose Input/Output (GPIO)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../md/index.html">RAID</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../media/index.html">Media subsystem kernel internal API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../misc_devices.html">Miscellaneous Devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../nfc/index.html">Near Field Communication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dmaengine/index.html">DMAEngine documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../slimbus.html">Linux kernel SLIMbus support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../soundwire/index.html">SoundWire Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../thermal/index.html">Thermal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga/index.html">FPGA Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../acpi/index.html">ACPI Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../backlight/lp855x-driver.html">Kernel driver lp855x</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../connector.html">Kernel Connector</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../console.html">Console Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dcdbas.html">Dell Systems Management Base Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../eisa.html">EISA bus support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../isa.html">ISA Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../isapnp.html">ISA Plug &amp; Play support by Jaroslav Kysela &lt;perex&#64;suse.cz&gt;</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../io-mapping.html">The io_mapping functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../io_ordering.html">Ordering I/O writes to memory-mapped addresses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../generic-counter.html">Generic Counter Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../lightnvm-pblk.html">pblk: Physical Block Device Target</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../memory-devices/index.html">Memory Controller drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../men-chameleon-bus.html">MEN Chameleon Bus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ntb.html">NTB Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../nvmem.html">NVMEM Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../parport-lowlevel.html">PARPORT interface documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pps.html">PPS - Pulse Per Second</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ptp.html">PTP hardware clock infrastructure for Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../phy/index.html">Generic PHY Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pti_intel_mid.html">Intel MID PTI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pwm.html">Pulse Width Modulation (PWM) interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pldmfw/index.html">PLDM Firmware Flash Update Library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pldmfw/index.html#overview-of-the-pldmfw-library">Overview of the <code class="docutils literal notranslate"><span class="pre">pldmfw</span></code> library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../rfkill.html">rfkill - RF kill switch support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../serial/index.html">Support for Serial devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sm501.html">SM501 Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../switchtec.html">Linux Switchtec Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sync_file.html">Sync File API Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../vfio-mediated-device.html">VFIO Mediated devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../vfio.html">VFIO - “Virtual Function I/O” </a></li>
+<li class="toctree-l2"><a class="reference internal" href="../xilinx/index.html">Xilinx FPGA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../xillybus.html">Xillybus driver for generic FPGA interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../zorro.html">Writing Device Drivers for Zorro Devices</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">The Linux driver implementer’s API guide</a> &raquo;</li>
+        
+          <li><a href="index.html">Driver Model</a> &raquo;</li>
+        
+      <li>Devres - Managed Device Resource</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/driver-api/driver-model/devres.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="devres-managed-device-resource">
+<h1>Devres - Managed Device Resource<a class="headerlink" href="#devres-managed-device-resource" title="Permalink to this headline">¶</a></h1>
+<p>Tejun Heo       &lt;<a class="reference external" href="mailto:teheo&#37;&#52;&#48;suse&#46;de">teheo<span>&#64;</span>suse<span>&#46;</span>de</a>&gt;</p>
+<p>First draft     10 January 2007</p>
+<div class="section" id="intro">
+<h2>1. Intro<a class="headerlink" href="#intro" title="Permalink to this headline">¶</a></h2>
+<p>devres came up while trying to convert libata to use iomap.  Each
+iomapped address should be kept and unmapped on driver detach.  For
+example, a plain SFF ATA controller (that is, good old PCI IDE) in
+native mode makes use of 5 PCI BARs and all of them should be
+maintained.</p>
+<p>As with many other device drivers, libata low level drivers have
+sufficient bugs in -&gt;remove and -&gt;probe failure path.  Well, yes,
+that’s probably because libata low level driver developers are lazy
+bunch, but aren’t all low level driver developers?  After spending a
+day fiddling with braindamaged hardware with no document or
+braindamaged document, if it’s finally working, well, it’s working.</p>
+<p>For one reason or another, low level drivers don’t receive as much
+attention or testing as core code, and bugs on driver detach or
+initialization failure don’t happen often enough to be noticeable.
+Init failure path is worse because it’s much less travelled while
+needs to handle multiple entry points.</p>
+<p>So, many low level drivers end up leaking resources on driver detach
+and having half broken failure path implementation in -&gt;probe() which
+would leak resources or even cause oops when failure occurs.  iomap
+adds more to this mix.  So do msi and msix.</p>
+</div>
+<div class="section" id="devres">
+<h2>2. Devres<a class="headerlink" href="#devres" title="Permalink to this headline">¶</a></h2>
+<p>devres is basically linked list of arbitrarily sized memory areas
+associated with a <a class="reference internal" href="../infrastructure.html#c.device" title="device"><code class="xref c c-struct docutils literal notranslate"><span class="pre">struct</span> <span class="pre">device</span></code></a>.  Each devres entry is associated with
+a release function.  A devres can be released in several ways.  No
+matter what, all devres entries are released on driver detach.  On
+release, the associated release function is invoked and then the
+devres entry is freed.</p>
+<p>Managed interface is created for resources commonly used by device
+drivers using devres.  For example, coherent DMA memory is acquired
+using dma_alloc_coherent().  The managed version is called
+dmam_alloc_coherent().  It is identical to dma_alloc_coherent() except
+for the DMA memory allocated using it is managed and will be
+automatically released on driver detach.  Implementation looks like
+the following:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct dma_devres {
+      size_t          size;
+      void            *vaddr;
+      dma_addr_t      dma_handle;
+};
+
+static void dmam_coherent_release(struct device *dev, void *res)
+{
+      struct dma_devres *this = res;
+
+      dma_free_coherent(dev, this-&gt;size, this-&gt;vaddr, this-&gt;dma_handle);
+}
+
+dmam_alloc_coherent(dev, size, dma_handle, gfp)
+{
+      struct dma_devres *dr;
+      void *vaddr;
+
+      dr = devres_alloc(dmam_coherent_release, sizeof(*dr), gfp);
+      ...
+
+      /* alloc DMA memory as usual */
+      vaddr = dma_alloc_coherent(...);
+      ...
+
+      /* record size, vaddr, dma_handle in dr */
+      dr-&gt;vaddr = vaddr;
+      ...
+
+      devres_add(dev, dr);
+
+      return vaddr;
+}
+</pre></div>
+</div>
+<p>If a driver uses dmam_alloc_coherent(), the area is guaranteed to be
+freed whether initialization fails half-way or the device gets
+detached.  If most resources are acquired using managed interface, a
+driver can have much simpler init and exit code.  Init path basically
+looks like the following:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>my_init_one()
+{
+      struct mydev *d;
+
+      d = devm_kzalloc(dev, sizeof(*d), GFP_KERNEL);
+      if (!d)
+              return -ENOMEM;
+
+      d-&gt;ring = dmam_alloc_coherent(...);
+      if (!d-&gt;ring)
+              return -ENOMEM;
+
+      if (check something)
+              return -EINVAL;
+      ...
+
+      return register_to_upper_layer(d);
+}
+</pre></div>
+</div>
+<p>And exit path:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>my_remove_one()
+{
+      unregister_from_upper_layer(d);
+      shutdown_my_hardware();
+}
+</pre></div>
+</div>
+<p>As shown above, low level drivers can be simplified a lot by using
+devres.  Complexity is shifted from less maintained low level drivers
+to better maintained higher layer.  Also, as init failure path is
+shared with exit path, both can get more testing.</p>
+<p>Note though that when converting current calls or assignments to
+managed devm_* versions it is up to you to check if internal operations
+like allocating memory, have failed. Managed resources pertains to the
+freeing of these resources <em>only</em> - all other checks needed are still
+on you. In some cases this may mean introducing checks that were not
+necessary before moving to the managed devm_* calls.</p>
+</div>
+<div class="section" id="devres-group">
+<h2>3. Devres group<a class="headerlink" href="#devres-group" title="Permalink to this headline">¶</a></h2>
+<p>Devres entries can be grouped using devres group.  When a group is
+released, all contained normal devres entries and properly nested
+groups are released.  One usage is to rollback series of acquired
+resources on failure.  For example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span> if (!devres_open_group(dev, NULL, GFP_KERNEL))
+       return -ENOMEM;
+
+ acquire A;
+ if (failed)
+       goto err;
+
+ acquire B;
+ if (failed)
+       goto err;
+ ...
+
+ devres_remove_group(dev, NULL);
+ return 0;
+
+err:
+ devres_release_group(dev, NULL);
+ return err_code;
+</pre></div>
+</div>
+<p>As resource acquisition failure usually means probe failure, constructs
+like above are usually useful in midlayer driver (e.g. libata core
+layer) where interface function shouldn’t have side effect on failure.
+For LLDs, just returning error code suffices in most cases.</p>
+<p>Each group is identified by <cite>void *id</cite>.  It can either be explicitly
+specified by &#64;id argument to <a class="reference internal" href="../basics.html#c.devres_open_group" title="devres_open_group"><code class="xref c c-func docutils literal notranslate"><span class="pre">devres_open_group()</span></code></a> or automatically
+created by passing NULL as &#64;id as in the above example.  In both
+cases, <a class="reference internal" href="../basics.html#c.devres_open_group" title="devres_open_group"><code class="xref c c-func docutils literal notranslate"><span class="pre">devres_open_group()</span></code></a> returns the group’s id.  The returned id
+can be passed to other devres functions to select the target group.
+If NULL is given to those functions, the latest open group is
+selected.</p>
+<p>For example, you can do something like the following:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int my_midlayer_create_something()
+{
+      if (!devres_open_group(dev, my_midlayer_create_something, GFP_KERNEL))
+              return -ENOMEM;
+
+      ...
+
+      devres_close_group(dev, my_midlayer_create_something);
+      return 0;
+}
+
+void my_midlayer_destroy_something()
+{
+      devres_release_group(dev, my_midlayer_create_something);
+}
+</pre></div>
+</div>
+</div>
+<div class="section" id="details">
+<h2>4. Details<a class="headerlink" href="#details" title="Permalink to this headline">¶</a></h2>
+<p>Lifetime of a devres entry begins on devres allocation and finishes
+when it is released or destroyed (removed and freed) - no reference
+counting.</p>
+<p>devres core guarantees atomicity to all basic devres operations and
+has support for single-instance devres types (atomic
+lookup-and-add-if-not-found).  Other than that, synchronizing
+concurrent accesses to allocated devres data is caller’s
+responsibility.  This is usually non-issue because bus ops and
+resource allocations already do the job.</p>
+<p>For an example of single-instance devres type, read pcim_iomap_table()
+in lib/devres.c.</p>
+<p>All devres interface functions can be called without context if the
+right gfp mask is given.</p>
+</div>
+<div class="section" id="overhead">
+<h2>5. Overhead<a class="headerlink" href="#overhead" title="Permalink to this headline">¶</a></h2>
+<p>Each devres bookkeeping info is allocated together with requested data
+area.  With debug option turned off, bookkeeping info occupies 16
+bytes on 32bit machines and 24 bytes on 64bit (three pointers rounded
+up to ull alignment).  If singly linked list is used, it can be
+reduced to two pointers (8 bytes on 32bit, 16 bytes on 64bit).</p>
+<p>Each devres group occupies 8 pointers.  It can be reduced to 6 if
+singly linked list is used.</p>
+<p>Memory space overhead on ahci controller with two ports is between 300
+and 400 bytes on 32bit machine after naive conversion (we can
+certainly invest a bit more effort into libata core layer).</p>
+</div>
+<div class="section" id="list-of-managed-interfaces">
+<h2>6. List of managed interfaces<a class="headerlink" href="#list-of-managed-interfaces" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt>CLOCK</dt><dd><p><a class="reference internal" href="../../core-api/kernel-api.html#c.devm_clk_get" title="devm_clk_get"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_clk_get()</span></code></a>
+<a class="reference internal" href="../../core-api/kernel-api.html#c.devm_clk_get_optional" title="devm_clk_get_optional"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_clk_get_optional()</span></code></a>
+<a class="reference internal" href="../../core-api/kernel-api.html#c.devm_clk_put" title="devm_clk_put"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_clk_put()</span></code></a>
+<a class="reference internal" href="../../core-api/kernel-api.html#c.devm_clk_bulk_get" title="devm_clk_bulk_get"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_clk_bulk_get()</span></code></a>
+<a class="reference internal" href="../../core-api/kernel-api.html#c.devm_clk_bulk_get_all" title="devm_clk_bulk_get_all"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_clk_bulk_get_all()</span></code></a>
+<a class="reference internal" href="../../core-api/kernel-api.html#c.devm_clk_bulk_get_optional" title="devm_clk_bulk_get_optional"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_clk_bulk_get_optional()</span></code></a>
+devm_get_clk_from_childl()
+devm_clk_hw_register()
+devm_of_clk_add_hw_provider()
+devm_clk_hw_register_clkdev()</p>
+</dd>
+<dt>DMA</dt><dd><p>dmaenginem_async_device_register()
+dmam_alloc_coherent()
+<a class="reference internal" href="../infrastructure.html#c.dmam_alloc_attrs" title="dmam_alloc_attrs"><code class="xref c c-func docutils literal notranslate"><span class="pre">dmam_alloc_attrs()</span></code></a>
+<a class="reference internal" href="../infrastructure.html#c.dmam_free_coherent" title="dmam_free_coherent"><code class="xref c c-func docutils literal notranslate"><span class="pre">dmam_free_coherent()</span></code></a>
+<a class="reference internal" href="../../core-api/mm-api.html#c.dmam_pool_create" title="dmam_pool_create"><code class="xref c c-func docutils literal notranslate"><span class="pre">dmam_pool_create()</span></code></a>
+<a class="reference internal" href="../../core-api/mm-api.html#c.dmam_pool_destroy" title="dmam_pool_destroy"><code class="xref c c-func docutils literal notranslate"><span class="pre">dmam_pool_destroy()</span></code></a></p>
+</dd>
+<dt>DRM</dt><dd><p><a class="reference internal" href="../../gpu/drm-internals.html#c.devm_drm_dev_alloc" title="devm_drm_dev_alloc"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_drm_dev_alloc()</span></code></a></p>
+</dd>
+<dt>GPIO</dt><dd><p><a class="reference internal" href="../gpio/index.html#c.devm_gpiod_get" title="devm_gpiod_get"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_gpiod_get()</span></code></a>
+<a class="reference internal" href="../gpio/index.html#c.devm_gpiod_get_array" title="devm_gpiod_get_array"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_gpiod_get_array()</span></code></a>
+<a class="reference internal" href="../gpio/index.html#c.devm_gpiod_get_array_optional" title="devm_gpiod_get_array_optional"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_gpiod_get_array_optional()</span></code></a>
+<a class="reference internal" href="../gpio/index.html#c.devm_gpiod_get_index" title="devm_gpiod_get_index"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_gpiod_get_index()</span></code></a>
+<a class="reference internal" href="../gpio/index.html#c.devm_gpiod_get_index_optional" title="devm_gpiod_get_index_optional"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_gpiod_get_index_optional()</span></code></a>
+<a class="reference internal" href="../gpio/index.html#c.devm_gpiod_get_optional" title="devm_gpiod_get_optional"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_gpiod_get_optional()</span></code></a>
+<a class="reference internal" href="../gpio/index.html#c.devm_gpiod_put" title="devm_gpiod_put"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_gpiod_put()</span></code></a>
+<a class="reference internal" href="../gpio/index.html#c.devm_gpiod_unhinge" title="devm_gpiod_unhinge"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_gpiod_unhinge()</span></code></a>
+devm_gpiochip_add_data()
+<a class="reference internal" href="../gpio/index.html#c.devm_gpio_request" title="devm_gpio_request"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_gpio_request()</span></code></a>
+<a class="reference internal" href="../gpio/index.html#c.devm_gpio_request_one" title="devm_gpio_request_one"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_gpio_request_one()</span></code></a>
+<a class="reference internal" href="../gpio/index.html#c.devm_gpio_free" title="devm_gpio_free"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_gpio_free()</span></code></a></p>
+</dd>
+<dt>I2C</dt><dd><p><a class="reference internal" href="../i2c.html#c.devm_i2c_new_dummy_device" title="devm_i2c_new_dummy_device"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_i2c_new_dummy_device()</span></code></a></p>
+</dd>
+<dt>IIO</dt><dd><p><a class="reference internal" href="../iio/core.html#c.devm_iio_device_alloc" title="devm_iio_device_alloc"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_iio_device_alloc()</span></code></a>
+<a class="reference internal" href="../iio/core.html#c.devm_iio_device_register" title="devm_iio_device_register"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_iio_device_register()</span></code></a>
+devm_iio_kfifo_allocate()
+devm_iio_triggered_buffer_setup()
+<a class="reference internal" href="../iio/triggers.html#c.devm_iio_trigger_alloc" title="devm_iio_trigger_alloc"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_iio_trigger_alloc()</span></code></a>
+devm_iio_trigger_register()
+devm_iio_channel_get()
+devm_iio_channel_get_all()</p>
+</dd>
+<dt>INPUT</dt><dd><p><a class="reference internal" href="../input.html#c.devm_input_allocate_device" title="devm_input_allocate_device"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_input_allocate_device()</span></code></a></p>
+</dd>
+<dt>IO region</dt><dd><p>devm_release_mem_region()
+devm_release_region()
+<a class="reference internal" href="../../core-api/kernel-api.html#c.devm_release_resource" title="devm_release_resource"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_release_resource()</span></code></a>
+devm_request_mem_region()
+devm_request_region()
+<a class="reference internal" href="../../core-api/kernel-api.html#c.devm_request_resource" title="devm_request_resource"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_request_resource()</span></code></a></p>
+</dd>
+<dt>IOMAP</dt><dd><p>devm_ioport_map()
+devm_ioport_unmap()
+devm_ioremap()
+devm_ioremap_uc()
+devm_ioremap_wc()
+devm_ioremap_resource() : checks resource, requests memory region, ioremaps
+devm_ioremap_resource_wc()
+<a class="reference internal" href="../infrastructure.html#c.devm_platform_ioremap_resource" title="devm_platform_ioremap_resource"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_platform_ioremap_resource()</span></code></a> : calls devm_ioremap_resource() for platform device
+devm_platform_ioremap_resource_wc()
+<a class="reference internal" href="../infrastructure.html#c.devm_platform_ioremap_resource_byname" title="devm_platform_ioremap_resource_byname"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_platform_ioremap_resource_byname()</span></code></a>
+<a class="reference internal" href="../infrastructure.html#c.devm_platform_get_and_ioremap_resource" title="devm_platform_get_and_ioremap_resource"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_platform_get_and_ioremap_resource()</span></code></a>
+devm_iounmap()
+pcim_iomap()
+pcim_iomap_regions()  : do request_region() and iomap() on multiple BARs
+pcim_iomap_table()    : array of mapped addresses indexed by BAR
+pcim_iounmap()</p>
+</dd>
+<dt>IRQ</dt><dd><p>devm_free_irq()
+devm_request_any_context_irq()
+devm_request_irq()
+devm_request_threaded_irq()
+devm_irq_alloc_descs()
+devm_irq_alloc_desc()
+devm_irq_alloc_desc_at()
+devm_irq_alloc_desc_from()
+devm_irq_alloc_descs_from()
+devm_irq_alloc_generic_chip()
+devm_irq_setup_generic_chip()
+devm_irq_sim_init()</p>
+</dd>
+<dt>LED</dt><dd><p>devm_led_classdev_register()
+devm_led_classdev_unregister()</p>
+</dd>
+<dt>MDIO</dt><dd><p>devm_mdiobus_alloc()
+devm_mdiobus_alloc_size()
+devm_mdiobus_register()
+devm_of_mdiobus_register()</p>
+</dd>
+<dt>MEM</dt><dd><p><a class="reference internal" href="../basics.html#c.devm_free_pages" title="devm_free_pages"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_free_pages()</span></code></a>
+<a class="reference internal" href="../basics.html#c.devm_get_free_pages" title="devm_get_free_pages"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_get_free_pages()</span></code></a>
+<a class="reference internal" href="../basics.html#c.devm_kasprintf" title="devm_kasprintf"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_kasprintf()</span></code></a>
+devm_kcalloc()
+<a class="reference internal" href="../basics.html#c.devm_kfree" title="devm_kfree"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_kfree()</span></code></a>
+<a class="reference internal" href="../basics.html#c.devm_kmalloc" title="devm_kmalloc"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_kmalloc()</span></code></a>
+devm_kmalloc_array()
+<a class="reference internal" href="../basics.html#c.devm_kmemdup" title="devm_kmemdup"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_kmemdup()</span></code></a>
+<a class="reference internal" href="../basics.html#c.devm_krealloc" title="devm_krealloc"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_krealloc()</span></code></a>
+<a class="reference internal" href="../basics.html#c.devm_kstrdup" title="devm_kstrdup"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_kstrdup()</span></code></a>
+<a class="reference internal" href="../basics.html#c.devm_kvasprintf" title="devm_kvasprintf"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_kvasprintf()</span></code></a>
+devm_kzalloc()</p>
+</dd>
+<dt>MFD</dt><dd><p>devm_mfd_add_devices()</p>
+</dd>
+<dt>MUX</dt><dd><p>devm_mux_chip_alloc()
+devm_mux_chip_register()
+devm_mux_control_get()</p>
+</dd>
+<dt>NET</dt><dd><p>devm_alloc_etherdev()
+devm_alloc_etherdev_mqs()
+devm_register_netdev()</p>
+</dd>
+<dt>PER-CPU MEM</dt><dd><p><a class="reference internal" href="../infrastructure.html#c.devm_alloc_percpu" title="devm_alloc_percpu"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_alloc_percpu()</span></code></a>
+<a class="reference internal" href="../basics.html#c.devm_free_percpu" title="devm_free_percpu"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_free_percpu()</span></code></a></p>
+</dd>
+<dt>PCI</dt><dd><p>devm_pci_alloc_host_bridge()  : managed PCI host bridge allocation
+<a class="reference internal" href="../pci/pci.html#c.devm_pci_remap_cfgspace" title="devm_pci_remap_cfgspace"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_pci_remap_cfgspace()</span></code></a>     : ioremap PCI configuration space
+<a class="reference internal" href="../pci/pci.html#c.devm_pci_remap_cfg_resource" title="devm_pci_remap_cfg_resource"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_pci_remap_cfg_resource()</span></code></a> : ioremap PCI configuration space resource
+<a class="reference internal" href="../pci/pci.html#c.pcim_enable_device" title="pcim_enable_device"><code class="xref c c-func docutils literal notranslate"><span class="pre">pcim_enable_device()</span></code></a>          : after success, all PCI ops become managed
+<a class="reference internal" href="../pci/pci.html#c.pcim_pin_device" title="pcim_pin_device"><code class="xref c c-func docutils literal notranslate"><span class="pre">pcim_pin_device()</span></code></a>             : keep PCI device enabled after release</p>
+</dd>
+<dt>PHY</dt><dd><p>devm_usb_get_phy()
+devm_usb_put_phy()</p>
+</dd>
+<dt>PINCTRL</dt><dd><p>devm_pinctrl_get()
+devm_pinctrl_put()
+devm_pinctrl_register()
+devm_pinctrl_unregister()</p>
+</dd>
+<dt>POWER</dt><dd><p>devm_reboot_mode_register()
+devm_reboot_mode_unregister()</p>
+</dd>
+<dt>PWM</dt><dd><p><a class="reference internal" href="../miscellaneous.html#c.devm_pwm_get" title="devm_pwm_get"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_pwm_get()</span></code></a>
+<a class="reference internal" href="../miscellaneous.html#c.devm_pwm_put" title="devm_pwm_put"><code class="xref c c-func docutils literal notranslate"><span class="pre">devm_pwm_put()</span></code></a></p>
+</dd>
+<dt>REGULATOR</dt><dd><p>devm_regulator_bulk_get()
+devm_regulator_get()
+devm_regulator_put()
+devm_regulator_register()</p>
+</dd>
+<dt>RESET</dt><dd><p>devm_reset_control_get()
+devm_reset_controller_register()</p>
+</dd>
+<dt>SERDEV</dt><dd><p>devm_serdev_device_open()</p>
+</dd>
+<dt>SLAVE DMA ENGINE</dt><dd><p>devm_acpi_dma_controller_register()</p>
+</dd>
+<dt>SPI</dt><dd><p>devm_spi_register_master()</p>
+</dd>
+<dt>WATCHDOG</dt><dd><p>devm_watchdog_register_device()</p>
+</dd>
+</dl>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="driver.html" class="btn btn-neutral float-right" title="Device Drivers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="device.html" class="btn btn-neutral float-left" title="The Basic Device Structure" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
