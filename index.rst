@@ -5,7 +5,7 @@ Landlock: unprivileged access control
    :maxdepth: 2
    :caption: Contents:
 
-The goal of Landlock is to enable to restrict ambient rights (e.g.  global
+The goal of Landlock is to enable to restrict ambient rights (e.g. global
 filesystem access) for a set of processes.  Because Landlock is a stackable
 LSM, it makes possible to create safe security sandboxes as new security layers
 in addition to the existing system-wide access-controls. This kind of sandbox
@@ -19,7 +19,7 @@ process, including unprivileged ones, to securely restrict themselves.
 
 `LKML`__ -- `code`__ -- `sandbox manager example`__ -- `tests`__ -- `documentation`__
 
-__ https://lore.kernel.org/linux-security-module/20201027200358.557003-1-mic@digikod.net/
+__ https://lore.kernel.org/lkml/20201027200358.557003-1-mic@digikod.net/
 __ https://github.com/landlock-lsm/linux/commits/landlock-v22
 __ https://github.com/landlock-lsm/linux/blob/landlock-v22/samples/landlock/sandboxer.c
 __ https://github.com/landlock-lsm/linux/blob/landlock-v22/tools/testing/selftests/landlock/
