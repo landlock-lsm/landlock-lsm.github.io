@@ -14,6 +14,18 @@ unexpected/malicious behaviors in user-space applications. Landlock empower any
 process, including unprivileged ones, to securely restrict themselves.
 
 
+[PATCH v23] -- Landlock LSM
+---------------------------
+
+`LKML`__ -- `code`__ -- `sandbox manager example`__ -- `tests`__ -- `documentation`__
+
+__ https://lore.kernel.org/lkml/20201103182109.1014179-1-mic@digikod.net/
+__ https://github.com/landlock-lsm/linux/commits/landlock-v23
+__ https://github.com/landlock-lsm/linux/blob/landlock-v23/samples/landlock/sandboxer.c
+__ https://github.com/landlock-lsm/linux/blob/landlock-v23/tools/testing/selftests/landlock/
+__ linux-doc/landlock-v23/userspace-api/landlock.html
+
+
 [PATCH v22] -- Landlock LSM
 ---------------------------
 
