@@ -1,0 +1,584 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Unaligned Memory Accesses &mdash; The Linux Kernel  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Development tools for the kernel" href="../dev-tools/index.html" />
+    <link rel="prev" title="arch/riscv maintenance guidelines for developers" href="../riscv/patch-acceptance.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.10.0-rc2
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Core API Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="index.html#core-utilities">Core utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#data-structures-and-low-level-utilities">Data structures and low-level utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#concurrency-primitives">Concurrency primitives</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#low-level-hardware-management">Low-level hardware management</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#memory-management">Memory management</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="memory-allocation.html">Memory Allocation Guide</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Unaligned Memory Accesses</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#the-definition-of-an-unaligned-access">The definition of an unaligned access</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#natural-alignment">Natural alignment</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#why-unaligned-access-is-bad">Why unaligned access is bad</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#code-that-does-not-cause-unaligned-access">Code that does not cause unaligned access</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#code-that-causes-unaligned-access">Code that causes unaligned access</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#avoiding-unaligned-accesses">Avoiding unaligned accesses</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#alignment-vs-networking">Alignment vs. Networking</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dma-api.html">Dynamic DMA mapping using the generic device</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dma-api-howto.html">Dynamic DMA mapping Guide</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dma-attributes.html">DMA attributes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dma-isa-lpc.html">DMA with ISA and LPC devices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mm-api.html">Memory Management APIs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="genalloc.html">The genalloc/genpool subsystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pin_user_pages.html">pin_user_pages() and related calls</a></li>
+<li class="toctree-l3"><a class="reference internal" href="boot-time-mm.html">Boot time memory management</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gfp_mask-from-fs-io.html">GFP masks used from FS/IO context</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#interfaces-for-kernel-debugging">Interfaces for kernel debugging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#everything-else">Everything else</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../process/index.html">Working with the kernel development community</a> &raquo;</li>
+        
+      <li>Unaligned Memory Accesses</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/core-api/unaligned-memory-access.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="unaligned-memory-accesses">
+<h1>Unaligned Memory Accesses<a class="headerlink" href="#unaligned-memory-accesses" title="Permalink to this headline">¶</a></h1>
+<dl class="field-list simple">
+<dt class="field-odd">Author</dt>
+<dd class="field-odd"><p>Daniel Drake &lt;<a class="reference external" href="mailto:dsd&#37;&#52;&#48;gentoo&#46;org">dsd<span>&#64;</span>gentoo<span>&#46;</span>org</a>&gt;,</p>
+</dd>
+<dt class="field-even">Author</dt>
+<dd class="field-even"><p>Johannes Berg &lt;<a class="reference external" href="mailto:johannes&#37;&#52;&#48;sipsolutions&#46;net">johannes<span>&#64;</span>sipsolutions<span>&#46;</span>net</a>&gt;</p>
+</dd>
+<dt class="field-odd">With help from</dt>
+<dd class="field-odd"><p>Alan Cox, Avuton Olrich, Heikki Orsila, Jan Engelhardt,
+Kyle McMartin, Kyle Moffett, Randy Dunlap, Robert Hancock, Uli Kunitz,
+Vadim Lobanov</p>
+</dd>
+</dl>
+<p>Linux runs on a wide variety of architectures which have varying behaviour
+when it comes to memory access. This document presents some details about
+unaligned accesses, why you need to write code that doesn’t cause them,
+and how to write such code!</p>
+<div class="section" id="the-definition-of-an-unaligned-access">
+<h2>The definition of an unaligned access<a class="headerlink" href="#the-definition-of-an-unaligned-access" title="Permalink to this headline">¶</a></h2>
+<p>Unaligned memory accesses occur when you try to read N bytes of data starting
+from an address that is not evenly divisible by N (i.e. addr % N != 0).
+For example, reading 4 bytes of data from address 0x10004 is fine, but
+reading 4 bytes of data from address 0x10005 would be an unaligned memory
+access.</p>
+<p>The above may seem a little vague, as memory access can happen in different
+ways. The context here is at the machine code level: certain instructions read
+or write a number of bytes to or from memory (e.g. movb, movw, movl in x86
+assembly). As will become clear, it is relatively easy to spot C statements
+which will compile to multiple-byte memory access instructions, namely when
+dealing with types such as u16, u32 and u64.</p>
+</div>
+<div class="section" id="natural-alignment">
+<h2>Natural alignment<a class="headerlink" href="#natural-alignment" title="Permalink to this headline">¶</a></h2>
+<p>The rule mentioned above forms what we refer to as natural alignment:
+When accessing N bytes of memory, the base memory address must be evenly
+divisible by N, i.e. addr % N == 0.</p>
+<p>When writing code, assume the target architecture has natural alignment
+requirements.</p>
+<p>In reality, only a few architectures require natural alignment on all sizes
+of memory access. However, we must consider ALL supported architectures;
+writing code that satisfies natural alignment requirements is the easiest way
+to achieve full portability.</p>
+</div>
+<div class="section" id="why-unaligned-access-is-bad">
+<h2>Why unaligned access is bad<a class="headerlink" href="#why-unaligned-access-is-bad" title="Permalink to this headline">¶</a></h2>
+<p>The effects of performing an unaligned memory access vary from architecture
+to architecture. It would be easy to write a whole document on the differences
+here; a summary of the common scenarios is presented below:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Some architectures are able to perform unaligned memory accesses
+transparently, but there is usually a significant performance cost.</p></li>
+<li><p>Some architectures raise processor exceptions when unaligned accesses
+happen. The exception handler is able to correct the unaligned access,
+at significant cost to performance.</p></li>
+<li><p>Some architectures raise processor exceptions when unaligned accesses
+happen, but the exceptions do not contain enough information for the
+unaligned access to be corrected.</p></li>
+<li><p>Some architectures are not capable of unaligned memory access, but will
+silently perform a different memory access to the one that was requested,
+resulting in a subtle code bug that is hard to detect!</p></li>
+</ul>
+</div></blockquote>
+<p>It should be obvious from the above that if your code causes unaligned
+memory accesses to happen, your code will not work correctly on certain
+platforms and will cause performance problems on others.</p>
+</div>
+<div class="section" id="code-that-does-not-cause-unaligned-access">
+<h2>Code that does not cause unaligned access<a class="headerlink" href="#code-that-does-not-cause-unaligned-access" title="Permalink to this headline">¶</a></h2>
+<p>At first, the concepts above may seem a little hard to relate to actual
+coding practice. After all, you don’t have a great deal of control over
+memory addresses of certain variables, etc.</p>
+<p>Fortunately things are not too complex, as in most cases, the compiler
+ensures that things will work for you. For example, take the following
+structure:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct foo {
+        u16 field1;
+        u32 field2;
+        u8 field3;
+};
+</pre></div>
+</div>
+<p>Let us assume that an instance of the above structure resides in memory
+starting at address 0x10000. With a basic level of understanding, it would
+not be unreasonable to expect that accessing field2 would cause an unaligned
+access. You’d be expecting field2 to be located at offset 2 bytes into the
+structure, i.e. address 0x10002, but that address is not evenly divisible
+by 4 (remember, we’re reading a 4 byte value here).</p>
+<p>Fortunately, the compiler understands the alignment constraints, so in the
+above case it would insert 2 bytes of padding in between field1 and field2.
+Therefore, for standard structure types you can always rely on the compiler
+to pad structures so that accesses to fields are suitably aligned (assuming
+you do not cast the field to a type of different length).</p>
+<p>Similarly, you can also rely on the compiler to align variables and function
+parameters to a naturally aligned scheme, based on the size of the type of
+the variable.</p>
+<p>At this point, it should be clear that accessing a single byte (u8 or char)
+will never cause an unaligned access, because all memory addresses are evenly
+divisible by one.</p>
+<p>On a related topic, with the above considerations in mind you may observe
+that you could reorder the fields in the structure in order to place fields
+where padding would otherwise be inserted, and hence reduce the overall
+resident memory size of structure instances. The optimal layout of the
+above example is:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct foo {
+        u32 field2;
+        u16 field1;
+        u8 field3;
+};
+</pre></div>
+</div>
+<p>For a natural alignment scheme, the compiler would only have to add a single
+byte of padding at the end of the structure. This padding is added in order
+to satisfy alignment constraints for arrays of these structures.</p>
+<p>Another point worth mentioning is the use of __attribute__((packed)) on a
+structure type. This GCC-specific attribute tells the compiler never to
+insert any padding within structures, useful when you want to use a C struct
+to represent some data that comes in a fixed arrangement ‘off the wire’.</p>
+<p>You might be inclined to believe that usage of this attribute can easily
+lead to unaligned accesses when accessing fields that do not satisfy
+architectural alignment requirements. However, again, the compiler is aware
+of the alignment constraints and will generate extra instructions to perform
+the memory access in a way that does not cause unaligned access. Of course,
+the extra instructions obviously cause a loss in performance compared to the
+non-packed case, so the packed attribute should only be used when avoiding
+structure padding is of importance.</p>
+</div>
+<div class="section" id="code-that-causes-unaligned-access">
+<h2>Code that causes unaligned access<a class="headerlink" href="#code-that-causes-unaligned-access" title="Permalink to this headline">¶</a></h2>
+<p>With the above in mind, let’s move onto a real life example of a function
+that can cause an unaligned memory access. The following function taken
+from include/linux/etherdevice.h is an optimized routine to compare two
+ethernet MAC addresses for equality:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>bool ether_addr_equal(const u8 *addr1, const u8 *addr2)
+{
+#ifdef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
+      u32 fold = ((*(const u32 *)addr1) ^ (*(const u32 *)addr2)) |
+                 ((*(const u16 *)(addr1 + 4)) ^ (*(const u16 *)(addr2 + 4)));
+
+      return fold == 0;
+#else
+      const u16 *a = (const u16 *)addr1;
+      const u16 *b = (const u16 *)addr2;
+      return ((a[0] ^ b[0]) | (a[1] ^ b[1]) | (a[2] ^ b[2])) == 0;
+#endif
+}
+</pre></div>
+</div>
+<p>In the above function, when the hardware has efficient unaligned access
+capability, there is no issue with this code.  But when the hardware isn’t
+able to access memory on arbitrary boundaries, the reference to a[0] causes
+2 bytes (16 bits) to be read from memory starting at address addr1.</p>
+<p>Think about what would happen if addr1 was an odd address such as 0x10003.
+(Hint: it’d be an unaligned access.)</p>
+<p>Despite the potential unaligned access problems with the above function, it
+is included in the kernel anyway but is understood to only work normally on
+16-bit-aligned addresses. It is up to the caller to ensure this alignment or
+not use this function at all. This alignment-unsafe function is still useful
+as it is a decent optimization for the cases when you can ensure alignment,
+which is true almost all of the time in ethernet networking context.</p>
+<p>Here is another example of some code that could cause unaligned accesses:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void myfunc(u8 *data, u32 value)
+{
+        [...]
+        *((u32 *) data) = cpu_to_le32(value);
+        [...]
+}
+</pre></div>
+</div>
+<p>This code will cause unaligned accesses every time the data parameter points
+to an address that is not evenly divisible by 4.</p>
+<p>In summary, the 2 main scenarios where you may run into unaligned access
+problems involve:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Casting variables to types of different lengths</p></li>
+<li><p>Pointer arithmetic followed by access to at least 2 bytes of data</p></li>
+</ol>
+</div></blockquote>
+</div>
+<div class="section" id="avoiding-unaligned-accesses">
+<h2>Avoiding unaligned accesses<a class="headerlink" href="#avoiding-unaligned-accesses" title="Permalink to this headline">¶</a></h2>
+<p>The easiest way to avoid unaligned access is to use the get_unaligned() and
+put_unaligned() macros provided by the &lt;asm/unaligned.h&gt; header file.</p>
+<p>Going back to an earlier example of code that potentially causes unaligned
+access:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void myfunc(u8 *data, u32 value)
+{
+        [...]
+        *((u32 *) data) = cpu_to_le32(value);
+        [...]
+}
+</pre></div>
+</div>
+<p>To avoid the unaligned memory access, you would rewrite it as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void myfunc(u8 *data, u32 value)
+{
+        [...]
+        value = cpu_to_le32(value);
+        put_unaligned(value, (u32 *) data);
+        [...]
+}
+</pre></div>
+</div>
+<p>The get_unaligned() macro works similarly. Assuming ‘data’ is a pointer to
+memory and you wish to avoid unaligned access, its usage is as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>u32 value = get_unaligned((u32 *) data);
+</pre></div>
+</div>
+<p>These macros work for memory accesses of any length (not just 32 bits as
+in the examples above). Be aware that when compared to standard access of
+aligned memory, using these macros to access unaligned memory can be costly in
+terms of performance.</p>
+<p>If use of such macros is not convenient, another option is to use <a class="reference internal" href="kernel-api.html#c.memcpy" title="memcpy"><code class="xref c c-func docutils literal notranslate"><span class="pre">memcpy()</span></code></a>,
+where the source or destination (or both) are of type u8* or unsigned char*.
+Due to the byte-wise nature of this operation, unaligned accesses are avoided.</p>
+</div>
+<div class="section" id="alignment-vs-networking">
+<h2>Alignment vs. Networking<a class="headerlink" href="#alignment-vs-networking" title="Permalink to this headline">¶</a></h2>
+<p>On architectures that require aligned loads, networking requires that the IP
+header is aligned on a four-byte boundary to optimise the IP stack. For
+regular ethernet hardware, the constant NET_IP_ALIGN is used. On most
+architectures this constant has the value 2 because the normal ethernet
+header is 14 bytes long, so in order to get proper alignment one needs to
+DMA to an address which can be expressed as 4*n + 2. One notable exception
+here is powerpc which defines NET_IP_ALIGN to 0 because DMA to unaligned
+addresses can be very expensive and dwarf the cost of unaligned loads.</p>
+<p>For some ethernet hardware that cannot DMA to unaligned addresses like
+4*n+2 or non-ethernet hardware, this can be a problem, and it is then
+required to copy the incoming frame into an aligned buffer. Because this is
+unnecessary on architectures that can do unaligned accesses, the code can be
+made dependent on CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS like so:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>#ifdef CONFIG_HAVE_EFFICIENT_UNALIGNED_ACCESS
+        skb = original skb
+#else
+        skb = copy skb
+#endif
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../dev-tools/index.html" class="btn btn-neutral float-right" title="Development tools for the kernel" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../riscv/patch-acceptance.html" class="btn btn-neutral float-left" title="arch/riscv maintenance guidelines for developers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

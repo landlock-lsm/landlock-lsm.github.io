@@ -1,0 +1,955 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>autofs - how it works &mdash; The Linux Kernel  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Miscellaneous Device control operations for the autofs kernel module" href="autofs-mount-control.html" />
+    <link rel="prev" title="kAFS: AFS FILESYSTEM" href="afs.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.10.0-rc2
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Filesystems in the Linux kernel</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="index.html#core-vfs-documentation">Core VFS documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#filesystem-support-layers">Filesystem support layers</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#filesystems">Filesystems</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="9p.html">v9fs: Plan 9 Resource Sharing for Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="adfs.html">Acorn Disc Filing System - ADFS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="affs.html">Overview of Amiga Filesystems</a></li>
+<li class="toctree-l3"><a class="reference internal" href="afs.html">kAFS: AFS FILESYSTEM</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">autofs - how it works</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#purpose">Purpose</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#context">Context</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#content">Content</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#mount-traps">Mount Traps</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#mountpoint-expiry">Mountpoint expiry</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#communicating-with-autofs-detecting-the-daemon">Communicating with autofs: detecting the daemon</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#communicating-with-autofs-the-event-pipe">Communicating with autofs: the event pipe</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#communicating-with-autofs-root-directory-ioctls">Communicating with autofs: root directory ioctls</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#communicating-with-autofs-char-device-ioctls">Communicating with autofs: char-device ioctls</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#catatonic-mode">Catatonic mode</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#the-ignore-mount-option">The “ignore” mount option</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#autofs-name-spaces-and-shared-mounts">autofs, name spaces, and shared mounts</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="autofs-mount-control.html">Miscellaneous Device control operations for the autofs kernel module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="befs.html">BeOS filesystem for Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bfs.html">BFS Filesystem for Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="btrfs.html">BTRFS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cifs/cifsroot.html">Mounting root file system via SMB (cifs.ko)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ceph.html">Ceph Distributed File System</a></li>
+<li class="toctree-l3"><a class="reference internal" href="coda.html">Coda Kernel-Venus Interface</a></li>
+<li class="toctree-l3"><a class="reference internal" href="configfs.html">Configfs - Userspace-driven Kernel Object Configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cramfs.html">Cramfs - cram a filesystem onto a small ROM</a></li>
+<li class="toctree-l3"><a class="reference internal" href="debugfs.html">DebugFS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dlmfs.html">DLMFS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ecryptfs.html">eCryptfs: A stacked cryptographic filesystem for Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="efivarfs.html">efivarfs - a (U)EFI variable filesystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="erofs.html">Enhanced Read-Only File System - EROFS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ext2.html">The Second Extended Filesystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ext2.html#options">Options</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ext2.html#specification">Specification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ext2.html#references">References</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ext3.html">Ext3 Filesystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="f2fs.html">WHAT IS Flash-Friendly File System (F2FS)?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gfs2.html">Global File System</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gfs2-uevents.html">uevents and GFS2</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gfs2-glocks.html">Glock internal locking rules</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hfs.html">Macintosh HFS Filesystem for Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hfsplus.html">Macintosh HFSPlus Filesystem for Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hpfs.html">Read/Write HPFS 2.09</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fuse.html">FUSE</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fuse-io.html">Fuse I/O Modes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="inotify.html">Inotify - A Powerful yet Simple File Change Notification System</a></li>
+<li class="toctree-l3"><a class="reference internal" href="isofs.html">ISO9660 Filesystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="nilfs2.html">NILFS2</a></li>
+<li class="toctree-l3"><a class="reference internal" href="nfs/index.html">NFS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ntfs.html">The Linux NTFS filesystem driver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ocfs2.html">OCFS2 filesystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ocfs2-online-filecheck.html">OCFS2 file system - online file check</a></li>
+<li class="toctree-l3"><a class="reference internal" href="omfs.html">Optimized MPEG Filesystem (OMFS)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="orangefs.html">ORANGEFS</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overlayfs.html">Overlay Filesystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="proc.html">The /proc Filesystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="qnx6.html">The QNX6 Filesystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ramfs-rootfs-initramfs.html">Ramfs, rootfs and initramfs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="relay.html">relay interface (formerly relayfs)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="romfs.html">ROMFS - ROM File System</a></li>
+<li class="toctree-l3"><a class="reference internal" href="spufs/index.html">SPU Filesystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="squashfs.html">Squashfs 4.0 Filesystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sysfs.html">sysfs - _The_ filesystem for exporting kernel objects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sysv-fs.html">SystemV Filesystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tmpfs.html">Tmpfs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ubifs.html">UBI File System</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ubifs-authentication.html">UBIFS Authentication Support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="udf.html">UDF file system</a></li>
+<li class="toctree-l3"><a class="reference internal" href="virtiofs.html">virtiofs: virtio-fs host&lt;-&gt;guest shared file system</a></li>
+<li class="toctree-l3"><a class="reference internal" href="vfat.html">VFAT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xfs-delayed-logging-design.html">XFS Delayed Logging Design</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xfs-self-describing-metadata.html">XFS Self Describing Metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="zonefs.html">ZoneFS - Zone filesystem for Zoned block devices</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="index.html">Filesystems in the Linux kernel</a> &raquo;</li>
+        
+      <li>autofs - how it works</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/filesystems/autofs.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="autofs-how-it-works">
+<h1>autofs - how it works<a class="headerlink" href="#autofs-how-it-works" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="purpose">
+<h2>Purpose<a class="headerlink" href="#purpose" title="Permalink to this headline">¶</a></h2>
+<p>The goal of autofs is to provide on-demand mounting and race free
+automatic unmounting of various other filesystems.  This provides two
+key advantages:</p>
+<ol class="arabic simple">
+<li><p>There is no need to delay boot until all filesystems that
+might be needed are mounted.  Processes that try to access those
+slow filesystems might be delayed but other processes can
+continue freely.  This is particularly important for
+network filesystems (e.g. NFS) or filesystems stored on
+media with a media-changing robot.</p></li>
+<li><p>The names and locations of filesystems can be stored in
+a remote database and can change at any time.  The content
+in that data base at the time of access will be used to provide
+a target for the access.  The interpretation of names in the
+filesystem can even be programmatic rather than database-backed,
+allowing wildcards for example, and can vary based on the user who
+first accessed a name.</p></li>
+</ol>
+</div>
+<div class="section" id="context">
+<h2>Context<a class="headerlink" href="#context" title="Permalink to this headline">¶</a></h2>
+<p>The “autofs” filesystem module is only one part of an autofs system.
+There also needs to be a user-space program which looks up names
+and mounts filesystems.  This will often be the “automount” program,
+though other tools including “systemd” can make use of “autofs”.
+This document describes only the kernel module and the interactions
+required with any user-space program.  Subsequent text refers to this
+as the “automount daemon” or simply “the daemon”.</p>
+<p>“autofs” is a Linux kernel module with provides the “autofs”
+filesystem type.  Several “autofs” filesystems can be mounted and they
+can each be managed separately, or all managed by the same daemon.</p>
+</div>
+<div class="section" id="content">
+<h2>Content<a class="headerlink" href="#content" title="Permalink to this headline">¶</a></h2>
+<p>An autofs filesystem can contain 3 sorts of objects: directories,
+symbolic links and mount traps.  Mount traps are directories with
+extra properties as described in the next section.</p>
+<p>Objects can only be created by the automount daemon: symlinks are
+created with a regular <cite>symlink</cite> system call, while directories and
+mount traps are created with <cite>mkdir</cite>.  The determination of whether a
+directory should be a mount trap is based on a master map. This master
+map is consulted by autofs to determine which directories are mount
+points. Mount points can be <em>direct</em>/<em>indirect</em>/<em>offset</em>.
+On most systems, the default master map is located at <em>/etc/auto.master</em>.</p>
+<p>If neither the <em>direct</em> or <em>offset</em> mount options are given (so the
+mount is considered to be <em>indirect</em>), then the root directory is
+always a regular directory, otherwise it is a mount trap when it is
+empty and a regular directory when not empty.  Note that <em>direct</em> and
+<em>offset</em> are treated identically so a concise summary is that the root
+directory is a mount trap only if the filesystem is mounted <em>direct</em>
+and the root is empty.</p>
+<p>Directories created in the root directory are mount traps only if the
+filesystem is mounted <em>indirect</em> and they are empty.</p>
+<p>Directories further down the tree depend on the <em>maxproto</em> mount
+option and particularly whether it is less than five or not.
+When <em>maxproto</em> is five, no directories further down the
+tree are ever mount traps, they are always regular directories.  When
+the <em>maxproto</em> is four (or three), these directories are mount traps
+precisely when they are empty.</p>
+<p>So: non-empty (i.e. non-leaf) directories are never mount traps. Empty
+directories are sometimes mount traps, and sometimes not depending on
+where in the tree they are (root, top level, or lower), the <em>maxproto</em>,
+and whether the mount was <em>indirect</em> or not.</p>
+</div>
+<div class="section" id="mount-traps">
+<h2>Mount Traps<a class="headerlink" href="#mount-traps" title="Permalink to this headline">¶</a></h2>
+<p>A core element of the implementation of autofs is the Mount Traps
+which are provided by the Linux VFS.  Any directory provided by a
+filesystem can be designated as a trap.  This involves two separate
+features that work together to allow autofs to do its job.</p>
+<p><strong>DCACHE_NEED_AUTOMOUNT</strong></p>
+<p>If a dentry has the DCACHE_NEED_AUTOMOUNT flag set (which gets set if
+the inode has S_AUTOMOUNT set, or can be set directly) then it is
+(potentially) a mount trap.  Any access to this directory beyond a
+“<cite>stat</cite>” will (normally) cause the <cite>d_op-&gt;d_automount()</cite> dentry operation
+to be called. The task of this method is to find the filesystem that
+should be mounted on the directory and to return it.  The VFS is
+responsible for actually mounting the root of this filesystem on the
+directory.</p>
+<p>autofs doesn’t find the filesystem itself but sends a message to the
+automount daemon asking it to find and mount the filesystem.  The
+autofs <cite>d_automount</cite> method then waits for the daemon to report that
+everything is ready.  It will then return “<cite>NULL</cite>” indicating that the
+mount has already happened.  The VFS doesn’t try to mount anything but
+follows down the mount that is already there.</p>
+<p>This functionality is sufficient for some users of mount traps such
+as NFS which creates traps so that mountpoints on the server can be
+reflected on the client.  However it is not sufficient for autofs.  As
+mounting onto a directory is considered to be “beyond a <cite>stat</cite>”, the
+automount daemon would not be able to mount a filesystem on the ‘trap’
+directory without some way to avoid getting caught in the trap.  For
+that purpose there is another flag.</p>
+<p><strong>DCACHE_MANAGE_TRANSIT</strong></p>
+<p>If a dentry has DCACHE_MANAGE_TRANSIT set then two very different but
+related behaviours are invoked, both using the <cite>d_op-&gt;d_manage()</cite>
+dentry operation.</p>
+<p>Firstly, before checking to see if any filesystem is mounted on the
+directory, d_manage() will be called with the <cite>rcu_walk</cite> parameter set
+to <cite>false</cite>.  It may return one of three things:</p>
+<ul>
+<li><p>A return value of zero indicates that there is nothing special
+about this dentry and normal checks for mounts and automounts
+should proceed.</p>
+<p>autofs normally returns zero, but first waits for any
+expiry (automatic unmounting of the mounted filesystem) to
+complete.  This avoids races.</p>
+</li>
+<li><p>A return value of <cite>-EISDIR</cite> tells the VFS to ignore any mounts
+on the directory and to not consider calling <cite>-&gt;d_automount()</cite>.
+This effectively disables the <strong>DCACHE_NEED_AUTOMOUNT</strong> flag
+causing the directory not be a mount trap after all.</p>
+<p>autofs returns this if it detects that the process performing the
+lookup is the automount daemon and that the mount has been
+requested but has not yet completed.  How it determines this is
+discussed later.  This allows the automount daemon not to get
+caught in the mount trap.</p>
+<p>There is a subtlety here.  It is possible that a second autofs
+filesystem can be mounted below the first and for both of them to
+be managed by the same daemon.  For the daemon to be able to mount
+something on the second it must be able to “walk” down past the
+first.  This means that d_manage cannot <em>always</em> return -EISDIR for
+the automount daemon.  It must only return it when a mount has
+been requested, but has not yet completed.</p>
+<p><cite>d_manage</cite> also returns <cite>-EISDIR</cite> if the dentry shouldn’t be a
+mount trap, either because it is a symbolic link or because it is
+not empty.</p>
+</li>
+<li><p>Any other negative value is treated as an error and returned
+to the caller.</p>
+<p>autofs can return</p>
+<ul class="simple">
+<li><p>-ENOENT if the automount daemon failed to mount anything,</p></li>
+<li><p>-ENOMEM if it ran out of memory,</p></li>
+<li><p>-EINTR if a signal arrived while waiting for expiry to
+complete</p></li>
+<li><p>or any other error sent down by the automount daemon.</p></li>
+</ul>
+</li>
+</ul>
+<p>The second use case only occurs during an “RCU-walk” and so <cite>rcu_walk</cite>
+will be set.</p>
+<p>An RCU-walk is a fast and lightweight process for walking down a
+filename path (i.e. it is like running on tip-toes).  RCU-walk cannot
+cope with all situations so when it finds a difficulty it falls back
+to “REF-walk”, which is slower but more robust.</p>
+<p>RCU-walk will never call <cite>-&gt;d_automount</cite>; the filesystems must already
+be mounted or RCU-walk cannot handle the path.
+To determine if a mount-trap is safe for RCU-walk mode it calls
+<cite>-&gt;d_manage()</cite> with <cite>rcu_walk</cite> set to <cite>true</cite>.</p>
+<p>In this case <cite>d_manage()</cite> must avoid blocking and should avoid taking
+spinlocks if at all possible.  Its sole purpose is to determine if it
+would be safe to follow down into any mounted directory and the only
+reason that it might not be is if an expiry of the mount is
+underway.</p>
+<p>In the <cite>rcu_walk</cite> case, <cite>d_manage()</cite> cannot return -EISDIR to tell the
+VFS that this is a directory that doesn’t require d_automount.  If
+<cite>rcu_walk</cite> sees a dentry with DCACHE_NEED_AUTOMOUNT set but nothing
+mounted, it <em>will</em> fall back to REF-walk.  <cite>d_manage()</cite> cannot make the
+VFS remain in RCU-walk mode, but can only tell it to get out of
+RCU-walk mode by returning <cite>-ECHILD</cite>.</p>
+<p>So <cite>d_manage()</cite>, when called with <cite>rcu_walk</cite> set, should either return
+-ECHILD if there is any reason to believe it is unsafe to enter the
+mounted filesystem, otherwise it should return 0.</p>
+<p>autofs will return <cite>-ECHILD</cite> if an expiry of the filesystem has been
+initiated or is being considered, otherwise it returns 0.</p>
+</div>
+<div class="section" id="mountpoint-expiry">
+<h2>Mountpoint expiry<a class="headerlink" href="#mountpoint-expiry" title="Permalink to this headline">¶</a></h2>
+<p>The VFS has a mechanism for automatically expiring unused mounts,
+much as it can expire any unused dentry information from the dcache.
+This is guided by the MNT_SHRINKABLE flag.  This only applies to
+mounts that were created by <cite>d_automount()</cite> returning a filesystem to be
+mounted.  As autofs doesn’t return such a filesystem but leaves the
+mounting to the automount daemon, it must involve the automount daemon
+in unmounting as well.  This also means that autofs has more control
+over expiry.</p>
+<p>The VFS also supports “expiry” of mounts using the MNT_EXPIRE flag to
+the <cite>umount</cite> system call.  Unmounting with MNT_EXPIRE will fail unless
+a previous attempt had been made, and the filesystem has been inactive
+and untouched since that previous attempt.  autofs does not depend on
+this but has its own internal tracking of whether filesystems were
+recently used.  This allows individual names in the autofs directory
+to expire separately.</p>
+<p>With version 4 of the protocol, the automount daemon can try to
+unmount any filesystems mounted on the autofs filesystem or remove any
+symbolic links or empty directories any time it likes.  If the unmount
+or removal is successful the filesystem will be returned to the state
+it was before the mount or creation, so that any access of the name
+will trigger normal auto-mount processing.  In particular, <cite>rmdir</cite> and
+<cite>unlink</cite> do not leave negative entries in the dcache as a normal
+filesystem would, so an attempt to access a recently-removed object is
+passed to autofs for handling.</p>
+<p>With version 5, this is not safe except for unmounting from top-level
+directories.  As lower-level directories are never mount traps, other
+processes will see an empty directory as soon as the filesystem is
+unmounted.  So it is generally safest to use the autofs expiry
+protocol described below.</p>
+<p>Normally the daemon only wants to remove entries which haven’t been
+used for a while.  For this purpose autofs maintains a “<cite>last_used</cite>”
+time stamp on each directory or symlink.  For symlinks it genuinely
+does record the last time the symlink was “used” or followed to find
+out where it points to.  For directories the field is used slightly
+differently.  The field is updated at mount time and during expire
+checks if it is found to be in use (ie. open file descriptor or
+process working directory) and during path walks. The update done
+during path walks prevents frequent expire and immediate mount of
+frequently accessed automounts. But in the case where a GUI continually
+access or an application frequently scans an autofs directory tree
+there can be an accumulation of mounts that aren’t actually being
+used. To cater for this case the “<cite>strictexpire</cite>” autofs mount option
+can be used to avoid the “<cite>last_used</cite>” update on path walk thereby
+preventing this apparent inability to expire mounts that aren’t
+really in use.</p>
+<p>The daemon is able to ask autofs if anything is due to be expired,
+using an <cite>ioctl</cite> as discussed later.  For a <em>direct</em> mount, autofs
+considers if the entire mount-tree can be unmounted or not.  For an
+<em>indirect</em> mount, autofs considers each of the names in the top level
+directory to determine if any of those can be unmounted and cleaned
+up.</p>
+<p>There is an option with indirect mounts to consider each of the leaves
+that has been mounted on instead of considering the top-level names.
+This was originally intended for compatibility with version 4 of autofs
+and should be considered as deprecated for Sun Format automount maps.
+However, it may be used again for amd format mount maps (which are
+generally indirect maps) because the amd automounter allows for the
+setting of an expire timeout for individual mounts. But there are
+some difficulties in making the needed changes for this.</p>
+<p>When autofs considers a directory it checks the <cite>last_used</cite> time and
+compares it with the “timeout” value set when the filesystem was
+mounted, though this check is ignored in some cases. It also checks if
+the directory or anything below it is in use.  For symbolic links,
+only the <cite>last_used</cite> time is ever considered.</p>
+<p>If both appear to support expiring the directory or symlink, an action
+is taken.</p>
+<p>There are two ways to ask autofs to consider expiry.  The first is to
+use the <strong>AUTOFS_IOC_EXPIRE</strong> ioctl.  This only works for indirect
+mounts.  If it finds something in the root directory to expire it will
+return the name of that thing.  Once a name has been returned the
+automount daemon needs to unmount any filesystems mounted below the
+name normally.  As described above, this is unsafe for non-toplevel
+mounts in a version-5 autofs.  For this reason the current <cite>automount(8)</cite>
+does not use this ioctl.</p>
+<p>The second mechanism uses either the <strong>AUTOFS_DEV_IOCTL_EXPIRE_CMD</strong> or
+the <strong>AUTOFS_IOC_EXPIRE_MULTI</strong> ioctl.  This will work for both direct and
+indirect mounts.  If it selects an object to expire, it will notify
+the daemon using the notification mechanism described below.  This
+will block until the daemon acknowledges the expiry notification.
+This implies that the “<cite>EXPIRE</cite>” ioctl must be sent from a different
+thread than the one which handles notification.</p>
+<p>While the ioctl is blocking, the entry is marked as “expiring” and
+<cite>d_manage</cite> will block until the daemon affirms that the unmount has
+completed (together with removing any directories that might have been
+necessary), or has been aborted.</p>
+</div>
+<div class="section" id="communicating-with-autofs-detecting-the-daemon">
+<h2>Communicating with autofs: detecting the daemon<a class="headerlink" href="#communicating-with-autofs-detecting-the-daemon" title="Permalink to this headline">¶</a></h2>
+<p>There are several forms of communication between the automount daemon
+and the filesystem.  As we have already seen, the daemon can create and
+remove directories and symlinks using normal filesystem operations.
+autofs knows whether a process requesting some operation is the daemon
+or not based on its process-group id number (see getpgid(1)).</p>
+<p>When an autofs filesystem is mounted the pgid of the mounting
+processes is recorded unless the “pgrp=” option is given, in which
+case that number is recorded instead.  Any request arriving from a
+process in that process group is considered to come from the daemon.
+If the daemon ever has to be stopped and restarted a new pgid can be
+provided through an ioctl as will be described below.</p>
+</div>
+<div class="section" id="communicating-with-autofs-the-event-pipe">
+<h2>Communicating with autofs: the event pipe<a class="headerlink" href="#communicating-with-autofs-the-event-pipe" title="Permalink to this headline">¶</a></h2>
+<p>When an autofs filesystem is mounted, the ‘write’ end of a pipe must
+be passed using the ‘fd=’ mount option.  autofs will write
+notification messages to this pipe for the daemon to respond to.
+For version 5, the format of the message is:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct autofs_v5_packet {
+        struct autofs_packet_hdr hdr;
+        autofs_wqt_t wait_queue_token;
+        __u32 dev;
+        __u64 ino;
+        __u32 uid;
+        __u32 gid;
+        __u32 pid;
+        __u32 tgid;
+        __u32 len;
+        char name[NAME_MAX+1];
+};
+</pre></div>
+</div>
+<p>And the format of the header is:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct autofs_packet_hdr {
+        int proto_version;              /* Protocol version */
+        int type;                       /* Type of packet */
+};
+</pre></div>
+</div>
+<p>where the type is one of</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>autofs_ptype_missing_indirect
+autofs_ptype_expire_indirect
+autofs_ptype_missing_direct
+autofs_ptype_expire_direct
+</pre></div>
+</div>
+<p>so messages can indicate that a name is missing (something tried to
+access it but it isn’t there) or that it has been selected for expiry.</p>
+<p>The pipe will be set to “packet mode” (equivalent to passing
+<cite>O_DIRECT</cite>) to _pipe2(2)_ so that a read from the pipe will return at
+most one packet, and any unread portion of a packet will be discarded.</p>
+<p>The <cite>wait_queue_token</cite> is a unique number which can identify a
+particular request to be acknowledged.  When a message is sent over
+the pipe the affected dentry is marked as either “active” or
+“expiring” and other accesses to it block until the message is
+acknowledged using one of the ioctls below with the relevant
+<cite>wait_queue_token</cite>.</p>
+</div>
+<div class="section" id="communicating-with-autofs-root-directory-ioctls">
+<h2>Communicating with autofs: root directory ioctls<a class="headerlink" href="#communicating-with-autofs-root-directory-ioctls" title="Permalink to this headline">¶</a></h2>
+<p>The root directory of an autofs filesystem will respond to a number of
+ioctls.  The process issuing the ioctl must have the CAP_SYS_ADMIN
+capability, or must be the automount daemon.</p>
+<p>The available ioctl commands are:</p>
+<ul>
+<li><dl class="simple">
+<dt><strong>AUTOFS_IOC_READY</strong>:</dt><dd><p>a notification has been handled.  The argument
+to the ioctl command is the “wait_queue_token” number
+corresponding to the notification being acknowledged.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>AUTOFS_IOC_FAIL</strong>:</dt><dd><p>similar to above, but indicates failure with
+the error code <cite>ENOENT</cite>.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>AUTOFS_IOC_CATATONIC</strong>:</dt><dd><p>Causes the autofs to enter “catatonic”
+mode meaning that it stops sending notifications to the daemon.
+This mode is also entered if a write to the pipe fails.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>AUTOFS_IOC_PROTOVER</strong>:</dt><dd><p>This returns the protocol version in use.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>AUTOFS_IOC_PROTOSUBVER</strong>:</dt><dd><p>Returns the protocol sub-version which
+is really a version number for the implementation.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>AUTOFS_IOC_SETTIMEOUT</strong>:</dt><dd><p>This passes a pointer to an unsigned
+long.  The value is used to set the timeout for expiry, and
+the current timeout value is stored back through the pointer.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>AUTOFS_IOC_ASKUMOUNT</strong>:</dt><dd><p>Returns, in the pointed-to <cite>int</cite>, 1 if
+the filesystem could be unmounted.  This is only a hint as
+the situation could change at any instant.  This call can be
+used to avoid a more expensive full unmount attempt.</p>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt><strong>AUTOFS_IOC_EXPIRE</strong>:</dt><dd><p>as described above, this asks if there is
+anything suitable to expire.  A pointer to a packet:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct autofs_packet_expire_multi {
+        struct autofs_packet_hdr hdr;
+        autofs_wqt_t wait_queue_token;
+        int len;
+        char name[NAME_MAX+1];
+};
+</pre></div>
+</div>
+<p>is required.  This is filled in with the name of something
+that can be unmounted or removed.  If nothing can be expired,
+<cite>errno</cite> is set to <cite>EAGAIN</cite>.  Even though a <cite>wait_queue_token</cite>
+is present in the structure, no “wait queue” is established
+and no acknowledgment is needed.</p>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt><strong>AUTOFS_IOC_EXPIRE_MULTI</strong>:</dt><dd><p>This is similar to
+<strong>AUTOFS_IOC_EXPIRE</strong> except that it causes notification to be
+sent to the daemon, and it blocks until the daemon acknowledges.
+The argument is an integer which can contain two different flags.</p>
+<p><strong>AUTOFS_EXP_IMMEDIATE</strong> causes <cite>last_used</cite> time to be ignored
+and objects are expired if the are not in use.</p>
+<p><strong>AUTOFS_EXP_FORCED</strong> causes the in use status to be ignored
+and objects are expired ieven if they are in use. This assumes
+that the daemon has requested this because it is capable of
+performing the umount.</p>
+<p><strong>AUTOFS_EXP_LEAVES</strong> will select a leaf rather than a top-level
+name to expire.  This is only safe when <em>maxproto</em> is 4.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</div>
+<div class="section" id="communicating-with-autofs-char-device-ioctls">
+<h2>Communicating with autofs: char-device ioctls<a class="headerlink" href="#communicating-with-autofs-char-device-ioctls" title="Permalink to this headline">¶</a></h2>
+<p>It is not always possible to open the root of an autofs filesystem,
+particularly a <em>direct</em> mounted filesystem.  If the automount daemon
+is restarted there is no way for it to regain control of existing
+mounts using any of the above communication channels.  To address this
+need there is a “miscellaneous” character device (major 10, minor 235)
+which can be used to communicate directly with the autofs filesystem.
+It requires CAP_SYS_ADMIN for access.</p>
+<p>The ‘ioctl’s that can be used on this device are described in a separate
+document <cite>autofs-mount-control.txt</cite>, and are summarised briefly here.
+Each ioctl is passed a pointer to an <cite>autofs_dev_ioctl</cite> structure:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct autofs_dev_ioctl {
+        __u32 ver_major;
+        __u32 ver_minor;
+        __u32 size;             /* total size of data passed in
+                                 * including this struct */
+        __s32 ioctlfd;          /* automount command fd */
+
+        /* Command parameters */
+        union {
+                struct args_protover            protover;
+                struct args_protosubver         protosubver;
+                struct args_openmount           openmount;
+                struct args_ready               ready;
+                struct args_fail                fail;
+                struct args_setpipefd           setpipefd;
+                struct args_timeout             timeout;
+                struct args_requester           requester;
+                struct args_expire              expire;
+                struct args_askumount           askumount;
+                struct args_ismountpoint        ismountpoint;
+        };
+
+        char path[0];
+};
+</pre></div>
+</div>
+<p>For the <strong>OPEN_MOUNT</strong> and <strong>IS_MOUNTPOINT</strong> commands, the target
+filesystem is identified by the <cite>path</cite>.  All other commands identify
+the filesystem by the <cite>ioctlfd</cite> which is a file descriptor open on the
+root, and which can be returned by <strong>OPEN_MOUNT</strong>.</p>
+<p>The <cite>ver_major</cite> and <cite>ver_minor</cite> are in/out parameters which check that
+the requested version is supported, and report the maximum version
+that the kernel module can support.</p>
+<p>Commands are:</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><strong>AUTOFS_DEV_IOCTL_VERSION_CMD</strong>:</dt><dd><p>does nothing, except validate and
+set version numbers.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>AUTOFS_DEV_IOCTL_OPENMOUNT_CMD</strong>:</dt><dd><p>return an open file descriptor
+on the root of an autofs filesystem.  The filesystem is identified
+by name and device number, which is stored in <cite>openmount.devid</cite>.
+Device numbers for existing filesystems can be found in
+<cite>/proc/self/mountinfo</cite>.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>AUTOFS_DEV_IOCTL_CLOSEMOUNT_CMD</strong>:</dt><dd><p>same as <cite>close(ioctlfd)</cite>.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>AUTOFS_DEV_IOCTL_SETPIPEFD_CMD</strong>:</dt><dd><p>if the filesystem is in
+catatonic mode, this can provide the write end of a new pipe
+in <cite>setpipefd.pipefd</cite> to re-establish communication with a daemon.
+The process group of the calling process is used to identify the
+daemon.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>AUTOFS_DEV_IOCTL_REQUESTER_CMD</strong>:</dt><dd><p><cite>path</cite> should be a
+name within the filesystem that has been auto-mounted on.
+On successful return, <cite>requester.uid</cite> and <cite>requester.gid</cite> will be
+the UID and GID of the process which triggered that mount.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>AUTOFS_DEV_IOCTL_ISMOUNTPOINT_CMD</strong>:</dt><dd><p>Check if path is a
+mountpoint of a particular type - see separate documentation for
+details.</p>
+</dd>
+</dl>
+</li>
+<li><p><strong>AUTOFS_DEV_IOCTL_PROTOVER_CMD</strong></p></li>
+<li><p><strong>AUTOFS_DEV_IOCTL_PROTOSUBVER_CMD</strong></p></li>
+<li><p><strong>AUTOFS_DEV_IOCTL_READY_CMD</strong></p></li>
+<li><p><strong>AUTOFS_DEV_IOCTL_FAIL_CMD</strong></p></li>
+<li><p><strong>AUTOFS_DEV_IOCTL_CATATONIC_CMD</strong></p></li>
+<li><p><strong>AUTOFS_DEV_IOCTL_TIMEOUT_CMD</strong></p></li>
+<li><p><strong>AUTOFS_DEV_IOCTL_EXPIRE_CMD</strong></p></li>
+<li><p><strong>AUTOFS_DEV_IOCTL_ASKUMOUNT_CMD</strong></p></li>
+</ul>
+<p>These all have the same
+function as the similarly named <strong>AUTOFS_IOC</strong> ioctls, except
+that <strong>FAIL</strong> can be given an explicit error number in <cite>fail.status</cite>
+instead of assuming <cite>ENOENT</cite>, and this <strong>EXPIRE</strong> command
+corresponds to <strong>AUTOFS_IOC_EXPIRE_MULTI</strong>.</p>
+</div>
+<div class="section" id="catatonic-mode">
+<h2>Catatonic mode<a class="headerlink" href="#catatonic-mode" title="Permalink to this headline">¶</a></h2>
+<p>As mentioned, an autofs mount can enter “catatonic” mode.  This
+happens if a write to the notification pipe fails, or if it is
+explicitly requested by an <cite>ioctl</cite>.</p>
+<p>When entering catatonic mode, the pipe is closed and any pending
+notifications are acknowledged with the error <cite>ENOENT</cite>.</p>
+<p>Once in catatonic mode attempts to access non-existing names will
+result in <cite>ENOENT</cite> while attempts to access existing directories will
+be treated in the same way as if they came from the daemon, so mount
+traps will not fire.</p>
+<p>When the filesystem is mounted a _uid_ and _gid_ can be given which
+set the ownership of directories and symbolic links.  When the
+filesystem is in catatonic mode, any process with a matching UID can
+create directories or symlinks in the root directory, but not in other
+directories.</p>
+<p>Catatonic mode can only be left via the
+<strong>AUTOFS_DEV_IOCTL_OPENMOUNT_CMD</strong> ioctl on the <cite>/dev/autofs</cite>.</p>
+</div>
+<div class="section" id="the-ignore-mount-option">
+<h2>The “ignore” mount option<a class="headerlink" href="#the-ignore-mount-option" title="Permalink to this headline">¶</a></h2>
+<p>The “ignore” mount option can be used to provide a generic indicator
+to applications that the mount entry should be ignored when displaying
+mount information.</p>
+<p>In other OSes that provide autofs and that provide a mount list to user
+space based on the kernel mount list a no-op mount option (“ignore” is
+the one use on the most common OSes) is allowed so that autofs file
+system users can optionally use it.</p>
+<p>This is intended to be used by user space programs to exclude autofs
+mounts from consideration when reading the mounts list.</p>
+</div>
+<div class="section" id="autofs-name-spaces-and-shared-mounts">
+<h2>autofs, name spaces, and shared mounts<a class="headerlink" href="#autofs-name-spaces-and-shared-mounts" title="Permalink to this headline">¶</a></h2>
+<p>With bind mounts and name spaces it is possible for an autofs
+filesystem to appear at multiple places in one or more filesystem
+name spaces.  For this to work sensibly, the autofs filesystem should
+always be mounted “shared”. e.g.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>mount --make-shared /autofs/mount/point
+</pre></div>
+</div>
+<p>The automount daemon is only able to manage a single mount location for
+an autofs filesystem and if mounts on that are not ‘shared’, other
+locations will not behave as expected.  In particular access to those
+other locations will likely result in the <cite>ELOOP</cite> error</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Too many levels of symbolic links
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="autofs-mount-control.html" class="btn btn-neutral float-right" title="Miscellaneous Device control operations for the autofs kernel module" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="afs.html" class="btn btn-neutral float-left" title="kAFS: AFS FILESYSTEM" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

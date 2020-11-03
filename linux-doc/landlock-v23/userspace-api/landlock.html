@@ -1,0 +1,757 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Landlock: unprivileged access control &mdash; The Linux Kernel  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="unshare system call" href="unshare.html" />
+    <link rel="prev" title="Seccomp BPF (SECure COMPuting with filters)" href="seccomp_filter.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.10.0-rc2
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">The Linux kernel user-space API guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="no_new_privs.html">No New Privileges Flag</a></li>
+<li class="toctree-l2"><a class="reference internal" href="seccomp_filter.html">Seccomp BPF (SECure COMPuting with filters)</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Landlock: unprivileged access control</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#landlock-rules">Landlock rules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#defining-and-enforcing-a-security-policy">Defining and enforcing a security policy</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#inheritance">Inheritance</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#ptrace-restrictions">Ptrace restrictions</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#kernel-interface">Kernel interface</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#access-rights">Access rights</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#creating-a-new-ruleset">Creating a new ruleset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#extending-a-ruleset">Extending a ruleset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#enforcing-a-ruleset">Enforcing a ruleset</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#current-limitations">Current limitations</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#file-renaming-and-linking">File renaming and linking</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#overlayfs">OverlayFS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#special-filesystems">Special filesystems</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#questions-and-answers">Questions and answers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#what-about-user-space-sandbox-managers">What about user space sandbox managers?</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#what-about-namespaces-and-containers">What about namespaces and containers?</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#additional-documentation">Additional documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="unshare.html">unshare system call</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spec_ctrl.html">Speculation Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="accelerators/ocxl.html">OpenCAPI (Open Coherent Accelerator Processor Interface)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ioctl/index.html">IOCTLs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="media/index.html">Linux Media Infrastructure userspace API</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="index.html">The Linux kernel user-space API guide</a> &raquo;</li>
+        
+      <li>Landlock: unprivileged access control</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/userspace-api/landlock.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="landlock-unprivileged-access-control">
+<h1>Landlock: unprivileged access control<a class="headerlink" href="#landlock-unprivileged-access-control" title="Permalink to this headline">¶</a></h1>
+<dl class="field-list simple">
+<dt class="field-odd">Author</dt>
+<dd class="field-odd"><p>Mickaël Salaün</p>
+</dd>
+<dt class="field-even">Date</dt>
+<dd class="field-even"><p>November 2020</p>
+</dd>
+</dl>
+<p>The goal of Landlock is to enable to restrict ambient rights (e.g. global
+filesystem access) for a set of processes.  Because Landlock is a stackable
+LSM, it makes possible to create safe security sandboxes as new security layers
+in addition to the existing system-wide access-controls. This kind of sandbox
+is expected to help mitigate the security impact of bugs or
+unexpected/malicious behaviors in user space applications.  Landlock empowers
+any process, including unprivileged ones, to securely restrict themselves.</p>
+<div class="section" id="landlock-rules">
+<h2>Landlock rules<a class="headerlink" href="#landlock-rules" title="Permalink to this headline">¶</a></h2>
+<p>A Landlock rule describes an action on an object.  An object is currently a
+file hierarchy, and the related filesystem actions are defined in <a class="reference internal" href="#access-rights">Access
+rights</a>.  A set of rules is aggregated in a ruleset, which can then restrict
+the thread enforcing it, and its future children.</p>
+<div class="section" id="defining-and-enforcing-a-security-policy">
+<h3>Defining and enforcing a security policy<a class="headerlink" href="#defining-and-enforcing-a-security-policy" title="Permalink to this headline">¶</a></h3>
+<p>We first need to create the ruleset that will contain our rules.  For this
+example, the ruleset will contain rules which only allow read actions, but
+write actions will be denied.  The ruleset then needs to handle both of these
+kind of actions.</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span> <span class="n">ruleset_fd</span><span class="p">;</span>
+<span class="k">struct</span> <span class="nc">landlock_ruleset_attr</span> <span class="n">ruleset_attr</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="p">.</span><span class="n">handled_access_fs</span> <span class="o">=</span>
+        <span class="n">LANDLOCK_ACCESS_FS_EXECUTE</span> <span class="o">|</span>
+        <span class="n">LANDLOCK_ACCESS_FS_WRITE_FILE</span> <span class="o">|</span>
+        <span class="n">LANDLOCK_ACCESS_FS_READ_FILE</span> <span class="o">|</span>
+        <span class="n">LANDLOCK_ACCESS_FS_READ_DIR</span> <span class="o">|</span>
+        <span class="n">LANDLOCK_ACCESS_FS_REMOVE_DIR</span> <span class="o">|</span>
+        <span class="n">LANDLOCK_ACCESS_FS_REMOVE_FILE</span> <span class="o">|</span>
+        <span class="n">LANDLOCK_ACCESS_FS_MAKE_CHAR</span> <span class="o">|</span>
+        <span class="n">LANDLOCK_ACCESS_FS_MAKE_DIR</span> <span class="o">|</span>
+        <span class="n">LANDLOCK_ACCESS_FS_MAKE_REG</span> <span class="o">|</span>
+        <span class="n">LANDLOCK_ACCESS_FS_MAKE_SOCK</span> <span class="o">|</span>
+        <span class="n">LANDLOCK_ACCESS_FS_MAKE_FIFO</span> <span class="o">|</span>
+        <span class="n">LANDLOCK_ACCESS_FS_MAKE_BLOCK</span> <span class="o">|</span>
+        <span class="n">LANDLOCK_ACCESS_FS_MAKE_SYM</span><span class="p">,</span>
+<span class="p">};</span>
+
+<span class="n">ruleset_fd</span> <span class="o">=</span> <span class="n">landlock_create_ruleset</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ruleset_attr</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">ruleset_attr</span><span class="p">),</span> <span class="mi">0</span><span class="p">);</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">ruleset_fd</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">perror</span><span class="p">(</span><span class="s">&quot;Failed to create a ruleset&quot;</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>We can now add a new rule to this ruleset thanks to the returned file
+descriptor referring to this ruleset.  The rule will only allow reading the
+file hierarchy <code class="docutils literal notranslate"><span class="pre">/usr</span></code>.  Without another rule, write actions would then be
+denied by the ruleset.  To add <code class="docutils literal notranslate"><span class="pre">/usr</span></code> to the ruleset, we open it with the
+<code class="docutils literal notranslate"><span class="pre">O_PATH</span></code> flag and fill the &amp;<a class="reference internal" href="#c.landlock_path_beneath_attr" title="landlock_path_beneath_attr"><code class="xref c c-struct docutils literal notranslate"><span class="pre">struct</span> <span class="pre">landlock_path_beneath_attr</span></code></a> with this file
+descriptor.</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="kt">int</span> <span class="n">err</span><span class="p">;</span>
+<span class="k">struct</span> <span class="nc">landlock_path_beneath_attr</span> <span class="n">path_beneath</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="p">.</span><span class="n">allowed_access</span> <span class="o">=</span>
+        <span class="n">LANDLOCK_ACCESS_FS_EXECUTE</span> <span class="o">|</span>
+        <span class="n">LANDLOCK_ACCESS_FS_READ_FILE</span> <span class="o">|</span>
+        <span class="n">LANDLOCK_ACCESS_FS_READ_DIR</span><span class="p">,</span>
+<span class="p">};</span>
+
+<span class="n">path_beneath</span><span class="p">.</span><span class="n">parent_fd</span> <span class="o">=</span> <span class="n">open</span><span class="p">(</span><span class="s">&quot;/usr&quot;</span><span class="p">,</span> <span class="n">O_PATH</span> <span class="o">|</span> <span class="n">O_CLOEXEC</span><span class="p">);</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">path_beneath</span><span class="p">.</span><span class="n">parent_fd</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">perror</span><span class="p">(</span><span class="s">&quot;Failed to open file&quot;</span><span class="p">);</span>
+    <span class="n">close</span><span class="p">(</span><span class="n">ruleset_fd</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="n">err</span> <span class="o">=</span> <span class="n">landlock_add_rule</span><span class="p">(</span><span class="n">ruleset_fd</span><span class="p">,</span> <span class="n">LANDLOCK_RULE_PATH_BENEATH</span><span class="p">,</span>
+                        <span class="o">&amp;</span><span class="n">path_beneath</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+<span class="n">close</span><span class="p">(</span><span class="n">path_beneath</span><span class="p">.</span><span class="n">parent_fd</span><span class="p">);</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">err</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">perror</span><span class="p">(</span><span class="s">&quot;Failed to update ruleset&quot;</span><span class="p">);</span>
+    <span class="n">close</span><span class="p">(</span><span class="n">ruleset_fd</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>We now have a ruleset with one rule allowing read access to <code class="docutils literal notranslate"><span class="pre">/usr</span></code> while
+denying all other handled accesses for the filesystem.  The next step is to
+restrict the current thread from gaining more privileges (e.g. thanks to a SUID
+binary).</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="p">(</span><span class="n">prctl</span><span class="p">(</span><span class="n">PR_SET_NO_NEW_PRIVS</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span> <span class="p">{</span>
+    <span class="n">perror</span><span class="p">(</span><span class="s">&quot;Failed to restrict privileges&quot;</span><span class="p">);</span>
+    <span class="n">close</span><span class="p">(</span><span class="n">ruleset_fd</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The current thread is now ready to sandbox itself with the ruleset.</p>
+<div class="highlight-c notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="p">(</span><span class="n">landlock_enforce_ruleset_current</span><span class="p">(</span><span class="n">ruleset_fd</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span> <span class="p">{</span>
+    <span class="n">perror</span><span class="p">(</span><span class="s">&quot;Failed to enforce ruleset&quot;</span><span class="p">);</span>
+    <span class="n">close</span><span class="p">(</span><span class="n">ruleset_fd</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">1</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="n">close</span><span class="p">(</span><span class="n">ruleset_fd</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>If the <cite>landlock_enforce_ruleset_current</cite> system call succeeds, the current
+thread is now restricted and this policy will be enforced on all its
+subsequently created children as well.  Once a thread is landlocked, there is
+no way to remove its security policy; only adding more restrictions is allowed.
+These threads are now in a new Landlock domain, merge of their parent one (if
+any) with the new ruleset.</p>
+<p>Full working code can be found in <a class="reference external" href="https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/tree/samples/landlock/sandboxer.c">samples/landlock/sandboxer.c</a>.</p>
+</div>
+<div class="section" id="inheritance">
+<h3>Inheritance<a class="headerlink" href="#inheritance" title="Permalink to this headline">¶</a></h3>
+<p>Every new thread resulting from a <em class="manpage">clone(2)</em> inherits Landlock domain
+restrictions from its parent.  This is similar to the seccomp inheritance (cf.
+<a class="reference internal" href="seccomp_filter.html"><span class="doc">Seccomp BPF (SECure COMPuting with filters)</span></a>) or any other LSM dealing with task’s
+<em class="manpage">credentials(7)</em>.  For instance, one process’s thread may apply
+Landlock rules to itself, but they will not be automatically applied to other
+sibling threads (unlike POSIX thread credential changes, cf.
+<em class="manpage">nptl(7)</em>).</p>
+<p>When a thread sandboxes itself, we have the guarantee that the related security
+policy will stay enforced on all this thread’s descendants.  This allows
+creating standalone and modular security policies per application, which will
+automatically be composed between themselves according to their runtime parent
+policies.</p>
+</div>
+<div class="section" id="ptrace-restrictions">
+<h3>Ptrace restrictions<a class="headerlink" href="#ptrace-restrictions" title="Permalink to this headline">¶</a></h3>
+<p>A sandboxed process has less privileges than a non-sandboxed process and must
+then be subject to additional restrictions when manipulating another process.
+To be allowed to use <em class="manpage">ptrace(2)</em> and related syscalls on a target
+process, a sandboxed process should have a subset of the target process rules,
+which means the tracee must be in a sub-domain of the tracer.</p>
+</div>
+</div>
+<div class="section" id="kernel-interface">
+<h2>Kernel interface<a class="headerlink" href="#kernel-interface" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="access-rights">
+<h3>Access rights<a class="headerlink" href="#access-rights" title="Permalink to this headline">¶</a></h3>
+<p>A set of actions on kernel objects may be defined by an attribute (e.g.
+<a class="reference internal" href="#c.landlock_path_beneath_attr" title="landlock_path_beneath_attr"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">landlock_path_beneath_attr</span></code></a>) including a bitmask of access.</p>
+<div class="section" id="filesystem-flags">
+<h4>Filesystem flags<a class="headerlink" href="#filesystem-flags" title="Permalink to this headline">¶</a></h4>
+<p>These flags enable to restrict a sandboxed process to a set of actions on
+files and directories.  Files or directories opened before the sandboxing
+are not subject to these restrictions.</p>
+<p>A file can only receive these access rights:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">LANDLOCK_ACCESS_FS_EXECUTE</span></code>: Execute a file.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">LANDLOCK_ACCESS_FS_WRITE_FILE</span></code>: Open a file with write access.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">LANDLOCK_ACCESS_FS_READ_FILE</span></code>: Open a file with read access.</p></li>
+</ul>
+<p>A directory can receive access rights related to files or directories.  The
+following access right is applied to the directory itself, and the
+directories beneath it:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">LANDLOCK_ACCESS_FS_READ_DIR</span></code>: Open a directory or list its content.</p></li>
+</ul>
+<p>However, the following access rights only apply to the content of a
+directory, not the directory itself:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">LANDLOCK_ACCESS_FS_REMOVE_DIR</span></code>: Remove an empty directory or rename one.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">LANDLOCK_ACCESS_FS_REMOVE_FILE</span></code>: Unlink (or rename) a file.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">LANDLOCK_ACCESS_FS_MAKE_CHAR</span></code>: Create (or rename or link) a character
+device.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">LANDLOCK_ACCESS_FS_MAKE_DIR</span></code>: Create (or rename) a directory.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">LANDLOCK_ACCESS_FS_MAKE_REG</span></code>: Create (or rename or link) a regular file.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">LANDLOCK_ACCESS_FS_MAKE_SOCK</span></code>: Create (or rename or link) a UNIX domain
+socket.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">LANDLOCK_ACCESS_FS_MAKE_FIFO</span></code>: Create (or rename or link) a named pipe.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">LANDLOCK_ACCESS_FS_MAKE_BLOCK</span></code>: Create (or rename or link) a block device.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">LANDLOCK_ACCESS_FS_MAKE_SYM</span></code>: Create (or rename or link) a symbolic link.</p></li>
+</ul>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>It is currently not possible to restrict some file-related actions
+accessible through these syscall families: <em class="manpage">chdir(2)</em>,
+<em class="manpage">truncate(2)</em>, <em class="manpage">stat(2)</em>, <em class="manpage">flock(2)</em>,
+<em class="manpage">chmod(2)</em>, <em class="manpage">chown(2)</em>, <em class="manpage">setxattr(2)</em>,
+<em class="manpage">ioctl(2)</em>, <em class="manpage">fcntl(2)</em>.
+Future Landlock evolutions will enable to restrict them.</p>
+</div>
+</div>
+</div>
+<div class="section" id="creating-a-new-ruleset">
+<h3>Creating a new ruleset<a class="headerlink" href="#creating-a-new-ruleset" title="Permalink to this headline">¶</a></h3>
+<dl class="c function">
+<dt id="c.sys_landlock_create_ruleset">
+long <code class="sig-name descname">sys_landlock_create_ruleset</code><span class="sig-paren">(</span><em class="property">const</em> <em class="property">struct</em> <a class="reference internal" href="#c.landlock_ruleset_attr" title="landlock_ruleset_attr">landlock_ruleset_attr</a> __user *<em class="property">const</em> <em>attr</em>, <em class="property">const</em> size_t <em>size</em>, <em class="property">const</em> __u32 <em>flags</em><span class="sig-paren">)</span><a class="headerlink" href="#c.sys_landlock_create_ruleset" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Create a new ruleset</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">const</span> <span class="pre">struct</span> <span class="pre">landlock_ruleset_attr</span> <span class="pre">__user</span> <span class="pre">*const</span> <span class="pre">attr</span></code></dt><dd><p>Pointer to a <a class="reference internal" href="#c.landlock_ruleset_attr" title="landlock_ruleset_attr"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">landlock_ruleset_attr</span></code></a> identifying the scope of
+the new ruleset.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">const</span> <span class="pre">size_t</span> <span class="pre">size</span></code></dt><dd><p>Size of the pointed <a class="reference internal" href="#c.landlock_ruleset_attr" title="landlock_ruleset_attr"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">landlock_ruleset_attr</span></code></a> (needed for
+backward and forward compatibility).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">const</span> <span class="pre">__u32</span> <span class="pre">flags</span></code></dt><dd><p>Must be 0.</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This system call enables to create a new Landlock ruleset, and returns the
+related file descriptor on success.</p>
+<p>Possible returned errors are:</p>
+<ul class="simple">
+<li><p>EOPNOTSUPP: Landlock is supported by the kernel but disabled at boot time;</p></li>
+<li><p>EINVAL: <strong>flags</strong> is not 0, or unknown access, or too small <strong>size</strong>;</p></li>
+<li><p>E2BIG or EFAULT: <strong>attr</strong> or <strong>size</strong> inconsistencies;</p></li>
+<li><p>ENOMSG: empty <a class="reference internal" href="#c.landlock_ruleset_attr" title="landlock_ruleset_attr"><code class="xref c c-type docutils literal notranslate"><span class="pre">landlock_ruleset_attr.handled_access_fs</span></code></a>.</p></li>
+</ul>
+<dl class="c struct">
+<dt id="c.landlock_ruleset_attr">
+<em class="property">struct </em><code class="sig-name descname">landlock_ruleset_attr</code><a class="headerlink" href="#c.landlock_ruleset_attr" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Ruleset definition</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct landlock_ruleset_attr {
+  __u64 handled_access_fs;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">handled_access_fs</span></code></dt><dd><p>Bitmask of actions (cf. <a class="reference internal" href="#filesystem-flags">Filesystem flags</a>)
+that is handled by this ruleset and should then be forbidden if no
+rule explicitly allow them.  This is needed for backward
+compatibility reasons.</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Argument of <a class="reference internal" href="#c.sys_landlock_create_ruleset" title="sys_landlock_create_ruleset"><code class="xref c c-func docutils literal notranslate"><span class="pre">sys_landlock_create_ruleset()</span></code></a>.  This structure can grow in
+future versions.</p>
+</div>
+<div class="section" id="extending-a-ruleset">
+<h3>Extending a ruleset<a class="headerlink" href="#extending-a-ruleset" title="Permalink to this headline">¶</a></h3>
+<dl class="c function">
+<dt id="c.sys_landlock_add_rule">
+long <code class="sig-name descname">sys_landlock_add_rule</code><span class="sig-paren">(</span><em class="property">const</em> int <em>ruleset_fd</em>, <em class="property">const</em> <em class="property">enum</em> <a class="reference internal" href="#c.landlock_rule_type" title="landlock_rule_type">landlock_rule_type</a> <em>rule_type</em>, <em class="property">const</em> void __user *<em class="property">const</em> <em>rule_attr</em>, <em class="property">const</em> __u32 <em>flags</em><span class="sig-paren">)</span><a class="headerlink" href="#c.sys_landlock_add_rule" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Add a new rule to a ruleset</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">const</span> <span class="pre">int</span> <span class="pre">ruleset_fd</span></code></dt><dd><p>File descriptor tied to the ruleset which should be extended
+with the new rule.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">const</span> <span class="pre">enum</span> <span class="pre">landlock_rule_type</span> <span class="pre">rule_type</span></code></dt><dd><p>Identify the structure type pointed to by <strong>rule_attr</strong> (only
+LANDLOCK_RULE_PATH_BENEATH for now).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">const</span> <span class="pre">void</span> <span class="pre">__user</span> <span class="pre">*const</span> <span class="pre">rule_attr</span></code></dt><dd><p>Pointer to a rule (only of type <a class="reference internal" href="#c.landlock_path_beneath_attr" title="landlock_path_beneath_attr"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span>
+<span class="pre">landlock_path_beneath_attr</span></code></a> for now).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">const</span> <span class="pre">__u32</span> <span class="pre">flags</span></code></dt><dd><p>Must be 0.</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This system call enables to define a new rule and add it to an existing
+ruleset.</p>
+<p>Possible returned errors are:</p>
+<ul class="simple">
+<li><p>EOPNOTSUPP: Landlock is supported by the kernel but disabled at boot time;</p></li>
+<li><p>EINVAL: <strong>flags</strong> is not 0, or inconsistent access in the rule (i.e.
+<a class="reference internal" href="#c.landlock_path_beneath_attr" title="landlock_path_beneath_attr"><code class="xref c c-type docutils literal notranslate"><span class="pre">landlock_path_beneath_attr.allowed_access</span></code></a> is not a subset of the rule’s
+accesses);</p></li>
+<li><p>EBADF: <strong>ruleset_fd</strong> is not a file descriptor for the current thread;</p></li>
+<li><p>EBADFD: <strong>ruleset_fd</strong> is not a ruleset file descriptor;</p></li>
+<li><p>EPERM: <strong>ruleset_fd</strong> has no write access to the underlying ruleset;</p></li>
+<li><p>EFAULT: <strong>rule_attr</strong> inconsistency.</p></li>
+</ul>
+<dl class="c enum">
+<dt id="c.landlock_rule_type">
+<em class="property">enum </em><code class="sig-name descname">landlock_rule_type</code><a class="headerlink" href="#c.landlock_rule_type" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Landlock rule type</p>
+</dd></dl>
+
+<p><strong>Constants</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">LANDLOCK_RULE_PATH_BENEATH</span></code></dt><dd><p>Type of a <a class="reference internal" href="#c.landlock_path_beneath_attr" title="landlock_path_beneath_attr"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span>
+<span class="pre">landlock_path_beneath_attr</span></code></a> .</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Argument of <a class="reference internal" href="#c.sys_landlock_add_rule" title="sys_landlock_add_rule"><code class="xref c c-func docutils literal notranslate"><span class="pre">sys_landlock_add_rule()</span></code></a>.</p>
+<dl class="c struct">
+<dt id="c.landlock_path_beneath_attr">
+<em class="property">struct </em><code class="sig-name descname">landlock_path_beneath_attr</code><a class="headerlink" href="#c.landlock_path_beneath_attr" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Path hierarchy definition</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct landlock_path_beneath_attr {
+  __u64 allowed_access;
+  __s32 parent_fd;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">allowed_access</span></code></dt><dd><p>Bitmask of allowed actions for this file hierarchy
+(cf. <a class="reference internal" href="#filesystem-flags">Filesystem flags</a>).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">parent_fd</span></code></dt><dd><p>File descriptor, open with <code class="docutils literal notranslate"><span class="pre">O_PATH</span></code>, which identifies
+the parent directory of a file hierarchy, or just a file.</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Argument of <a class="reference internal" href="#c.sys_landlock_add_rule" title="sys_landlock_add_rule"><code class="xref c c-func docutils literal notranslate"><span class="pre">sys_landlock_add_rule()</span></code></a>.</p>
+</div>
+<div class="section" id="enforcing-a-ruleset">
+<h3>Enforcing a ruleset<a class="headerlink" href="#enforcing-a-ruleset" title="Permalink to this headline">¶</a></h3>
+<dl class="c function">
+<dt id="c.sys_landlock_enforce_ruleset_current">
+long <code class="sig-name descname">sys_landlock_enforce_ruleset_current</code><span class="sig-paren">(</span><em class="property">const</em> int <em>ruleset_fd</em>, <em class="property">const</em> __u32 <em>flags</em><span class="sig-paren">)</span><a class="headerlink" href="#c.sys_landlock_enforce_ruleset_current" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Enforce a ruleset on the current task</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">const</span> <span class="pre">int</span> <span class="pre">ruleset_fd</span></code></dt><dd><p>File descriptor tied to the ruleset to merge with the target.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">const</span> <span class="pre">__u32</span> <span class="pre">flags</span></code></dt><dd><p>Must be 0.</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This system call enables to enforce a Landlock ruleset on the current
+thread.  Enforcing a ruleset requires that the task has CAP_SYS_ADMIN in its
+namespace or is running with no_new_privs.  This avoids scenarios where
+unprivileged tasks can affect the behavior of privileged children.</p>
+<p>Possible returned errors are:</p>
+<ul class="simple">
+<li><p>EOPNOTSUPP: Landlock is supported by the kernel but disabled at boot time;</p></li>
+<li><p>EINVAL: <strong>flags</strong> is not 0.</p></li>
+<li><p>EBADF: <strong>ruleset_fd</strong> is not a file descriptor for the current thread;</p></li>
+<li><p>EBADFD: <strong>ruleset_fd</strong> is not a ruleset file descriptor;</p></li>
+<li><p>EPERM: <strong>ruleset_fd</strong> has no read access to the underlying ruleset, or the
+current thread is not running with no_new_privs, or it doesn’t have
+CAP_SYS_ADMIN in its namespace.</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="current-limitations">
+<h2>Current limitations<a class="headerlink" href="#current-limitations" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="file-renaming-and-linking">
+<h3>File renaming and linking<a class="headerlink" href="#file-renaming-and-linking" title="Permalink to this headline">¶</a></h3>
+<p>Because Landlock targets unprivileged access controls, it is needed to properly
+handle composition of rules.  Such property also implies rules nesting.
+Properly handling multiple layers of ruleset, each one of them able to restrict
+access to files, also implies to inherit the ruleset restrictions from a parent
+to its hierarchy.  Because files are identified and restricted by their
+hierarchy, moving or linking a file from one directory to another imply to
+propagate the hierarchy constraints.  To protect against privilege escalations
+through renaming or linking, and for the sack of simplicity, Landlock currently
+limits linking and renaming to the same directory.  Future Landlock evolutions
+will enable more flexibility for renaming and linking, with dedicated ruleset
+flags.</p>
+</div>
+<div class="section" id="overlayfs">
+<h3>OverlayFS<a class="headerlink" href="#overlayfs" title="Permalink to this headline">¶</a></h3>
+<p>An OverlayFS mount point consists of upper and lower layers.  It is currently
+not possible to reliably infer which underlying file hierarchy matches an
+OverlayFS path composed of such layers.  It is then not currently possible to
+track the source of an indirect access request, and then not possible to
+properly identify and allow an unified OverlayFS hierarchy.  Restricting files
+in an OverlayFS mount point works, but files allowed in one layer may not be
+allowed in a related OverlayFS mount point.  A future Landlock evolution will
+make possible to properly work with OverlayFS, according to a dedicated ruleset
+flag.</p>
+</div>
+<div class="section" id="special-filesystems">
+<h3>Special filesystems<a class="headerlink" href="#special-filesystems" title="Permalink to this headline">¶</a></h3>
+<p>Access to regular files and directories can be restricted by Landlock,
+according to the handled accesses of a ruleset.  However, files which do not
+come from a user-visible filesystem (e.g. pipe, socket), but can still be
+accessed through /proc/self/fd/, cannot currently be restricted.  Likewise,
+some special kernel filesystems such as nsfs which can be accessed through
+/proc/self/ns/, cannot currently be restricted.  For now, these kind of special
+paths are then always allowed.  Future Landlock evolutions will enable to
+restrict such paths, with dedicated ruleset flags.</p>
+</div>
+</div>
+<div class="section" id="questions-and-answers">
+<h2>Questions and answers<a class="headerlink" href="#questions-and-answers" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="what-about-user-space-sandbox-managers">
+<h3>What about user space sandbox managers?<a class="headerlink" href="#what-about-user-space-sandbox-managers" title="Permalink to this headline">¶</a></h3>
+<p>Using user space process to enforce restrictions on kernel resources can lead
+to race conditions or inconsistent evaluations (i.e. <a class="reference external" href="https://www.ndss-symposium.org/ndss2003/traps-and-pitfalls-practical-problems-system-call-interposition-based-security-tools/">Incorrect mirroring of
+the OS code and state</a>).</p>
+</div>
+<div class="section" id="what-about-namespaces-and-containers">
+<h3>What about namespaces and containers?<a class="headerlink" href="#what-about-namespaces-and-containers" title="Permalink to this headline">¶</a></h3>
+<p>Namespaces can help create sandboxes but they are not designed for
+access-control and then miss useful features for such use case (e.g. no
+fine-grained restrictions).  Moreover, their complexity can lead to security
+issues, especially when untrusted processes can manipulate them (cf.
+<a class="reference external" href="https://lwn.net/Articles/673597/">Controlling access to user namespaces</a>).</p>
+</div>
+</div>
+<div class="section" id="additional-documentation">
+<h2>Additional documentation<a class="headerlink" href="#additional-documentation" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p><a class="reference internal" href="../security/landlock.html"><span class="doc">Landlock LSM: kernel documentation</span></a></p></li>
+<li><p><a class="reference external" href="https://landlock.io">https://landlock.io</a></p></li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="unshare.html" class="btn btn-neutral float-right" title="unshare system call" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="seccomp_filter.html" class="btn btn-neutral float-left" title="Seccomp BPF (SECure COMPuting with filters)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
