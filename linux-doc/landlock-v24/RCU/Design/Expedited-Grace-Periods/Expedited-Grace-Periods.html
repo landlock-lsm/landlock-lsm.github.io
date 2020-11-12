@@ -1,0 +1,849 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>A Tour Through TREE_RCU’s Expedited Grace Periods &mdash; The Linux Kernel 5.10.0-rc3+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="A Tour Through RCU’s Requirements" href="../Requirements/Requirements.html" />
+    <link rel="prev" title="A Tour Through TREE_RCU’s Grace-Period Memory Ordering" href="../Memory-Ordering/Tree-RCU-Memory-Ordering.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home" alt="Documentation Home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.10.0-rc3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../core-api/index.html">Core API Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../../core-api/index.html#core-utilities">Core utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core-api/index.html#data-structures-and-low-level-utilities">Data structures and low-level utilities</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../../core-api/index.html#concurrency-primitives">Concurrency primitives</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../../../core-api/atomic_ops.html">Semantics and Behavior of Atomic and Bitmask Operations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core-api/refcount-vs-atomic.html">refcount_t API compared to atomic_t</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core-api/irq/index.html">IRQs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core-api/local_ops.html">Semantics and Behavior of Local Atomic Operations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core-api/padata.html">The padata parallel execution mechanism</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html">RCU concepts</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../../arrayRCU.html">Using RCU to Protect Read-Mostly Arrays</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../checklist.html">Review Checklist for RCU Patches</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../lockdep.html">RCU and lockdep checking</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../lockdep-splat.html">Lockdep-RCU Splat</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../rcubarrier.html">RCU and Unloadable Modules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../rcu_dereference.html">PROPER CARE AND FEEDING OF RETURN VALUES FROM rcu_dereference()</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../whatisRCU.html">What is RCU?  –  “Read, Copy, Update”</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../rcu.html">RCU Concepts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../rculist_nulls.html">Using RCU hlist_nulls to protect list and objects</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../rcuref.html">Reference-count design for elements of lists/arrays protected by RCU</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../torture.html">RCU Torture Test Operation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../stallwarn.html">Using RCU’s CPU Stall Detector</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../listRCU.html">Using RCU to Protect Read-Mostly Linked Lists</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../NMI-RCU.html">Using RCU to Protect Dynamic NMI Handlers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../UP.html">RCU on Uniprocessor Systems</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../Memory-Ordering/Tree-RCU-Memory-Ordering.html">A Tour Through TREE_RCU’s Grace-Period Memory Ordering</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">A Tour Through TREE_RCU’s Expedited Grace Periods</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../Requirements/Requirements.html">A Tour Through RCU’s Requirements</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../Data-Structures/Data-Structures.html">A Tour Through TREE_RCU’s Data Structures [LWN.net]</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core-api/index.html#low-level-hardware-management">Low-level hardware management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core-api/index.html#memory-management">Memory management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core-api/index.html#interfaces-for-kernel-debugging">Interfaces for kernel debugging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core-api/index.html#everything-else">Everything else</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../../core-api/index.html">Core API Documentation</a> &raquo;</li>
+        
+          <li><a href="../../index.html">RCU concepts</a> &raquo;</li>
+        
+      <li>A Tour Through TREE_RCU’s Expedited Grace Periods</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../../_sources/RCU/Design/Expedited-Grace-Periods/Expedited-Grace-Periods.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="a-tour-through-tree-rcu-s-expedited-grace-periods">
+<h1>A Tour Through TREE_RCU’s Expedited Grace Periods<a class="headerlink" href="#a-tour-through-tree-rcu-s-expedited-grace-periods" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>This document describes RCU’s expedited grace periods.
+Unlike RCU’s normal grace periods, which accept long latencies to attain
+high efficiency and minimal disturbance, expedited grace periods accept
+lower efficiency and significant disturbance to attain shorter latencies.</p>
+<p>There are two flavors of RCU (RCU-preempt and RCU-sched), with an earlier
+third RCU-bh flavor having been implemented in terms of the other two.
+Each of the two implementations is covered in its own section.</p>
+</div>
+<div class="section" id="expedited-grace-period-design">
+<h2>Expedited Grace Period Design<a class="headerlink" href="#expedited-grace-period-design" title="Permalink to this headline">¶</a></h2>
+<p>The expedited RCU grace periods cannot be accused of being subtle,
+given that they for all intents and purposes hammer every CPU that
+has not yet provided a quiescent state for the current expedited
+grace period.
+The one saving grace is that the hammer has grown a bit smaller
+over time:  The old call to <code class="docutils literal notranslate"><span class="pre">try_stop_cpus()</span></code> has been
+replaced with a set of calls to <code class="docutils literal notranslate"><span class="pre">smp_call_function_single()</span></code>,
+each of which results in an IPI to the target CPU.
+The corresponding handler function checks the CPU’s state, motivating
+a faster quiescent state where possible, and triggering a report
+of that quiescent state.
+As always for RCU, once everything has spent some time in a quiescent
+state, the expedited grace period has completed.</p>
+<p>The details of the <code class="docutils literal notranslate"><span class="pre">smp_call_function_single()</span></code> handler’s
+operation depend on the RCU flavor, as described in the following
+sections.</p>
+</div>
+<div class="section" id="rcu-preempt-expedited-grace-periods">
+<h2>RCU-preempt Expedited Grace Periods<a class="headerlink" href="#rcu-preempt-expedited-grace-periods" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">CONFIG_PREEMPT=y</span></code> kernels implement RCU-preempt.
+The overall flow of the handling of a given CPU by an RCU-preempt
+expedited grace period is shown in the following diagram:</p>
+<div class="figure align-default">
+<img alt="../../../_images/ExpRCUFlow.svg" src="../../../_images/ExpRCUFlow.svg" /></div>
+<p>The solid arrows denote direct action, for example, a function call.
+The dotted arrows denote indirect action, for example, an IPI
+or a state that is reached after some time.</p>
+<p>If a given CPU is offline or idle, <code class="docutils literal notranslate"><span class="pre">synchronize_rcu_expedited()</span></code>
+will ignore it because idle and offline CPUs are already residing
+in quiescent states.
+Otherwise, the expedited grace period will use
+<code class="docutils literal notranslate"><span class="pre">smp_call_function_single()</span></code> to send the CPU an IPI, which
+is handled by <code class="docutils literal notranslate"><span class="pre">rcu_exp_handler()</span></code>.</p>
+<p>However, because this is preemptible RCU, <code class="docutils literal notranslate"><span class="pre">rcu_exp_handler()</span></code>
+can check to see if the CPU is currently running in an RCU read-side
+critical section.
+If not, the handler can immediately report a quiescent state.
+Otherwise, it sets flags so that the outermost <code class="docutils literal notranslate"><span class="pre">rcu_read_unlock()</span></code>
+invocation will provide the needed quiescent-state report.
+This flag-setting avoids the previous forced preemption of all
+CPUs that might have RCU read-side critical sections.
+In addition, this flag-setting is done so as to avoid increasing
+the overhead of the common-case fastpath through the scheduler.</p>
+<p>Again because this is preemptible RCU, an RCU read-side critical section
+can be preempted.
+When that happens, RCU will enqueue the task, which will the continue to
+block the current expedited grace period until it resumes and finds its
+outermost <code class="docutils literal notranslate"><span class="pre">rcu_read_unlock()</span></code>.
+The CPU will report a quiescent state just after enqueuing the task because
+the CPU is no longer blocking the grace period.
+It is instead the preempted task doing the blocking.
+The list of blocked tasks is managed by <code class="docutils literal notranslate"><span class="pre">rcu_preempt_ctxt_queue()</span></code>,
+which is called from <code class="docutils literal notranslate"><span class="pre">rcu_preempt_note_context_switch()</span></code>, which
+in turn is called from <code class="docutils literal notranslate"><span class="pre">rcu_note_context_switch()</span></code>, which in
+turn is called from the scheduler.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Quick Quiz</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>Why not just have the expedited grace period check the state of all
+the CPUs? After all, that would avoid all those real-time-unfriendly
+IPIs.</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Answer</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>Because we want the RCU read-side critical sections to run fast,
+which means no memory barriers. Therefore, it is not possible to
+safely check the state from some other CPU. And even if it was
+possible to safely check the state, it would still be necessary to
+IPI the CPU to safely interact with the upcoming
+<code class="docutils literal notranslate"><span class="pre">rcu_read_unlock()</span></code> invocation, which means that the remote state
+testing would not help the worst-case latency that real-time
+applications care about.</p>
+<p>One way to prevent your real-time application from getting hit with
+these IPIs is to build your kernel with <code class="docutils literal notranslate"><span class="pre">CONFIG_NO_HZ_FULL=y</span></code>. RCU
+would then perceive the CPU running your application as being idle,
+and it would be able to safely detect that state without needing to
+IPI the CPU.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>Please note that this is just the overall flow: Additional complications
+can arise due to races with CPUs going idle or offline, among other
+things.</p>
+<div class="section" id="rcu-sched-expedited-grace-periods">
+<h3>RCU-sched Expedited Grace Periods<a class="headerlink" href="#rcu-sched-expedited-grace-periods" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">CONFIG_PREEMPT=n</span></code> kernels implement RCU-sched. The overall flow of
+the handling of a given CPU by an RCU-sched expedited grace period is
+shown in the following diagram:</p>
+<div class="figure align-default">
+<img alt="../../../_images/ExpSchedFlow.svg" src="../../../_images/ExpSchedFlow.svg" /></div>
+<p>As with RCU-preempt, RCU-sched’s <code class="docutils literal notranslate"><span class="pre">synchronize_rcu_expedited()</span></code> ignores
+offline and idle CPUs, again because they are in remotely detectable
+quiescent states. However, because the <code class="docutils literal notranslate"><span class="pre">rcu_read_lock_sched()</span></code> and
+<code class="docutils literal notranslate"><span class="pre">rcu_read_unlock_sched()</span></code> leave no trace of their invocation, in
+general it is not possible to tell whether or not the current CPU is in
+an RCU read-side critical section. The best that RCU-sched’s
+<code class="docutils literal notranslate"><span class="pre">rcu_exp_handler()</span></code> can do is to check for idle, on the off-chance
+that the CPU went idle while the IPI was in flight. If the CPU is idle,
+then <code class="docutils literal notranslate"><span class="pre">rcu_exp_handler()</span></code> reports the quiescent state.</p>
+<p>Otherwise, the handler forces a future context switch by setting the
+NEED_RESCHED flag of the current task’s thread flag and the CPU preempt
+counter. At the time of the context switch, the CPU reports the
+quiescent state. Should the CPU go offline first, it will report the
+quiescent state at that time.</p>
+</div>
+<div class="section" id="expedited-grace-period-and-cpu-hotplug">
+<h3>Expedited Grace Period and CPU Hotplug<a class="headerlink" href="#expedited-grace-period-and-cpu-hotplug" title="Permalink to this headline">¶</a></h3>
+<p>The expedited nature of expedited grace periods require a much tighter
+interaction with CPU hotplug operations than is required for normal
+grace periods. In addition, attempting to IPI offline CPUs will result
+in splats, but failing to IPI online CPUs can result in too-short grace
+periods. Neither option is acceptable in production kernels.</p>
+<p>The interaction between expedited grace periods and CPU hotplug
+operations is carried out at several levels:</p>
+<ol class="arabic simple">
+<li><p>The number of CPUs that have ever been online is tracked by the
+<code class="docutils literal notranslate"><span class="pre">rcu_state</span></code> structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;ncpus</span></code> field. The <code class="docutils literal notranslate"><span class="pre">rcu_state</span></code>
+structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;ncpus_snap</span></code> field tracks the number of CPUs that
+have ever been online at the beginning of an RCU expedited grace
+period. Note that this number never decreases, at least in the
+absence of a time machine.</p></li>
+<li><p>The identities of the CPUs that have ever been online is tracked by
+the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;expmaskinitnext</span></code> field. The
+<code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;expmaskinit</span></code> field tracks the
+identities of the CPUs that were online at least once at the
+beginning of the most recent RCU expedited grace period. The
+<code class="docutils literal notranslate"><span class="pre">rcu_state</span></code> structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;ncpus</span></code> and <code class="docutils literal notranslate"><span class="pre">-&gt;ncpus_snap</span></code> fields are
+used to detect when new CPUs have come online for the first time,
+that is, when the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;expmaskinitnext</span></code>
+field has changed since the beginning of the last RCU expedited grace
+period, which triggers an update of each <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure’s
+<code class="docutils literal notranslate"><span class="pre">-&gt;expmaskinit</span></code> field from its <code class="docutils literal notranslate"><span class="pre">-&gt;expmaskinitnext</span></code> field.</p></li>
+<li><p>Each <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;expmaskinit</span></code> field is used to
+initialize that structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;expmask</span></code> at the beginning of each
+RCU expedited grace period. This means that only those CPUs that have
+been online at least once will be considered for a given grace
+period.</p></li>
+<li><p>Any CPU that goes offline will clear its bit in its leaf <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code>
+structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;qsmaskinitnext</span></code> field, so any CPU with that bit
+clear can safely be ignored. However, it is possible for a CPU coming
+online or going offline to have this bit set for some time while
+<code class="docutils literal notranslate"><span class="pre">cpu_online</span></code> returns <code class="docutils literal notranslate"><span class="pre">false</span></code>.</p></li>
+<li><p>For each non-idle CPU that RCU believes is currently online, the
+grace period invokes <code class="docutils literal notranslate"><span class="pre">smp_call_function_single()</span></code>. If this
+succeeds, the CPU was fully online. Failure indicates that the CPU is
+in the process of coming online or going offline, in which case it is
+necessary to wait for a short time period and try again. The purpose
+of this wait (or series of waits, as the case may be) is to permit a
+concurrent CPU-hotplug operation to complete.</p></li>
+<li><p>In the case of RCU-sched, one of the last acts of an outgoing CPU is
+to invoke <code class="docutils literal notranslate"><span class="pre">rcu_report_dead()</span></code>, which reports a quiescent state for
+that CPU. However, this is likely paranoia-induced redundancy.</p></li>
+</ol>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Quick Quiz</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>Why all the dancing around with multiple counters and masks tracking
+CPUs that were once online? Why not just have a single set of masks
+tracking the currently online CPUs and be done with it?</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Answer</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>Maintaining single set of masks tracking the online CPUs <em>sounds</em>
+easier, at least until you try working out all the race conditions
+between grace-period initialization and CPU-hotplug operations. For
+example, suppose initialization is progressing down the tree while a
+CPU-offline operation is progressing up the tree. This situation can
+result in bits set at the top of the tree that have no counterparts
+at the bottom of the tree. Those bits will never be cleared, which
+will result in grace-period hangs. In short, that way lies madness,
+to say nothing of a great many bugs, hangs, and deadlocks.
+In contrast, the current multi-mask multi-counter scheme ensures that
+grace-period initialization will always see consistent masks up and
+down the tree, which brings significant simplifications over the
+single-mask method.</p>
+<p>This is an instance of <a class="reference external" href="http://www.cs.columbia.edu/~library/TR-repository/reports/reports-1992/cucs-039-92.ps.gz">deferring work in order to avoid
+synchronization</a>.
+Lazily recording CPU-hotplug events at the beginning of the next
+grace period greatly simplifies maintenance of the CPU-tracking
+bitmasks in the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> tree.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="expedited-grace-period-refinements">
+<h3>Expedited Grace Period Refinements<a class="headerlink" href="#expedited-grace-period-refinements" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="idle-cpu-checks">
+<h4>Idle-CPU Checks<a class="headerlink" href="#idle-cpu-checks" title="Permalink to this headline">¶</a></h4>
+<p>Each expedited grace period checks for idle CPUs when initially forming
+the mask of CPUs to be IPIed and again just before IPIing a CPU (both
+checks are carried out by <code class="docutils literal notranslate"><span class="pre">sync_rcu_exp_select_cpus()</span></code>). If the CPU is
+idle at any time between those two times, the CPU will not be IPIed.
+Instead, the task pushing the grace period forward will include the idle
+CPUs in the mask passed to <code class="docutils literal notranslate"><span class="pre">rcu_report_exp_cpu_mult()</span></code>.</p>
+<p>For RCU-sched, there is an additional check: If the IPI has interrupted
+the idle loop, then <code class="docutils literal notranslate"><span class="pre">rcu_exp_handler()</span></code> invokes
+<code class="docutils literal notranslate"><span class="pre">rcu_report_exp_rdp()</span></code> to report the corresponding quiescent state.</p>
+<p>For RCU-preempt, there is no specific check for idle in the IPI handler
+(<code class="docutils literal notranslate"><span class="pre">rcu_exp_handler()</span></code>), but because RCU read-side critical sections are
+not permitted within the idle loop, if <code class="docutils literal notranslate"><span class="pre">rcu_exp_handler()</span></code> sees that
+the CPU is within RCU read-side critical section, the CPU cannot
+possibly be idle. Otherwise, <code class="docutils literal notranslate"><span class="pre">rcu_exp_handler()</span></code> invokes
+<code class="docutils literal notranslate"><span class="pre">rcu_report_exp_rdp()</span></code> to report the corresponding quiescent state,
+regardless of whether or not that quiescent state was due to the CPU
+being idle.</p>
+<p>In summary, RCU expedited grace periods check for idle when building the
+bitmask of CPUs that must be IPIed, just before sending each IPI, and
+(either explicitly or implicitly) within the IPI handler.</p>
+</div>
+<div class="section" id="batching-via-sequence-counter">
+<h4>Batching via Sequence Counter<a class="headerlink" href="#batching-via-sequence-counter" title="Permalink to this headline">¶</a></h4>
+<p>If each grace-period request was carried out separately, expedited grace
+periods would have abysmal scalability and problematic high-load
+characteristics. Because each grace-period operation can serve an
+unlimited number of updates, it is important to <em>batch</em> requests, so
+that a single expedited grace-period operation will cover all requests
+in the corresponding batch.</p>
+<p>This batching is controlled by a sequence counter named
+<code class="docutils literal notranslate"><span class="pre">-&gt;expedited_sequence</span></code> in the <code class="docutils literal notranslate"><span class="pre">rcu_state</span></code> structure. This counter
+has an odd value when there is an expedited grace period in progress and
+an even value otherwise, so that dividing the counter value by two gives
+the number of completed grace periods. During any given update request,
+the counter must transition from even to odd and then back to even, thus
+indicating that a grace period has elapsed. Therefore, if the initial
+value of the counter is <code class="docutils literal notranslate"><span class="pre">s</span></code>, the updater must wait until the counter
+reaches at least the value <code class="docutils literal notranslate"><span class="pre">(s+3)&amp;~0x1</span></code>. This counter is managed by
+the following access functions:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">rcu_exp_gp_seq_start()</span></code>, which marks the start of an expedited
+grace period.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rcu_exp_gp_seq_end()</span></code>, which marks the end of an expedited grace
+period.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rcu_exp_gp_seq_snap()</span></code>, which obtains a snapshot of the counter.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rcu_exp_gp_seq_done()</span></code>, which returns <code class="docutils literal notranslate"><span class="pre">true</span></code> if a full expedited
+grace period has elapsed since the corresponding call to
+<code class="docutils literal notranslate"><span class="pre">rcu_exp_gp_seq_snap()</span></code>.</p></li>
+</ol>
+<p>Again, only one request in a given batch need actually carry out a
+grace-period operation, which means there must be an efficient way to
+identify which of many concurrent reqeusts will initiate the grace
+period, and that there be an efficient way for the remaining requests to
+wait for that grace period to complete. However, that is the topic of
+the next section.</p>
+</div>
+<div class="section" id="funnel-locking-and-wait-wakeup">
+<h4>Funnel Locking and Wait/Wakeup<a class="headerlink" href="#funnel-locking-and-wait-wakeup" title="Permalink to this headline">¶</a></h4>
+<p>The natural way to sort out which of a batch of updaters will initiate
+the expedited grace period is to use the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> combining tree, as
+implemented by the <code class="docutils literal notranslate"><span class="pre">exp_funnel_lock()</span></code> function. The first updater
+corresponding to a given grace period arriving at a given <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code>
+structure records its desired grace-period sequence number in the
+<code class="docutils literal notranslate"><span class="pre">-&gt;exp_seq_rq</span></code> field and moves up to the next level in the tree.
+Otherwise, if the <code class="docutils literal notranslate"><span class="pre">-&gt;exp_seq_rq</span></code> field already contains the sequence
+number for the desired grace period or some later one, the updater
+blocks on one of four wait queues in the <code class="docutils literal notranslate"><span class="pre">-&gt;exp_wq[]</span></code> array, using the
+second-from-bottom and third-from bottom bits as an index. An
+<code class="docutils literal notranslate"><span class="pre">-&gt;exp_lock</span></code> field in the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure synchronizes access
+to these fields.</p>
+<p>An empty <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> tree is shown in the following diagram, with the
+white cells representing the <code class="docutils literal notranslate"><span class="pre">-&gt;exp_seq_rq</span></code> field and the red cells
+representing the elements of the <code class="docutils literal notranslate"><span class="pre">-&gt;exp_wq[]</span></code> array.</p>
+<div class="figure align-default">
+<img alt="../../../_images/Funnel0.svg" src="../../../_images/Funnel0.svg" /></div>
+<p>The next diagram shows the situation after the arrival of Task A and
+Task B at the leftmost and rightmost leaf <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structures,
+respectively. The current value of the <code class="docutils literal notranslate"><span class="pre">rcu_state</span></code> structure’s
+<code class="docutils literal notranslate"><span class="pre">-&gt;expedited_sequence</span></code> field is zero, so adding three and clearing the
+bottom bit results in the value two, which both tasks record in the
+<code class="docutils literal notranslate"><span class="pre">-&gt;exp_seq_rq</span></code> field of their respective <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structures:</p>
+<div class="figure align-default">
+<img alt="../../../_images/Funnel1.svg" src="../../../_images/Funnel1.svg" /></div>
+<p>Each of Tasks A and B will move up to the root <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure.
+Suppose that Task A wins, recording its desired grace-period sequence
+number and resulting in the state shown below:</p>
+<div class="figure align-default">
+<img alt="../../../_images/Funnel2.svg" src="../../../_images/Funnel2.svg" /></div>
+<p>Task A now advances to initiate a new grace period, while Task B moves
+up to the root <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure, and, seeing that its desired
+sequence number is already recorded, blocks on <code class="docutils literal notranslate"><span class="pre">-&gt;exp_wq[1]</span></code>.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Quick Quiz</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>Why <code class="docutils literal notranslate"><span class="pre">-&gt;exp_wq[1]</span></code>? Given that the value of these tasks’ desired
+sequence number is two, so shouldn’t they instead block on
+<code class="docutils literal notranslate"><span class="pre">-&gt;exp_wq[2]</span></code>?</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Answer</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>No.
+Recall that the bottom bit of the desired sequence number indicates
+whether or not a grace period is currently in progress. It is
+therefore necessary to shift the sequence number right one bit
+position to obtain the number of the grace period. This results in
+<code class="docutils literal notranslate"><span class="pre">-&gt;exp_wq[1]</span></code>.</p></td>
+</tr>
+</tbody>
+</table>
+<p>If Tasks C and D also arrive at this point, they will compute the same
+desired grace-period sequence number, and see that both leaf
+<code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structures already have that value recorded. They will
+therefore block on their respective <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structures’
+<code class="docutils literal notranslate"><span class="pre">-&gt;exp_wq[1]</span></code> fields, as shown below:</p>
+<div class="figure align-default">
+<img alt="../../../_images/Funnel3.svg" src="../../../_images/Funnel3.svg" /></div>
+<p>Task A now acquires the <code class="docutils literal notranslate"><span class="pre">rcu_state</span></code> structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;exp_mutex</span></code> and
+initiates the grace period, which increments <code class="docutils literal notranslate"><span class="pre">-&gt;expedited_sequence</span></code>.
+Therefore, if Tasks E and F arrive, they will compute a desired sequence
+number of 4 and will record this value as shown below:</p>
+<div class="figure align-default">
+<img alt="../../../_images/Funnel4.svg" src="../../../_images/Funnel4.svg" /></div>
+<p>Tasks E and F will propagate up the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> combining tree, with
+Task F blocking on the root <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure and Task E wait for
+Task A to finish so that it can start the next grace period. The
+resulting state is as shown below:</p>
+<div class="figure align-default">
+<img alt="../../../_images/Funnel5.svg" src="../../../_images/Funnel5.svg" /></div>
+<p>Once the grace period completes, Task A starts waking up the tasks
+waiting for this grace period to complete, increments the
+<code class="docutils literal notranslate"><span class="pre">-&gt;expedited_sequence</span></code>, acquires the <code class="docutils literal notranslate"><span class="pre">-&gt;exp_wake_mutex</span></code> and then
+releases the <code class="docutils literal notranslate"><span class="pre">-&gt;exp_mutex</span></code>. This results in the following state:</p>
+<div class="figure align-default">
+<img alt="../../../_images/Funnel6.svg" src="../../../_images/Funnel6.svg" /></div>
+<p>Task E can then acquire <code class="docutils literal notranslate"><span class="pre">-&gt;exp_mutex</span></code> and increment
+<code class="docutils literal notranslate"><span class="pre">-&gt;expedited_sequence</span></code> to the value three. If new tasks G and H arrive
+and moves up the combining tree at the same time, the state will be as
+follows:</p>
+<div class="figure align-default">
+<img alt="../../../_images/Funnel7.svg" src="../../../_images/Funnel7.svg" /></div>
+<p>Note that three of the root <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure’s waitqueues are now
+occupied. However, at some point, Task A will wake up the tasks blocked
+on the <code class="docutils literal notranslate"><span class="pre">-&gt;exp_wq</span></code> waitqueues, resulting in the following state:</p>
+<div class="figure align-default">
+<img alt="../../../_images/Funnel8.svg" src="../../../_images/Funnel8.svg" /></div>
+<p>Execution will continue with Tasks E and H completing their grace
+periods and carrying out their wakeups.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Quick Quiz</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>What happens if Task A takes so long to do its wakeups that Task E’s
+grace period completes?</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Answer</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>Then Task E will block on the <code class="docutils literal notranslate"><span class="pre">-&gt;exp_wake_mutex</span></code>, which will also
+prevent it from releasing <code class="docutils literal notranslate"><span class="pre">-&gt;exp_mutex</span></code>, which in turn will prevent
+the next grace period from starting. This last is important in
+preventing overflow of the <code class="docutils literal notranslate"><span class="pre">-&gt;exp_wq[]</span></code> array.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="use-of-workqueues">
+<h4>Use of Workqueues<a class="headerlink" href="#use-of-workqueues" title="Permalink to this headline">¶</a></h4>
+<p>In earlier implementations, the task requesting the expedited grace
+period also drove it to completion. This straightforward approach had
+the disadvantage of needing to account for POSIX signals sent to user
+tasks, so more recent implemementations use the Linux kernel’s
+<a class="reference external" href="https://www.kernel.org/doc/Documentation/core-api/workqueue.rst">workqueues</a>.</p>
+<p>The requesting task still does counter snapshotting and funnel-lock
+processing, but the task reaching the top of the funnel lock does a
+<code class="docutils literal notranslate"><span class="pre">schedule_work()</span></code> (from <code class="docutils literal notranslate"><span class="pre">_synchronize_rcu_expedited()</span></code> so that a
+workqueue kthread does the actual grace-period processing. Because
+workqueue kthreads do not accept POSIX signals, grace-period-wait
+processing need not allow for POSIX signals. In addition, this approach
+allows wakeups for the previous expedited grace period to be overlapped
+with processing for the next expedited grace period. Because there are
+only four sets of waitqueues, it is necessary to ensure that the
+previous grace period’s wakeups complete before the next grace period’s
+wakeups start. This is handled by having the <code class="docutils literal notranslate"><span class="pre">-&gt;exp_mutex</span></code> guard
+expedited grace-period processing and the <code class="docutils literal notranslate"><span class="pre">-&gt;exp_wake_mutex</span></code> guard
+wakeups. The key point is that the <code class="docutils literal notranslate"><span class="pre">-&gt;exp_mutex</span></code> is not released until
+the first wakeup is complete, which means that the <code class="docutils literal notranslate"><span class="pre">-&gt;exp_wake_mutex</span></code>
+has already been acquired at that point. This approach ensures that the
+previous grace period’s wakeups can be carried out while the current
+grace period is in process, but that these wakeups will complete before
+the next grace period starts. This means that only three waitqueues are
+required, guaranteeing that the four that are provided are sufficient.</p>
+</div>
+<div class="section" id="stall-warnings">
+<h4>Stall Warnings<a class="headerlink" href="#stall-warnings" title="Permalink to this headline">¶</a></h4>
+<p>Expediting grace periods does nothing to speed things up when RCU
+readers take too long, and therefore expedited grace periods check for
+stalls just as normal grace periods do.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Quick Quiz</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>But why not just let the normal grace-period machinery detect the
+stalls, given that a given reader must block both normal and
+expedited grace periods?</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Answer</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>Because it is quite possible that at a given time there is no normal
+grace period in progress, in which case the normal grace period
+cannot emit a stall warning.</p></td>
+</tr>
+</tbody>
+</table>
+<p>The <code class="docutils literal notranslate"><span class="pre">synchronize_sched_expedited_wait()</span></code> function loops waiting for
+the expedited grace period to end, but with a timeout set to the current
+RCU CPU stall-warning time. If this time is exceeded, any CPUs or
+<code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structures blocking the current grace period are printed.
+Each stall warning results in another pass through the loop, but the
+second and subsequent passes use longer stall times.</p>
+</div>
+<div class="section" id="mid-boot-operation">
+<h4>Mid-boot operation<a class="headerlink" href="#mid-boot-operation" title="Permalink to this headline">¶</a></h4>
+<p>The use of workqueues has the advantage that the expedited grace-period
+code need not worry about POSIX signals. Unfortunately, it has the
+corresponding disadvantage that workqueues cannot be used until they are
+initialized, which does not happen until some time after the scheduler
+spawns the first task. Given that there are parts of the kernel that
+really do want to execute grace periods during this mid-boot “dead
+zone”, expedited grace periods must do something else during thie time.</p>
+<p>What they do is to fall back to the old practice of requiring that the
+requesting task drive the expedited grace period, as was the case before
+the use of workqueues. However, the requesting task is only required to
+drive the grace period during the mid-boot dead zone. Before mid-boot, a
+synchronous grace period is a no-op. Some time after mid-boot,
+workqueues are used.</p>
+<p>Non-expedited non-SRCU synchronous grace periods must also operate
+normally during mid-boot. This is handled by causing non-expedited grace
+periods to take the expedited code path during mid-boot.</p>
+<p>The current code assumes that there are no POSIX signals during the
+mid-boot dead zone. However, if an overwhelming need for POSIX signals
+somehow arises, appropriate adjustments can be made to the expedited
+stall-warning code. One such adjustment would reinstate the
+pre-workqueue stall-warning checks, but only during the mid-boot dead
+zone.</p>
+<p>With this refinement, synchronous grace periods can now be used from
+task context pretty much any time during the life of the kernel. That
+is, aside from some points in the suspend, hibernate, or shutdown code
+path.</p>
+</div>
+<div class="section" id="summary">
+<h4>Summary<a class="headerlink" href="#summary" title="Permalink to this headline">¶</a></h4>
+<p>Expedited grace periods use a sequence-number approach to promote
+batching, so that a single grace-period operation can serve numerous
+requests. A funnel lock is used to efficiently identify the one task out
+of a concurrent group that will request the grace period. All members of
+the group will block on waitqueues provided in the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code>
+structure. The actual grace-period processing is carried out by a
+workqueue.</p>
+<p>CPU-hotplug operations are noted lazily in order to prevent the need for
+tight synchronization between expedited grace periods and CPU-hotplug
+operations. The dyntick-idle counters are used to avoid sending IPIs to
+idle CPUs, at least in the common case. RCU-preempt and RCU-sched use
+different IPI handlers and different code to respond to the state
+changes carried out by those handlers, but otherwise use common code.</p>
+<p>Quiescent states are tracked using the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> tree, and once all
+necessary quiescent states have been reported, all tasks waiting on this
+expedited grace period are awakened. A pair of mutexes are used to allow
+one grace period’s wakeups to proceed concurrently with the next grace
+period’s processing.</p>
+<p>This combination of mechanisms allows expedited grace periods to run
+reasonably efficiently. However, for non-time-critical tasks, normal
+grace periods should be used instead because their longer duration
+permits much higher degrees of batching, and thus much lower per-request
+overheads.</p>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../Requirements/Requirements.html" class="btn btn-neutral float-right" title="A Tour Through RCU’s Requirements" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../Memory-Ordering/Tree-RCU-Memory-Ordering.html" class="btn btn-neutral float-left" title="A Tour Through TREE_RCU’s Grace-Period Memory Ordering" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

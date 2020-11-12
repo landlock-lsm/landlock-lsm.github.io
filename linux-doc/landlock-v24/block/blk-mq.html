@@ -1,0 +1,1126 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Multi-Queue Block IO Queueing Mechanism (blk-mq) &mdash; The Linux Kernel 5.10.0-rc3+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Generic Block Device Capability" href="capability.html" />
+    <link rel="prev" title="Immutable biovecs and biovec iterators" href="biovecs.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.10.0-rc3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Block</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="bfq-iosched.html">BFQ (Budget Fair Queueing)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="biodoc.html">Notes on the Generic Block Layer Rewrite in Linux 2.5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="biovecs.html">Immutable biovecs and biovec iterators</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Multi-Queue Block IO Queueing Mechanism (blk-mq)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#introduction">Introduction</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#background">Background</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#operation">Operation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#further-reading">Further reading</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#source-code-documentation">Source code documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="capability.html">Generic Block Device Capability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmdline-partition.html">Embedded device command line partition parsing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data-integrity.html">Data Integrity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deadline-iosched.html">Deadline IO scheduler tunables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="inline-encryption.html">Inline Encryption</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ioprio.html">Block io priorities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kyber-iosched.html">Kyber I/O scheduler tunables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="null_blk.html">Null block device driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pr.html">Block layer support for Persistent Reservations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="queue-sysfs.html">Queue sysfs files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="request.html">struct request documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stat.html">Block layer statistics in /sys/block/&lt;dev&gt;/stat</a></li>
+<li class="toctree-l2"><a class="reference internal" href="switching-sched.html">Switching Scheduler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="writeback_cache_control.html">Explicit volatile write back cache control</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="index.html">Block</a> &raquo;</li>
+        
+      <li>Multi-Queue Block IO Queueing Mechanism (blk-mq)</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/block/blk-mq.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="multi-queue-block-io-queueing-mechanism-blk-mq">
+<h1>Multi-Queue Block IO Queueing Mechanism (blk-mq)<a class="headerlink" href="#multi-queue-block-io-queueing-mechanism-blk-mq" title="Permalink to this headline">¶</a></h1>
+<p>The Multi-Queue Block IO Queueing Mechanism is an API to enable fast storage
+devices to achieve a huge number of input/output operations per second (IOPS)
+through queueing and submitting IO requests to block devices simultaneously,
+benefiting from the parallelism offered by modern storage devices.</p>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="background">
+<h3>Background<a class="headerlink" href="#background" title="Permalink to this headline">¶</a></h3>
+<p>Magnetic hard disks have been the de facto standard from the beginning of the
+development of the kernel. The Block IO subsystem aimed to achieve the best
+performance possible for those devices with a high penalty when doing random
+access, and the bottleneck was the mechanical moving parts, a lot slower than
+any layer on the storage stack. One example of such optimization technique
+involves ordering read/write requests according to the current position of the
+hard disk head.</p>
+<p>However, with the development of Solid State Drives and Non-Volatile Memories
+without mechanical parts nor random access penalty and capable of performing
+high parallel access, the bottleneck of the stack had moved from the storage
+device to the operating system. In order to take advantage of the parallelism
+in those devices’ design, the multi-queue mechanism was introduced.</p>
+<p>The former design had a single queue to store block IO requests with a single
+lock. That did not scale well in SMP systems due to dirty data in cache and the
+bottleneck of having a single lock for multiple processors. This setup also
+suffered with congestion when different processes (or the same process, moving
+to different CPUs) wanted to perform block IO. Instead of this, the blk-mq API
+spawns multiple queues with individual entry points local to the CPU, removing
+the need for a lock. A deeper explanation on how this works is covered in the
+following section (<a class="reference internal" href="#operation">Operation</a>).</p>
+</div>
+<div class="section" id="operation">
+<h3>Operation<a class="headerlink" href="#operation" title="Permalink to this headline">¶</a></h3>
+<p>When the userspace performs IO to a block device (reading or writing a file,
+for instance), blk-mq takes action: it will store and manage IO requests to
+the block device, acting as middleware between the userspace (and a file
+system, if present) and the block device driver.</p>
+<p>blk-mq has two group of queues: software staging queues and hardware dispatch
+queues. When the request arrives at the block layer, it will try the shortest
+path possible: send it directly to the hardware queue. However, there are two
+cases that it might not do that: if there’s an IO scheduler attached at the
+layer or if we want to try to merge requests. In both cases, requests will be
+sent to the software queue.</p>
+<p>Then, after the requests are processed by software queues, they will be placed
+at the hardware queue, a second stage queue were the hardware has direct access
+to process those requests. However, if the hardware does not have enough
+resources to accept more requests, blk-mq will places requests on a temporary
+queue, to be sent in the future, when the hardware is able.</p>
+<div class="section" id="software-staging-queues">
+<h4>Software staging queues<a class="headerlink" href="#software-staging-queues" title="Permalink to this headline">¶</a></h4>
+<p>The block IO subsystem adds requests  in the software staging queues
+(represented by struct blk_mq_ctx) in case that they weren’t sent
+directly to the driver. A request is one or more BIOs. They arrived at the
+block layer through the data structure struct bio. The block layer
+will then build a new structure from it, the struct request that will
+be used to communicate with the device driver. Each queue has its own lock and
+the number of queues is defined by a per-CPU or per-node basis.</p>
+<p>The staging queue can be used to merge requests for adjacent sectors. For
+instance, requests for sector 3-6, 6-7, 7-9 can become one request for 3-9.
+Even if random access to SSDs and NVMs have the same time of response compared
+to sequential access, grouped requests for sequential access decreases the
+number of individual requests. This technique of merging requests is called
+plugging.</p>
+<p>Along with that, the requests can be reordered to ensure fairness of system
+resources (e.g. to ensure that no application suffers from starvation) and/or to
+improve IO performance, by an IO scheduler.</p>
+<div class="section" id="io-schedulers">
+<h5>IO Schedulers<a class="headerlink" href="#io-schedulers" title="Permalink to this headline">¶</a></h5>
+<p>There are several schedulers implemented by the block layer, each one following
+a heuristic to improve the IO performance. They are “pluggable” (as in plug
+and play), in the sense of they can be selected at run time using sysfs. You
+can read more about Linux’s IO schedulers <a class="reference external" href="https://www.kernel.org/doc/html/latest/block/index.html">here</a>. The scheduling
+happens only between requests in the same queue, so it is not possible to merge
+requests from different queues, otherwise there would be cache trashing and a
+need to have a lock for each queue. After the scheduling, the requests are
+eligible to be sent to the hardware. One of the possible schedulers to be
+selected is the NONE scheduler, the most straightforward one. It will just
+place requests on whatever software queue the process is running on, without
+any reordering. When the device starts processing requests in the hardware
+queue (a.k.a. run the hardware queue), the software queues mapped to that
+hardware queue will be drained in sequence according to their mapping.</p>
+</div>
+</div>
+<div class="section" id="hardware-dispatch-queues">
+<h4>Hardware dispatch queues<a class="headerlink" href="#hardware-dispatch-queues" title="Permalink to this headline">¶</a></h4>
+<p>The hardware queue (represented by <a class="reference internal" href="#c.blk_mq_hw_ctx" title="blk_mq_hw_ctx"><code class="xref c c-struct docutils literal notranslate"><span class="pre">struct</span> <span class="pre">blk_mq_hw_ctx</span></code></a>) is a struct
+used by device drivers to map the device submission queues (or device DMA ring
+buffer), and are the last step of the block layer submission code before the
+low level device driver taking ownership of the request. To run this queue, the
+block layer removes requests from the associated software queues and tries to
+dispatch to the hardware.</p>
+<p>If it’s not possible to send the requests directly to hardware, they will be
+added to a linked list (<code class="docutils literal notranslate"><span class="pre">hctx-&gt;dispatch</span></code>) of requests. Then,
+next time the block layer runs a queue, it will send the requests laying at the
+<code class="docutils literal notranslate"><span class="pre">dispatch</span></code> list first, to ensure a fairness dispatch with those
+requests that were ready to be sent first. The number of hardware queues
+depends on the number of hardware contexts supported by the hardware and its
+device driver, but it will not be more than the number of cores of the system.
+There is no reordering at this stage, and each software queue has a set of
+hardware queues to send requests for.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Neither the block layer nor the device protocols guarantee
+the order of completion of requests. This must be handled by
+higher layers, like the filesystem.</p>
+</div>
+</div>
+<div class="section" id="tag-based-completion">
+<h4>Tag-based completion<a class="headerlink" href="#tag-based-completion" title="Permalink to this headline">¶</a></h4>
+<p>In order to indicate which request has been completed, every request is
+identified by an integer, ranging from 0 to the dispatch queue size. This tag
+is generated by the block layer and later reused by the device driver, removing
+the need to create a redundant identifier. When a request is completed in the
+drive, the tag is sent back to the block layer to notify it of the finalization.
+This removes the need to do a linear search to find out which IO has been
+completed.</p>
+</div>
+</div>
+<div class="section" id="further-reading">
+<h3>Further reading<a class="headerlink" href="#further-reading" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p><a class="reference external" href="http://kernel.dk/blk-mq.pdf">Linux Block IO: Introducing Multi-queue SSD Access on Multi-core Systems</a></p></li>
+<li><p><a class="reference external" href="https://en.wikipedia.org/wiki/Noop_scheduler">NOOP scheduler</a></p></li>
+<li><p><a class="reference external" href="https://www.kernel.org/doc/html/latest/block/null_blk.html">Null block device driver</a></p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="source-code-documentation">
+<h2>Source code documentation<a class="headerlink" href="#source-code-documentation" title="Permalink to this headline">¶</a></h2>
+<dl class="c struct">
+<dt id="c.blk_mq_hw_ctx">
+<em class="property">struct </em><code class="sig-name descname">blk_mq_hw_ctx</code><a class="headerlink" href="#c.blk_mq_hw_ctx" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>State for a hardware queue facing the hardware block device</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct blk_mq_hw_ctx {
+  struct {
+    spinlock_t lock;
+    struct list_head        dispatch;
+    unsigned long           state;
+  };
+  struct delayed_work     run_work;
+  cpumask_var_t cpumask;
+  int next_cpu;
+  int next_cpu_batch;
+  unsigned long           flags;
+  void *sched_data;
+  struct request_queue    *queue;
+  struct blk_flush_queue  *fq;
+  void *driver_data;
+  struct sbitmap          ctx_map;
+  struct blk_mq_ctx       *dispatch_from;
+  unsigned int            dispatch_busy;
+  unsigned short          type;
+  unsigned short          nr_ctx;
+  struct blk_mq_ctx       **ctxs;
+  spinlock_t dispatch_wait_lock;
+  wait_queue_entry_t dispatch_wait;
+  atomic_t wait_index;
+  struct blk_mq_tags      *tags;
+  struct blk_mq_tags      *sched_tags;
+  unsigned long           queued;
+  unsigned long           run;
+#define BLK_MQ_MAX_DISPATCH_ORDER       7;
+  unsigned long           dispatched[BLK_MQ_MAX_DISPATCH_ORDER];
+  unsigned int            numa_node;
+  unsigned int            queue_num;
+  atomic_t nr_active;
+  atomic_t elevator_queued;
+  struct hlist_node       cpuhp_online;
+  struct hlist_node       cpuhp_dead;
+  struct kobject          kobj;
+  unsigned long           poll_considered;
+  unsigned long           poll_invoked;
+  unsigned long           poll_success;
+#ifdef CONFIG_BLK_DEBUG_FS;
+  struct dentry           *debugfs_dir;
+  struct dentry           *sched_debugfs_dir;
+#endif;
+  struct list_head        hctx_list;
+  struct srcu_struct      srcu[];
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">{unnamed_struct}</span></code></dt><dd><p>anonymous</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">lock</span></code></dt><dd><p>Protects the dispatch list.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">dispatch</span></code></dt><dd><p>Used for requests that are ready to be
+dispatched to the hardware but for some reason (e.g. lack of
+resources) could not be sent to the hardware. As soon as the
+driver can send new requests, requests at this list will
+be sent first for a fairer dispatch.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">state</span></code></dt><dd><p>BLK_MQ_S_* flags. Defines the state of the hw
+queue (active, scheduled to restart, stopped).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">run_work</span></code></dt><dd><p>Used for scheduling a hardware queue run at a later time.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">cpumask</span></code></dt><dd><p>Map of available CPUs where this hctx can run.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">next_cpu</span></code></dt><dd><p>Used by blk_mq_hctx_next_cpu() for round-robin CPU
+selection from <strong>cpumask</strong>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">next_cpu_batch</span></code></dt><dd><p>Counter of how many works left in the batch before
+changing to the next CPU.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">flags</span></code></dt><dd><p>BLK_MQ_F_* flags. Defines the behaviour of the queue.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">sched_data</span></code></dt><dd><p>Pointer owned by the IO scheduler attached to a request
+queue. It’s up to the IO scheduler how to use this pointer.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">queue</span></code></dt><dd><p>Pointer to the request queue that owns this hardware context.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">fq</span></code></dt><dd><p>Queue of requests that need to perform a flush operation.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">driver_data</span></code></dt><dd><p>Pointer to data owned by the block driver that created
+this hctx</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">ctx_map</span></code></dt><dd><p>Bitmap for each software queue. If bit is on, there is a
+pending request in that software queue.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">dispatch_from</span></code></dt><dd><p>Software queue to be used when no scheduler was
+selected.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">dispatch_busy</span></code></dt><dd><p>Number used by blk_mq_update_dispatch_busy() to
+decide if the hw_queue is busy using Exponential Weighted Moving
+Average algorithm.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">type</span></code></dt><dd><p>HCTX_TYPE_* flags. Type of hardware queue.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">nr_ctx</span></code></dt><dd><p>Number of software queues.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">ctxs</span></code></dt><dd><p>Array of software queues.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">dispatch_wait_lock</span></code></dt><dd><p>Lock for dispatch_wait queue.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">dispatch_wait</span></code></dt><dd><p>Waitqueue to put requests when there is no tag
+available at the moment, to wait for another try in the future.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">wait_index</span></code></dt><dd><p>Index of next available dispatch_wait queue to insert
+requests.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">tags</span></code></dt><dd><p>Tags owned by the block driver. A tag at this set is only
+assigned when a request is dispatched from a hardware queue.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">sched_tags</span></code></dt><dd><p>Tags owned by I/O scheduler. If there is an I/O
+scheduler associated with a request queue, a tag is assigned when
+that request is allocated. Else, this member is not used.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">queued</span></code></dt><dd><p>Number of queued requests.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">run</span></code></dt><dd><p>Number of dispatched requests.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">dispatched</span></code></dt><dd><p>Number of dispatch requests by queue.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">numa_node</span></code></dt><dd><p>NUMA node the storage adapter has been connected to.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">queue_num</span></code></dt><dd><p>Index of this hardware queue.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">nr_active</span></code></dt><dd><p>Number of active requests. Only used when a tag set is
+shared across request queues.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">elevator_queued</span></code></dt><dd><p>Number of queued requests on hctx.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">cpuhp_online</span></code></dt><dd><p>List to store request if CPU is going to die</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">cpuhp_dead</span></code></dt><dd><p>List to store request if some CPU die.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">kobj</span></code></dt><dd><p>Kernel object for sysfs.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">poll_considered</span></code></dt><dd><p>Count times <a class="reference internal" href="#c.blk_poll" title="blk_poll"><code class="xref c c-func docutils literal notranslate"><span class="pre">blk_poll()</span></code></a> was called.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">poll_invoked</span></code></dt><dd><p>Count how many requests <a class="reference internal" href="#c.blk_poll" title="blk_poll"><code class="xref c c-func docutils literal notranslate"><span class="pre">blk_poll()</span></code></a> polled.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">poll_success</span></code></dt><dd><p>Count how many polled requests were completed.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">debugfs_dir</span></code></dt><dd><p>debugfs directory for this hardware queue. Named
+as cpu&lt;cpu_number&gt;.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">sched_debugfs_dir</span></code></dt><dd><p>debugfs directory for the scheduler.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">hctx_list</span></code></dt><dd><p>if this hctx is not in use, this is an entry in
+q-&gt;unused_hctx_list.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">srcu</span></code></dt><dd><p>Sleepable RCU. Use as lock when type of the hardware queue is
+blocking (BLK_MQ_F_BLOCKING). Must be the last member - see also
+blk_mq_hw_ctx_size().</p>
+</dd>
+</dl>
+<dl class="c struct">
+<dt id="c.blk_mq_queue_map">
+<em class="property">struct </em><code class="sig-name descname">blk_mq_queue_map</code><a class="headerlink" href="#c.blk_mq_queue_map" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Map software queues to hardware queues</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct blk_mq_queue_map {
+  unsigned int *mq_map;
+  unsigned int nr_queues;
+  unsigned int queue_offset;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">mq_map</span></code></dt><dd><p>CPU ID to hardware queue index map. This is an array
+with nr_cpu_ids elements. Each element has a value in the range
+[<strong>queue_offset</strong>, <strong>queue_offset</strong> + <strong>nr_queues</strong>).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">nr_queues</span></code></dt><dd><p>Number of hardware queues to map CPU IDs onto.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">queue_offset</span></code></dt><dd><p>First hardware queue to map onto. Used by the PCIe NVMe
+driver to map each hardware queue type (<a class="reference internal" href="#c.hctx_type" title="hctx_type"><code class="xref c c-enum docutils literal notranslate"><span class="pre">enum</span> <span class="pre">hctx_type</span></code></a>) onto a distinct
+set of hardware queues.</p>
+</dd>
+</dl>
+<dl class="c enum">
+<dt id="c.hctx_type">
+<em class="property">enum </em><code class="sig-name descname">hctx_type</code><a class="headerlink" href="#c.hctx_type" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Type of hardware queue</p>
+</dd></dl>
+
+<p><strong>Constants</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">HCTX_TYPE_DEFAULT</span></code></dt><dd><p>All I/O not otherwise accounted for.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">HCTX_TYPE_READ</span></code></dt><dd><p>Just for READ I/O.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">HCTX_TYPE_POLL</span></code></dt><dd><p>Polled I/O of any kind.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">HCTX_MAX_TYPES</span></code></dt><dd><p>Number of types of hctx.</p>
+</dd>
+</dl>
+<dl class="c struct">
+<dt id="c.blk_mq_tag_set">
+<em class="property">struct </em><code class="sig-name descname">blk_mq_tag_set</code><a class="headerlink" href="#c.blk_mq_tag_set" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>tag set that can be shared between request queues</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct blk_mq_tag_set {
+  struct blk_mq_queue_map map[HCTX_MAX_TYPES];
+  unsigned int            nr_maps;
+  const struct blk_mq_ops *ops;
+  unsigned int            nr_hw_queues;
+  unsigned int            queue_depth;
+  unsigned int            reserved_tags;
+  unsigned int            cmd_size;
+  int numa_node;
+  unsigned int            timeout;
+  unsigned int            flags;
+  void *driver_data;
+  atomic_t active_queues_shared_sbitmap;
+  struct sbitmap_queue    __bitmap_tags;
+  struct sbitmap_queue    __breserved_tags;
+  struct blk_mq_tags      **tags;
+  struct mutex            tag_list_lock;
+  struct list_head        tag_list;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">map</span></code></dt><dd><p>One or more ctx -&gt; hctx mappings. One map exists for each
+hardware queue type (<a class="reference internal" href="#c.hctx_type" title="hctx_type"><code class="xref c c-enum docutils literal notranslate"><span class="pre">enum</span> <span class="pre">hctx_type</span></code></a>) that the driver wishes
+to support. There are no restrictions on maps being of the
+same size, and it’s perfectly legal to share maps between
+types.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">nr_maps</span></code></dt><dd><p>Number of elements in the <strong>map</strong> array. A number in the range
+[1, HCTX_MAX_TYPES].</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">ops</span></code></dt><dd><p>Pointers to functions that implement block driver behavior.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">nr_hw_queues</span></code></dt><dd><p>Number of hardware queues supported by the block driver that
+owns this data structure.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">queue_depth</span></code></dt><dd><p>Number of tags per hardware queue, reserved tags included.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">reserved_tags</span></code></dt><dd><p>Number of tags to set aside for BLK_MQ_REQ_RESERVED tag
+allocations.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">cmd_size</span></code></dt><dd><p>Number of additional bytes to allocate per request. The block
+driver owns these additional bytes.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">numa_node</span></code></dt><dd><p>NUMA node the storage adapter has been connected to.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">timeout</span></code></dt><dd><p>Request processing timeout in jiffies.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">flags</span></code></dt><dd><p>Zero or more BLK_MQ_F_* flags.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">driver_data</span></code></dt><dd><p>Pointer to data owned by the block driver that created this
+tag set.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">active_queues_shared_sbitmap</span></code></dt><dd><p>number of active request queues per tag set.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">__bitmap_tags</span></code></dt><dd><p>A shared tags sbitmap, used over all hctx’s</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">__breserved_tags</span></code></dt><dd><p>A shared reserved tags sbitmap, used over all hctx’s</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">tags</span></code></dt><dd><p>Tag sets. One tag set per hardware queue. Has <strong>nr_hw_queues</strong>
+elements.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">tag_list_lock</span></code></dt><dd><p>Serializes tag_list accesses.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">tag_list</span></code></dt><dd><p>List of the request queues that use this tag set. See also
+request_queue.tag_set_list.</p>
+</dd>
+</dl>
+<dl class="c struct">
+<dt id="c.blk_mq_queue_data">
+<em class="property">struct </em><code class="sig-name descname">blk_mq_queue_data</code><a class="headerlink" href="#c.blk_mq_queue_data" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Data about a request inserted in a queue</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct blk_mq_queue_data {
+  struct request *rq;
+  bool last;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">rq</span></code></dt><dd><p>Request pointer.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">last</span></code></dt><dd><p>If it is the last request in the queue.</p>
+</dd>
+</dl>
+<dl class="c struct">
+<dt id="c.blk_mq_ops">
+<em class="property">struct </em><code class="sig-name descname">blk_mq_ops</code><a class="headerlink" href="#c.blk_mq_ops" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Callback functions that implements block driver behaviour.</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct blk_mq_ops {
+  blk_status_t (*queue_rq)(struct blk_mq_hw_ctx *, const struct blk_mq_queue_data *);
+  void (*commit_rqs)(struct blk_mq_hw_ctx *);
+  bool (*get_budget)(struct request_queue *);
+  void (*put_budget)(struct request_queue *);
+  enum blk_eh_timer_return (*timeout)(struct request *, bool);
+  int (*poll)(struct blk_mq_hw_ctx *);
+  void (*complete)(struct request *);
+  int (*init_hctx)(struct blk_mq_hw_ctx *, void *, unsigned int);
+  void (*exit_hctx)(struct blk_mq_hw_ctx *, unsigned int);
+  int (*init_request)(struct blk_mq_tag_set *set, struct request *, unsigned int, unsigned int);
+  void (*exit_request)(struct blk_mq_tag_set *set, struct request *, unsigned int);
+  void (*initialize_rq_fn)(struct request *rq);
+  void (*cleanup_rq)(struct request *);
+  bool (*busy)(struct request_queue *);
+  int (*map_queues)(struct blk_mq_tag_set *set);
+#ifdef CONFIG_BLK_DEBUG_FS;
+  void (*show_rq)(struct seq_file *m, struct request *rq);
+#endif;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl>
+<dt><code class="docutils literal notranslate"><span class="pre">queue_rq</span></code></dt><dd><p>Queue a new request from block IO.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">commit_rqs</span></code></dt><dd><p>If a driver uses bd-&gt;last to judge when to submit
+requests to hardware, it must define this function. In case of errors
+that make us stop issuing further requests, this hook serves the
+purpose of kicking the hardware (which the last request otherwise
+would have done).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">get_budget</span></code></dt><dd><p>Reserve budget before queue request, once .queue_rq is
+run, it is driver’s responsibility to release the
+reserved budget. Also we have to handle failure case
+of .get_budget for avoiding I/O deadlock.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">put_budget</span></code></dt><dd><p>Release the reserved budget.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">timeout</span></code></dt><dd><p>Called on request timeout.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">poll</span></code></dt><dd><p>Called to poll for completion of a specific tag.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">complete</span></code></dt><dd><p>Mark the request as complete.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">init_hctx</span></code></dt><dd><p>Called when the block layer side of a hardware queue has
+been set up, allowing the driver to allocate/init matching
+structures.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">exit_hctx</span></code></dt><dd><p>Ditto for exit/teardown.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">init_request</span></code></dt><dd><p>Called for every command allocated by the block layer
+to allow the driver to set up driver specific data.</p>
+<p>Tag greater than or equal to queue_depth is for setting up
+flush request.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">exit_request</span></code></dt><dd><p>Ditto for exit/teardown.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">initialize_rq_fn</span></code></dt><dd><p>Called from inside <a class="reference internal" href="../core-api/kernel-api.html#c.blk_get_request" title="blk_get_request"><code class="xref c c-func docutils literal notranslate"><span class="pre">blk_get_request()</span></code></a>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">cleanup_rq</span></code></dt><dd><p>Called before freeing one request which isn’t completed
+yet, and usually for freeing the driver private data.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">busy</span></code></dt><dd><p>If set, returns whether or not this queue currently is busy.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">map_queues</span></code></dt><dd><p>This allows drivers specify their own queue mapping by
+overriding the setup-time function that builds the mq_map.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">show_rq</span></code></dt><dd><p>Used by the debugfs implementation to show driver-specific
+information about a request.</p>
+</dd>
+</dl>
+<dl class="c function">
+<dt id="c.blk_mq_rq_state">
+<em class="property">enum</em> mq_rq_state <code class="sig-name descname">blk_mq_rq_state</code><span class="sig-paren">(</span><em class="property">struct</em> request *<em>rq</em><span class="sig-paren">)</span><a class="headerlink" href="#c.blk_mq_rq_state" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>read the current MQ_RQ_* state of a request</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">request</span> <span class="pre">*rq</span></code></dt><dd><p>target request.</p>
+</dd>
+</dl>
+<dl class="c function">
+<dt id="c.blk_mq_rq_from_pdu">
+<em class="property">struct</em> request *<code class="sig-name descname">blk_mq_rq_from_pdu</code><span class="sig-paren">(</span>void *<em>pdu</em><span class="sig-paren">)</span><a class="headerlink" href="#c.blk_mq_rq_from_pdu" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>cast a PDU to a request</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">void</span> <span class="pre">*pdu</span></code></dt><dd><p>the PDU (Protocol Data Unit) to be casted</p>
+</dd>
+</dl>
+<p><strong>Return</strong></p>
+<p>request</p>
+<p><strong>Description</strong></p>
+<p>Driver command data is immediately after the request. So subtract request
+size to get back to the original request.</p>
+<dl class="c function">
+<dt id="c.blk_mq_rq_to_pdu">
+void *<code class="sig-name descname">blk_mq_rq_to_pdu</code><span class="sig-paren">(</span><em class="property">struct</em> request *<em>rq</em><span class="sig-paren">)</span><a class="headerlink" href="#c.blk_mq_rq_to_pdu" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>cast a request to a PDU</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">request</span> <span class="pre">*rq</span></code></dt><dd><p>the request to be casted</p>
+</dd>
+</dl>
+<p><strong>Return</strong></p>
+<p>pointer to the PDU</p>
+<p><strong>Description</strong></p>
+<p>Driver command data is immediately after the request. So add request to get
+the PDU.</p>
+<dl class="c function">
+<dt id="c.blk_mq_quiesce_queue">
+void <code class="sig-name descname">blk_mq_quiesce_queue</code><span class="sig-paren">(</span><em class="property">struct</em> request_queue *<em>q</em><span class="sig-paren">)</span><a class="headerlink" href="#c.blk_mq_quiesce_queue" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>wait until all ongoing dispatches have finished</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">request_queue</span> <span class="pre">*q</span></code></dt><dd><p>request queue.</p>
+</dd>
+</dl>
+<p><strong>Note</strong></p>
+<p>this function does not prevent that the struct request end_io()
+callback function is invoked. Once this function is returned, we make
+sure no dispatch can happen until the queue is unquiesced via
+blk_mq_unquiesce_queue().</p>
+<dl class="c function">
+<dt id="c.blk_mq_complete_request">
+void <code class="sig-name descname">blk_mq_complete_request</code><span class="sig-paren">(</span><em class="property">struct</em> request *<em>rq</em><span class="sig-paren">)</span><a class="headerlink" href="#c.blk_mq_complete_request" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>end I/O on a request</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">request</span> <span class="pre">*rq</span></code></dt><dd><p>the request being processed</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<blockquote>
+<div><p>Complete a request by scheduling the -&gt;complete_rq operation.</p>
+</div></blockquote>
+<dl class="c function">
+<dt id="c.blk_mq_start_request">
+void <code class="sig-name descname">blk_mq_start_request</code><span class="sig-paren">(</span><em class="property">struct</em> request *<em>rq</em><span class="sig-paren">)</span><a class="headerlink" href="#c.blk_mq_start_request" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Start processing a request</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">request</span> <span class="pre">*rq</span></code></dt><dd><p>Pointer to request to be started</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Function used by device drivers to notify the block layer that a request
+is going to be processed now, so blk layer can do proper initializations
+such as starting the timeout timer.</p>
+<dl class="c function">
+<dt id="c.__blk_mq_run_hw_queue">
+void <code class="sig-name descname">__blk_mq_run_hw_queue</code><span class="sig-paren">(</span><em class="property">struct</em> <a class="reference internal" href="#c.blk_mq_hw_ctx" title="blk_mq_hw_ctx">blk_mq_hw_ctx</a> *<em>hctx</em><span class="sig-paren">)</span><a class="headerlink" href="#c.__blk_mq_run_hw_queue" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Run a hardware queue.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">blk_mq_hw_ctx</span> <span class="pre">*hctx</span></code></dt><dd><p>Pointer to the hardware queue to run.</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Send pending requests to the hardware.</p>
+<dl class="c function">
+<dt id="c.__blk_mq_delay_run_hw_queue">
+void <code class="sig-name descname">__blk_mq_delay_run_hw_queue</code><span class="sig-paren">(</span><em class="property">struct</em> <a class="reference internal" href="#c.blk_mq_hw_ctx" title="blk_mq_hw_ctx">blk_mq_hw_ctx</a> *<em>hctx</em>, bool <em>async</em>, unsigned long <em>msecs</em><span class="sig-paren">)</span><a class="headerlink" href="#c.__blk_mq_delay_run_hw_queue" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Run (or schedule to run) a hardware queue.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">blk_mq_hw_ctx</span> <span class="pre">*hctx</span></code></dt><dd><p>Pointer to the hardware queue to run.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">bool</span> <span class="pre">async</span></code></dt><dd><p>If we want to run the queue asynchronously.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">unsigned</span> <span class="pre">long</span> <span class="pre">msecs</span></code></dt><dd><p>Microseconds of delay to wait before running the queue.</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>If <strong>!async</strong>, try to run the queue now. Else, run the queue asynchronously and
+with a delay of <strong>msecs</strong>.</p>
+<dl class="c function">
+<dt id="c.blk_mq_delay_run_hw_queue">
+void <code class="sig-name descname">blk_mq_delay_run_hw_queue</code><span class="sig-paren">(</span><em class="property">struct</em> <a class="reference internal" href="#c.blk_mq_hw_ctx" title="blk_mq_hw_ctx">blk_mq_hw_ctx</a> *<em>hctx</em>, unsigned long <em>msecs</em><span class="sig-paren">)</span><a class="headerlink" href="#c.blk_mq_delay_run_hw_queue" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Run a hardware queue asynchronously.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">blk_mq_hw_ctx</span> <span class="pre">*hctx</span></code></dt><dd><p>Pointer to the hardware queue to run.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">unsigned</span> <span class="pre">long</span> <span class="pre">msecs</span></code></dt><dd><p>Microseconds of delay to wait before running the queue.</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Run a hardware queue asynchronously with a delay of <strong>msecs</strong>.</p>
+<dl class="c function">
+<dt id="c.blk_mq_run_hw_queue">
+void <code class="sig-name descname">blk_mq_run_hw_queue</code><span class="sig-paren">(</span><em class="property">struct</em> <a class="reference internal" href="#c.blk_mq_hw_ctx" title="blk_mq_hw_ctx">blk_mq_hw_ctx</a> *<em>hctx</em>, bool <em>async</em><span class="sig-paren">)</span><a class="headerlink" href="#c.blk_mq_run_hw_queue" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Start to run a hardware queue.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">blk_mq_hw_ctx</span> <span class="pre">*hctx</span></code></dt><dd><p>Pointer to the hardware queue to run.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">bool</span> <span class="pre">async</span></code></dt><dd><p>If we want to run the queue asynchronously.</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Check if the request queue is not in a quiesced state and if there are
+pending requests to be sent. If this is true, run the queue to send requests
+to hardware.</p>
+<dl class="c function">
+<dt id="c.blk_mq_run_hw_queues">
+void <code class="sig-name descname">blk_mq_run_hw_queues</code><span class="sig-paren">(</span><em class="property">struct</em> request_queue *<em>q</em>, bool <em>async</em><span class="sig-paren">)</span><a class="headerlink" href="#c.blk_mq_run_hw_queues" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Run all hardware queues in a request queue.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">request_queue</span> <span class="pre">*q</span></code></dt><dd><p>Pointer to the request queue to run.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">bool</span> <span class="pre">async</span></code></dt><dd><p>If we want to run the queue asynchronously.</p>
+</dd>
+</dl>
+<dl class="c function">
+<dt id="c.blk_mq_delay_run_hw_queues">
+void <code class="sig-name descname">blk_mq_delay_run_hw_queues</code><span class="sig-paren">(</span><em class="property">struct</em> request_queue *<em>q</em>, unsigned long <em>msecs</em><span class="sig-paren">)</span><a class="headerlink" href="#c.blk_mq_delay_run_hw_queues" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Run all hardware queues asynchronously.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">request_queue</span> <span class="pre">*q</span></code></dt><dd><p>Pointer to the request queue to run.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">unsigned</span> <span class="pre">long</span> <span class="pre">msecs</span></code></dt><dd><p>Microseconds of delay to wait before running the queues.</p>
+</dd>
+</dl>
+<dl class="c function">
+<dt id="c.blk_mq_queue_stopped">
+bool <code class="sig-name descname">blk_mq_queue_stopped</code><span class="sig-paren">(</span><em class="property">struct</em> request_queue *<em>q</em><span class="sig-paren">)</span><a class="headerlink" href="#c.blk_mq_queue_stopped" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>check whether one or more hctxs have been stopped</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">request_queue</span> <span class="pre">*q</span></code></dt><dd><p>request queue.</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>The caller is responsible for serializing this function against
+blk_mq_{start,stop}_hw_queue().</p>
+<dl class="c function">
+<dt id="c.blk_mq_request_bypass_insert">
+void <code class="sig-name descname">blk_mq_request_bypass_insert</code><span class="sig-paren">(</span><em class="property">struct</em> request *<em>rq</em>, bool <em>at_head</em>, bool <em>run_queue</em><span class="sig-paren">)</span><a class="headerlink" href="#c.blk_mq_request_bypass_insert" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Insert a request at dispatch list.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">request</span> <span class="pre">*rq</span></code></dt><dd><p>Pointer to request to be inserted.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">bool</span> <span class="pre">at_head</span></code></dt><dd><p>true if the request should be inserted at the head of the list.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">bool</span> <span class="pre">run_queue</span></code></dt><dd><p>If we should run the hardware queue after inserting the request.</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Should only be used carefully, when the caller knows we want to
+bypass a potential IO scheduler on the target device.</p>
+<dl class="c function">
+<dt id="c.blk_mq_try_issue_directly">
+void <code class="sig-name descname">blk_mq_try_issue_directly</code><span class="sig-paren">(</span><em class="property">struct</em> <a class="reference internal" href="#c.blk_mq_hw_ctx" title="blk_mq_hw_ctx">blk_mq_hw_ctx</a> *<em>hctx</em>, <em class="property">struct</em> request *<em>rq</em>, blk_qc_t *<em>cookie</em><span class="sig-paren">)</span><a class="headerlink" href="#c.blk_mq_try_issue_directly" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Try to send a request directly to device driver.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">blk_mq_hw_ctx</span> <span class="pre">*hctx</span></code></dt><dd><p>Pointer of the associated hardware queue.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">request</span> <span class="pre">*rq</span></code></dt><dd><p>Pointer to request to be sent.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">blk_qc_t</span> <span class="pre">*cookie</span></code></dt><dd><p>Request queue cookie.</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>If the device has enough resources to accept a new request now, send the
+request directly to device driver. Else, insert at hctx-&gt;dispatch queue, so
+we can try send it another time in the future. Requests inserted at this
+queue have higher priority.</p>
+<dl class="c function">
+<dt id="c.blk_mq_submit_bio">
+blk_qc_t <code class="sig-name descname">blk_mq_submit_bio</code><span class="sig-paren">(</span><em class="property">struct</em> bio *<em>bio</em><span class="sig-paren">)</span><a class="headerlink" href="#c.blk_mq_submit_bio" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Create and send a request to block device.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">bio</span> <span class="pre">*bio</span></code></dt><dd><p>Bio pointer.</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Builds up a request structure from <strong>q</strong> and <strong>bio</strong> and send to the device. The
+request may not be queued directly to hardware if:
+* This request can be merged with another one
+* We want to place request at plug queue for possible future merging
+* There is an IO scheduler active at this queue</p>
+<p>It will not queue the request if there is an error with the bio, or at the
+request creation.</p>
+<p><strong>Return</strong></p>
+<p>Request queue cookie.</p>
+<dl class="c function">
+<dt id="c.blk_poll">
+int <code class="sig-name descname">blk_poll</code><span class="sig-paren">(</span><em class="property">struct</em> request_queue *<em>q</em>, blk_qc_t <em>cookie</em>, bool <em>spin</em><span class="sig-paren">)</span><a class="headerlink" href="#c.blk_poll" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>poll for IO completions</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">request_queue</span> <span class="pre">*q</span></code></dt><dd><p>the queue</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">blk_qc_t</span> <span class="pre">cookie</span></code></dt><dd><p>cookie passed back at IO submission time</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">bool</span> <span class="pre">spin</span></code></dt><dd><p>whether to spin for completions</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<blockquote>
+<div><p>Poll for completions on the passed in queue. Returns number of
+completed entries found. If <strong>spin</strong> is true, then blk_poll will continue
+looping until at least one completion is found, unless the task is
+otherwise marked running (or we need to reschedule).</p>
+</div></blockquote>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="capability.html" class="btn btn-neutral float-right" title="Generic Block Device Capability" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="biovecs.html" class="btn btn-neutral float-left" title="Immutable biovecs and biovec iterators" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

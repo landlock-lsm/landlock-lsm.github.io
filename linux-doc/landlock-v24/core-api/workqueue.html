@@ -1,0 +1,2549 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Concurrency Managed Workqueue (cmwq) &mdash; The Linux Kernel 5.10.0-rc3+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Message logging with printk" href="printk-basics.html" />
+    <link rel="prev" title="The Linux Kernel API" href="kernel-api.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.10.0-rc3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Core API Documentation</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#core-utilities">Core utilities</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="kernel-api.html">The Linux Kernel API</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Concurrency Managed Workqueue (cmwq)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#why-cmwq">Why cmwq?</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#the-design">The Design</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#application-programming-interface-api">Application Programming Interface (API)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#example-execution-scenarios">Example Execution Scenarios</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#guidelines">Guidelines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#debugging">Debugging</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#kernel-inline-documentations-reference">Kernel Inline Documentations Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="printk-basics.html">Message logging with printk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="printk-formats.html">How to get printk format specifiers right</a></li>
+<li class="toctree-l3"><a class="reference internal" href="symbol-namespaces.html">Symbol Namespaces</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#data-structures-and-low-level-utilities">Data structures and low-level utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#concurrency-primitives">Concurrency primitives</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#low-level-hardware-management">Low-level hardware management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#memory-management">Memory management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#interfaces-for-kernel-debugging">Interfaces for kernel debugging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#everything-else">Everything else</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="index.html">Core API Documentation</a> &raquo;</li>
+        
+      <li>Concurrency Managed Workqueue (cmwq)</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/core-api/workqueue.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="concurrency-managed-workqueue-cmwq">
+<h1>Concurrency Managed Workqueue (cmwq)<a class="headerlink" href="#concurrency-managed-workqueue-cmwq" title="Permalink to this headline">¶</a></h1>
+<dl class="field-list simple">
+<dt class="field-odd">Date</dt>
+<dd class="field-odd"><p>September, 2010</p>
+</dd>
+<dt class="field-even">Author</dt>
+<dd class="field-even"><p>Tejun Heo &lt;<a class="reference external" href="mailto:tj&#37;&#52;&#48;kernel&#46;org">tj<span>&#64;</span>kernel<span>&#46;</span>org</a>&gt;</p>
+</dd>
+<dt class="field-odd">Author</dt>
+<dd class="field-odd"><p>Florian Mickler &lt;<a class="reference external" href="mailto:florian&#37;&#52;&#48;mickler&#46;org">florian<span>&#64;</span>mickler<span>&#46;</span>org</a>&gt;</p>
+</dd>
+</dl>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>There are many cases where an asynchronous process execution context
+is needed and the workqueue (wq) API is the most commonly used
+mechanism for such cases.</p>
+<p>When such an asynchronous execution context is needed, a work item
+describing which function to execute is put on a queue.  An
+independent thread serves as the asynchronous execution context.  The
+queue is called workqueue and the thread is called worker.</p>
+<p>While there are work items on the workqueue the worker executes the
+functions associated with the work items one after the other.  When
+there is no work item left on the workqueue the worker becomes idle.
+When a new work item gets queued, the worker begins executing again.</p>
+</div>
+<div class="section" id="why-cmwq">
+<h2>Why cmwq?<a class="headerlink" href="#why-cmwq" title="Permalink to this headline">¶</a></h2>
+<p>In the original wq implementation, a multi threaded (MT) wq had one
+worker thread per CPU and a single threaded (ST) wq had one worker
+thread system-wide.  A single MT wq needed to keep around the same
+number of workers as the number of CPUs.  The kernel grew a lot of MT
+wq users over the years and with the number of CPU cores continuously
+rising, some systems saturated the default 32k PID space just booting
+up.</p>
+<p>Although MT wq wasted a lot of resource, the level of concurrency
+provided was unsatisfactory.  The limitation was common to both ST and
+MT wq albeit less severe on MT.  Each wq maintained its own separate
+worker pool.  An MT wq could provide only one execution context per CPU
+while an ST wq one for the whole system.  Work items had to compete for
+those very limited execution contexts leading to various problems
+including proneness to deadlocks around the single execution context.</p>
+<p>The tension between the provided level of concurrency and resource
+usage also forced its users to make unnecessary tradeoffs like libata
+choosing to use ST wq for polling PIOs and accepting an unnecessary
+limitation that no two polling PIOs can progress at the same time.  As
+MT wq don’t provide much better concurrency, users which require
+higher level of concurrency, like async or fscache, had to implement
+their own thread pool.</p>
+<p>Concurrency Managed Workqueue (cmwq) is a reimplementation of wq with
+focus on the following goals.</p>
+<ul class="simple">
+<li><p>Maintain compatibility with the original workqueue API.</p></li>
+<li><p>Use per-CPU unified worker pools shared by all wq to provide
+flexible level of concurrency on demand without wasting a lot of
+resource.</p></li>
+<li><p>Automatically regulate worker pool and level of concurrency so that
+the API users don’t need to worry about such details.</p></li>
+</ul>
+</div>
+<div class="section" id="the-design">
+<h2>The Design<a class="headerlink" href="#the-design" title="Permalink to this headline">¶</a></h2>
+<p>In order to ease the asynchronous execution of functions a new
+abstraction, the work item, is introduced.</p>
+<p>A work item is a simple struct that holds a pointer to the function
+that is to be executed asynchronously.  Whenever a driver or subsystem
+wants a function to be executed asynchronously it has to set up a work
+item pointing to that function and queue that work item on a
+workqueue.</p>
+<p>Special purpose threads, called worker threads, execute the functions
+off of the queue, one after the other.  If no work is queued, the
+worker threads become idle.  These worker threads are managed in so
+called worker-pools.</p>
+<p>The cmwq design differentiates between the user-facing workqueues that
+subsystems and drivers queue work items on and the backend mechanism
+which manages worker-pools and processes the queued work items.</p>
+<p>There are two worker-pools, one for normal work items and the other
+for high priority ones, for each possible CPU and some extra
+worker-pools to serve work items queued on unbound workqueues - the
+number of these backing pools is dynamic.</p>
+<p>Subsystems and drivers can create and queue work items through special
+workqueue API functions as they see fit. They can influence some
+aspects of the way the work items are executed by setting flags on the
+workqueue they are putting the work item on. These flags include
+things like CPU locality, concurrency limits, priority and more.  To
+get a detailed overview refer to the API description of
+<code class="docutils literal notranslate"><span class="pre">alloc_workqueue()</span></code> below.</p>
+<p>When a work item is queued to a workqueue, the target worker-pool is
+determined according to the queue parameters and workqueue attributes
+and appended on the shared worklist of the worker-pool.  For example,
+unless specifically overridden, a work item of a bound workqueue will
+be queued on the worklist of either normal or highpri worker-pool that
+is associated to the CPU the issuer is running on.</p>
+<p>For any worker pool implementation, managing the concurrency level
+(how many execution contexts are active) is an important issue.  cmwq
+tries to keep the concurrency at a minimal but sufficient level.
+Minimal to save resources and sufficient in that the system is used at
+its full capacity.</p>
+<p>Each worker-pool bound to an actual CPU implements concurrency
+management by hooking into the scheduler.  The worker-pool is notified
+whenever an active worker wakes up or sleeps and keeps track of the
+number of the currently runnable workers.  Generally, work items are
+not expected to hog a CPU and consume many cycles.  That means
+maintaining just enough concurrency to prevent work processing from
+stalling should be optimal.  As long as there are one or more runnable
+workers on the CPU, the worker-pool doesn’t start execution of a new
+work, but, when the last running worker goes to sleep, it immediately
+schedules a new worker so that the CPU doesn’t sit idle while there
+are pending work items.  This allows using a minimal number of workers
+without losing execution bandwidth.</p>
+<p>Keeping idle workers around doesn’t cost other than the memory space
+for kthreads, so cmwq holds onto idle ones for a while before killing
+them.</p>
+<p>For unbound workqueues, the number of backing pools is dynamic.
+Unbound workqueue can be assigned custom attributes using
+<code class="docutils literal notranslate"><span class="pre">apply_workqueue_attrs()</span></code> and workqueue will automatically create
+backing worker pools matching the attributes.  The responsibility of
+regulating concurrency level is on the users.  There is also a flag to
+mark a bound wq to ignore the concurrency management.  Please refer to
+the API section for details.</p>
+<p>Forward progress guarantee relies on that workers can be created when
+more execution contexts are necessary, which in turn is guaranteed
+through the use of rescue workers.  All work items which might be used
+on code paths that handle memory reclaim are required to be queued on
+wq’s that have a rescue-worker reserved for execution under memory
+pressure.  Else it is possible that the worker-pool deadlocks waiting
+for execution contexts to free up.</p>
+</div>
+<div class="section" id="application-programming-interface-api">
+<h2>Application Programming Interface (API)<a class="headerlink" href="#application-programming-interface-api" title="Permalink to this headline">¶</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">alloc_workqueue()</span></code> allocates a wq.  The original
+<code class="docutils literal notranslate"><span class="pre">create_*workqueue()</span></code> functions are deprecated and scheduled for
+removal.  <code class="docutils literal notranslate"><span class="pre">alloc_workqueue()</span></code> takes three arguments - <code class="docutils literal notranslate"><span class="pre">&#64;name</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&#64;flags</span></code> and <code class="docutils literal notranslate"><span class="pre">&#64;max_active</span></code>.  <code class="docutils literal notranslate"><span class="pre">&#64;name</span></code> is the name of the wq and
+also used as the name of the rescuer thread if there is one.</p>
+<p>A wq no longer manages execution resources but serves as a domain for
+forward progress guarantee, flush and work item attributes. <code class="docutils literal notranslate"><span class="pre">&#64;flags</span></code>
+and <code class="docutils literal notranslate"><span class="pre">&#64;max_active</span></code> control how work items are assigned execution
+resources, scheduled and executed.</p>
+<div class="section" id="flags">
+<h3><code class="docutils literal notranslate"><span class="pre">flags</span></code><a class="headerlink" href="#flags" title="Permalink to this headline">¶</a></h3>
+<dl>
+<dt><code class="docutils literal notranslate"><span class="pre">WQ_UNBOUND</span></code></dt><dd><p>Work items queued to an unbound wq are served by the special
+worker-pools which host workers which are not bound to any
+specific CPU.  This makes the wq behave as a simple execution
+context provider without concurrency management.  The unbound
+worker-pools try to start execution of work items as soon as
+possible.  Unbound wq sacrifices locality but is useful for
+the following cases.</p>
+<ul class="simple">
+<li><p>Wide fluctuation in the concurrency level requirement is
+expected and using bound wq may end up creating large number
+of mostly unused workers across different CPUs as the issuer
+hops through different CPUs.</p></li>
+<li><p>Long running CPU intensive workloads which can be better
+managed by the system scheduler.</p></li>
+</ul>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">WQ_FREEZABLE</span></code></dt><dd><p>A freezable wq participates in the freeze phase of the system
+suspend operations.  Work items on the wq are drained and no
+new work item starts execution until thawed.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">WQ_MEM_RECLAIM</span></code></dt><dd><p>All wq which might be used in the memory reclaim paths <strong>MUST</strong>
+have this flag set.  The wq is guaranteed to have at least one
+execution context regardless of memory pressure.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">WQ_HIGHPRI</span></code></dt><dd><p>Work items of a highpri wq are queued to the highpri
+worker-pool of the target cpu.  Highpri worker-pools are
+served by worker threads with elevated nice level.</p>
+<p>Note that normal and highpri worker-pools don’t interact with
+each other.  Each maintains its separate pool of workers and
+implements concurrency management among its workers.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">WQ_CPU_INTENSIVE</span></code></dt><dd><p>Work items of a CPU intensive wq do not contribute to the
+concurrency level.  In other words, runnable CPU intensive
+work items will not prevent other work items in the same
+worker-pool from starting execution.  This is useful for bound
+work items which are expected to hog CPU cycles so that their
+execution is regulated by the system scheduler.</p>
+<p>Although CPU intensive work items don’t contribute to the
+concurrency level, start of their executions is still
+regulated by the concurrency management and runnable
+non-CPU-intensive work items can delay execution of CPU
+intensive work items.</p>
+<p>This flag is meaningless for unbound wq.</p>
+</dd>
+</dl>
+<p>Note that the flag <code class="docutils literal notranslate"><span class="pre">WQ_NON_REENTRANT</span></code> no longer exists as all
+workqueues are now non-reentrant - any work item is guaranteed to be
+executed by at most one worker system-wide at any given time.</p>
+</div>
+<div class="section" id="max-active">
+<h3><code class="docutils literal notranslate"><span class="pre">max_active</span></code><a class="headerlink" href="#max-active" title="Permalink to this headline">¶</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">&#64;max_active</span></code> determines the maximum number of execution contexts
+per CPU which can be assigned to the work items of a wq.  For example,
+with <code class="docutils literal notranslate"><span class="pre">&#64;max_active</span></code> of 16, at most 16 work items of the wq can be
+executing at the same time per CPU.</p>
+<p>Currently, for a bound wq, the maximum limit for <code class="docutils literal notranslate"><span class="pre">&#64;max_active</span></code> is
+512 and the default value used when 0 is specified is 256.  For an
+unbound wq, the limit is higher of 512 and 4 *
+<code class="docutils literal notranslate"><span class="pre">num_possible_cpus()</span></code>.  These values are chosen sufficiently high
+such that they are not the limiting factor while providing protection
+in runaway cases.</p>
+<p>The number of active work items of a wq is usually regulated by the
+users of the wq, more specifically, by how many work items the users
+may queue at the same time.  Unless there is a specific need for
+throttling the number of active work items, specifying ‘0’ is
+recommended.</p>
+<p>Some users depend on the strict execution ordering of ST wq.  The
+combination of <code class="docutils literal notranslate"><span class="pre">&#64;max_active</span></code> of 1 and <code class="docutils literal notranslate"><span class="pre">WQ_UNBOUND</span></code> used to
+achieve this behavior.  Work items on such wq were always queued to the
+unbound worker-pools and only one work item could be active at any given
+time thus achieving the same ordering property as ST wq.</p>
+<p>In the current implementation the above configuration only guarantees
+ST behavior within a given NUMA node. Instead <code class="docutils literal notranslate"><span class="pre">alloc_ordered_queue()</span></code> should
+be used to achieve system-wide ST behavior.</p>
+</div>
+</div>
+<div class="section" id="example-execution-scenarios">
+<h2>Example Execution Scenarios<a class="headerlink" href="#example-execution-scenarios" title="Permalink to this headline">¶</a></h2>
+<p>The following example execution scenarios try to illustrate how cmwq
+behave under different configurations.</p>
+<blockquote>
+<div><p>Work items w0, w1, w2 are queued to a bound wq q0 on the same CPU.
+w0 burns CPU for 5ms then sleeps for 10ms then burns CPU for 5ms
+again before finishing.  w1 and w2 burn CPU for 5ms then sleep for
+10ms.</p>
+</div></blockquote>
+<p>Ignoring all other tasks, works and processing overhead, and assuming
+simple FIFO scheduling, the following is one highly simplified version
+of possible sequences of events with the original wq.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>TIME IN MSECS  EVENT
+0              w0 starts and burns CPU
+5              w0 sleeps
+15             w0 wakes up and burns CPU
+20             w0 finishes
+20             w1 starts and burns CPU
+25             w1 sleeps
+35             w1 wakes up and finishes
+35             w2 starts and burns CPU
+40             w2 sleeps
+50             w2 wakes up and finishes
+</pre></div>
+</div>
+<p>And with cmwq with <code class="docutils literal notranslate"><span class="pre">&#64;max_active</span></code> &gt;= 3,</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>TIME IN MSECS  EVENT
+0              w0 starts and burns CPU
+5              w0 sleeps
+5              w1 starts and burns CPU
+10             w1 sleeps
+10             w2 starts and burns CPU
+15             w2 sleeps
+15             w0 wakes up and burns CPU
+20             w0 finishes
+20             w1 wakes up and finishes
+25             w2 wakes up and finishes
+</pre></div>
+</div>
+<p>If <code class="docutils literal notranslate"><span class="pre">&#64;max_active</span></code> == 2,</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>TIME IN MSECS  EVENT
+0              w0 starts and burns CPU
+5              w0 sleeps
+5              w1 starts and burns CPU
+10             w1 sleeps
+15             w0 wakes up and burns CPU
+20             w0 finishes
+20             w1 wakes up and finishes
+20             w2 starts and burns CPU
+25             w2 sleeps
+35             w2 wakes up and finishes
+</pre></div>
+</div>
+<p>Now, let’s assume w1 and w2 are queued to a different wq q1 which has
+<code class="docutils literal notranslate"><span class="pre">WQ_CPU_INTENSIVE</span></code> set,</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>TIME IN MSECS  EVENT
+0              w0 starts and burns CPU
+5              w0 sleeps
+5              w1 and w2 start and burn CPU
+10             w1 sleeps
+15             w2 sleeps
+15             w0 wakes up and burns CPU
+20             w0 finishes
+20             w1 wakes up and finishes
+25             w2 wakes up and finishes
+</pre></div>
+</div>
+</div>
+<div class="section" id="guidelines">
+<h2>Guidelines<a class="headerlink" href="#guidelines" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Do not forget to use <code class="docutils literal notranslate"><span class="pre">WQ_MEM_RECLAIM</span></code> if a wq may process work
+items which are used during memory reclaim.  Each wq with
+<code class="docutils literal notranslate"><span class="pre">WQ_MEM_RECLAIM</span></code> set has an execution context reserved for it.  If
+there is dependency among multiple work items used during memory
+reclaim, they should be queued to separate wq each with
+<code class="docutils literal notranslate"><span class="pre">WQ_MEM_RECLAIM</span></code>.</p></li>
+<li><p>Unless strict ordering is required, there is no need to use ST wq.</p></li>
+<li><p>Unless there is a specific need, using 0 for &#64;max_active is
+recommended.  In most use cases, concurrency level usually stays
+well under the default limit.</p></li>
+<li><p>A wq serves as a domain for forward progress guarantee
+(<code class="docutils literal notranslate"><span class="pre">WQ_MEM_RECLAIM</span></code>, flush and work item attributes.  Work items
+which are not involved in memory reclaim and don’t need to be
+flushed as a part of a group of work items, and don’t require any
+special attribute, can use one of the system wq.  There is no
+difference in execution characteristics between using a dedicated wq
+and a system wq.</p></li>
+<li><p>Unless work items are expected to consume a huge amount of CPU
+cycles, using a bound wq is usually beneficial due to the increased
+level of locality in wq operations and work item execution.</p></li>
+</ul>
+</div>
+<div class="section" id="debugging">
+<h2>Debugging<a class="headerlink" href="#debugging" title="Permalink to this headline">¶</a></h2>
+<p>Because the work functions are executed by generic worker threads
+there are a few tricks needed to shed some light on misbehaving
+workqueue users.</p>
+<p>Worker threads show up in the process list as:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>root      5671  0.0  0.0      0     0 ?        S    12:07   0:00 [kworker/0:1]
+root      5672  0.0  0.0      0     0 ?        S    12:07   0:00 [kworker/1:2]
+root      5673  0.0  0.0      0     0 ?        S    12:12   0:00 [kworker/0:0]
+root      5674  0.0  0.0      0     0 ?        S    12:13   0:00 [kworker/1:0]
+</pre></div>
+</div>
+<p>If kworkers are going crazy (using too much cpu), there are two types
+of possible problems:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Something being scheduled in rapid succession</p></li>
+<li><p>A single work item that consumes lots of cpu cycles</p></li>
+</ol>
+</div></blockquote>
+<p>The first one can be tracked using tracing:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ echo workqueue:workqueue_queue_work &gt; /sys/kernel/debug/tracing/set_event
+$ cat /sys/kernel/debug/tracing/trace_pipe &gt; out.txt
+(wait a few secs)
+^C
+</pre></div>
+</div>
+<p>If something is busy looping on work queueing, it would be dominating
+the output and the offender can be determined with the work item
+function.</p>
+<p>For the second type of problems it should be possible to just check
+the stack trace of the offending worker thread.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ cat /proc/THE_OFFENDING_KWORKER/stack
+</pre></div>
+</div>
+<p>The work item’s function should be trivially visible in the stack
+trace.</p>
+</div>
+<div class="section" id="kernel-inline-documentations-reference">
+<h2>Kernel Inline Documentations Reference<a class="headerlink" href="#kernel-inline-documentations-reference" title="Permalink to this headline">¶</a></h2>
+<dl class="c struct">
+<dt id="c.workqueue_attrs">
+<em class="property">struct </em><code class="sig-name descname">workqueue_attrs</code><a class="headerlink" href="#c.workqueue_attrs" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>A struct for workqueue attributes.</p>
+</dd></dl>
+
+<p><strong>Definition</strong></p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct workqueue_attrs {
+  int nice;
+  cpumask_var_t cpumask;
+  bool no_numa;
+};
+</pre></div>
+</div>
+<p><strong>Members</strong></p>
+<dl>
+<dt><code class="docutils literal notranslate"><span class="pre">nice</span></code></dt><dd><p>nice level</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">cpumask</span></code></dt><dd><p>allowed CPUs</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">no_numa</span></code></dt><dd><p>disable NUMA affinity</p>
+<p>Unlike other fields, <code class="docutils literal notranslate"><span class="pre">no_numa</span></code> isn’t a property of a worker_pool. It
+only modifies how <a class="reference internal" href="#c.apply_workqueue_attrs" title="apply_workqueue_attrs"><code class="xref c c-func docutils literal notranslate"><span class="pre">apply_workqueue_attrs()</span></code></a> select pools and thus
+doesn’t participate in pool hash calculations or equality comparisons.</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This can be used to change attributes of an unbound workqueue.</p>
+<dl class="c macro">
+<dt id="c.work_pending">
+<code class="sig-name descname">work_pending</code><a class="headerlink" href="#c.work_pending" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><code class="docutils literal notranslate"><span class="pre">work_pending</span> <span class="pre">(work)</span></code></p>
+<blockquote>
+<div><p>Find out whether a work item is currently pending</p>
+</div></blockquote>
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">work</span></code></dt><dd><p>The work item in question</p>
+</dd>
+</dl>
+<dl class="c macro">
+<dt id="c.delayed_work_pending">
+<code class="sig-name descname">delayed_work_pending</code><a class="headerlink" href="#c.delayed_work_pending" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><code class="docutils literal notranslate"><span class="pre">delayed_work_pending</span> <span class="pre">(w)</span></code></p>
+<blockquote>
+<div><p>Find out whether a delayable work item is currently pending</p>
+</div></blockquote>
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">w</span></code></dt><dd><p>The work item in question</p>
+</dd>
+</dl>
+<dl class="c function">
+<dt id="c.alloc_workqueue">
+<em class="property">struct</em> workqueue_struct *<code class="sig-name descname">alloc_workqueue</code><span class="sig-paren">(</span><em class="property">const</em> char *<em>fmt</em>, unsigned int <em>flags</em>, int <em>max_active</em>, ...<span class="sig-paren">)</span><a class="headerlink" href="#c.alloc_workqueue" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>allocate a workqueue</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">const</span> <span class="pre">char</span> <span class="pre">*fmt</span></code></dt><dd><p>printf format for the name of the workqueue</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">unsigned</span> <span class="pre">int</span> <span class="pre">flags</span></code></dt><dd><p>WQ_* flags</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">max_active</span></code></dt><dd><p>max in-flight work items, 0 for default
+remaining args: args for <strong>fmt</strong></p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">...</span></code></dt><dd><p>variable arguments</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Allocate a workqueue with the specified parameters.  For detailed
+information on WQ_* flags, please refer to
+<a class="reference internal" href="#"><span class="doc">Concurrency Managed Workqueue (cmwq)</span></a>.</p>
+<p><strong>Return</strong></p>
+<p>Pointer to the allocated workqueue on success, <code class="docutils literal notranslate"><span class="pre">NULL</span></code> on failure.</p>
+<dl class="c macro">
+<dt id="c.alloc_ordered_workqueue">
+<code class="sig-name descname">alloc_ordered_workqueue</code><a class="headerlink" href="#c.alloc_ordered_workqueue" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><code class="docutils literal notranslate"><span class="pre">alloc_ordered_workqueue</span> <span class="pre">(fmt,</span> <span class="pre">flags,</span> <span class="pre">args...)</span></code></p>
+<blockquote>
+<div><p>allocate an ordered workqueue</p>
+</div></blockquote>
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">fmt</span></code></dt><dd><p>printf format for the name of the workqueue</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">flags</span></code></dt><dd><p>WQ_* flags (only WQ_FREEZABLE and WQ_MEM_RECLAIM are meaningful)</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">args...</span></code></dt><dd><p>args for <strong>fmt</strong></p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Allocate an ordered workqueue.  An ordered workqueue executes at
+most one work item at any given time in the queued order.  They are
+implemented as unbound workqueues with <strong>max_active</strong> of one.</p>
+<p><strong>Return</strong></p>
+<p>Pointer to the allocated workqueue on success, <code class="docutils literal notranslate"><span class="pre">NULL</span></code> on failure.</p>
+<dl class="c function">
+<dt id="c.queue_work">
+bool <code class="sig-name descname">queue_work</code><span class="sig-paren">(</span><em class="property">struct</em> workqueue_struct *<em>wq</em>, <em class="property">struct</em> work_struct *<em>work</em><span class="sig-paren">)</span><a class="headerlink" href="#c.queue_work" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>queue work on a workqueue</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">workqueue_struct</span> <span class="pre">*wq</span></code></dt><dd><p>workqueue to use</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">work_struct</span> <span class="pre">*work</span></code></dt><dd><p>work to queue</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Returns <code class="docutils literal notranslate"><span class="pre">false</span></code> if <strong>work</strong> was already on a queue, <code class="docutils literal notranslate"><span class="pre">true</span></code> otherwise.</p>
+<p>We queue the work to the CPU on which it was submitted, but if the CPU dies
+it can be processed by another CPU.</p>
+<p>Memory-ordering properties:  If it returns <code class="docutils literal notranslate"><span class="pre">true</span></code>, guarantees that all stores
+preceding the call to <a class="reference internal" href="#c.queue_work" title="queue_work"><code class="xref c c-func docutils literal notranslate"><span class="pre">queue_work()</span></code></a> in the program order will be visible from
+the CPU which will execute <strong>work</strong> by the time such work executes, e.g.,</p>
+<p>{ x is initially 0 }</p>
+<blockquote>
+<div><p>CPU0                               CPU1</p>
+<p>WRITE_ONCE(x, 1);                  [ <strong>work</strong> is being executed ]
+r0 = queue_work(wq, work);           r1 = READ_ONCE(x);</p>
+</div></blockquote>
+<p>Forbids: r0 == true &amp;&amp; r1 == 0</p>
+<dl class="c function">
+<dt id="c.queue_delayed_work">
+bool <code class="sig-name descname">queue_delayed_work</code><span class="sig-paren">(</span><em class="property">struct</em> workqueue_struct *<em>wq</em>, <em class="property">struct</em> delayed_work *<em>dwork</em>, unsigned long <em>delay</em><span class="sig-paren">)</span><a class="headerlink" href="#c.queue_delayed_work" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>queue work on a workqueue after delay</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">workqueue_struct</span> <span class="pre">*wq</span></code></dt><dd><p>workqueue to use</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">delayed_work</span> <span class="pre">*dwork</span></code></dt><dd><p>delayable work to queue</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">unsigned</span> <span class="pre">long</span> <span class="pre">delay</span></code></dt><dd><p>number of jiffies to wait before queueing</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Equivalent to <a class="reference internal" href="#c.queue_delayed_work_on" title="queue_delayed_work_on"><code class="xref c c-func docutils literal notranslate"><span class="pre">queue_delayed_work_on()</span></code></a> but tries to use the local CPU.</p>
+<dl class="c function">
+<dt id="c.mod_delayed_work">
+bool <code class="sig-name descname">mod_delayed_work</code><span class="sig-paren">(</span><em class="property">struct</em> workqueue_struct *<em>wq</em>, <em class="property">struct</em> delayed_work *<em>dwork</em>, unsigned long <em>delay</em><span class="sig-paren">)</span><a class="headerlink" href="#c.mod_delayed_work" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>modify delay of or queue a delayed work</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">workqueue_struct</span> <span class="pre">*wq</span></code></dt><dd><p>workqueue to use</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">delayed_work</span> <span class="pre">*dwork</span></code></dt><dd><p>work to queue</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">unsigned</span> <span class="pre">long</span> <span class="pre">delay</span></code></dt><dd><p>number of jiffies to wait before queueing</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p><a class="reference internal" href="#c.mod_delayed_work_on" title="mod_delayed_work_on"><code class="xref c c-func docutils literal notranslate"><span class="pre">mod_delayed_work_on()</span></code></a> on local CPU.</p>
+<dl class="c function">
+<dt id="c.schedule_work_on">
+bool <code class="sig-name descname">schedule_work_on</code><span class="sig-paren">(</span>int <em>cpu</em>, <em class="property">struct</em> work_struct *<em>work</em><span class="sig-paren">)</span><a class="headerlink" href="#c.schedule_work_on" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>put work task on a specific cpu</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">cpu</span></code></dt><dd><p>cpu to put the work task on</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">work_struct</span> <span class="pre">*work</span></code></dt><dd><p>job to be done</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This puts a job on a specific cpu</p>
+<dl class="c function">
+<dt id="c.schedule_work">
+bool <code class="sig-name descname">schedule_work</code><span class="sig-paren">(</span><em class="property">struct</em> work_struct *<em>work</em><span class="sig-paren">)</span><a class="headerlink" href="#c.schedule_work" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>put work task in global workqueue</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">work_struct</span> <span class="pre">*work</span></code></dt><dd><p>job to be done</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Returns <code class="docutils literal notranslate"><span class="pre">false</span></code> if <strong>work</strong> was already on the kernel-global workqueue and
+<code class="docutils literal notranslate"><span class="pre">true</span></code> otherwise.</p>
+<p>This puts a job in the kernel-global workqueue if it was not already
+queued and leaves it in the same position on the kernel-global
+workqueue otherwise.</p>
+<p>Shares the same memory-ordering properties of <a class="reference internal" href="#c.queue_work" title="queue_work"><code class="xref c c-func docutils literal notranslate"><span class="pre">queue_work()</span></code></a>, cf. the
+DocBook header of <a class="reference internal" href="#c.queue_work" title="queue_work"><code class="xref c c-func docutils literal notranslate"><span class="pre">queue_work()</span></code></a>.</p>
+<dl class="c function">
+<dt id="c.flush_scheduled_work">
+void <code class="sig-name descname">flush_scheduled_work</code><span class="sig-paren">(</span>void<span class="sig-paren">)</span><a class="headerlink" href="#c.flush_scheduled_work" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>ensure that any scheduled work has run to completion.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">void</span></code></dt><dd><p>no arguments</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Forces execution of the kernel-global workqueue and blocks until its
+completion.</p>
+<p>Think twice before calling this function!  It’s very easy to get into
+trouble if you don’t take great care.  Either of the following situations
+will lead to deadlock:</p>
+<blockquote>
+<div><p>One of the work items currently on the workqueue needs to acquire
+a lock held by your code or its caller.</p>
+<p>Your code is running in the context of a work routine.</p>
+</div></blockquote>
+<p>They will be detected by lockdep when they occur, but the first might not
+occur very often.  It depends on what work items are on the workqueue and
+what locks they need, which you have no control over.</p>
+<p>In most situations flushing the entire workqueue is overkill; you merely
+need to know that a particular work item isn’t queued and isn’t running.
+In such cases you should use <a class="reference internal" href="#c.cancel_delayed_work_sync" title="cancel_delayed_work_sync"><code class="xref c c-func docutils literal notranslate"><span class="pre">cancel_delayed_work_sync()</span></code></a> or
+<a class="reference internal" href="#c.cancel_work_sync" title="cancel_work_sync"><code class="xref c c-func docutils literal notranslate"><span class="pre">cancel_work_sync()</span></code></a> instead.</p>
+<dl class="c function">
+<dt id="c.schedule_delayed_work_on">
+bool <code class="sig-name descname">schedule_delayed_work_on</code><span class="sig-paren">(</span>int <em>cpu</em>, <em class="property">struct</em> delayed_work *<em>dwork</em>, unsigned long <em>delay</em><span class="sig-paren">)</span><a class="headerlink" href="#c.schedule_delayed_work_on" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>queue work in global workqueue on CPU after delay</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">cpu</span></code></dt><dd><p>cpu to use</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">delayed_work</span> <span class="pre">*dwork</span></code></dt><dd><p>job to be done</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">unsigned</span> <span class="pre">long</span> <span class="pre">delay</span></code></dt><dd><p>number of jiffies to wait</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>After waiting for a given time this puts a job in the kernel-global
+workqueue on the specified CPU.</p>
+<dl class="c function">
+<dt id="c.schedule_delayed_work">
+bool <code class="sig-name descname">schedule_delayed_work</code><span class="sig-paren">(</span><em class="property">struct</em> delayed_work *<em>dwork</em>, unsigned long <em>delay</em><span class="sig-paren">)</span><a class="headerlink" href="#c.schedule_delayed_work" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>put work task in global workqueue after delay</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">delayed_work</span> <span class="pre">*dwork</span></code></dt><dd><p>job to be done</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">unsigned</span> <span class="pre">long</span> <span class="pre">delay</span></code></dt><dd><p>number of jiffies to wait or 0 for immediate execution</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>After waiting for a given time this puts a job in the kernel-global
+workqueue.</p>
+<dl class="c macro">
+<dt id="c.for_each_pool">
+<code class="sig-name descname">for_each_pool</code><a class="headerlink" href="#c.for_each_pool" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><code class="docutils literal notranslate"><span class="pre">for_each_pool</span> <span class="pre">(pool,</span> <span class="pre">pi)</span></code></p>
+<blockquote>
+<div><p>iterate through all worker_pools in the system</p>
+</div></blockquote>
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">pool</span></code></dt><dd><p>iteration cursor</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">pi</span></code></dt><dd><p>integer used for iteration</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This must be called either with wq_pool_mutex held or RCU read
+locked.  If the pool needs to be used beyond the locking in effect, the
+caller is responsible for guaranteeing that the pool stays online.</p>
+<p>The if/else clause exists only for the lockdep assertion and can be
+ignored.</p>
+<dl class="c macro">
+<dt id="c.for_each_pool_worker">
+<code class="sig-name descname">for_each_pool_worker</code><a class="headerlink" href="#c.for_each_pool_worker" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><code class="docutils literal notranslate"><span class="pre">for_each_pool_worker</span> <span class="pre">(worker,</span> <span class="pre">pool)</span></code></p>
+<blockquote>
+<div><p>iterate through all workers of a worker_pool</p>
+</div></blockquote>
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">worker</span></code></dt><dd><p>iteration cursor</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">pool</span></code></dt><dd><p>worker_pool to iterate workers of</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This must be called with wq_pool_attach_mutex.</p>
+<p>The if/else clause exists only for the lockdep assertion and can be
+ignored.</p>
+<dl class="c macro">
+<dt id="c.for_each_pwq">
+<code class="sig-name descname">for_each_pwq</code><a class="headerlink" href="#c.for_each_pwq" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><code class="docutils literal notranslate"><span class="pre">for_each_pwq</span> <span class="pre">(pwq,</span> <span class="pre">wq)</span></code></p>
+<blockquote>
+<div><p>iterate through all pool_workqueues of the specified workqueue</p>
+</div></blockquote>
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">pwq</span></code></dt><dd><p>iteration cursor</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">wq</span></code></dt><dd><p>the target workqueue</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This must be called either with wq-&gt;mutex held or RCU read locked.
+If the pwq needs to be used beyond the locking in effect, the caller is
+responsible for guaranteeing that the pwq stays online.</p>
+<p>The if/else clause exists only for the lockdep assertion and can be
+ignored.</p>
+<dl class="c function">
+<dt id="c.worker_pool_assign_id">
+int <code class="sig-name descname">worker_pool_assign_id</code><span class="sig-paren">(</span><em class="property">struct</em> worker_pool *<em>pool</em><span class="sig-paren">)</span><a class="headerlink" href="#c.worker_pool_assign_id" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>allocate ID and assing it to <strong>pool</strong></p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">worker_pool</span> <span class="pre">*pool</span></code></dt><dd><p>the pool pointer of interest</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Returns 0 if ID in [0, WORK_OFFQ_POOL_NONE) is allocated and assigned
+successfully, -errno on failure.</p>
+<dl class="c function">
+<dt id="c.unbound_pwq_by_node">
+<em class="property">struct</em> pool_workqueue *<code class="sig-name descname">unbound_pwq_by_node</code><span class="sig-paren">(</span><em class="property">struct</em> workqueue_struct *<em>wq</em>, int <em>node</em><span class="sig-paren">)</span><a class="headerlink" href="#c.unbound_pwq_by_node" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>return the unbound pool_workqueue for the given node</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">workqueue_struct</span> <span class="pre">*wq</span></code></dt><dd><p>the target workqueue</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">node</span></code></dt><dd><p>the node ID</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This must be called with any of wq_pool_mutex, wq-&gt;mutex or RCU
+read locked.
+If the pwq needs to be used beyond the locking in effect, the caller is
+responsible for guaranteeing that the pwq stays online.</p>
+<p><strong>Return</strong></p>
+<p>The unbound pool_workqueue for <strong>node</strong>.</p>
+<dl class="c function">
+<dt id="c.get_work_pool">
+<em class="property">struct</em> worker_pool *<code class="sig-name descname">get_work_pool</code><span class="sig-paren">(</span><em class="property">struct</em> work_struct *<em>work</em><span class="sig-paren">)</span><a class="headerlink" href="#c.get_work_pool" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>return the worker_pool a given work was associated with</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">work_struct</span> <span class="pre">*work</span></code></dt><dd><p>the work item of interest</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Pools are created and destroyed under wq_pool_mutex, and allows read
+access under RCU read lock.  As such, this function should be
+called under wq_pool_mutex or inside of a <a class="reference internal" href="kernel-api.html#c.rcu_read_lock" title="rcu_read_lock"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_read_lock()</span></code></a> region.</p>
+<p>All fields of the returned pool are accessible as long as the above
+mentioned locking is in effect.  If the returned pool needs to be used
+beyond the critical section, the caller is responsible for ensuring the
+returned pool is and stays online.</p>
+<p><strong>Return</strong></p>
+<p>The worker_pool <strong>work</strong> was last associated with.  <code class="docutils literal notranslate"><span class="pre">NULL</span></code> if none.</p>
+<dl class="c function">
+<dt id="c.get_work_pool_id">
+int <code class="sig-name descname">get_work_pool_id</code><span class="sig-paren">(</span><em class="property">struct</em> work_struct *<em>work</em><span class="sig-paren">)</span><a class="headerlink" href="#c.get_work_pool_id" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>return the worker pool ID a given work is associated with</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">work_struct</span> <span class="pre">*work</span></code></dt><dd><p>the work item of interest</p>
+</dd>
+</dl>
+<p><strong>Return</strong></p>
+<p>The worker_pool ID <strong>work</strong> was last associated with.
+<code class="docutils literal notranslate"><span class="pre">WORK_OFFQ_POOL_NONE</span></code> if none.</p>
+<dl class="c function">
+<dt id="c.wake_up_worker">
+void <code class="sig-name descname">wake_up_worker</code><span class="sig-paren">(</span><em class="property">struct</em> worker_pool *<em>pool</em><span class="sig-paren">)</span><a class="headerlink" href="#c.wake_up_worker" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>wake up an idle worker</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">worker_pool</span> <span class="pre">*pool</span></code></dt><dd><p>worker pool to wake worker from</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Wake up the first idle worker of <strong>pool</strong>.</p>
+<p><strong>Context</strong></p>
+<p>raw_spin_lock_irq(pool-&gt;lock).</p>
+<dl class="c function">
+<dt id="c.wq_worker_running">
+void <code class="sig-name descname">wq_worker_running</code><span class="sig-paren">(</span><em class="property">struct</em> task_struct *<em>task</em><span class="sig-paren">)</span><a class="headerlink" href="#c.wq_worker_running" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>a worker is running again</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">task_struct</span> <span class="pre">*task</span></code></dt><dd><p>task waking up</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This function is called when a worker returns from schedule()</p>
+<dl class="c function">
+<dt id="c.wq_worker_sleeping">
+void <code class="sig-name descname">wq_worker_sleeping</code><span class="sig-paren">(</span><em class="property">struct</em> task_struct *<em>task</em><span class="sig-paren">)</span><a class="headerlink" href="#c.wq_worker_sleeping" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>a worker is going to sleep</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">task_struct</span> <span class="pre">*task</span></code></dt><dd><p>task going to sleep</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This function is called from schedule() when a busy worker is
+going to sleep. Preemption needs to be disabled to protect -&gt;sleeping
+assignment.</p>
+<dl class="c function">
+<dt id="c.wq_worker_last_func">
+work_func_t <code class="sig-name descname">wq_worker_last_func</code><span class="sig-paren">(</span><em class="property">struct</em> task_struct *<em>task</em><span class="sig-paren">)</span><a class="headerlink" href="#c.wq_worker_last_func" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>retrieve worker’s last work function</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">task_struct</span> <span class="pre">*task</span></code></dt><dd><p>Task to retrieve last work function of.</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Determine the last function a worker executed. This is called from
+the scheduler to get a worker’s last known identity.</p>
+<p>This function is called during schedule() when a kworker is going
+to sleep. It’s used by psi to identify aggregation workers during
+dequeuing, to allow periodic aggregation to shut-off when that
+worker is the last task in the system or cgroup to go to sleep.</p>
+<p>As this function doesn’t involve any workqueue-related locking, it
+only returns stable values when called from inside the scheduler’s
+queuing and dequeuing paths, when <strong>task</strong>, which must be a kworker,
+is guaranteed to not be processing any works.</p>
+<p><strong>Context</strong></p>
+<p>raw_spin_lock_irq(rq-&gt;lock)</p>
+<p><strong>Return</strong></p>
+<p>The last work function <code class="docutils literal notranslate"><span class="pre">current</span></code> executed as a worker, NULL if it
+hasn’t executed any work yet.</p>
+<dl class="c function">
+<dt id="c.worker_set_flags">
+void <code class="sig-name descname">worker_set_flags</code><span class="sig-paren">(</span><em class="property">struct</em> worker *<em>worker</em>, unsigned int <em>flags</em><span class="sig-paren">)</span><a class="headerlink" href="#c.worker_set_flags" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>set worker flags and adjust nr_running accordingly</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">worker</span> <span class="pre">*worker</span></code></dt><dd><p>self</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">unsigned</span> <span class="pre">int</span> <span class="pre">flags</span></code></dt><dd><p>flags to set</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Set <strong>flags</strong> in <strong>worker-&gt;flags</strong> and adjust nr_running accordingly.</p>
+<p><strong>Context</strong></p>
+<p>raw_spin_lock_irq(pool-&gt;lock)</p>
+<dl class="c function">
+<dt id="c.worker_clr_flags">
+void <code class="sig-name descname">worker_clr_flags</code><span class="sig-paren">(</span><em class="property">struct</em> worker *<em>worker</em>, unsigned int <em>flags</em><span class="sig-paren">)</span><a class="headerlink" href="#c.worker_clr_flags" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>clear worker flags and adjust nr_running accordingly</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">worker</span> <span class="pre">*worker</span></code></dt><dd><p>self</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">unsigned</span> <span class="pre">int</span> <span class="pre">flags</span></code></dt><dd><p>flags to clear</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Clear <strong>flags</strong> in <strong>worker-&gt;flags</strong> and adjust nr_running accordingly.</p>
+<p><strong>Context</strong></p>
+<p>raw_spin_lock_irq(pool-&gt;lock)</p>
+<dl class="c function">
+<dt id="c.find_worker_executing_work">
+<em class="property">struct</em> worker *<code class="sig-name descname">find_worker_executing_work</code><span class="sig-paren">(</span><em class="property">struct</em> worker_pool *<em>pool</em>, <em class="property">struct</em> work_struct *<em>work</em><span class="sig-paren">)</span><a class="headerlink" href="#c.find_worker_executing_work" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>find worker which is executing a work</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">worker_pool</span> <span class="pre">*pool</span></code></dt><dd><p>pool of interest</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">work_struct</span> <span class="pre">*work</span></code></dt><dd><p>work to find worker for</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Find a worker which is executing <strong>work</strong> on <strong>pool</strong> by searching
+<strong>pool-&gt;busy_hash</strong> which is keyed by the address of <strong>work</strong>.  For a worker
+to match, its current execution should match the address of <strong>work</strong> and
+its work function.  This is to avoid unwanted dependency between
+unrelated work executions through a work item being recycled while still
+being executed.</p>
+<p>This is a bit tricky.  A work item may be freed once its execution
+starts and nothing prevents the freed area from being recycled for
+another work item.  If the same work item address ends up being reused
+before the original execution finishes, workqueue will identify the
+recycled work item as currently executing and make it wait until the
+current execution finishes, introducing an unwanted dependency.</p>
+<p>This function checks the work item address and work function to avoid
+false positives.  Note that this isn’t complete as one may construct a
+work function which can introduce dependency onto itself through a
+recycled work item.  Well, if somebody wants to shoot oneself in the
+foot that badly, there’s only so much we can do, and if such deadlock
+actually occurs, it should be easy to locate the culprit work function.</p>
+<p><strong>Context</strong></p>
+<p>raw_spin_lock_irq(pool-&gt;lock).</p>
+<p><strong>Return</strong></p>
+<p>Pointer to worker which is executing <strong>work</strong> if found, <code class="docutils literal notranslate"><span class="pre">NULL</span></code>
+otherwise.</p>
+<dl class="c function">
+<dt id="c.move_linked_works">
+void <code class="sig-name descname">move_linked_works</code><span class="sig-paren">(</span><em class="property">struct</em> work_struct *<em>work</em>, <em class="property">struct</em> list_head *<em>head</em>, <em class="property">struct</em> work_struct **<em>nextp</em><span class="sig-paren">)</span><a class="headerlink" href="#c.move_linked_works" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>move linked works to a list</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">work_struct</span> <span class="pre">*work</span></code></dt><dd><p>start of series of works to be scheduled</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">list_head</span> <span class="pre">*head</span></code></dt><dd><p>target list to append <strong>work</strong> to</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">work_struct</span> <span class="pre">**nextp</span></code></dt><dd><p>out parameter for nested worklist walking</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Schedule linked works starting from <strong>work</strong> to <strong>head</strong>.  Work series to
+be scheduled starts at <strong>work</strong> and includes any consecutive work with
+WORK_STRUCT_LINKED set in its predecessor.</p>
+<p>If <strong>nextp</strong> is not NULL, it’s updated to point to the next work of
+the last scheduled work.  This allows <a class="reference internal" href="#c.move_linked_works" title="move_linked_works"><code class="xref c c-func docutils literal notranslate"><span class="pre">move_linked_works()</span></code></a> to be
+nested inside outer <a class="reference internal" href="kernel-api.html#c.list_for_each_entry_safe" title="list_for_each_entry_safe"><code class="xref c c-func docutils literal notranslate"><span class="pre">list_for_each_entry_safe()</span></code></a>.</p>
+<p><strong>Context</strong></p>
+<p>raw_spin_lock_irq(pool-&gt;lock).</p>
+<dl class="c function">
+<dt id="c.get_pwq">
+void <code class="sig-name descname">get_pwq</code><span class="sig-paren">(</span><em class="property">struct</em> pool_workqueue *<em>pwq</em><span class="sig-paren">)</span><a class="headerlink" href="#c.get_pwq" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>get an extra reference on the specified pool_workqueue</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">pool_workqueue</span> <span class="pre">*pwq</span></code></dt><dd><p>pool_workqueue to get</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Obtain an extra reference on <strong>pwq</strong>.  The caller should guarantee that
+<strong>pwq</strong> has positive refcnt and be holding the matching pool-&gt;lock.</p>
+<dl class="c function">
+<dt id="c.put_pwq">
+void <code class="sig-name descname">put_pwq</code><span class="sig-paren">(</span><em class="property">struct</em> pool_workqueue *<em>pwq</em><span class="sig-paren">)</span><a class="headerlink" href="#c.put_pwq" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>put a pool_workqueue reference</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">pool_workqueue</span> <span class="pre">*pwq</span></code></dt><dd><p>pool_workqueue to put</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Drop a reference of <strong>pwq</strong>.  If its refcnt reaches zero, schedule its
+destruction.  The caller should be holding the matching pool-&gt;lock.</p>
+<dl class="c function">
+<dt id="c.put_pwq_unlocked">
+void <code class="sig-name descname">put_pwq_unlocked</code><span class="sig-paren">(</span><em class="property">struct</em> pool_workqueue *<em>pwq</em><span class="sig-paren">)</span><a class="headerlink" href="#c.put_pwq_unlocked" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p><a class="reference internal" href="#c.put_pwq" title="put_pwq"><code class="xref c c-func docutils literal notranslate"><span class="pre">put_pwq()</span></code></a> with surrounding pool lock/unlock</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">pool_workqueue</span> <span class="pre">*pwq</span></code></dt><dd><p>pool_workqueue to put (can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code>)</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p><a class="reference internal" href="#c.put_pwq" title="put_pwq"><code class="xref c c-func docutils literal notranslate"><span class="pre">put_pwq()</span></code></a> with locking.  This function also allows <code class="docutils literal notranslate"><span class="pre">NULL</span></code> <strong>pwq</strong>.</p>
+<dl class="c function">
+<dt id="c.pwq_dec_nr_in_flight">
+void <code class="sig-name descname">pwq_dec_nr_in_flight</code><span class="sig-paren">(</span><em class="property">struct</em> pool_workqueue *<em>pwq</em>, int <em>color</em><span class="sig-paren">)</span><a class="headerlink" href="#c.pwq_dec_nr_in_flight" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>decrement pwq’s nr_in_flight</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">pool_workqueue</span> <span class="pre">*pwq</span></code></dt><dd><p>pwq of interest</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">color</span></code></dt><dd><p>color of work which left the queue</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>A work either has completed or is removed from pending queue,
+decrement nr_in_flight of its pwq and handle workqueue flushing.</p>
+<p><strong>Context</strong></p>
+<p>raw_spin_lock_irq(pool-&gt;lock).</p>
+<dl class="c function">
+<dt id="c.try_to_grab_pending">
+int <code class="sig-name descname">try_to_grab_pending</code><span class="sig-paren">(</span><em class="property">struct</em> work_struct *<em>work</em>, bool <em>is_dwork</em>, unsigned long *<em>flags</em><span class="sig-paren">)</span><a class="headerlink" href="#c.try_to_grab_pending" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>steal work item from worklist and disable irq</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">work_struct</span> <span class="pre">*work</span></code></dt><dd><p>work item to steal</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">bool</span> <span class="pre">is_dwork</span></code></dt><dd><p><strong>work</strong> is a delayed_work</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">unsigned</span> <span class="pre">long</span> <span class="pre">*flags</span></code></dt><dd><p>place to store irq state</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Try to grab PENDING bit of <strong>work</strong>.  This function can handle <strong>work</strong> in any
+stable state - idle, on timer or on worklist.</p>
+<p>On successful return, &gt;= 0, irq is disabled and the caller is
+responsible for releasing it using local_irq_restore(<strong>*flags</strong>).</p>
+<p>This function is safe to call from any context including IRQ handler.</p>
+<p><strong>Return</strong></p>
+<blockquote>
+<div><table class="docutils align-default">
+<colgroup>
+<col style="width: 11%" />
+<col style="width: 89%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>1</p></td>
+<td><p>if <strong>work</strong> was pending and we successfully stole PENDING</p></td>
+</tr>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>if <strong>work</strong> was idle and we claimed PENDING</p></td>
+</tr>
+<tr class="row-odd"><td><p>-EAGAIN</p></td>
+<td><p>if PENDING couldn’t be grabbed at the moment, safe to busy-retry</p></td>
+</tr>
+<tr class="row-even"><td><p>-ENOENT</p></td>
+<td><p>if someone else is canceling <strong>work</strong>, this state may persist
+for arbitrarily long</p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p><strong>Note</strong></p>
+<p>On &gt;= 0 return, the caller owns <strong>work</strong>’s PENDING bit.  To avoid getting
+interrupted while holding PENDING and <strong>work</strong> off queue, irq must be
+disabled on entry.  This, combined with delayed_work-&gt;timer being
+irqsafe, ensures that we return -EAGAIN for finite short period of time.</p>
+<dl class="c function">
+<dt id="c.insert_work">
+void <code class="sig-name descname">insert_work</code><span class="sig-paren">(</span><em class="property">struct</em> pool_workqueue *<em>pwq</em>, <em class="property">struct</em> work_struct *<em>work</em>, <em class="property">struct</em> list_head *<em>head</em>, unsigned int <em>extra_flags</em><span class="sig-paren">)</span><a class="headerlink" href="#c.insert_work" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>insert a work into a pool</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">pool_workqueue</span> <span class="pre">*pwq</span></code></dt><dd><p>pwq <strong>work</strong> belongs to</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">work_struct</span> <span class="pre">*work</span></code></dt><dd><p>work to insert</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">list_head</span> <span class="pre">*head</span></code></dt><dd><p>insertion point</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">unsigned</span> <span class="pre">int</span> <span class="pre">extra_flags</span></code></dt><dd><p>extra WORK_STRUCT_* flags to set</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Insert <strong>work</strong> which belongs to <strong>pwq</strong> after <strong>head</strong>.  <strong>extra_flags</strong> is or’d to
+work_struct flags.</p>
+<p><strong>Context</strong></p>
+<p>raw_spin_lock_irq(pool-&gt;lock).</p>
+<dl class="c function">
+<dt id="c.queue_work_on">
+bool <code class="sig-name descname">queue_work_on</code><span class="sig-paren">(</span>int <em>cpu</em>, <em class="property">struct</em> workqueue_struct *<em>wq</em>, <em class="property">struct</em> work_struct *<em>work</em><span class="sig-paren">)</span><a class="headerlink" href="#c.queue_work_on" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>queue work on specific cpu</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">cpu</span></code></dt><dd><p>CPU number to execute work on</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">workqueue_struct</span> <span class="pre">*wq</span></code></dt><dd><p>workqueue to use</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">work_struct</span> <span class="pre">*work</span></code></dt><dd><p>work to queue</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>We queue the work to a specific CPU, the caller must ensure it
+can’t go away.</p>
+<p><strong>Return</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">false</span></code> if <strong>work</strong> was already on a queue, <code class="docutils literal notranslate"><span class="pre">true</span></code> otherwise.</p>
+<dl class="c function">
+<dt id="c.workqueue_select_cpu_near">
+int <code class="sig-name descname">workqueue_select_cpu_near</code><span class="sig-paren">(</span>int <em>node</em><span class="sig-paren">)</span><a class="headerlink" href="#c.workqueue_select_cpu_near" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Select a CPU based on NUMA node</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">node</span></code></dt><dd><p>NUMA node ID that we want to select a CPU from</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This function will attempt to find a “random” cpu available on a given
+node. If there are no CPUs available on the given node it will return
+WORK_CPU_UNBOUND indicating that we should just schedule to any
+available CPU if we need to schedule this work.</p>
+<dl class="c function">
+<dt id="c.queue_work_node">
+bool <code class="sig-name descname">queue_work_node</code><span class="sig-paren">(</span>int <em>node</em>, <em class="property">struct</em> workqueue_struct *<em>wq</em>, <em class="property">struct</em> work_struct *<em>work</em><span class="sig-paren">)</span><a class="headerlink" href="#c.queue_work_node" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>queue work on a “random” cpu for a given NUMA node</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">node</span></code></dt><dd><p>NUMA node that we are targeting the work for</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">workqueue_struct</span> <span class="pre">*wq</span></code></dt><dd><p>workqueue to use</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">work_struct</span> <span class="pre">*work</span></code></dt><dd><p>work to queue</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>We queue the work to a “random” CPU within a given NUMA node. The basic
+idea here is to provide a way to somehow associate work with a given
+NUMA node.</p>
+<p>This function will only make a best effort attempt at getting this onto
+the right NUMA node. If no node is requested or the requested node is
+offline then we just fall back to standard queue_work behavior.</p>
+<p>Currently the “random” CPU ends up being the first available CPU in the
+intersection of cpu_online_mask and the cpumask of the node, unless we
+are running on the node. In that case we just use the current CPU.</p>
+<p><strong>Return</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">false</span></code> if <strong>work</strong> was already on a queue, <code class="docutils literal notranslate"><span class="pre">true</span></code> otherwise.</p>
+<dl class="c function">
+<dt id="c.queue_delayed_work_on">
+bool <code class="sig-name descname">queue_delayed_work_on</code><span class="sig-paren">(</span>int <em>cpu</em>, <em class="property">struct</em> workqueue_struct *<em>wq</em>, <em class="property">struct</em> delayed_work *<em>dwork</em>, unsigned long <em>delay</em><span class="sig-paren">)</span><a class="headerlink" href="#c.queue_delayed_work_on" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>queue work on specific CPU after delay</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">cpu</span></code></dt><dd><p>CPU number to execute work on</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">workqueue_struct</span> <span class="pre">*wq</span></code></dt><dd><p>workqueue to use</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">delayed_work</span> <span class="pre">*dwork</span></code></dt><dd><p>work to queue</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">unsigned</span> <span class="pre">long</span> <span class="pre">delay</span></code></dt><dd><p>number of jiffies to wait before queueing</p>
+</dd>
+</dl>
+<p><strong>Return</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">false</span></code> if <strong>work</strong> was already on a queue, <code class="docutils literal notranslate"><span class="pre">true</span></code> otherwise.  If
+<strong>delay</strong> is zero and <strong>dwork</strong> is idle, it will be scheduled for immediate
+execution.</p>
+<dl class="c function">
+<dt id="c.mod_delayed_work_on">
+bool <code class="sig-name descname">mod_delayed_work_on</code><span class="sig-paren">(</span>int <em>cpu</em>, <em class="property">struct</em> workqueue_struct *<em>wq</em>, <em class="property">struct</em> delayed_work *<em>dwork</em>, unsigned long <em>delay</em><span class="sig-paren">)</span><a class="headerlink" href="#c.mod_delayed_work_on" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>modify delay of or queue a delayed work on specific CPU</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">cpu</span></code></dt><dd><p>CPU number to execute work on</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">workqueue_struct</span> <span class="pre">*wq</span></code></dt><dd><p>workqueue to use</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">delayed_work</span> <span class="pre">*dwork</span></code></dt><dd><p>work to queue</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">unsigned</span> <span class="pre">long</span> <span class="pre">delay</span></code></dt><dd><p>number of jiffies to wait before queueing</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>If <strong>dwork</strong> is idle, equivalent to <a class="reference internal" href="#c.queue_delayed_work_on" title="queue_delayed_work_on"><code class="xref c c-func docutils literal notranslate"><span class="pre">queue_delayed_work_on()</span></code></a>; otherwise,
+modify <strong>dwork</strong>’s timer so that it expires after <strong>delay</strong>.  If <strong>delay</strong> is
+zero, <strong>work</strong> is guaranteed to be scheduled immediately regardless of its
+current state.</p>
+<p>This function is safe to call from any context including IRQ handler.
+See <a class="reference internal" href="#c.try_to_grab_pending" title="try_to_grab_pending"><code class="xref c c-func docutils literal notranslate"><span class="pre">try_to_grab_pending()</span></code></a> for details.</p>
+<p><strong>Return</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">false</span></code> if <strong>dwork</strong> was idle and queued, <code class="docutils literal notranslate"><span class="pre">true</span></code> if <strong>dwork</strong> was
+pending and its timer was modified.</p>
+<dl class="c function">
+<dt id="c.queue_rcu_work">
+bool <code class="sig-name descname">queue_rcu_work</code><span class="sig-paren">(</span><em class="property">struct</em> workqueue_struct *<em>wq</em>, <em class="property">struct</em> rcu_work *<em>rwork</em><span class="sig-paren">)</span><a class="headerlink" href="#c.queue_rcu_work" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>queue work after a RCU grace period</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">workqueue_struct</span> <span class="pre">*wq</span></code></dt><dd><p>workqueue to use</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">rcu_work</span> <span class="pre">*rwork</span></code></dt><dd><p>work to queue</p>
+</dd>
+</dl>
+<p><strong>Return</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">false</span></code> if <strong>rwork</strong> was already pending, <code class="docutils literal notranslate"><span class="pre">true</span></code> otherwise.  Note
+that a full RCU grace period is guaranteed only after a <code class="docutils literal notranslate"><span class="pre">true</span></code> return.
+While <strong>rwork</strong> is guaranteed to be executed after a <code class="docutils literal notranslate"><span class="pre">false</span></code> return, the
+execution may happen before a full RCU grace period has passed.</p>
+<dl class="c function">
+<dt id="c.worker_enter_idle">
+void <code class="sig-name descname">worker_enter_idle</code><span class="sig-paren">(</span><em class="property">struct</em> worker *<em>worker</em><span class="sig-paren">)</span><a class="headerlink" href="#c.worker_enter_idle" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>enter idle state</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">worker</span> <span class="pre">*worker</span></code></dt><dd><p>worker which is entering idle state</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p><strong>worker</strong> is entering idle state.  Update stats and idle timer if
+necessary.</p>
+<p>LOCKING:
+raw_spin_lock_irq(pool-&gt;lock).</p>
+<dl class="c function">
+<dt id="c.worker_leave_idle">
+void <code class="sig-name descname">worker_leave_idle</code><span class="sig-paren">(</span><em class="property">struct</em> worker *<em>worker</em><span class="sig-paren">)</span><a class="headerlink" href="#c.worker_leave_idle" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>leave idle state</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">worker</span> <span class="pre">*worker</span></code></dt><dd><p>worker which is leaving idle state</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p><strong>worker</strong> is leaving idle state.  Update stats.</p>
+<p>LOCKING:
+raw_spin_lock_irq(pool-&gt;lock).</p>
+<dl class="c function">
+<dt id="c.worker_attach_to_pool">
+void <code class="sig-name descname">worker_attach_to_pool</code><span class="sig-paren">(</span><em class="property">struct</em> worker *<em>worker</em>, <em class="property">struct</em> worker_pool *<em>pool</em><span class="sig-paren">)</span><a class="headerlink" href="#c.worker_attach_to_pool" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>attach a worker to a pool</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">worker</span> <span class="pre">*worker</span></code></dt><dd><p>worker to be attached</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">worker_pool</span> <span class="pre">*pool</span></code></dt><dd><p>the target pool</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Attach <strong>worker</strong> to <strong>pool</strong>.  Once attached, the <code class="docutils literal notranslate"><span class="pre">WORKER_UNBOUND</span></code> flag and
+cpu-binding of <strong>worker</strong> are kept coordinated with the pool across
+cpu-[un]hotplugs.</p>
+<dl class="c function">
+<dt id="c.worker_detach_from_pool">
+void <code class="sig-name descname">worker_detach_from_pool</code><span class="sig-paren">(</span><em class="property">struct</em> worker *<em>worker</em><span class="sig-paren">)</span><a class="headerlink" href="#c.worker_detach_from_pool" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>detach a worker from its pool</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">worker</span> <span class="pre">*worker</span></code></dt><dd><p>worker which is attached to its pool</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Undo the attaching which had been done in <a class="reference internal" href="#c.worker_attach_to_pool" title="worker_attach_to_pool"><code class="xref c c-func docutils literal notranslate"><span class="pre">worker_attach_to_pool()</span></code></a>.  The
+caller worker shouldn’t access to the pool after detached except it has
+other reference to the pool.</p>
+<dl class="c function">
+<dt id="c.create_worker">
+<em class="property">struct</em> worker *<code class="sig-name descname">create_worker</code><span class="sig-paren">(</span><em class="property">struct</em> worker_pool *<em>pool</em><span class="sig-paren">)</span><a class="headerlink" href="#c.create_worker" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>create a new workqueue worker</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">worker_pool</span> <span class="pre">*pool</span></code></dt><dd><p>pool the new worker will belong to</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Create and start a new worker which is attached to <strong>pool</strong>.</p>
+<p><strong>Context</strong></p>
+<p>Might sleep.  Does GFP_KERNEL allocations.</p>
+<p><strong>Return</strong></p>
+<p>Pointer to the newly created worker.</p>
+<dl class="c function">
+<dt id="c.destroy_worker">
+void <code class="sig-name descname">destroy_worker</code><span class="sig-paren">(</span><em class="property">struct</em> worker *<em>worker</em><span class="sig-paren">)</span><a class="headerlink" href="#c.destroy_worker" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>destroy a workqueue worker</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">worker</span> <span class="pre">*worker</span></code></dt><dd><p>worker to be destroyed</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Destroy <strong>worker</strong> and adjust <strong>pool</strong> stats accordingly.  The worker should
+be idle.</p>
+<p><strong>Context</strong></p>
+<p>raw_spin_lock_irq(pool-&gt;lock).</p>
+<dl class="c function">
+<dt id="c.maybe_create_worker">
+void <code class="sig-name descname">maybe_create_worker</code><span class="sig-paren">(</span><em class="property">struct</em> worker_pool *<em>pool</em><span class="sig-paren">)</span><a class="headerlink" href="#c.maybe_create_worker" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>create a new worker if necessary</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">worker_pool</span> <span class="pre">*pool</span></code></dt><dd><p>pool to create a new worker for</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Create a new worker for <strong>pool</strong> if necessary.  <strong>pool</strong> is guaranteed to
+have at least one idle worker on return from this function.  If
+creating a new worker takes longer than MAYDAY_INTERVAL, mayday is
+sent to all rescuers with works scheduled on <strong>pool</strong> to resolve
+possible allocation deadlock.</p>
+<p>On return, need_to_create_worker() is guaranteed to be <code class="docutils literal notranslate"><span class="pre">false</span></code> and
+may_start_working() <code class="docutils literal notranslate"><span class="pre">true</span></code>.</p>
+<p>LOCKING:
+raw_spin_lock_irq(pool-&gt;lock) which may be released and regrabbed
+multiple times.  Does GFP_KERNEL allocations.  Called only from
+manager.</p>
+<dl class="c function">
+<dt id="c.manage_workers">
+bool <code class="sig-name descname">manage_workers</code><span class="sig-paren">(</span><em class="property">struct</em> worker *<em>worker</em><span class="sig-paren">)</span><a class="headerlink" href="#c.manage_workers" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>manage worker pool</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">worker</span> <span class="pre">*worker</span></code></dt><dd><p>self</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Assume the manager role and manage the worker pool <strong>worker</strong> belongs
+to.  At any given time, there can be only zero or one manager per
+pool.  The exclusion is handled automatically by this function.</p>
+<p>The caller can safely start processing works on false return.  On
+true return, it’s guaranteed that need_to_create_worker() is false
+and may_start_working() is true.</p>
+<p><strong>Context</strong></p>
+<p>raw_spin_lock_irq(pool-&gt;lock) which may be released and regrabbed
+multiple times.  Does GFP_KERNEL allocations.</p>
+<p><strong>Return</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">false</span></code> if the pool doesn’t need management and the caller can safely
+start processing works, <code class="docutils literal notranslate"><span class="pre">true</span></code> if management function was performed and
+the conditions that the caller verified before calling the function may
+no longer be true.</p>
+<dl class="c function">
+<dt id="c.process_one_work">
+void <code class="sig-name descname">process_one_work</code><span class="sig-paren">(</span><em class="property">struct</em> worker *<em>worker</em>, <em class="property">struct</em> work_struct *<em>work</em><span class="sig-paren">)</span><a class="headerlink" href="#c.process_one_work" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>process single work</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">worker</span> <span class="pre">*worker</span></code></dt><dd><p>self</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">work_struct</span> <span class="pre">*work</span></code></dt><dd><p>work to process</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Process <strong>work</strong>.  This function contains all the logics necessary to
+process a single work including synchronization against and
+interaction with other workers on the same cpu, queueing and
+flushing.  As long as context requirement is met, any worker can
+call this function to process a work.</p>
+<p><strong>Context</strong></p>
+<p>raw_spin_lock_irq(pool-&gt;lock) which is released and regrabbed.</p>
+<dl class="c function">
+<dt id="c.process_scheduled_works">
+void <code class="sig-name descname">process_scheduled_works</code><span class="sig-paren">(</span><em class="property">struct</em> worker *<em>worker</em><span class="sig-paren">)</span><a class="headerlink" href="#c.process_scheduled_works" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>process scheduled works</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">worker</span> <span class="pre">*worker</span></code></dt><dd><p>self</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Process all scheduled works.  Please note that the scheduled list
+may change while processing a work, so this function repeatedly
+fetches a work from the top and executes it.</p>
+<p><strong>Context</strong></p>
+<p>raw_spin_lock_irq(pool-&gt;lock) which may be released and regrabbed
+multiple times.</p>
+<dl class="c function">
+<dt id="c.worker_thread">
+int <code class="sig-name descname">worker_thread</code><span class="sig-paren">(</span>void *<em>__worker</em><span class="sig-paren">)</span><a class="headerlink" href="#c.worker_thread" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>the worker thread function</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">void</span> <span class="pre">*__worker</span></code></dt><dd><p>self</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>The worker thread function.  All workers belong to a worker_pool -
+either a per-cpu one or dynamic unbound one.  These workers process all
+work items regardless of their specific target workqueue.  The only
+exception is work items which belong to workqueues with a rescuer which
+will be explained in <a class="reference internal" href="#c.rescuer_thread" title="rescuer_thread"><code class="xref c c-func docutils literal notranslate"><span class="pre">rescuer_thread()</span></code></a>.</p>
+<p><strong>Return</strong></p>
+<p>0</p>
+<dl class="c function">
+<dt id="c.rescuer_thread">
+int <code class="sig-name descname">rescuer_thread</code><span class="sig-paren">(</span>void *<em>__rescuer</em><span class="sig-paren">)</span><a class="headerlink" href="#c.rescuer_thread" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>the rescuer thread function</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">void</span> <span class="pre">*__rescuer</span></code></dt><dd><p>self</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Workqueue rescuer thread function.  There’s one rescuer for each
+workqueue which has WQ_MEM_RECLAIM set.</p>
+<p>Regular work processing on a pool may block trying to create a new
+worker which uses GFP_KERNEL allocation which has slight chance of
+developing into deadlock if some works currently on the same queue
+need to be processed to satisfy the GFP_KERNEL allocation.  This is
+the problem rescuer solves.</p>
+<p>When such condition is possible, the pool summons rescuers of all
+workqueues which have works queued on the pool and let them process
+those works so that forward progress can be guaranteed.</p>
+<p>This should happen rarely.</p>
+<p><strong>Return</strong></p>
+<p>0</p>
+<dl class="c function">
+<dt id="c.check_flush_dependency">
+void <code class="sig-name descname">check_flush_dependency</code><span class="sig-paren">(</span><em class="property">struct</em> workqueue_struct *<em>target_wq</em>, <em class="property">struct</em> work_struct *<em>target_work</em><span class="sig-paren">)</span><a class="headerlink" href="#c.check_flush_dependency" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>check for flush dependency sanity</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">workqueue_struct</span> <span class="pre">*target_wq</span></code></dt><dd><p>workqueue being flushed</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">work_struct</span> <span class="pre">*target_work</span></code></dt><dd><p>work item being flushed (NULL for workqueue flushes)</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">current</span></code> is trying to flush the whole <strong>target_wq</strong> or <strong>target_work</strong> on it.
+If <strong>target_wq</strong> doesn’t have <code class="docutils literal notranslate"><span class="pre">WQ_MEM_RECLAIM</span></code>, verify that <code class="docutils literal notranslate"><span class="pre">current</span></code> is not
+reclaiming memory or running on a workqueue which doesn’t have
+<code class="docutils literal notranslate"><span class="pre">WQ_MEM_RECLAIM</span></code> as that can break forward-progress guarantee leading to
+a deadlock.</p>
+<dl class="c function">
+<dt id="c.insert_wq_barrier">
+void <code class="sig-name descname">insert_wq_barrier</code><span class="sig-paren">(</span><em class="property">struct</em> pool_workqueue *<em>pwq</em>, <em class="property">struct</em> wq_barrier *<em>barr</em>, <em class="property">struct</em> work_struct *<em>target</em>, <em class="property">struct</em> worker *<em>worker</em><span class="sig-paren">)</span><a class="headerlink" href="#c.insert_wq_barrier" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>insert a barrier work</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">pool_workqueue</span> <span class="pre">*pwq</span></code></dt><dd><p>pwq to insert barrier into</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">wq_barrier</span> <span class="pre">*barr</span></code></dt><dd><p>wq_barrier to insert</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">work_struct</span> <span class="pre">*target</span></code></dt><dd><p>target work to attach <strong>barr</strong> to</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">worker</span> <span class="pre">*worker</span></code></dt><dd><p>worker currently executing <strong>target</strong>, NULL if <strong>target</strong> is not executing</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p><strong>barr</strong> is linked to <strong>target</strong> such that <strong>barr</strong> is completed only after
+<strong>target</strong> finishes execution.  Please note that the ordering
+guarantee is observed only with respect to <strong>target</strong> and on the local
+cpu.</p>
+<p>Currently, a queued barrier can’t be canceled.  This is because
+<a class="reference internal" href="#c.try_to_grab_pending" title="try_to_grab_pending"><code class="xref c c-func docutils literal notranslate"><span class="pre">try_to_grab_pending()</span></code></a> can’t determine whether the work to be
+grabbed is at the head of the queue and thus can’t clear LINKED
+flag of the previous work while there must be a valid next work
+after a work with LINKED flag set.</p>
+<p>Note that when <strong>worker</strong> is non-NULL, <strong>target</strong> may be modified
+underneath us, so we can’t reliably determine pwq from <strong>target</strong>.</p>
+<p><strong>Context</strong></p>
+<p>raw_spin_lock_irq(pool-&gt;lock).</p>
+<dl class="c function">
+<dt id="c.flush_workqueue_prep_pwqs">
+bool <code class="sig-name descname">flush_workqueue_prep_pwqs</code><span class="sig-paren">(</span><em class="property">struct</em> workqueue_struct *<em>wq</em>, int <em>flush_color</em>, int <em>work_color</em><span class="sig-paren">)</span><a class="headerlink" href="#c.flush_workqueue_prep_pwqs" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>prepare pwqs for workqueue flushing</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">workqueue_struct</span> <span class="pre">*wq</span></code></dt><dd><p>workqueue being flushed</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">flush_color</span></code></dt><dd><p>new flush color, &lt; 0 for no-op</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">work_color</span></code></dt><dd><p>new work color, &lt; 0 for no-op</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Prepare pwqs for workqueue flushing.</p>
+<p>If <strong>flush_color</strong> is non-negative, flush_color on all pwqs should be
+-1.  If no pwq has in-flight commands at the specified color, all
+pwq-&gt;flush_color’s stay at -1 and <code class="docutils literal notranslate"><span class="pre">false</span></code> is returned.  If any pwq
+has in flight commands, its pwq-&gt;flush_color is set to
+<strong>flush_color</strong>, <strong>wq-&gt;nr_pwqs_to_flush</strong> is updated accordingly, pwq
+wakeup logic is armed and <code class="docutils literal notranslate"><span class="pre">true</span></code> is returned.</p>
+<p>The caller should have initialized <strong>wq-&gt;first_flusher</strong> prior to
+calling this function with non-negative <strong>flush_color</strong>.  If
+<strong>flush_color</strong> is negative, no flush color update is done and <code class="docutils literal notranslate"><span class="pre">false</span></code>
+is returned.</p>
+<p>If <strong>work_color</strong> is non-negative, all pwqs should have the same
+work_color which is previous to <strong>work_color</strong> and all will be
+advanced to <strong>work_color</strong>.</p>
+<p><strong>Context</strong></p>
+<p>mutex_lock(wq-&gt;mutex).</p>
+<p><strong>Return</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">true</span></code> if <strong>flush_color</strong> &gt;= 0 and there’s something to flush.  <code class="docutils literal notranslate"><span class="pre">false</span></code>
+otherwise.</p>
+<dl class="c function">
+<dt id="c.flush_workqueue">
+void <code class="sig-name descname">flush_workqueue</code><span class="sig-paren">(</span><em class="property">struct</em> workqueue_struct *<em>wq</em><span class="sig-paren">)</span><a class="headerlink" href="#c.flush_workqueue" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>ensure that any scheduled work has run to completion.</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">workqueue_struct</span> <span class="pre">*wq</span></code></dt><dd><p>workqueue to flush</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This function sleeps until all work items which were queued on entry
+have finished execution, but it is not livelocked by new incoming ones.</p>
+<dl class="c function">
+<dt id="c.drain_workqueue">
+void <code class="sig-name descname">drain_workqueue</code><span class="sig-paren">(</span><em class="property">struct</em> workqueue_struct *<em>wq</em><span class="sig-paren">)</span><a class="headerlink" href="#c.drain_workqueue" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>drain a workqueue</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">workqueue_struct</span> <span class="pre">*wq</span></code></dt><dd><p>workqueue to drain</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Wait until the workqueue becomes empty.  While draining is in progress,
+only chain queueing is allowed.  IOW, only currently pending or running
+work items on <strong>wq</strong> can queue further work items on it.  <strong>wq</strong> is flushed
+repeatedly until it becomes empty.  The number of flushing is determined
+by the depth of chaining and should be relatively short.  Whine if it
+takes too long.</p>
+<dl class="c function">
+<dt id="c.flush_work">
+bool <code class="sig-name descname">flush_work</code><span class="sig-paren">(</span><em class="property">struct</em> work_struct *<em>work</em><span class="sig-paren">)</span><a class="headerlink" href="#c.flush_work" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>wait for a work to finish executing the last queueing instance</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">work_struct</span> <span class="pre">*work</span></code></dt><dd><p>the work to flush</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Wait until <strong>work</strong> has finished execution.  <strong>work</strong> is guaranteed to be idle
+on return if it hasn’t been requeued since flush started.</p>
+<p><strong>Return</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">true</span></code> if <a class="reference internal" href="#c.flush_work" title="flush_work"><code class="xref c c-func docutils literal notranslate"><span class="pre">flush_work()</span></code></a> waited for the work to finish execution,
+<code class="docutils literal notranslate"><span class="pre">false</span></code> if it was already idle.</p>
+<dl class="c function">
+<dt id="c.cancel_work_sync">
+bool <code class="sig-name descname">cancel_work_sync</code><span class="sig-paren">(</span><em class="property">struct</em> work_struct *<em>work</em><span class="sig-paren">)</span><a class="headerlink" href="#c.cancel_work_sync" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>cancel a work and wait for it to finish</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">work_struct</span> <span class="pre">*work</span></code></dt><dd><p>the work to cancel</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Cancel <strong>work</strong> and wait for its execution to finish.  This function
+can be used even if the work re-queues itself or migrates to
+another workqueue.  On return from this function, <strong>work</strong> is
+guaranteed to be not pending or executing on any CPU.</p>
+<p>cancel_work_sync(<code class="xref c c-type docutils literal notranslate"><span class="pre">delayed_work-&gt;work</span></code>) must not be used for
+delayed_work’s.  Use <a class="reference internal" href="#c.cancel_delayed_work_sync" title="cancel_delayed_work_sync"><code class="xref c c-func docutils literal notranslate"><span class="pre">cancel_delayed_work_sync()</span></code></a> instead.</p>
+<p>The caller must ensure that the workqueue on which <strong>work</strong> was last
+queued can’t be destroyed before this function returns.</p>
+<p><strong>Return</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">true</span></code> if <strong>work</strong> was pending, <code class="docutils literal notranslate"><span class="pre">false</span></code> otherwise.</p>
+<dl class="c function">
+<dt id="c.flush_delayed_work">
+bool <code class="sig-name descname">flush_delayed_work</code><span class="sig-paren">(</span><em class="property">struct</em> delayed_work *<em>dwork</em><span class="sig-paren">)</span><a class="headerlink" href="#c.flush_delayed_work" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>wait for a dwork to finish executing the last queueing</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">delayed_work</span> <span class="pre">*dwork</span></code></dt><dd><p>the delayed work to flush</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Delayed timer is cancelled and the pending work is queued for
+immediate execution.  Like <a class="reference internal" href="#c.flush_work" title="flush_work"><code class="xref c c-func docutils literal notranslate"><span class="pre">flush_work()</span></code></a>, this function only
+considers the last queueing instance of <strong>dwork</strong>.</p>
+<p><strong>Return</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">true</span></code> if <a class="reference internal" href="#c.flush_work" title="flush_work"><code class="xref c c-func docutils literal notranslate"><span class="pre">flush_work()</span></code></a> waited for the work to finish execution,
+<code class="docutils literal notranslate"><span class="pre">false</span></code> if it was already idle.</p>
+<dl class="c function">
+<dt id="c.flush_rcu_work">
+bool <code class="sig-name descname">flush_rcu_work</code><span class="sig-paren">(</span><em class="property">struct</em> rcu_work *<em>rwork</em><span class="sig-paren">)</span><a class="headerlink" href="#c.flush_rcu_work" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>wait for a rwork to finish executing the last queueing</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">rcu_work</span> <span class="pre">*rwork</span></code></dt><dd><p>the rcu work to flush</p>
+</dd>
+</dl>
+<p><strong>Return</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">true</span></code> if <a class="reference internal" href="#c.flush_rcu_work" title="flush_rcu_work"><code class="xref c c-func docutils literal notranslate"><span class="pre">flush_rcu_work()</span></code></a> waited for the work to finish execution,
+<code class="docutils literal notranslate"><span class="pre">false</span></code> if it was already idle.</p>
+<dl class="c function">
+<dt id="c.cancel_delayed_work">
+bool <code class="sig-name descname">cancel_delayed_work</code><span class="sig-paren">(</span><em class="property">struct</em> delayed_work *<em>dwork</em><span class="sig-paren">)</span><a class="headerlink" href="#c.cancel_delayed_work" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>cancel a delayed work</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">delayed_work</span> <span class="pre">*dwork</span></code></dt><dd><p>delayed_work to cancel</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Kill off a pending delayed_work.</p>
+<p>This function is safe to call from any context including IRQ handler.</p>
+<p><strong>Return</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">true</span></code> if <strong>dwork</strong> was pending and canceled; <code class="docutils literal notranslate"><span class="pre">false</span></code> if it wasn’t
+pending.</p>
+<p><strong>Note</strong></p>
+<p>The work callback function may still be running on return, unless
+it returns <code class="docutils literal notranslate"><span class="pre">true</span></code> and the work doesn’t re-arm itself.  Explicitly flush or
+use <a class="reference internal" href="#c.cancel_delayed_work_sync" title="cancel_delayed_work_sync"><code class="xref c c-func docutils literal notranslate"><span class="pre">cancel_delayed_work_sync()</span></code></a> to wait on it.</p>
+<dl class="c function">
+<dt id="c.cancel_delayed_work_sync">
+bool <code class="sig-name descname">cancel_delayed_work_sync</code><span class="sig-paren">(</span><em class="property">struct</em> delayed_work *<em>dwork</em><span class="sig-paren">)</span><a class="headerlink" href="#c.cancel_delayed_work_sync" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>cancel a delayed work and wait for it to finish</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">delayed_work</span> <span class="pre">*dwork</span></code></dt><dd><p>the delayed work cancel</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This is <a class="reference internal" href="#c.cancel_work_sync" title="cancel_work_sync"><code class="xref c c-func docutils literal notranslate"><span class="pre">cancel_work_sync()</span></code></a> for delayed works.</p>
+<p><strong>Return</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">true</span></code> if <strong>dwork</strong> was pending, <code class="docutils literal notranslate"><span class="pre">false</span></code> otherwise.</p>
+<dl class="c function">
+<dt id="c.schedule_on_each_cpu">
+int <code class="sig-name descname">schedule_on_each_cpu</code><span class="sig-paren">(</span>work_func_t <em>func</em><span class="sig-paren">)</span><a class="headerlink" href="#c.schedule_on_each_cpu" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>execute a function synchronously on each online CPU</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">work_func_t</span> <span class="pre">func</span></code></dt><dd><p>the function to call</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p><a class="reference internal" href="#c.schedule_on_each_cpu" title="schedule_on_each_cpu"><code class="xref c c-func docutils literal notranslate"><span class="pre">schedule_on_each_cpu()</span></code></a> executes <strong>func</strong> on each online CPU using the
+system workqueue and blocks until all CPUs have completed.
+<a class="reference internal" href="#c.schedule_on_each_cpu" title="schedule_on_each_cpu"><code class="xref c c-func docutils literal notranslate"><span class="pre">schedule_on_each_cpu()</span></code></a> is very slow.</p>
+<p><strong>Return</strong></p>
+<p>0 on success, -errno on failure.</p>
+<dl class="c function">
+<dt id="c.execute_in_process_context">
+int <code class="sig-name descname">execute_in_process_context</code><span class="sig-paren">(</span>work_func_t <em>fn</em>, <em class="property">struct</em> execute_work *<em>ew</em><span class="sig-paren">)</span><a class="headerlink" href="#c.execute_in_process_context" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>reliably execute the routine with user context</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">work_func_t</span> <span class="pre">fn</span></code></dt><dd><p>the function to execute</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">execute_work</span> <span class="pre">*ew</span></code></dt><dd><p>guaranteed storage for the execute work structure (must
+be available when the work executes)</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Executes the function immediately if process context is available,
+otherwise schedules the function for delayed execution.</p>
+<p><strong>Return</strong></p>
+<dl class="simple">
+<dt>0 - function was executed</dt><dd><p>1 - function was scheduled for execution</p>
+</dd>
+</dl>
+<dl class="c function">
+<dt id="c.free_workqueue_attrs">
+void <code class="sig-name descname">free_workqueue_attrs</code><span class="sig-paren">(</span><em class="property">struct</em> <a class="reference internal" href="#c.workqueue_attrs" title="workqueue_attrs">workqueue_attrs</a> *<em>attrs</em><span class="sig-paren">)</span><a class="headerlink" href="#c.free_workqueue_attrs" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>free a workqueue_attrs</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">workqueue_attrs</span> <span class="pre">*attrs</span></code></dt><dd><p>workqueue_attrs to free</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Undo <a class="reference internal" href="#c.alloc_workqueue_attrs" title="alloc_workqueue_attrs"><code class="xref c c-func docutils literal notranslate"><span class="pre">alloc_workqueue_attrs()</span></code></a>.</p>
+<dl class="c function">
+<dt id="c.alloc_workqueue_attrs">
+<em class="property">struct</em> <a class="reference internal" href="#c.workqueue_attrs" title="workqueue_attrs">workqueue_attrs</a> *<code class="sig-name descname">alloc_workqueue_attrs</code><span class="sig-paren">(</span>void<span class="sig-paren">)</span><a class="headerlink" href="#c.alloc_workqueue_attrs" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>allocate a workqueue_attrs</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">void</span></code></dt><dd><p>no arguments</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Allocate a new workqueue_attrs, initialize with default settings and
+return it.</p>
+<p><strong>Return</strong></p>
+<p>The allocated new workqueue_attr on success. <code class="docutils literal notranslate"><span class="pre">NULL</span></code> on failure.</p>
+<dl class="c function">
+<dt id="c.init_worker_pool">
+int <code class="sig-name descname">init_worker_pool</code><span class="sig-paren">(</span><em class="property">struct</em> worker_pool *<em>pool</em><span class="sig-paren">)</span><a class="headerlink" href="#c.init_worker_pool" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>initialize a newly zalloc’d worker_pool</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">worker_pool</span> <span class="pre">*pool</span></code></dt><dd><p>worker_pool to initialize</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Initialize a newly zalloc’d <strong>pool</strong>.  It also allocates <strong>pool-&gt;attrs</strong>.</p>
+<p><strong>Return</strong></p>
+<p>0 on success, -errno on failure.  Even on failure, all fields
+inside <strong>pool</strong> proper are initialized and <a class="reference internal" href="#c.put_unbound_pool" title="put_unbound_pool"><code class="xref c c-func docutils literal notranslate"><span class="pre">put_unbound_pool()</span></code></a> can be called
+on <strong>pool</strong> safely to release it.</p>
+<dl class="c function">
+<dt id="c.put_unbound_pool">
+void <code class="sig-name descname">put_unbound_pool</code><span class="sig-paren">(</span><em class="property">struct</em> worker_pool *<em>pool</em><span class="sig-paren">)</span><a class="headerlink" href="#c.put_unbound_pool" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>put a worker_pool</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">worker_pool</span> <span class="pre">*pool</span></code></dt><dd><p>worker_pool to put</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Put <strong>pool</strong>.  If its refcnt reaches zero, it gets destroyed in RCU
+safe manner.  <a class="reference internal" href="#c.get_unbound_pool" title="get_unbound_pool"><code class="xref c c-func docutils literal notranslate"><span class="pre">get_unbound_pool()</span></code></a> calls this function on its failure path
+and this function should be able to release pools which went through,
+successfully or not, <a class="reference internal" href="#c.init_worker_pool" title="init_worker_pool"><code class="xref c c-func docutils literal notranslate"><span class="pre">init_worker_pool()</span></code></a>.</p>
+<p>Should be called with wq_pool_mutex held.</p>
+<dl class="c function">
+<dt id="c.get_unbound_pool">
+<em class="property">struct</em> worker_pool *<code class="sig-name descname">get_unbound_pool</code><span class="sig-paren">(</span><em class="property">const</em> <em class="property">struct</em> <a class="reference internal" href="#c.workqueue_attrs" title="workqueue_attrs">workqueue_attrs</a> *<em>attrs</em><span class="sig-paren">)</span><a class="headerlink" href="#c.get_unbound_pool" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>get a worker_pool with the specified attributes</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">const</span> <span class="pre">struct</span> <span class="pre">workqueue_attrs</span> <span class="pre">*attrs</span></code></dt><dd><p>the attributes of the worker_pool to get</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Obtain a worker_pool which has the same attributes as <strong>attrs</strong>, bump the
+reference count and return it.  If there already is a matching
+worker_pool, it will be used; otherwise, this function attempts to
+create a new one.</p>
+<p>Should be called with wq_pool_mutex held.</p>
+<p><strong>Return</strong></p>
+<p>On success, a worker_pool with the same attributes as <strong>attrs</strong>.
+On failure, <code class="docutils literal notranslate"><span class="pre">NULL</span></code>.</p>
+<dl class="c function">
+<dt id="c.pwq_adjust_max_active">
+void <code class="sig-name descname">pwq_adjust_max_active</code><span class="sig-paren">(</span><em class="property">struct</em> pool_workqueue *<em>pwq</em><span class="sig-paren">)</span><a class="headerlink" href="#c.pwq_adjust_max_active" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>update a pwq’s max_active to the current setting</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">pool_workqueue</span> <span class="pre">*pwq</span></code></dt><dd><p>target pool_workqueue</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>If <strong>pwq</strong> isn’t freezing, set <strong>pwq-&gt;max_active</strong> to the associated
+workqueue’s saved_max_active and activate delayed work items
+accordingly.  If <strong>pwq</strong> is freezing, clear <strong>pwq-&gt;max_active</strong> to zero.</p>
+<dl class="c function">
+<dt id="c.wq_calc_node_cpumask">
+bool <code class="sig-name descname">wq_calc_node_cpumask</code><span class="sig-paren">(</span><em class="property">const</em> <em class="property">struct</em> <a class="reference internal" href="#c.workqueue_attrs" title="workqueue_attrs">workqueue_attrs</a> *<em>attrs</em>, int <em>node</em>, int <em>cpu_going_down</em>, cpumask_t *<em>cpumask</em><span class="sig-paren">)</span><a class="headerlink" href="#c.wq_calc_node_cpumask" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>calculate a wq_attrs’ cpumask for the specified node</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">const</span> <span class="pre">struct</span> <span class="pre">workqueue_attrs</span> <span class="pre">*attrs</span></code></dt><dd><p>the wq_attrs of the default pwq of the target workqueue</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">node</span></code></dt><dd><p>the target NUMA node</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">cpu_going_down</span></code></dt><dd><p>if &gt;= 0, the CPU to consider as offline</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">cpumask_t</span> <span class="pre">*cpumask</span></code></dt><dd><p>outarg, the resulting cpumask</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Calculate the cpumask a workqueue with <strong>attrs</strong> should use on <strong>node</strong>.  If
+<strong>cpu_going_down</strong> is &gt;= 0, that cpu is considered offline during
+calculation.  The result is stored in <strong>cpumask</strong>.</p>
+<p>If NUMA affinity is not enabled, <strong>attrs-&gt;cpumask</strong> is always used.  If
+enabled and <strong>node</strong> has online CPUs requested by <strong>attrs</strong>, the returned
+cpumask is the intersection of the possible CPUs of <strong>node</strong> and
+<strong>attrs-&gt;cpumask</strong>.</p>
+<p>The caller is responsible for ensuring that the cpumask of <strong>node</strong> stays
+stable.</p>
+<p><strong>Return</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">true</span></code> if the resulting <strong>cpumask</strong> is different from <strong>attrs-&gt;cpumask</strong>,
+<code class="docutils literal notranslate"><span class="pre">false</span></code> if equal.</p>
+<dl class="c function">
+<dt id="c.apply_workqueue_attrs">
+int <code class="sig-name descname">apply_workqueue_attrs</code><span class="sig-paren">(</span><em class="property">struct</em> workqueue_struct *<em>wq</em>, <em class="property">const</em> <em class="property">struct</em> <a class="reference internal" href="#c.workqueue_attrs" title="workqueue_attrs">workqueue_attrs</a> *<em>attrs</em><span class="sig-paren">)</span><a class="headerlink" href="#c.apply_workqueue_attrs" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>apply new workqueue_attrs to an unbound workqueue</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">workqueue_struct</span> <span class="pre">*wq</span></code></dt><dd><p>the target workqueue</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">const</span> <span class="pre">struct</span> <span class="pre">workqueue_attrs</span> <span class="pre">*attrs</span></code></dt><dd><p>the workqueue_attrs to apply, allocated with <a class="reference internal" href="#c.alloc_workqueue_attrs" title="alloc_workqueue_attrs"><code class="xref c c-func docutils literal notranslate"><span class="pre">alloc_workqueue_attrs()</span></code></a></p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Apply <strong>attrs</strong> to an unbound workqueue <strong>wq</strong>.  Unless disabled, on NUMA
+machines, this function maps a separate pwq to each NUMA node with
+possibles CPUs in <strong>attrs-&gt;cpumask</strong> so that work items are affine to the
+NUMA node it was issued on.  Older pwqs are released as in-flight work
+items finish.  Note that a work item which repeatedly requeues itself
+back-to-back will stay on its current pwq.</p>
+<p>Performs GFP_KERNEL allocations.</p>
+<p>Assumes caller has CPU hotplug read exclusion, i.e. get_online_cpus().</p>
+<p><strong>Return</strong></p>
+<p>0 on success and -errno on failure.</p>
+<dl class="c function">
+<dt id="c.wq_update_unbound_numa">
+void <code class="sig-name descname">wq_update_unbound_numa</code><span class="sig-paren">(</span><em class="property">struct</em> workqueue_struct *<em>wq</em>, int <em>cpu</em>, bool <em>online</em><span class="sig-paren">)</span><a class="headerlink" href="#c.wq_update_unbound_numa" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>update NUMA affinity of a wq for CPU hot[un]plug</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">workqueue_struct</span> <span class="pre">*wq</span></code></dt><dd><p>the target workqueue</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">cpu</span></code></dt><dd><p>the CPU coming up or going down</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">bool</span> <span class="pre">online</span></code></dt><dd><p>whether <strong>cpu</strong> is coming up or going down</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This function is to be called from <code class="docutils literal notranslate"><span class="pre">CPU_DOWN_PREPARE</span></code>, <code class="docutils literal notranslate"><span class="pre">CPU_ONLINE</span></code> and
+<code class="docutils literal notranslate"><span class="pre">CPU_DOWN_FAILED</span></code>.  <strong>cpu</strong> is being hot[un]plugged, update NUMA affinity of
+<strong>wq</strong> accordingly.</p>
+<p>If NUMA affinity can’t be adjusted due to memory allocation failure, it
+falls back to <strong>wq-&gt;dfl_pwq</strong> which may not be optimal but is always
+correct.</p>
+<p>Note that when the last allowed CPU of a NUMA node goes offline for a
+workqueue with a cpumask spanning multiple nodes, the workers which were
+already executing the work items for the workqueue will lose their CPU
+affinity and may execute on any CPU.  This is similar to how per-cpu
+workqueues behave on CPU_DOWN.  If a workqueue user wants strict
+affinity, it’s the user’s responsibility to flush the work item from
+CPU_DOWN_PREPARE.</p>
+<dl class="c function">
+<dt id="c.destroy_workqueue">
+void <code class="sig-name descname">destroy_workqueue</code><span class="sig-paren">(</span><em class="property">struct</em> workqueue_struct *<em>wq</em><span class="sig-paren">)</span><a class="headerlink" href="#c.destroy_workqueue" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>safely terminate a workqueue</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">workqueue_struct</span> <span class="pre">*wq</span></code></dt><dd><p>target workqueue</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Safely destroy a workqueue. All work currently pending will be done first.</p>
+<dl class="c function">
+<dt id="c.workqueue_set_max_active">
+void <code class="sig-name descname">workqueue_set_max_active</code><span class="sig-paren">(</span><em class="property">struct</em> workqueue_struct *<em>wq</em>, int <em>max_active</em><span class="sig-paren">)</span><a class="headerlink" href="#c.workqueue_set_max_active" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>adjust max_active of a workqueue</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">workqueue_struct</span> <span class="pre">*wq</span></code></dt><dd><p>target workqueue</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">max_active</span></code></dt><dd><p>new max_active value.</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Set max_active of <strong>wq</strong> to <strong>max_active</strong>.</p>
+<p><strong>Context</strong></p>
+<p>Don’t call from IRQ context.</p>
+<dl class="c function">
+<dt id="c.current_work">
+<em class="property">struct</em> work_struct *<code class="sig-name descname">current_work</code><span class="sig-paren">(</span>void<span class="sig-paren">)</span><a class="headerlink" href="#c.current_work" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>retrieve <code class="docutils literal notranslate"><span class="pre">current</span></code> task’s work struct</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">void</span></code></dt><dd><p>no arguments</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Determine if <code class="docutils literal notranslate"><span class="pre">current</span></code> task is a workqueue worker and what it’s working on.
+Useful to find out the context that the <code class="docutils literal notranslate"><span class="pre">current</span></code> task is running in.</p>
+<p><strong>Return</strong></p>
+<p>work struct if <code class="docutils literal notranslate"><span class="pre">current</span></code> task is a workqueue worker, <code class="docutils literal notranslate"><span class="pre">NULL</span></code> otherwise.</p>
+<dl class="c function">
+<dt id="c.current_is_workqueue_rescuer">
+bool <code class="sig-name descname">current_is_workqueue_rescuer</code><span class="sig-paren">(</span>void<span class="sig-paren">)</span><a class="headerlink" href="#c.current_is_workqueue_rescuer" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>is <code class="docutils literal notranslate"><span class="pre">current</span></code> workqueue rescuer?</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">void</span></code></dt><dd><p>no arguments</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Determine whether <code class="docutils literal notranslate"><span class="pre">current</span></code> is a workqueue rescuer.  Can be used from
+work functions to determine whether it’s being run off the rescuer task.</p>
+<p><strong>Return</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">true</span></code> if <code class="docutils literal notranslate"><span class="pre">current</span></code> is a workqueue rescuer. <code class="docutils literal notranslate"><span class="pre">false</span></code> otherwise.</p>
+<dl class="c function">
+<dt id="c.workqueue_congested">
+bool <code class="sig-name descname">workqueue_congested</code><span class="sig-paren">(</span>int <em>cpu</em>, <em class="property">struct</em> workqueue_struct *<em>wq</em><span class="sig-paren">)</span><a class="headerlink" href="#c.workqueue_congested" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>test whether a workqueue is congested</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">cpu</span></code></dt><dd><p>CPU in question</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">workqueue_struct</span> <span class="pre">*wq</span></code></dt><dd><p>target workqueue</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Test whether <strong>wq</strong>’s cpu workqueue for <strong>cpu</strong> is congested.  There is
+no synchronization around this function and the test result is
+unreliable and only useful as advisory hints or for debugging.</p>
+<p>If <strong>cpu</strong> is WORK_CPU_UNBOUND, the test is performed on the local CPU.
+Note that both per-cpu and unbound workqueues may be associated with
+multiple pool_workqueues which have separate congested states.  A
+workqueue being congested on one CPU doesn’t mean the workqueue is also
+contested on other CPUs / NUMA nodes.</p>
+<p><strong>Return</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">true</span></code> if congested, <code class="docutils literal notranslate"><span class="pre">false</span></code> otherwise.</p>
+<dl class="c function">
+<dt id="c.work_busy">
+unsigned int <code class="sig-name descname">work_busy</code><span class="sig-paren">(</span><em class="property">struct</em> work_struct *<em>work</em><span class="sig-paren">)</span><a class="headerlink" href="#c.work_busy" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>test whether a work is currently pending or running</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">work_struct</span> <span class="pre">*work</span></code></dt><dd><p>the work to be tested</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Test whether <strong>work</strong> is currently pending or running.  There is no
+synchronization around this function and the test result is
+unreliable and only useful as advisory hints or for debugging.</p>
+<p><strong>Return</strong></p>
+<p>OR’d bitmask of WORK_BUSY_* bits.</p>
+<dl class="c function">
+<dt id="c.set_worker_desc">
+void <code class="sig-name descname">set_worker_desc</code><span class="sig-paren">(</span><em class="property">const</em> char *<em>fmt</em>, ...<span class="sig-paren">)</span><a class="headerlink" href="#c.set_worker_desc" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>set description for the current work item</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">const</span> <span class="pre">char</span> <span class="pre">*fmt</span></code></dt><dd><p>printf-style format string</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">...</span></code></dt><dd><p>arguments for the format string</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This function can be called by a running work function to describe what
+the work item is about.  If the worker task gets dumped, this
+information will be printed out together to help debugging.  The
+description can be at most WORKER_DESC_LEN including the trailing ‘0’.</p>
+<dl class="c function">
+<dt id="c.print_worker_info">
+void <code class="sig-name descname">print_worker_info</code><span class="sig-paren">(</span><em class="property">const</em> char *<em>log_lvl</em>, <em class="property">struct</em> task_struct *<em>task</em><span class="sig-paren">)</span><a class="headerlink" href="#c.print_worker_info" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>print out worker information and description</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">const</span> <span class="pre">char</span> <span class="pre">*log_lvl</span></code></dt><dd><p>the log level to use when printing</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">task_struct</span> <span class="pre">*task</span></code></dt><dd><p>target task</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>If <strong>task</strong> is a worker and currently executing a work item, print out the
+name of the workqueue being serviced and worker description set with
+<a class="reference internal" href="#c.set_worker_desc" title="set_worker_desc"><code class="xref c c-func docutils literal notranslate"><span class="pre">set_worker_desc()</span></code></a> by the currently executing work item.</p>
+<p>This function can be safely called on any task as long as the
+task_struct itself is accessible.  While safe, this function isn’t
+synchronized and may print out mixups or garbages of limited length.</p>
+<dl class="c function">
+<dt id="c.show_workqueue_state">
+void <code class="sig-name descname">show_workqueue_state</code><span class="sig-paren">(</span>void<span class="sig-paren">)</span><a class="headerlink" href="#c.show_workqueue_state" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>dump workqueue state</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">void</span></code></dt><dd><p>no arguments</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Called from a sysrq handler or try_to_freeze_tasks() and prints out
+all busy workqueues and pools.</p>
+<dl class="c function">
+<dt id="c.rebind_workers">
+void <code class="sig-name descname">rebind_workers</code><span class="sig-paren">(</span><em class="property">struct</em> worker_pool *<em>pool</em><span class="sig-paren">)</span><a class="headerlink" href="#c.rebind_workers" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>rebind all workers of a pool to the associated CPU</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">worker_pool</span> <span class="pre">*pool</span></code></dt><dd><p>pool of interest</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p><strong>pool-&gt;cpu</strong> is coming online.  Rebind all workers to the CPU.</p>
+<dl class="c function">
+<dt id="c.restore_unbound_workers_cpumask">
+void <code class="sig-name descname">restore_unbound_workers_cpumask</code><span class="sig-paren">(</span><em class="property">struct</em> worker_pool *<em>pool</em>, int <em>cpu</em><span class="sig-paren">)</span><a class="headerlink" href="#c.restore_unbound_workers_cpumask" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>restore cpumask of unbound workers</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">worker_pool</span> <span class="pre">*pool</span></code></dt><dd><p>unbound pool of interest</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">cpu</span></code></dt><dd><p>the CPU which is coming up</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>An unbound pool may end up with a cpumask which doesn’t have any online
+CPUs.  When a worker of such pool get scheduled, the scheduler resets
+its cpus_allowed.  If <strong>cpu</strong> is in <strong>pool</strong>’s cpumask which didn’t have any
+online CPU before, cpus_allowed of all its workers should be restored.</p>
+<dl class="c function">
+<dt id="c.work_on_cpu">
+long <code class="sig-name descname">work_on_cpu</code><span class="sig-paren">(</span>int <em>cpu</em>, long (*<em>fn</em>)<span class="sig-paren">(</span>void*<span class="sig-paren">)</span>, void *<em>arg</em>, <span class="sig-paren">)</span><a class="headerlink" href="#c.work_on_cpu" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>run a function in thread context on a particular cpu</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">cpu</span></code></dt><dd><p>the cpu to run on</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">long</span> <span class="pre">(*fn)(void</span> <span class="pre">*)</span></code></dt><dd><p>the function to run</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">void</span> <span class="pre">*arg</span></code></dt><dd><p>the function arg</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>It is up to the caller to ensure that the cpu doesn’t go offline.
+The caller must not hold any locks which would prevent <strong>fn</strong> from completing.</p>
+<p><strong>Return</strong></p>
+<p>The value <strong>fn</strong> returns.</p>
+<dl class="c function">
+<dt id="c.work_on_cpu_safe">
+long <code class="sig-name descname">work_on_cpu_safe</code><span class="sig-paren">(</span>int <em>cpu</em>, long (*<em>fn</em>)<span class="sig-paren">(</span>void*<span class="sig-paren">)</span>, void *<em>arg</em>, <span class="sig-paren">)</span><a class="headerlink" href="#c.work_on_cpu_safe" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>run a function in thread context on a particular cpu</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">int</span> <span class="pre">cpu</span></code></dt><dd><p>the cpu to run on</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">long</span> <span class="pre">(*fn)(void</span> <span class="pre">*)</span></code></dt><dd><p>the function to run</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">void</span> <span class="pre">*arg</span></code></dt><dd><p>the function argument</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Disables CPU hotplug and calls <a class="reference internal" href="#c.work_on_cpu" title="work_on_cpu"><code class="xref c c-func docutils literal notranslate"><span class="pre">work_on_cpu()</span></code></a>. The caller must not hold
+any locks which would prevent <strong>fn</strong> from completing.</p>
+<p><strong>Return</strong></p>
+<p>The value <strong>fn</strong> returns.</p>
+<dl class="c function">
+<dt id="c.freeze_workqueues_begin">
+void <code class="sig-name descname">freeze_workqueues_begin</code><span class="sig-paren">(</span>void<span class="sig-paren">)</span><a class="headerlink" href="#c.freeze_workqueues_begin" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>begin freezing workqueues</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">void</span></code></dt><dd><p>no arguments</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Start freezing workqueues.  After this function returns, all freezable
+workqueues will queue new works to their delayed_works list instead of
+pool-&gt;worklist.</p>
+<p><strong>Context</strong></p>
+<p>Grabs and releases wq_pool_mutex, wq-&gt;mutex and pool-&gt;lock’s.</p>
+<dl class="c function">
+<dt id="c.freeze_workqueues_busy">
+bool <code class="sig-name descname">freeze_workqueues_busy</code><span class="sig-paren">(</span>void<span class="sig-paren">)</span><a class="headerlink" href="#c.freeze_workqueues_busy" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>are freezable workqueues still busy?</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">void</span></code></dt><dd><p>no arguments</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Check whether freezing is complete.  This function must be called
+between <a class="reference internal" href="#c.freeze_workqueues_begin" title="freeze_workqueues_begin"><code class="xref c c-func docutils literal notranslate"><span class="pre">freeze_workqueues_begin()</span></code></a> and <a class="reference internal" href="#c.thaw_workqueues" title="thaw_workqueues"><code class="xref c c-func docutils literal notranslate"><span class="pre">thaw_workqueues()</span></code></a>.</p>
+<p><strong>Context</strong></p>
+<p>Grabs and releases wq_pool_mutex.</p>
+<p><strong>Return</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">true</span></code> if some freezable workqueues are still busy.  <code class="docutils literal notranslate"><span class="pre">false</span></code> if freezing
+is complete.</p>
+<dl class="c function">
+<dt id="c.thaw_workqueues">
+void <code class="sig-name descname">thaw_workqueues</code><span class="sig-paren">(</span>void<span class="sig-paren">)</span><a class="headerlink" href="#c.thaw_workqueues" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>thaw workqueues</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">void</span></code></dt><dd><p>no arguments</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Thaw workqueues.  Normal queueing is restored and all collected
+frozen works are transferred to their respective pool worklists.</p>
+<p><strong>Context</strong></p>
+<p>Grabs and releases wq_pool_mutex, wq-&gt;mutex and pool-&gt;lock’s.</p>
+<dl class="c function">
+<dt id="c.workqueue_set_unbound_cpumask">
+int <code class="sig-name descname">workqueue_set_unbound_cpumask</code><span class="sig-paren">(</span>cpumask_var_t <em>cpumask</em><span class="sig-paren">)</span><a class="headerlink" href="#c.workqueue_set_unbound_cpumask" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>Set the low-level unbound cpumask</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl>
+<dt><code class="docutils literal notranslate"><span class="pre">cpumask_var_t</span> <span class="pre">cpumask</span></code></dt><dd><p>the cpumask to set</p>
+<p>The low-level workqueues cpumask is a global cpumask that limits
+the affinity of all unbound workqueues.  This function check the <strong>cpumask</strong>
+and apply it to all unbound workqueues and updates all pwqs of them.</p>
+<dl class="simple">
+<dt>Retun:      0       - Success</dt><dd><p>-EINVAL - Invalid <strong>cpumask</strong>
+-ENOMEM - Failed to allocate memory for attrs or pwqs.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="c function">
+<dt id="c.workqueue_sysfs_register">
+int <code class="sig-name descname">workqueue_sysfs_register</code><span class="sig-paren">(</span><em class="property">struct</em> workqueue_struct *<em>wq</em><span class="sig-paren">)</span><a class="headerlink" href="#c.workqueue_sysfs_register" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>make a workqueue visible in sysfs</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">workqueue_struct</span> <span class="pre">*wq</span></code></dt><dd><p>the workqueue to register</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>Expose <strong>wq</strong> in sysfs under /sys/bus/workqueue/devices.
+alloc_workqueue*() automatically calls this function if WQ_SYSFS is set
+which is the preferred method.</p>
+<p>Workqueue user should use this function directly iff it wants to apply
+workqueue_attrs before making the workqueue visible in sysfs; otherwise,
+<a class="reference internal" href="#c.apply_workqueue_attrs" title="apply_workqueue_attrs"><code class="xref c c-func docutils literal notranslate"><span class="pre">apply_workqueue_attrs()</span></code></a> may race against userland updating the
+attributes.</p>
+<p><strong>Return</strong></p>
+<p>0 on success, -errno on failure.</p>
+<dl class="c function">
+<dt id="c.workqueue_sysfs_unregister">
+void <code class="sig-name descname">workqueue_sysfs_unregister</code><span class="sig-paren">(</span><em class="property">struct</em> workqueue_struct *<em>wq</em><span class="sig-paren">)</span><a class="headerlink" href="#c.workqueue_sysfs_unregister" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>undo <a class="reference internal" href="#c.workqueue_sysfs_register" title="workqueue_sysfs_register"><code class="xref c c-func docutils literal notranslate"><span class="pre">workqueue_sysfs_register()</span></code></a></p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">struct</span> <span class="pre">workqueue_struct</span> <span class="pre">*wq</span></code></dt><dd><p>the workqueue to unregister</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>If <strong>wq</strong> is registered to sysfs by <a class="reference internal" href="#c.workqueue_sysfs_register" title="workqueue_sysfs_register"><code class="xref c c-func docutils literal notranslate"><span class="pre">workqueue_sysfs_register()</span></code></a>, unregister.</p>
+<dl class="c function">
+<dt id="c.workqueue_init_early">
+void <code class="sig-name descname">workqueue_init_early</code><span class="sig-paren">(</span>void<span class="sig-paren">)</span><a class="headerlink" href="#c.workqueue_init_early" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>early init for workqueue subsystem</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">void</span></code></dt><dd><p>no arguments</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This is the first half of two-staged workqueue subsystem initialization
+and invoked as soon as the bare basics - memory allocation, cpumasks and
+idr are up.  It sets up all the data structures and system workqueues
+and allows early boot code to create workqueues and queue/cancel work
+items.  Actual work item execution starts only after kthreads can be
+created and scheduled right before early initcalls.</p>
+<dl class="c function">
+<dt id="c.workqueue_init">
+void <code class="sig-name descname">workqueue_init</code><span class="sig-paren">(</span>void<span class="sig-paren">)</span><a class="headerlink" href="#c.workqueue_init" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>bring workqueue subsystem fully online</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">void</span></code></dt><dd><p>no arguments</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This is the latter half of two-staged workqueue subsystem initialization
+and invoked as soon as kthreads can be created and scheduled.
+Workqueues have been created and work items queued on them, but there
+are no kworkers executing the work items yet.  Populate the worker pools
+with the initial workers and enable future kworker creations.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="printk-basics.html" class="btn btn-neutral float-right" title="Message logging with printk" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="kernel-api.html" class="btn btn-neutral float-left" title="The Linux Kernel API" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
