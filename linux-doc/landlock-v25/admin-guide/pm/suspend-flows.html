@@ -1,0 +1,635 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>System Suspend Code Flows &mdash; The Linux Kernel 5.10.0-rc6+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Working-State Power Management" href="working-state.html" />
+    <link rel="prev" title="System Sleep States" href="sleep-states.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.10.0-rc6
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">The Linux kernel user’s and administrator’s guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../README.html">Linux kernel release 5.x &lt;http://kernel.org/&gt;</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../kernel-parameters.html">The kernel’s command-line parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../devices.html">Linux allocated devices (4.x+ version)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sysctl/index.html">Documentation for /proc/sys</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../abi.html">Linux ABI description</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../hw-vuln/index.html">Hardware vulnerabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reporting-bugs.html">Reporting bugs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../security-bugs.html">Security bugs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../bug-hunting.html">Bug hunting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../bug-bisect.html">Bisecting a bug</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tainted-kernels.html">Tainted kernels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ramoops.html">Ramoops oops/panic logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dynamic-debug-howto.html">Dynamic debug</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../init.html">Explaining the “No working init found.” boot hang message</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../kdump/index.html">Documentation for Kdump - The kexec-based Crash Dumping Solution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../perf/index.html">Performance monitor support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pstore-blk.html">pstore block oops/panic logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sysfs-rules.html">Rules on how to access information in sysfs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../acpi/index.html">ACPI Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../aoe/index.html">ATA over Ethernet (AoE)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../auxdisplay/index.html">Auxiliary Display Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../bcache.html">A block layer cache (bcache)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../binderfs.html">The Android binderfs Filesystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../binfmt-misc.html">Kernel Support for miscellaneous Binary Formats (binfmt_misc)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../blockdev/index.html">The Linux RapidIO Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../bootconfig.html">Boot Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../braille-console.html">Linux Braille Console</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../btmrvl.html">btmrvl driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cgroup-v1/index.html">Control Groups version 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cgroup-v2.html">Control Group v2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cifs/index.html">CIFS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../clearing-warn-once.html">Clearing WARN_ONCE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cpu-load.html">CPU load</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cputopology.html">How CPU topology info is exported via sysfs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dell_rbu.html">Dell Remote BIOS Update driver (dell_rbu)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../device-mapper/index.html">Device Mapper</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../edid.html">EDID</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../efi-stub.html">The EFI Boot Stub</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ext4.html">ext4 General Information</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../nfs/index.html">NFS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../gpio/index.html">gpio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../highuid.html">Notes on the change from 16-bit UIDs to 32-bit UIDs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../hw_random.html">Linux support for random number generator in i8xx chipsets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../initrd.html">Using the initial RAM disk (initrd)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../iostats.html">I/O statistics fields</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../java.html">Java(tm) Binary Kernel Support for Linux v1.03</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../jfs.html">IBM’s Journaled File System (JFS) for Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../kernel-per-CPU-kthreads.html">Reducing OS jitter due to per-cpu kthreads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../laptops/index.html">Laptop Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../lcd-panel-cgram.html">Parallel port LCD/Keypad Panel support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ldm.html">LDM - Logical Disk Manager (Dynamic Disks)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../lockup-watchdogs.html">Softlockup detector and hardlockup detector (aka nmi_watchdog)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../LSM/index.html">Linux Security Module Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../md.html">RAID arrays</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../media/index.html">Media subsystem admin and user guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mm/index.html">Memory Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../module-signing.html">Kernel module signing facility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mono.html">Mono(tm) Binary Kernel Support for Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../namespaces/index.html">Namespaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../numastat.html">Numa policy hit/miss statistics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../parport.html">Parport</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../perf-security.html">Perf events and tool security</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">Power Management</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="strategies.html">Power Management Strategies</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="system-wide.html">System-Wide Power Management</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="sleep-states.html">System Sleep States</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">System Suspend Code Flows</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="working-state.html">Working-State Power Management</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../pnp.html">Linux Plug and Play Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../rapidio.html">RapidIO Subsystem Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ras.html">Reliability, Availability and Serviceability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../rtc.html">Real Time Clock (RTC) Drivers for Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../serial-console.html">Linux Serial Console</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../svga.html">Video Mode Selection Support 2.13</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sysrq.html">Linux Magic System Request Key Hacks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../thunderbolt.html">USB4 and Thunderbolt</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ufs.html">Using UFS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../unicode.html">Unicode support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../vga-softcursor.html">Software cursor for VGA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../video-output.html">Video Output Switcher Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../wimax/index.html">WiMAX subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../xfs.html">The SGI XFS Filesystem</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">The Linux kernel user’s and administrator’s guide</a> &raquo;</li>
+        
+          <li><a href="index.html">Power Management</a> &raquo;</li>
+        
+          <li><a href="system-wide.html">System-Wide Power Management</a> &raquo;</li>
+        
+      <li>System Suspend Code Flows</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/admin-guide/pm/suspend-flows.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="system-suspend-code-flows">
+<h1>System Suspend Code Flows<a class="headerlink" href="#system-suspend-code-flows" title="Permalink to this headline">¶</a></h1>
+<dl class="field-list simple">
+<dt class="field-odd">Copyright</dt>
+<dd class="field-odd"><p>© 2020 Intel Corporation</p>
+</dd>
+<dt class="field-even">Author</dt>
+<dd class="field-even"><p>Rafael J. Wysocki &lt;<a class="reference external" href="mailto:rafael&#46;j&#46;wysocki&#37;&#52;&#48;intel&#46;com">rafael<span>&#46;</span>j<span>&#46;</span>wysocki<span>&#64;</span>intel<span>&#46;</span>com</a>&gt;</p>
+</dd>
+</dl>
+<p>At least one global system-wide transition needs to be carried out for the
+system to get from the working state into one of the supported
+<a class="reference internal" href="sleep-states.html"><span class="doc">sleep states</span></a>.  Hibernation requires more than one
+transition to occur for this purpose, but the other sleep states, commonly
+referred to as <em>system-wide suspend</em> (or simply <em>system suspend</em>) states, need
+only one.</p>
+<p>For those sleep states, the transition from the working state of the system into
+the target sleep state is referred to as <em>system suspend</em> too (in the majority
+of cases, whether this means a transition or a sleep state of the system should
+be clear from the context) and the transition back from the sleep state into the
+working state is referred to as <em>system resume</em>.</p>
+<p>The kernel code flows associated with the suspend and resume transitions for
+different sleep states of the system are quite similar, but there are some
+significant differences between the <a class="reference internal" href="sleep-states.html#s2idle"><span class="std std-ref">suspend-to-idle</span></a> code flows
+and the code flows related to the <a class="reference internal" href="sleep-states.html#s2ram"><span class="std std-ref">suspend-to-RAM</span></a> and
+<a class="reference internal" href="sleep-states.html#standby"><span class="std std-ref">standby</span></a> sleep states.</p>
+<p>The <a class="reference internal" href="sleep-states.html#s2ram"><span class="std std-ref">suspend-to-RAM</span></a> and <a class="reference internal" href="sleep-states.html#standby"><span class="std std-ref">standby</span></a> sleep states
+cannot be implemented without platform support and the difference between them
+boils down to the platform-specific actions carried out by the suspend and
+resume hooks that need to be provided by the platform driver to make them
+available.  Apart from that, the suspend and resume code flows for these sleep
+states are mostly identical, so they both together will be referred to as
+<em>platform-dependent suspend</em> states in what follows.</p>
+<div class="section" id="suspend-to-idle-suspend-code-flow">
+<span id="s2idle-suspend"></span><h2>Suspend-to-idle Suspend Code Flow<a class="headerlink" href="#suspend-to-idle-suspend-code-flow" title="Permalink to this headline">¶</a></h2>
+<p>The following steps are taken in order to transition the system from the working
+state to the <a class="reference internal" href="sleep-states.html#s2idle"><span class="std std-ref">suspend-to-idle</span></a> sleep state:</p>
+<blockquote>
+<div><ol class="arabic">
+<li><p>Invoking system-wide suspend notifiers.</p>
+<p>Kernel subsystems can register callbacks to be invoked when the suspend
+transition is about to occur and when the resume transition has finished.</p>
+<p>That allows them to prepare for the change of the system state and to clean
+up after getting back to the working state.</p>
+</li>
+<li><p>Freezing tasks.</p>
+<p>Tasks are frozen primarily in order to avoid unchecked hardware accesses
+from user space through MMIO regions or I/O registers exposed directly to
+it and to prevent user space from entering the kernel while the next step
+of the transition is in progress (which might have been problematic for
+various reasons).</p>
+<p>All user space tasks are intercepted as though they were sent a signal and
+put into uninterruptible sleep until the end of the subsequent system resume
+transition.</p>
+<p>The kernel threads that choose to be frozen during system suspend for
+specific reasons are frozen subsequently, but they are not intercepted.
+Instead, they are expected to periodically check whether or not they need
+to be frozen and to put themselves into uninterruptible sleep if so.  [Note,
+however, that kernel threads can use locking and other concurrency controls
+available in kernel space to synchronize themselves with system suspend and
+resume, which can be much more precise than the freezing, so the latter is
+not a recommended option for kernel threads.]</p>
+</li>
+<li><p>Suspending devices and reconfiguring IRQs.</p>
+<p>Devices are suspended in four phases called <em>prepare</em>, <em>suspend</em>,
+<em>late suspend</em> and <em>noirq suspend</em> (see <a class="reference internal" href="../../driver-api/pm/devices.html#driverapi-pm-devices"><span class="std std-ref">Device Power Management Basics</span></a> for more
+information on what exactly happens in each phase).</p>
+<p>Every device is visited in each phase, but typically it is not physically
+accessed in more than two of them.</p>
+<p>The runtime PM API is disabled for every device during the <em>late</em> suspend
+phase and high-level (“action”) interrupt handlers are prevented from being
+invoked before the <em>noirq</em> suspend phase.</p>
+<p>Interrupts are still handled after that, but they are only acknowledged to
+interrupt controllers without performing any device-specific actions that
+would be triggered in the working state of the system (those actions are
+deferred till the subsequent system resume transition as described
+<a class="reference internal" href="#s2idle-resume">below</a>).</p>
+<p>IRQs associated with system wakeup devices are “armed” so that the resume
+transition of the system is started when one of them signals an event.</p>
+</li>
+<li><p>Freezing the scheduler tick and suspending timekeeping.</p>
+<p>When all devices have been suspended, CPUs enter the idle loop and are put
+into the deepest available idle state.  While doing that, each of them
+“freezes” its own scheduler tick so that the timer events associated with
+the tick do not occur until the CPU is woken up by another interrupt source.</p>
+<p>The last CPU to enter the idle state also stops the timekeeping which
+(among other things) prevents high resolution timers from triggering going
+forward until the first CPU that is woken up restarts the timekeeping.
+That allows the CPUs to stay in the deep idle state relatively long in one
+go.</p>
+<p>From this point on, the CPUs can only be woken up by non-timer hardware
+interrupts.  If that happens, they go back to the idle state unless the
+interrupt that woke up one of them comes from an IRQ that has been armed for
+system wakeup, in which case the system resume transition is started.</p>
+</li>
+</ol>
+</div></blockquote>
+</div>
+<div class="section" id="suspend-to-idle-resume-code-flow">
+<span id="s2idle-resume"></span><h2>Suspend-to-idle Resume Code Flow<a class="headerlink" href="#suspend-to-idle-resume-code-flow" title="Permalink to this headline">¶</a></h2>
+<p>The following steps are taken in order to transition the system from the
+<a class="reference internal" href="sleep-states.html#s2idle"><span class="std std-ref">suspend-to-idle</span></a> sleep state into the working state:</p>
+<blockquote>
+<div><ol class="arabic">
+<li><p>Resuming timekeeping and unfreezing the scheduler tick.</p>
+<p>When one of the CPUs is woken up (by a non-timer hardware interrupt), it
+leaves the idle state entered in the last step of the preceding suspend
+transition, restarts the timekeeping (unless it has been restarted already
+by another CPU that woke up earlier) and the scheduler tick on that CPU is
+unfrozen.</p>
+<p>If the interrupt that has woken up the CPU was armed for system wakeup,
+the system resume transition begins.</p>
+</li>
+<li><p>Resuming devices and restoring the working-state configuration of IRQs.</p>
+<p>Devices are resumed in four phases called <em>noirq resume</em>, <em>early resume</em>,
+<em>resume</em> and <em>complete</em> (see <a class="reference internal" href="../../driver-api/pm/devices.html#driverapi-pm-devices"><span class="std std-ref">Device Power Management Basics</span></a> for more
+information on what exactly happens in each phase).</p>
+<p>Every device is visited in each phase, but typically it is not physically
+accessed in more than two of them.</p>
+<p>The working-state configuration of IRQs is restored after the <em>noirq</em> resume
+phase and the runtime PM API is re-enabled for every device whose driver
+supports it during the <em>early</em> resume phase.</p>
+</li>
+<li><p>Thawing tasks.</p>
+<p>Tasks frozen in step 2 of the preceding <a class="reference internal" href="#s2idle-suspend">suspend</a>
+transition are “thawed”, which means that they are woken up from the
+uninterruptible sleep that they went into at that time and user space tasks
+are allowed to exit the kernel.</p>
+</li>
+<li><p>Invoking system-wide resume notifiers.</p>
+<p>This is analogous to step 1 of the <a class="reference internal" href="#s2idle-suspend">suspend</a> transition
+and the same set of callbacks is invoked at this point, but a different
+“notification type” parameter value is passed to them.</p>
+</li>
+</ol>
+</div></blockquote>
+</div>
+<div class="section" id="platform-dependent-suspend-code-flow">
+<h2>Platform-dependent Suspend Code Flow<a class="headerlink" href="#platform-dependent-suspend-code-flow" title="Permalink to this headline">¶</a></h2>
+<p>The following steps are taken in order to transition the system from the working
+state to platform-dependent suspend state:</p>
+<blockquote>
+<div><ol class="arabic">
+<li><p>Invoking system-wide suspend notifiers.</p>
+<p>This step is the same as step 1 of the suspend-to-idle suspend transition
+described <a class="reference internal" href="#s2idle-suspend">above</a>.</p>
+</li>
+<li><p>Freezing tasks.</p>
+<p>This step is the same as step 2 of the suspend-to-idle suspend transition
+described <a class="reference internal" href="#s2idle-suspend">above</a>.</p>
+</li>
+<li><p>Suspending devices and reconfiguring IRQs.</p>
+<p>This step is analogous to step 3 of the suspend-to-idle suspend transition
+described <a class="reference internal" href="#s2idle-suspend">above</a>, but the arming of IRQs for system
+wakeup generally does not have any effect on the platform.</p>
+<p>There are platforms that can go into a very deep low-power state internally
+when all CPUs in them are in sufficiently deep idle states and all I/O
+devices have been put into low-power states.  On those platforms,
+suspend-to-idle can reduce system power very effectively.</p>
+<p>On the other platforms, however, low-level components (like interrupt
+controllers) need to be turned off in a platform-specific way (implemented
+in the hooks provided by the platform driver) to achieve comparable power
+reduction.</p>
+<p>That usually prevents in-band hardware interrupts from waking up the system,
+which must be done in a special platform-dependent way.  Then, the
+configuration of system wakeup sources usually starts when system wakeup
+devices are suspended and is finalized by the platform suspend hooks later
+on.</p>
+</li>
+<li><p>Disabling non-boot CPUs.</p>
+<p>On some platforms the suspend hooks mentioned above must run in a one-CPU
+configuration of the system (in particular, the hardware cannot be accessed
+by any code running in parallel with the platform suspend hooks that may,
+and often do, trap into the platform firmware in order to finalize the
+suspend transition).</p>
+<p>For this reason, the CPU offline/online (CPU hotplug) framework is used
+to take all of the CPUs in the system, except for one (the boot CPU),
+offline (typically, the CPUs that have been taken offline go into deep idle
+states).</p>
+<p>This means that all tasks are migrated away from those CPUs and all IRQs are
+rerouted to the only CPU that remains online.</p>
+</li>
+<li><p>Suspending core system components.</p>
+<p>This prepares the core system components for (possibly) losing power going
+forward and suspends the timekeeping.</p>
+</li>
+<li><p>Platform-specific power removal.</p>
+<p>This is expected to remove power from all of the system components except
+for the memory controller and RAM (in order to preserve the contents of the
+latter) and some devices designated for system wakeup.</p>
+<p>In many cases control is passed to the platform firmware which is expected
+to finalize the suspend transition as needed.</p>
+</li>
+</ol>
+</div></blockquote>
+</div>
+<div class="section" id="platform-dependent-resume-code-flow">
+<h2>Platform-dependent Resume Code Flow<a class="headerlink" href="#platform-dependent-resume-code-flow" title="Permalink to this headline">¶</a></h2>
+<p>The following steps are taken in order to transition the system from a
+platform-dependent suspend state into the working state:</p>
+<blockquote>
+<div><ol class="arabic">
+<li><p>Platform-specific system wakeup.</p>
+<p>The platform is woken up by a signal from one of the designated system
+wakeup devices (which need not be an in-band hardware interrupt)  and
+control is passed back to the kernel (the working configuration of the
+platform may need to be restored by the platform firmware before the
+kernel gets control again).</p>
+</li>
+<li><p>Resuming core system components.</p>
+<p>The suspend-time configuration of the core system components is restored and
+the timekeeping is resumed.</p>
+</li>
+<li><p>Re-enabling non-boot CPUs.</p>
+<p>The CPUs disabled in step 4 of the preceding suspend transition are taken
+back online and their suspend-time configuration is restored.</p>
+</li>
+<li><p>Resuming devices and restoring the working-state configuration of IRQs.</p>
+<p>This step is the same as step 2 of the suspend-to-idle suspend transition
+described <a class="reference internal" href="#s2idle-resume">above</a>.</p>
+</li>
+<li><p>Thawing tasks.</p>
+<p>This step is the same as step 3 of the suspend-to-idle suspend transition
+described <a class="reference internal" href="#s2idle-resume">above</a>.</p>
+</li>
+<li><p>Invoking system-wide resume notifiers.</p>
+<p>This step is the same as step 4 of the suspend-to-idle suspend transition
+described <a class="reference internal" href="#s2idle-resume">above</a>.</p>
+</li>
+</ol>
+</div></blockquote>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="working-state.html" class="btn btn-neutral float-right" title="Working-State Power Management" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="sleep-states.html" class="btn btn-neutral float-left" title="System Sleep States" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

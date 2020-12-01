@@ -1,0 +1,987 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Linux GPU Driver Developer’s Guide &mdash; The Linux Kernel 5.10.0-rc6+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Introduction" href="introduction.html" />
+    <link rel="prev" title="Kernel driver zl6100" href="../hwmon/zl6100.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.10.0-rc6
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Linux GPU Driver Developer’s Guide</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="introduction.html">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-internals.html">DRM Internals</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-mm.html">DRM Memory Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms.html">Kernel Mode Setting (KMS)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms-helpers.html">Mode Setting Helper Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-uapi.html">Userland interfaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-client.html">Kernel clients</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drivers.html">GPU Driver Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="backlight.html">Backlight support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vga-switcheroo.html">VGA Switcheroo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vgaarbiter.html">VGA Arbiter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html">TODO list</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+      <li>Linux GPU Driver Developer’s Guide</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/gpu/index.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="linux-gpu-driver-developer-s-guide">
+<h1>Linux GPU Driver Developer’s Guide<a class="headerlink" href="#linux-gpu-driver-developer-s-guide" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="introduction.html#style-guidelines">Style Guidelines</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="introduction.html#documentation-requirements-for-kapi">Documentation Requirements for kAPI</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="introduction.html#getting-started">Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="introduction.html#contribution-process">Contribution Process</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="introduction.html#feature-merge-deadlines">Feature Merge Deadlines</a></li>
+<li class="toctree-l3"><a class="reference internal" href="introduction.html#code-of-conduct">Code of Conduct</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="drm-internals.html">DRM Internals</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="drm-internals.html#driver-initialization">Driver Initialization</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="drm-internals.html#driver-information">Driver Information</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="drm-internals.html#major-minor-and-patchlevel">Major, Minor and Patchlevel</a></li>
+<li class="toctree-l4"><a class="reference internal" href="drm-internals.html#name-description-and-date">Name, Description and Date</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="drm-internals.html#device-instance-and-driver-handling">Device Instance and Driver Handling</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="drm-internals.html#display-driver-example">Display driver example</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="drm-internals.html#driver-load">Driver Load</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="drm-internals.html#component-helper-usage">Component Helper Usage</a></li>
+<li class="toctree-l4"><a class="reference internal" href="drm-internals.html#irq-helper-library">IRQ Helper Library</a></li>
+<li class="toctree-l4"><a class="reference internal" href="drm-internals.html#memory-manager-initialization">Memory Manager Initialization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="drm-internals.html#miscellaneous-device-configuration">Miscellaneous Device Configuration</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="drm-internals.html#managed-resources">Managed Resources</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-internals.html#bus-specific-device-registration-and-pci-support">Bus-specific Device Registration and PCI Support</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="drm-internals.html#open-close-file-operations-and-ioctls">Open/Close, File Operations and IOCTLs</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="drm-internals.html#file-operations">File Operations</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="drm-internals.html#misc-utilities">Misc Utilities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="drm-internals.html#printer">Printer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-internals.html#utilities">Utilities</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="drm-internals.html#legacy-support-code">Legacy Support Code</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="drm-internals.html#legacy-suspend-resume">Legacy Suspend/Resume</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-internals.html#legacy-dma-services">Legacy DMA Services</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="drm-mm.html">DRM Memory Management</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="drm-mm.html#the-translation-table-manager-ttm">The Translation Table Manager (TTM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="drm-mm.html#ttm-initialization">TTM initialization</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="drm-mm.html#the-graphics-execution-manager-gem">The Graphics Execution Manager (GEM)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="drm-mm.html#gem-initialization">GEM Initialization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-mm.html#gem-objects-creation">GEM Objects Creation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-mm.html#gem-objects-lifetime">GEM Objects Lifetime</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-mm.html#gem-objects-naming">GEM Objects Naming</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-mm.html#gem-objects-mapping">GEM Objects Mapping</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-mm.html#memory-coherency">Memory Coherency</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-mm.html#command-execution">Command Execution</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-mm.html#gem-function-reference">GEM Function Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-mm.html#gem-cma-helper-functions-reference">GEM CMA Helper Functions Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-mm.html#gem-shmem-helper-function-reference">GEM SHMEM Helper Function Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-mm.html#gem-vram-helper-functions-reference">GEM VRAM Helper Functions Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-mm.html#gem-ttm-helper-functions-reference">GEM TTM Helper Functions Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="drm-mm.html#vma-offset-manager">VMA Offset Manager</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-mm.html#prime-buffer-sharing">PRIME Buffer Sharing</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="drm-mm.html#overview-and-lifetime-rules">Overview and Lifetime Rules</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="drm-mm.html#reference-counting-for-gem-drivers">Reference Counting for GEM Drivers</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="drm-mm.html#prime-helper-functions">PRIME Helper Functions</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="drm-mm.html#exporting-buffers">Exporting buffers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="drm-mm.html#id2">Exporting buffers</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="drm-mm.html#prime-function-references">PRIME Function References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="drm-mm.html#drm-mm-range-allocator">DRM MM Range Allocator</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="drm-mm.html#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-mm.html#lru-scan-eviction-support">LRU Scan/Eviction Support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-mm.html#drm-mm-range-allocator-function-references">DRM MM Range Allocator Function References</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="drm-mm.html#drm-cache-handling">DRM Cache Handling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-mm.html#drm-sync-objects">DRM Sync Objects</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="drm-mm.html#host-side-wait-on-syncobjs">Host-side wait on syncobjs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-mm.html#import-export-of-syncobjs">Import/export of syncobjs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-mm.html#import-export-of-timeline-points-in-timeline-syncobjs">Import/export of timeline points in timeline syncobjs</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="drm-mm.html#gpu-scheduler">GPU Scheduler</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="drm-mm.html#id3">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-mm.html#scheduler-function-references">Scheduler Function References</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="drm-kms.html">Kernel Mode Setting (KMS)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms.html#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms.html#kms-core-structures-and-functions">KMS Core Structures and Functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms.html#modeset-base-object-abstraction">Modeset Base Object Abstraction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms.html#atomic-mode-setting">Atomic Mode Setting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms.html#handling-driver-private-state">Handling Driver Private State</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms.html#atomic-mode-setting-function-reference">Atomic Mode Setting Function Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms.html#atomic-mode-setting-ioctl-and-uapi-functions">Atomic Mode Setting IOCTL and UAPI Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms.html#crtc-abstraction">CRTC Abstraction</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms.html#crtc-functions-reference">CRTC Functions Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms.html#frame-buffer-abstraction">Frame Buffer Abstraction</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms.html#frame-buffer-functions-reference">Frame Buffer Functions Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms.html#drm-format-handling">DRM Format Handling</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms.html#format-modifiers">Format Modifiers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms.html#format-functions-reference">Format Functions Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms.html#dumb-buffer-objects">Dumb Buffer Objects</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms.html#plane-abstraction">Plane Abstraction</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms.html#plane-functions-reference">Plane Functions Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms.html#display-modes-function-reference">Display Modes Function Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms.html#connector-abstraction">Connector Abstraction</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms.html#connector-functions-reference">Connector Functions Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms.html#writeback-connectors">Writeback Connectors</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms.html#encoder-abstraction">Encoder Abstraction</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms.html#encoder-functions-reference">Encoder Functions Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms.html#kms-locking">KMS Locking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms.html#kms-properties">KMS Properties</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms.html#property-types-and-blob-property-support">Property Types and Blob Property Support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms.html#standard-connector-properties">Standard Connector Properties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms.html#hdmi-specific-connector-properties">HDMI Specific Connector Properties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms.html#standard-crtc-properties">Standard CRTC Properties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms.html#plane-composition-properties">Plane Composition Properties</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="drm-kms.html#fb-damage-clips">FB_DAMAGE_CLIPS</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms.html#color-management-properties">Color Management Properties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms.html#tile-group-property">Tile Group Property</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms.html#explicit-fencing-properties">Explicit Fencing Properties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms.html#variable-refresh-properties">Variable Refresh Properties</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms.html#existing-kms-properties">Existing KMS Properties</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms.html#vertical-blanking">Vertical Blanking</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms.html#vertical-blanking-and-interrupt-handling-functions-reference">Vertical Blanking and Interrupt Handling Functions Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms.html#vertical-blank-work">Vertical Blank Work</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms.html#vertical-blank-work-functions-reference">Vertical Blank Work Functions Reference</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="drm-kms-helpers.html">Mode Setting Helper Functions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms-helpers.html#modeset-helper-reference-for-common-vtables">Modeset Helper Reference for Common Vtables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms-helpers.html#atomic-modeset-helper-functions-reference">Atomic Modeset Helper Functions Reference</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms-helpers.html#overview">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms-helpers.html#implementing-asynchronous-atomic-commit">Implementing Asynchronous Atomic Commit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms-helpers.html#helper-functions-reference">Helper Functions Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms-helpers.html#atomic-state-reset-and-initialization">Atomic State Reset and Initialization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms-helpers.html#atomic-state-helper-reference">Atomic State Helper Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms-helpers.html#simple-kms-helper-reference">Simple KMS Helper Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms-helpers.html#fbdev-helper-functions-reference">fbdev Helper Functions Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms-helpers.html#format-helper-functions-reference">format Helper Functions Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms-helpers.html#framebuffer-cma-helper-functions-reference">Framebuffer CMA Helper Functions Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms-helpers.html#framebuffer-gem-helper-reference">Framebuffer GEM Helper Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms-helpers.html#bridges">Bridges</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms-helpers.html#id1">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms-helpers.html#bridge-operations">Bridge Operations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms-helpers.html#bridge-connector-helper">Bridge Connector Helper</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms-helpers.html#bridge-helper-reference">Bridge Helper Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms-helpers.html#bridge-connector-helper-reference">Bridge Connector Helper Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms-helpers.html#panel-bridge-helper-reference">Panel-Bridge Helper Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms-helpers.html#panel-helper-reference">Panel Helper Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms-helpers.html#panel-self-refresh-helper-reference">Panel Self Refresh Helper Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms-helpers.html#hdcp-helper-functions-reference">HDCP Helper Functions Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms-helpers.html#display-port-helper-functions-reference">Display Port Helper Functions Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms-helpers.html#display-port-cec-helper-functions-reference">Display Port CEC Helper Functions Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms-helpers.html#display-port-dual-mode-adaptor-helper-functions-reference">Display Port Dual Mode Adaptor Helper Functions Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms-helpers.html#display-port-mst-helpers">Display Port MST Helpers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms-helpers.html#id2">Overview</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="drm-kms-helpers.html#topology-refcount-overview">Topology refcount overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="drm-kms-helpers.html#malloc-refcount-overview">Malloc refcount overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="drm-kms-helpers.html#refcount-relationships-in-a-topology">Refcount relationships in a topology</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms-helpers.html#functions-reference">Functions Reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-kms-helpers.html#topology-lifetime-internals">Topology Lifetime Internals</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms-helpers.html#mipi-dbi-helper-functions-reference">MIPI DBI Helper Functions Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms-helpers.html#mipi-dsi-helper-functions-reference">MIPI DSI Helper Functions Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms-helpers.html#display-stream-compression-helper-functions-reference">Display Stream Compression Helper Functions Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms-helpers.html#output-probing-helper-functions-reference">Output Probing Helper Functions Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms-helpers.html#edid-helper-functions-reference">EDID Helper Functions Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms-helpers.html#scdc-helper-functions-reference">SCDC Helper Functions Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms-helpers.html#hdmi-infoframes-helper-reference">HDMI Infoframes Helper Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms-helpers.html#rectangle-utilities-reference">Rectangle Utilities Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms-helpers.html#flip-work-helper-reference">Flip-work Helper Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms-helpers.html#auxiliary-modeset-helpers">Auxiliary Modeset Helpers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms-helpers.html#of-dt-helpers">OF/DT Helpers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms-helpers.html#legacy-plane-helper-reference">Legacy Plane Helper Reference</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-kms-helpers.html#legacy-crtc-modeset-helper-functions-reference">Legacy CRTC/Modeset Helper Functions Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="drm-uapi.html">Userland interfaces</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="drm-uapi.html#libdrm-device-lookup">libdrm Device Lookup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-uapi.html#primary-nodes-drm-master-and-authentication">Primary Nodes, DRM Master and Authentication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-uapi.html#open-source-userspace-requirements">Open-Source Userspace Requirements</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-uapi.html#render-nodes">Render nodes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-uapi.html#device-hot-unplug">Device Hot-Unplug</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="drm-uapi.html#requirements-for-kms-uapi">Requirements for KMS UAPI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-uapi.html#requirements-for-render-and-cross-device-uapi">Requirements for Render and Cross-Device UAPI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-uapi.html#requirements-for-memory-maps">Requirements for Memory Maps</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="drm-uapi.html#ioctl-support-on-device-nodes">IOCTL Support on Device Nodes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="drm-uapi.html#recommended-ioctl-return-values">Recommended IOCTL Return Values</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="drm-uapi.html#testing-and-validation">Testing and validation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="drm-uapi.html#testing-requirements-for-userspace-api">Testing Requirements for userspace API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-uapi.html#validating-changes-with-igt">Validating changes with IGT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-uapi.html#using-vkms-to-test-drm-api">Using VKMS to test DRM API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-uapi.html#display-crc-support">Display CRC Support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="drm-uapi.html#debugfs-support">Debugfs Support</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="drm-uapi.html#sysfs-support">Sysfs Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-uapi.html#vblank-event-handling">VBlank event handling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="drm-uapi.html#userspace-api-structures">Userspace API Structures</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="drm-client.html">Kernel clients</a></li>
+<li class="toctree-l1"><a class="reference internal" href="drivers.html">GPU Driver Documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="amdgpu.html">drm/amdgpu AMDgpu driver</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="amdgpu.html#module-parameters">Module Parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="amdgpu.html#core-driver-infrastructure">Core Driver Infrastructure</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="amdgpu.html#memory-domains">Memory Domains</a></li>
+<li class="toctree-l4"><a class="reference internal" href="amdgpu.html#buffer-objects">Buffer Objects</a></li>
+<li class="toctree-l4"><a class="reference internal" href="amdgpu.html#prime-buffer-sharing">PRIME Buffer Sharing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="amdgpu.html#mmu-notifier">MMU Notifier</a></li>
+<li class="toctree-l4"><a class="reference internal" href="amdgpu.html#amdgpu-virtual-memory">AMDGPU Virtual Memory</a></li>
+<li class="toctree-l4"><a class="reference internal" href="amdgpu.html#interrupt-handling">Interrupt Handling</a></li>
+<li class="toctree-l4"><a class="reference internal" href="amdgpu.html#ip-blocks">IP Blocks</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="amdgpu.html#amdgpu-xgmi-support">AMDGPU XGMI Support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="amdgpu.html#amdgpu-ras-support">AMDGPU RAS Support</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="amdgpu.html#ras-debugfs-sysfs-control-and-error-injection-interfaces">RAS debugfs/sysfs Control and Error Injection Interfaces</a></li>
+<li class="toctree-l4"><a class="reference internal" href="amdgpu.html#ras-reboot-behavior-for-unrecoverable-errors">RAS Reboot Behavior for Unrecoverable Errors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="amdgpu.html#ras-error-count-sysfs-interface">RAS Error Count sysfs Interface</a></li>
+<li class="toctree-l4"><a class="reference internal" href="amdgpu.html#ras-eeprom-debugfs-interface">RAS EEPROM debugfs Interface</a></li>
+<li class="toctree-l4"><a class="reference internal" href="amdgpu.html#ras-vram-bad-pages-sysfs-interface">RAS VRAM Bad Pages sysfs Interface</a></li>
+<li class="toctree-l4"><a class="reference internal" href="amdgpu.html#sample-code">Sample Code</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="amdgpu.html#gpu-power-thermal-controls-and-monitoring">GPU Power/Thermal Controls and Monitoring</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="amdgpu.html#hwmon-interfaces">HWMON Interfaces</a></li>
+<li class="toctree-l4"><a class="reference internal" href="amdgpu.html#gpu-sysfs-power-state-interfaces">GPU sysfs Power State Interfaces</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="amdgpu.html#power-dpm-state">power_dpm_state</a></li>
+<li class="toctree-l5"><a class="reference internal" href="amdgpu.html#power-dpm-force-performance-level">power_dpm_force_performance_level</a></li>
+<li class="toctree-l5"><a class="reference internal" href="amdgpu.html#pp-table">pp_table</a></li>
+<li class="toctree-l5"><a class="reference internal" href="amdgpu.html#pp-od-clk-voltage">pp_od_clk_voltage</a></li>
+<li class="toctree-l5"><a class="reference internal" href="amdgpu.html#pp-dpm">pp_dpm_*</a></li>
+<li class="toctree-l5"><a class="reference internal" href="amdgpu.html#pp-power-profile-mode">pp_power_profile_mode</a></li>
+<li class="toctree-l5"><a class="reference internal" href="amdgpu.html#busy-percent">*_busy_percent</a></li>
+<li class="toctree-l5"><a class="reference internal" href="amdgpu.html#gpu-metrics">gpu_metrics</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="amdgpu.html#gpu-product-information">GPU Product Information</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="amdgpu.html#product-name">product_name</a></li>
+<li class="toctree-l4"><a class="reference internal" href="amdgpu.html#product-number">product_number</a></li>
+<li class="toctree-l4"><a class="reference internal" href="amdgpu.html#serial-number">serial_number</a></li>
+<li class="toctree-l4"><a class="reference internal" href="amdgpu.html#unique-id">unique_id</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="amdgpu.html#gpu-memory-usage-information">GPU Memory Usage Information</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="amdgpu.html#mem-info-vram-total">mem_info_vram_total</a></li>
+<li class="toctree-l4"><a class="reference internal" href="amdgpu.html#mem-info-vram-used">mem_info_vram_used</a></li>
+<li class="toctree-l4"><a class="reference internal" href="amdgpu.html#mem-info-vis-vram-total">mem_info_vis_vram_total</a></li>
+<li class="toctree-l4"><a class="reference internal" href="amdgpu.html#mem-info-vis-vram-used">mem_info_vis_vram_used</a></li>
+<li class="toctree-l4"><a class="reference internal" href="amdgpu.html#mem-info-gtt-total">mem_info_gtt_total</a></li>
+<li class="toctree-l4"><a class="reference internal" href="amdgpu.html#mem-info-gtt-used">mem_info_gtt_used</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="amdgpu.html#pcie-accounting-information">PCIe Accounting Information</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="amdgpu.html#pcie-bw">pcie_bw</a></li>
+<li class="toctree-l4"><a class="reference internal" href="amdgpu.html#pcie-replay-count">pcie_replay_count</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="amdgpu-dc.html">drm/amd/display - Display Core (DC)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="amdgpu-dc.html#amdgpu-display-manager">AMDgpu Display Manager</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="amdgpu-dc.html#lifecycle">Lifecycle</a></li>
+<li class="toctree-l4"><a class="reference internal" href="amdgpu-dc.html#interrupts">Interrupts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="amdgpu-dc.html#atomic-implementation">Atomic Implementation</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="amdgpu-dc.html#display-core">Display Core</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="i915.html">drm/i915 Intel GFX Driver</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="i915.html#core-driver-infrastructure">Core Driver Infrastructure</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#runtime-power-management">Runtime Power Management</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#interrupt-handling">Interrupt Handling</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#intel-gvt-g-guest-support-vgpu">Intel GVT-g Guest Support(vGPU)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#intel-gvt-g-host-support-vgpu-device-model">Intel GVT-g Host Support(vGPU device model)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#workarounds">Workarounds</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="i915.html#layout">Layout</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="i915.html#display-hardware-handling">Display Hardware Handling</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#mode-setting-infrastructure">Mode Setting Infrastructure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#frontbuffer-tracking">Frontbuffer Tracking</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#display-fifo-underrun-reporting">Display FIFO Underrun Reporting</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#plane-configuration">Plane Configuration</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#atomic-plane-helpers">Atomic Plane Helpers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#output-probing">Output Probing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#hotplug">Hotplug</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#high-definition-audio">High Definition Audio</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#intel-hdmi-lpe-audio-support">Intel HDMI LPE Audio Support</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#panel-self-refresh-psr-psr-srd">Panel Self Refresh PSR (PSR/SRD)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#frame-buffer-compression-fbc">Frame Buffer Compression (FBC)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#display-refresh-rate-switching-drrs">Display Refresh Rate Switching (DRRS)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#dpio">DPIO</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#csr-firmware-support-for-dmc">CSR firmware support for DMC</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#video-bios-table-vbt">Video BIOS Table (VBT)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#display-clocks">Display clocks</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#display-plls">Display PLLs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#display-state-buffer">Display State Buffer</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="i915.html#memory-management-and-command-submission">Memory Management and Command Submission</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#intel-gpu-basics">Intel GPU Basics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#locking-guidelines">Locking Guidelines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#gem-bo-management-implementation-details">GEM BO Management Implementation Details</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#buffer-object-eviction">Buffer Object Eviction</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#buffer-object-memory-shrinking">Buffer Object Memory Shrinking</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#batchbuffer-parsing">Batchbuffer Parsing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#user-batchbuffer-execution">User Batchbuffer Execution</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#logical-rings-logical-ring-contexts-and-execlists">Logical Rings, Logical Ring Contexts and Execlists</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#global-gtt-views">Global GTT views</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#gtt-fences-and-swizzling">GTT Fences and Swizzling</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="i915.html#global-gtt-fence-handling">Global GTT Fence Handling</a></li>
+<li class="toctree-l5"><a class="reference internal" href="i915.html#hardware-tiling-and-swizzling-details">Hardware Tiling and Swizzling Details</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#object-tiling-ioctls">Object Tiling IOCTLs</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="i915.html#microcontrollers">Microcontrollers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#wopcm">WOPCM</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="i915.html#wopcm-layout">WOPCM Layout</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#guc">GuC</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="i915.html#guc-firmware-layout">GuC Firmware Layout</a></li>
+<li class="toctree-l5"><a class="reference internal" href="i915.html#guc-memory-management">GuC Memory Management</a></li>
+<li class="toctree-l5"><a class="reference internal" href="i915.html#guc-specific-firmware-loader">GuC-specific firmware loader</a></li>
+<li class="toctree-l5"><a class="reference internal" href="i915.html#guc-based-command-submission">GuC-based command submission</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#huc">HuC</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="i915.html#huc-memory-management">HuC Memory Management</a></li>
+<li class="toctree-l5"><a class="reference internal" href="i915.html#huc-firmware-layout">HuC Firmware Layout</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#dmc">DMC</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="i915.html#tracing">Tracing</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#i915-ppgtt-create-and-i915-ppgtt-release">i915_ppgtt_create and i915_ppgtt_release</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#i915-context-create-and-i915-context-free">i915_context_create and i915_context_free</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="i915.html#perf">Perf</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#comparison-with-core-perf">Comparison with Core Perf</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="i915.html#issues-hit-with-first-prototype-based-on-core-perf">Issues hit with first prototype based on Core Perf</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#i915-driver-entry-points">i915 Driver Entry Points</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#i915-perf-stream">i915 Perf Stream</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#i915-perf-observation-architecture-stream">i915 Perf Observation Architecture Stream</a></li>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#other-i915-perf-internals">Other i915 Perf Internals</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="i915.html#style">Style</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="i915.html#register-macro-definition-style">Register macro definition style</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="i915.html#file-layout">File Layout</a></li>
+<li class="toctree-l5"><a class="reference internal" href="i915.html#naming">Naming</a></li>
+<li class="toctree-l5"><a class="reference internal" href="i915.html#examples">Examples</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="mcde.html">drm/mcde ST-Ericsson MCDE Multi-channel display engine</a></li>
+<li class="toctree-l2"><a class="reference internal" href="meson.html">drm/meson AmLogic Meson Video Processing Unit</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="meson.html#video-processing-unit">Video Processing Unit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="meson.html#video-input-unit">Video Input Unit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="meson.html#video-post-processing">Video Post Processing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="meson.html#video-encoder">Video Encoder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="meson.html#video-clocks">Video Clocks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="meson.html#hdmi-video-output">HDMI Video Output</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="pl111.html">drm/pl111 ARM PrimeCell PL110 and PL111 CLCD Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tegra.html">drm/tegra NVIDIA Tegra GPU and display driver</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="tegra.html#driver-infrastructure">Driver Infrastructure</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tegra.html#host1x-infrastructure-reference">Host1x Infrastructure Reference</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tegra.html#host1x-syncpoint-reference">Host1x Syncpoint Reference</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tegra.html#kms-driver">KMS driver</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tegra.html#display-controllers">Display Controllers</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="tegra.html#windows">Windows</a></li>
+</ul>
+</li>
+<li class="toctree-l4"><a class="reference internal" href="tegra.html#outputs">Outputs</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="tegra.html#rgb-lvds">RGB/LVDS</a></li>
+<li class="toctree-l5"><a class="reference internal" href="tegra.html#hdmi">HDMI</a></li>
+<li class="toctree-l5"><a class="reference internal" href="tegra.html#dsi">DSI</a></li>
+<li class="toctree-l5"><a class="reference internal" href="tegra.html#edp-dp">eDP/DP</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tegra.html#userspace-interface">Userspace Interface</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="tegra.html#gem-buffers">GEM Buffers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tegra.html#syncpoints">Syncpoints</a></li>
+<li class="toctree-l4"><a class="reference internal" href="tegra.html#command-stream-submission">Command Stream Submission</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="tve200.html">drm/tve200 Faraday TV Encoder 200</a></li>
+<li class="toctree-l2"><a class="reference internal" href="v3d.html">drm/v3d Broadcom V3D Graphics Driver</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="v3d.html#gpu-buffer-object-bo-management">GPU buffer object (BO) management</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="v3d.html#address-space-management">Address space management</a></li>
+<li class="toctree-l4"><a class="reference internal" href="v3d.html#gpu-scheduling">GPU Scheduling</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="v3d.html#interrupts">Interrupts</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vc4.html">drm/vc4 Broadcom VC4 Graphics Driver</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vc4.html#display-hardware-handling">Display Hardware Handling</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="vc4.html#pixel-valve-drm-crtc">Pixel Valve (DRM CRTC)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="vc4.html#hvs">HVS</a></li>
+<li class="toctree-l4"><a class="reference internal" href="vc4.html#hvs-planes">HVS planes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="vc4.html#hdmi-encoder">HDMI encoder</a></li>
+<li class="toctree-l4"><a class="reference internal" href="vc4.html#dsi-encoder">DSI encoder</a></li>
+<li class="toctree-l4"><a class="reference internal" href="vc4.html#dpi-encoder">DPI encoder</a></li>
+<li class="toctree-l4"><a class="reference internal" href="vc4.html#vec-composite-tv-out-encoder">VEC (Composite TV out) encoder</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="vc4.html#memory-management-and-3d-command-submission">Memory Management and 3D Command Submission</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="vc4.html#gpu-buffer-object-bo-management">GPU buffer object (BO) management</a></li>
+<li class="toctree-l4"><a class="reference internal" href="vc4.html#v3d-binner-command-list-bcl-validation">V3D binner command list (BCL) validation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="vc4.html#v3d-render-command-list-rcl-generation">V3D render command list (RCL) generation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="vc4.html#shader-validator-for-vc4">Shader validator for VC4</a></li>
+<li class="toctree-l4"><a class="reference internal" href="vc4.html#v3d-interrupts">V3D Interrupts</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vkms.html">drm/vkms Virtual Kernel Modesetting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vkms.html#todo">TODO</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="vkms.html#crc-api-improvements">CRC API Improvements</a></li>
+<li class="toctree-l4"><a class="reference internal" href="vkms.html#runtime-configuration">Runtime Configuration</a></li>
+<li class="toctree-l4"><a class="reference internal" href="vkms.html#add-plane-features">Add Plane Features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="vkms.html#writeback-support">Writeback support</a></li>
+<li class="toctree-l4"><a class="reference internal" href="vkms.html#prime-buffer-sharing">Prime Buffer Sharing</a></li>
+<li class="toctree-l4"><a class="reference internal" href="vkms.html#output-features">Output Features</a></li>
+<li class="toctree-l4"><a class="reference internal" href="vkms.html#atomic-check-using-ebpf">Atomic Check using eBPF</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="bridge/dw-hdmi.html">drm/bridge/dw-hdmi Synopsys DesignWare HDMI Controller</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="bridge/dw-hdmi.html#synopsys-designware-hdmi-controller">Synopsys DesignWare HDMI Controller</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="bridge/dw-hdmi.html#supported-input-formats-and-encodings">Supported Input Formats and Encodings</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="xen-front.html">drm/xen-front Xen para-virtualized frontend driver</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="xen-front.html#driver-modes-of-operation-in-terms-of-display-buffers-used">Driver modes of operation in terms of display buffers used</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="xen-front.html#buffers-allocated-by-the-frontend-driver">Buffers allocated by the frontend driver</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xen-front.html#buffers-allocated-by-the-backend">Buffers allocated by the backend</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="xen-front.html#driver-limitations">Driver limitations</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="afbc.html">Arm Framebuffer Compression (AFBC)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="afbc.html#components-and-ordering">Components and Ordering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="afbc.html#number-of-planes">Number of Planes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="afbc.html#cross-device-interoperability">Cross-device interoperability</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="komeda-kms.html">drm/komeda Arm display driver</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="komeda-kms.html#overview-of-d71-like-display-ips">Overview of D71 like display IPs</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="komeda-kms.html#layer">Layer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="komeda-kms.html#scaler">Scaler</a></li>
+<li class="toctree-l4"><a class="reference internal" href="komeda-kms.html#compositor-compiz">Compositor (compiz)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="komeda-kms.html#writeback-layer-wb-layer">Writeback Layer (wb_layer)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="komeda-kms.html#post-image-processor-improc">Post image processor (improc)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="komeda-kms.html#timing-controller-timing-ctrlr">Timing controller (timing_ctrlr)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="komeda-kms.html#merger">Merger</a></li>
+<li class="toctree-l4"><a class="reference internal" href="komeda-kms.html#splitter">Splitter</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="komeda-kms.html#possible-d71-pipeline-usage">Possible D71 Pipeline usage</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="komeda-kms.html#single-pipeline-data-flow">Single pipeline data flow</a></li>
+<li class="toctree-l4"><a class="reference internal" href="komeda-kms.html#dual-pipeline-with-slave-enabled">Dual pipeline with Slave enabled</a></li>
+<li class="toctree-l4"><a class="reference internal" href="komeda-kms.html#sub-pipelines-for-input-and-output">Sub-pipelines for input and output</a><ul>
+<li class="toctree-l5"><a class="reference internal" href="komeda-kms.html#layer-input-pipeline">Layer(input) pipeline</a></li>
+<li class="toctree-l5"><a class="reference internal" href="komeda-kms.html#writeback-output-pipeline">Writeback(output) pipeline</a></li>
+<li class="toctree-l5"><a class="reference internal" href="komeda-kms.html#display-output-pipeline">Display output pipeline</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="komeda-kms.html#komeda-resource-abstraction">Komeda Resource abstraction</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="komeda-kms.html#struct-komeda-pipeline-component">struct komeda_pipeline/component</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="komeda-kms.html#resource-discovery-and-initialization">Resource discovery and initialization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="komeda-kms.html#format-handling">Format handling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="komeda-kms.html#attach-komeda-dev-to-drm-kms">Attach komeda_dev to DRM-KMS</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="komeda-kms.html#how-to-map-plane-to-layer-input-pipeline">How to map plane to Layer(input) pipeline</a></li>
+<li class="toctree-l4"><a class="reference internal" href="komeda-kms.html#make-component-pipeline-to-be-drm-private-obj">Make component/pipeline to be drm_private_obj</a></li>
+<li class="toctree-l4"><a class="reference internal" href="komeda-kms.html#tracking-component-state-pipeline-state-by-drm-atomic-state">Tracking component_state/pipeline_state by drm_atomic_state</a></li>
+<li class="toctree-l4"><a class="reference internal" href="komeda-kms.html#komeda-component-validation">komeda component validation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="komeda-kms.html#komeda-kms-abstraction">komeda_kms Abstraction</a></li>
+<li class="toctree-l4"><a class="reference internal" href="komeda-kms.html#komde-kms-functions">komde_kms Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="komeda-kms.html#build-komeda-to-be-a-linux-module-driver">Build komeda to be a Linux module driver</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="backlight.html">Backlight support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="vga-switcheroo.html">VGA Switcheroo</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="vga-switcheroo.html#modes-of-use">Modes of Use</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vga-switcheroo.html#manual-switching-and-manual-power-control">Manual switching and manual power control</a></li>
+<li class="toctree-l3"><a class="reference internal" href="vga-switcheroo.html#driver-power-control">Driver power control</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vga-switcheroo.html#api">API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vga-switcheroo.html#public-functions">Public functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="vga-switcheroo.html#public-structures">Public structures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="vga-switcheroo.html#public-constants">Public constants</a></li>
+<li class="toctree-l3"><a class="reference internal" href="vga-switcheroo.html#private-structures">Private structures</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="vga-switcheroo.html#handlers">Handlers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="vga-switcheroo.html#apple-gmux-handler">apple-gmux Handler</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="vga-switcheroo.html#graphics-mux">Graphics mux</a></li>
+<li class="toctree-l4"><a class="reference internal" href="vga-switcheroo.html#power-control">Power control</a></li>
+<li class="toctree-l4"><a class="reference internal" href="vga-switcheroo.html#backlight-control">Backlight control</a></li>
+<li class="toctree-l4"><a class="reference internal" href="vga-switcheroo.html#id2">Public functions</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="vgaarbiter.html">VGA Arbiter</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="vgaarbiter.html#vgaarb-kernel-userspace-abi">vgaarb kernel/userspace ABI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vgaarbiter.html#in-kernel-interface">In-kernel interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vgaarbiter.html#libpciaccess">libpciaccess</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vgaarbiter.html#xf86vgaarbiter-x-server-implementation">xf86VGAArbiter (X server implementation)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vgaarbiter.html#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="todo.html">TODO list</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#difficulty">Difficulty</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="todo.html#subsystem-wide-refactorings">Subsystem-wide refactorings</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#remove-custom-dumb-map-offset-implementations">Remove custom dumb_map_offset implementations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#convert-existing-kms-drivers-to-atomic-modesetting">Convert existing KMS drivers to atomic modesetting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#clean-up-the-clipped-coordination-confusion-around-planes">Clean up the clipped coordination confusion around planes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#improve-plane-atomic-check-helpers">Improve plane atomic_check helpers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#convert-early-atomic-drivers-to-async-commit-helpers">Convert early atomic drivers to async commit helpers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#fallout-from-atomic-kms">Fallout from atomic KMS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#get-rid-of-dev-struct-mutex-from-gem-drivers">Get rid of dev-&gt;struct_mutex from GEM drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#convert-logging-to-drm-functions-with-drm-device-paramater">Convert logging to drm_* functions with drm_device paramater</a></li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#convert-drivers-to-use-simple-modeset-suspend-resume">Convert drivers to use simple modeset suspend/resume</a></li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#convert-drivers-to-use-drm-fbdev-generic-setup">Convert drivers to use drm_fbdev_generic_setup()</a></li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#drm-framebuffer-funcs-and-drm-mode-config-funcs-fb-create-cleanup">drm_framebuffer_funcs and drm_mode_config_funcs.fb_create cleanup</a></li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#clean-up-mmap-forwarding">Clean up mmap forwarding</a></li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#generic-fbdev-defio-support">Generic fbdev defio support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#idr-init-base">idr_init_base()</a></li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#struct-drm-gem-object-funcs">struct drm_gem_object_funcs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#use-drm-modeset-lock-all-helpers-instead-of-boilerplate">Use DRM_MODESET_LOCK_ALL_* helpers instead of boilerplate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#rename-cma-helpers-to-dma-helpers">Rename CMA helpers to DMA helpers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#connector-register-unregister-fixes">connector register/unregister fixes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#remove-load-unload-callbacks-from-all-non-driver-legacy-drivers">Remove load/unload callbacks from all non-DRIVER_LEGACY drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#replace-drm-detect-hdmi-monitor-with-drm-display-info-is-hdmi">Replace drm_detect_hdmi_monitor() with drm_display_info.is_hdmi</a></li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#consolidate-custom-driver-modeset-properties">Consolidate custom driver modeset properties</a></li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#plumb-drm-atomic-state-all-over">Plumb drm_atomic_state all over</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="todo.html#core-refactorings">Core refactorings</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#make-panic-handling-work">Make panic handling work</a></li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#clean-up-the-debugfs-support">Clean up the debugfs support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#kms-cleanups">KMS cleanups</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="todo.html#better-testing">Better Testing</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#enable-trinity-for-drm">Enable trinity for DRM</a></li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#make-kms-tests-in-i-g-t-generic">Make KMS tests in i-g-t generic</a></li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#extend-virtual-test-driver-vkms">Extend virtual test driver (VKMS)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#backlight-refactoring">Backlight Refactoring</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="todo.html#driver-specific">Driver Specific</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#amd-dc-display-driver">AMD DC Display Driver</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="todo.html#bootsplash">Bootsplash</a></li>
+<li class="toctree-l3"><a class="reference internal" href="todo.html#outside-drm">Outside DRM</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="todo.html#convert-fbdev-drivers-to-drm">Convert fbdev drivers to DRM</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="introduction.html" class="btn btn-neutral float-right" title="Introduction" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../hwmon/zl6100.html" class="btn btn-neutral float-left" title="Kernel driver zl6100" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

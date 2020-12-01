@@ -1,0 +1,508 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Block io priorities &mdash; The Linux Kernel 5.10.0-rc6+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Kyber I/O scheduler tunables" href="kyber-iosched.html" />
+    <link rel="prev" title="Inline Encryption" href="inline-encryption.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.10.0-rc6
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Block</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="bfq-iosched.html">BFQ (Budget Fair Queueing)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="biodoc.html">Notes on the Generic Block Layer Rewrite in Linux 2.5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="biovecs.html">Immutable biovecs and biovec iterators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="blk-mq.html">Multi-Queue Block IO Queueing Mechanism (blk-mq)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="capability.html">Generic Block Device Capability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmdline-partition.html">Embedded device command line partition parsing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data-integrity.html">Data Integrity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deadline-iosched.html">Deadline IO scheduler tunables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="inline-encryption.html">Inline Encryption</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Block io priorities</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#intro">Intro</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#scheduling-classes">Scheduling classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tools">Tools</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="kyber-iosched.html">Kyber I/O scheduler tunables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="null_blk.html">Null block device driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pr.html">Block layer support for Persistent Reservations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="queue-sysfs.html">Queue sysfs files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="request.html">struct request documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stat.html">Block layer statistics in /sys/block/&lt;dev&gt;/stat</a></li>
+<li class="toctree-l2"><a class="reference internal" href="switching-sched.html">Switching Scheduler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="writeback_cache_control.html">Explicit volatile write back cache control</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="index.html">Block</a> &raquo;</li>
+        
+      <li>Block io priorities</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/block/ioprio.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="block-io-priorities">
+<h1>Block io priorities<a class="headerlink" href="#block-io-priorities" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="intro">
+<h2>Intro<a class="headerlink" href="#intro" title="Permalink to this headline">¶</a></h2>
+<p>With the introduction of cfq v3 (aka cfq-ts or time sliced cfq), basic io
+priorities are supported for reads on files.  This enables users to io nice
+processes or process groups, similar to what has been possible with cpu
+scheduling for ages.  This document mainly details the current possibilities
+with cfq; other io schedulers do not support io priorities thus far.</p>
+</div>
+<div class="section" id="scheduling-classes">
+<h2>Scheduling classes<a class="headerlink" href="#scheduling-classes" title="Permalink to this headline">¶</a></h2>
+<p>CFQ implements three generic scheduling classes that determine how io is
+served for a process.</p>
+<p>IOPRIO_CLASS_RT: This is the realtime io class. This scheduling class is given
+higher priority than any other in the system, processes from this class are
+given first access to the disk every time. Thus it needs to be used with some
+care, one io RT process can starve the entire system. Within the RT class,
+there are 8 levels of class data that determine exactly how much time this
+process needs the disk for on each service. In the future this might change
+to be more directly mappable to performance, by passing in a wanted data
+rate instead.</p>
+<p>IOPRIO_CLASS_BE: This is the best-effort scheduling class, which is the default
+for any process that hasn’t set a specific io priority. The class data
+determines how much io bandwidth the process will get, it’s directly mappable
+to the cpu nice levels just more coarsely implemented. 0 is the highest
+BE prio level, 7 is the lowest. The mapping between cpu nice level and io
+nice level is determined as: io_nice = (cpu_nice + 20) / 5.</p>
+<p>IOPRIO_CLASS_IDLE: This is the idle scheduling class, processes running at this
+level only get io time when no one else needs the disk. The idle class has no
+class data, since it doesn’t really apply here.</p>
+</div>
+<div class="section" id="tools">
+<h2>Tools<a class="headerlink" href="#tools" title="Permalink to this headline">¶</a></h2>
+<p>See below for a sample ionice tool. Usage:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># ionice -c&lt;class&gt; -n&lt;level&gt; -p&lt;pid&gt;
+</pre></div>
+</div>
+<p>If pid isn’t given, the current process is assumed. IO priority settings
+are inherited on fork, so you can use ionice to start the process at a given
+level:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># ionice -c2 -n0 /bin/ls
+</pre></div>
+</div>
+<p>will run ls at the best-effort scheduling class at the highest priority.
+For a running process, you can give the pid instead:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># ionice -c1 -n2 -p100
+</pre></div>
+</div>
+<p>will change pid 100 to run at the realtime scheduling class, at priority 2.</p>
+<p>ionice.c tool:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;errno.h&gt;
+#include &lt;getopt.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;sys/ptrace.h&gt;
+#include &lt;asm/unistd.h&gt;
+
+extern int sys_ioprio_set(int, int, int);
+extern int sys_ioprio_get(int, int);
+
+#if defined(__i386__)
+#define __NR_ioprio_set               289
+#define __NR_ioprio_get               290
+#elif defined(__ppc__)
+#define __NR_ioprio_set               273
+#define __NR_ioprio_get               274
+#elif defined(__x86_64__)
+#define __NR_ioprio_set               251
+#define __NR_ioprio_get               252
+#elif defined(__ia64__)
+#define __NR_ioprio_set               1274
+#define __NR_ioprio_get               1275
+#else
+#error &quot;Unsupported arch&quot;
+#endif
+
+static inline int ioprio_set(int which, int who, int ioprio)
+{
+      return syscall(__NR_ioprio_set, which, who, ioprio);
+}
+
+static inline int ioprio_get(int which, int who)
+{
+      return syscall(__NR_ioprio_get, which, who);
+}
+
+enum {
+      IOPRIO_CLASS_NONE,
+      IOPRIO_CLASS_RT,
+      IOPRIO_CLASS_BE,
+      IOPRIO_CLASS_IDLE,
+};
+
+enum {
+      IOPRIO_WHO_PROCESS = 1,
+      IOPRIO_WHO_PGRP,
+      IOPRIO_WHO_USER,
+};
+
+#define IOPRIO_CLASS_SHIFT    13
+
+const char *to_prio[] = { &quot;none&quot;, &quot;realtime&quot;, &quot;best-effort&quot;, &quot;idle&quot;, };
+
+int main(int argc, char *argv[])
+{
+      int ioprio = 4, set = 0, ioprio_class = IOPRIO_CLASS_BE;
+      int c, pid = 0;
+
+      while ((c = getopt(argc, argv, &quot;+n:c:p:&quot;)) != EOF) {
+              switch (c) {
+              case &#39;n&#39;:
+                      ioprio = strtol(optarg, NULL, 10);
+                      set = 1;
+                      break;
+              case &#39;c&#39;:
+                      ioprio_class = strtol(optarg, NULL, 10);
+                      set = 1;
+                      break;
+              case &#39;p&#39;:
+                      pid = strtol(optarg, NULL, 10);
+                      break;
+              }
+      }
+
+      switch (ioprio_class) {
+              case IOPRIO_CLASS_NONE:
+                      ioprio_class = IOPRIO_CLASS_BE;
+                      break;
+              case IOPRIO_CLASS_RT:
+              case IOPRIO_CLASS_BE:
+                      break;
+              case IOPRIO_CLASS_IDLE:
+                      ioprio = 7;
+                      break;
+              default:
+                      printf(&quot;bad prio class %d\n&quot;, ioprio_class);
+                      return 1;
+      }
+
+      if (!set) {
+              if (!pid &amp;&amp; argv[optind])
+                      pid = strtol(argv[optind], NULL, 10);
+
+              ioprio = ioprio_get(IOPRIO_WHO_PROCESS, pid);
+
+              printf(&quot;pid=%d, %d\n&quot;, pid, ioprio);
+
+              if (ioprio == -1)
+                      perror(&quot;ioprio_get&quot;);
+              else {
+                      ioprio_class = ioprio &gt;&gt; IOPRIO_CLASS_SHIFT;
+                      ioprio = ioprio &amp; 0xff;
+                      printf(&quot;%s: prio %d\n&quot;, to_prio[ioprio_class], ioprio);
+              }
+      } else {
+              if (ioprio_set(IOPRIO_WHO_PROCESS, pid, ioprio | ioprio_class &lt;&lt; IOPRIO_CLASS_SHIFT) == -1) {
+                      perror(&quot;ioprio_set&quot;);
+                      return 1;
+              }
+
+              if (argv[optind])
+                      execvp(argv[optind], &amp;argv[optind]);
+      }
+
+      return 0;
+}
+</pre></div>
+</div>
+<p>March 11 2005, Jens Axboe &lt;<a class="reference external" href="mailto:jens&#46;axboe&#37;&#52;&#48;oracle&#46;com">jens<span>&#46;</span>axboe<span>&#64;</span>oracle<span>&#46;</span>com</a>&gt;</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="kyber-iosched.html" class="btn btn-neutral float-right" title="Kyber I/O scheduler tunables" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="inline-encryption.html" class="btn btn-neutral float-left" title="Inline Encryption" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
