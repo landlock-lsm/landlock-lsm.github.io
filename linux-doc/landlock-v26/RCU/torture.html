@@ -1,0 +1,603 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>RCU Torture Test Operation &mdash; The Linux Kernel  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Using RCU’s CPU Stall Detector" href="stallwarn.html" />
+    <link rel="prev" title="Reference-count design for elements of lists/arrays protected by RCU" href="rcuref.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.10.0-rc7
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../core-api/index.html#core-utilities">Core utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-api/index.html#data-structures-and-low-level-utilities">Data structures and low-level utilities</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../core-api/index.html#concurrency-primitives">Concurrency primitives</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../core-api/atomic_ops.html">Semantics and Behavior of Atomic and Bitmask Operations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../core-api/refcount-vs-atomic.html">refcount_t API compared to atomic_t</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../core-api/irq/index.html">IRQs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../core-api/local_ops.html">Semantics and Behavior of Local Atomic Operations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../core-api/padata.html">The padata parallel execution mechanism</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="index.html">RCU concepts</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="arrayRCU.html">Using RCU to Protect Read-Mostly Arrays</a></li>
+<li class="toctree-l4"><a class="reference internal" href="checklist.html">Review Checklist for RCU Patches</a></li>
+<li class="toctree-l4"><a class="reference internal" href="lockdep.html">RCU and lockdep checking</a></li>
+<li class="toctree-l4"><a class="reference internal" href="lockdep-splat.html">Lockdep-RCU Splat</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rcubarrier.html">RCU and Unloadable Modules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rcu_dereference.html">PROPER CARE AND FEEDING OF RETURN VALUES FROM rcu_dereference()</a></li>
+<li class="toctree-l4"><a class="reference internal" href="whatisRCU.html">What is RCU?  –  “Read, Copy, Update”</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rcu.html">RCU Concepts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rculist_nulls.html">Using RCU hlist_nulls to protect list and objects</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rcuref.html">Reference-count design for elements of lists/arrays protected by RCU</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">RCU Torture Test Operation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="stallwarn.html">Using RCU’s CPU Stall Detector</a></li>
+<li class="toctree-l4"><a class="reference internal" href="listRCU.html">Using RCU to Protect Read-Mostly Linked Lists</a></li>
+<li class="toctree-l4"><a class="reference internal" href="NMI-RCU.html">Using RCU to Protect Dynamic NMI Handlers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="UP.html">RCU on Uniprocessor Systems</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Design/Memory-Ordering/Tree-RCU-Memory-Ordering.html">A Tour Through TREE_RCU’s Grace-Period Memory Ordering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Design/Expedited-Grace-Periods/Expedited-Grace-Periods.html">A Tour Through TREE_RCU’s Expedited Grace Periods</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Design/Requirements/Requirements.html">A Tour Through RCU’s Requirements</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Design/Data-Structures/Data-Structures.html">A Tour Through TREE_RCU’s Data Structures [LWN.net]</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../core-api/index.html#low-level-hardware-management">Low-level hardware management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-api/index.html#memory-management">Memory management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-api/index.html#interfaces-for-kernel-debugging">Interfaces for kernel debugging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-api/index.html#everything-else">Everything else</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../core-api/index.html">Core API Documentation</a> &raquo;</li>
+        
+          <li><a href="index.html">RCU concepts</a> &raquo;</li>
+        
+      <li>RCU Torture Test Operation</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/RCU/torture.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="rcu-torture-test-operation">
+<h1>RCU Torture Test Operation<a class="headerlink" href="#rcu-torture-test-operation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="config-rcu-torture-test">
+<h2>CONFIG_RCU_TORTURE_TEST<a class="headerlink" href="#config-rcu-torture-test" title="Permalink to this headline">¶</a></h2>
+<p>The CONFIG_RCU_TORTURE_TEST config option is available for all RCU
+implementations.  It creates an rcutorture kernel module that can
+be loaded to run a torture test.  The test periodically outputs
+status messages via <a class="reference internal" href="../core-api/printk-basics.html#c.printk" title="printk"><code class="xref c c-func docutils literal notranslate"><span class="pre">printk()</span></code></a>, which can be examined via the dmesg
+command (perhaps grepping for “torture”).  The test is started
+when the module is loaded, and stops when the module is unloaded.</p>
+<p>Module parameters are prefixed by “rcutorture.” in
+<a class="reference internal" href="../admin-guide/kernel-parameters.html"><span class="doc">The kernel’s command-line parameters</span></a>.</p>
+</div>
+<div class="section" id="output">
+<h2>Output<a class="headerlink" href="#output" title="Permalink to this headline">¶</a></h2>
+<p>The statistics output is as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>rcu-torture:--- Start of test: nreaders=16 nfakewriters=4 stat_interval=30 verbose=0 test_no_idle_hz=1 shuffle_interval=3 stutter=5 irqreader=1 fqs_duration=0 fqs_holdoff=0 fqs_stutter=3 test_boost=1/0 test_boost_interval=7 test_boost_duration=4
+rcu-torture: rtc:           (null) ver: 155441 tfle: 0 rta: 155441 rtaf: 8884 rtf: 155440 rtmbe: 0 rtbe: 0 rtbke: 0 rtbre: 0 rtbf: 0 rtb: 0 nt: 3055767
+rcu-torture: Reader Pipe:  727860534 34213 0 0 0 0 0 0 0 0 0
+rcu-torture: Reader Batch:  727877838 17003 0 0 0 0 0 0 0 0 0
+rcu-torture: Free-Block Circulation:  155440 155440 155440 155440 155440 155440 155440 155440 155440 155440 0
+rcu-torture:--- End of test: SUCCESS: nreaders=16 nfakewriters=4 stat_interval=30 verbose=0 test_no_idle_hz=1 shuffle_interval=3 stutter=5 irqreader=1 fqs_duration=0 fqs_holdoff=0 fqs_stutter=3 test_boost=1/0 test_boost_interval=7 test_boost_duration=4
+</pre></div>
+</div>
+<p>The command “dmesg | grep torture:” will extract this information on
+most systems.  On more esoteric configurations, it may be necessary to
+use other commands to access the output of the <a class="reference internal" href="../core-api/printk-basics.html#c.printk" title="printk"><code class="xref c c-func docutils literal notranslate"><span class="pre">printk()</span></code></a>s used by
+the RCU torture test.  The <a class="reference internal" href="../core-api/printk-basics.html#c.printk" title="printk"><code class="xref c c-func docutils literal notranslate"><span class="pre">printk()</span></code></a>s use KERN_ALERT, so they should
+be evident.  ;-)</p>
+<p>The first and last lines show the rcutorture module parameters, and the
+last line shows either “SUCCESS” or “FAILURE”, based on rcutorture’s
+automatic determination as to whether RCU operated correctly.</p>
+<p>The entries are as follows:</p>
+<ul>
+<li><p>“rtc”: The hexadecimal address of the structure currently visible
+to readers.</p></li>
+<li><p>“ver”: The number of times since boot that the RCU writer task
+has changed the structure visible to readers.</p></li>
+<li><p>“tfle”: If non-zero, indicates that the “torture freelist”
+containing structures to be placed into the “rtc” area is empty.
+This condition is important, since it can fool you into thinking
+that RCU is working when it is not.  :-/</p></li>
+<li><p>“rta”: Number of structures allocated from the torture freelist.</p></li>
+<li><p>“rtaf”: Number of allocations from the torture freelist that have
+failed due to the list being empty.  It is not unusual for this
+to be non-zero, but it is bad for it to be a large fraction of
+the value indicated by “rta”.</p></li>
+<li><p>“rtf”: Number of frees into the torture freelist.</p></li>
+<li><p>“rtmbe”: A non-zero value indicates that rcutorture believes that
+<a class="reference internal" href="../core-api/kernel-api.html#c.rcu_assign_pointer" title="rcu_assign_pointer"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_assign_pointer()</span></code></a> and <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_dereference" title="rcu_dereference"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_dereference()</span></code></a> are not working
+correctly.  This value should be zero.</p></li>
+<li><p>“rtbe”: A non-zero value indicates that one of the <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_barrier" title="rcu_barrier"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_barrier()</span></code></a>
+family of functions is not working correctly.</p></li>
+<li><p>“rtbke”: rcutorture was unable to create the real-time kthreads
+used to force RCU priority inversion.  This value should be zero.</p></li>
+<li><p>“rtbre”: Although rcutorture successfully created the kthreads
+used to force RCU priority inversion, it was unable to set them
+to the real-time priority level of 1.  This value should be zero.</p></li>
+<li><p>“rtbf”: The number of times that RCU priority boosting failed
+to resolve RCU priority inversion.</p></li>
+<li><p>“rtb”: The number of times that rcutorture attempted to force
+an RCU priority inversion condition.  If you are testing RCU
+priority boosting via the “test_boost” module parameter, this
+value should be non-zero.</p></li>
+<li><p>“nt”: The number of times rcutorture ran RCU read-side code from
+within a timer handler.  This value should be non-zero only
+if you specified the “irqreader” module parameter.</p></li>
+<li><p>“Reader Pipe”: Histogram of “ages” of structures seen by readers.
+If any entries past the first two are non-zero, RCU is broken.
+And rcutorture prints the error flag string “!!!” to make sure
+you notice.  The age of a newly allocated structure is zero,
+it becomes one when removed from reader visibility, and is
+incremented once per grace period subsequently – and is freed
+after passing through (RCU_TORTURE_PIPE_LEN-2) grace periods.</p>
+<p>The output displayed above was taken from a correctly working
+RCU.  If you want to see what it looks like when broken, break
+it yourself.  ;-)</p>
+</li>
+<li><p>“Reader Batch”: Another histogram of “ages” of structures seen
+by readers, but in terms of counter flips (or batches) rather
+than in terms of grace periods.  The legal number of non-zero
+entries is again two.  The reason for this separate view is that
+it is sometimes easier to get the third entry to show up in the
+“Reader Batch” list than in the “Reader Pipe” list.</p></li>
+<li><p>“Free-Block Circulation”: Shows the number of torture structures
+that have reached a given point in the pipeline.  The first element
+should closely correspond to the number of structures allocated,
+the second to the number that have been removed from reader view,
+and all but the last remaining to the corresponding number of
+passes through a grace period.  The last entry should be zero,
+as it is only incremented if a torture structure’s counter
+somehow gets incremented farther than it should.</p></li>
+</ul>
+<p>Different implementations of RCU can provide implementation-specific
+additional information.  For example, Tree SRCU provides the following
+additional line:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>srcud-torture: Tree SRCU per-CPU(idx=0): 0(35,-21) 1(-4,24) 2(1,1) 3(-26,20) 4(28,-47) 5(-9,4) 6(-10,14) 7(-14,11) T(1,6)
+</pre></div>
+</div>
+<p>This line shows the per-CPU counter state, in this case for Tree SRCU
+using a dynamically allocated srcu_struct (hence “srcud-” rather than
+“srcu-“).  The numbers in parentheses are the values of the “old” and
+“current” counters for the corresponding CPU.  The “idx” value maps the
+“old” and “current” values to the underlying array, and is useful for
+debugging.  The final “T” entry contains the totals of the counters.</p>
+</div>
+<div class="section" id="usage-on-specific-kernel-builds">
+<h2>Usage on Specific Kernel Builds<a class="headerlink" href="#usage-on-specific-kernel-builds" title="Permalink to this headline">¶</a></h2>
+<p>It is sometimes desirable to torture RCU on a specific kernel build,
+for example, when preparing to put that kernel build into production.
+In that case, the kernel should be built with CONFIG_RCU_TORTURE_TEST=m
+so that the test can be started using modprobe and terminated using rmmod.</p>
+<p>For example, the following script may be used to torture RCU:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>#!/bin/sh
+
+modprobe rcutorture
+sleep 3600
+rmmod rcutorture
+dmesg | grep torture:
+</pre></div>
+</div>
+<p>The output can be manually inspected for the error flag of “!!!”.
+One could of course create a more elaborate script that automatically
+checked for such errors.  The “rmmod” command forces a “SUCCESS”,
+“FAILURE”, or “RCU_HOTPLUG” indication to be <a class="reference internal" href="../core-api/printk-basics.html#c.printk" title="printk"><code class="xref c c-func docutils literal notranslate"><span class="pre">printk()</span></code></a>ed.  The first
+two are self-explanatory, while the last indicates that while there
+were no RCU failures, CPU-hotplug problems were detected.</p>
+</div>
+<div class="section" id="usage-on-mainline-kernels">
+<h2>Usage on Mainline Kernels<a class="headerlink" href="#usage-on-mainline-kernels" title="Permalink to this headline">¶</a></h2>
+<p>When using rcutorture to test changes to RCU itself, it is often
+necessary to build a number of kernels in order to test that change
+across a broad range of combinations of the relevant Kconfig options
+and of the relevant kernel boot parameters.  In this situation, use
+of modprobe and rmmod can be quite time-consuming and error-prone.</p>
+<p>Therefore, the tools/testing/selftests/rcutorture/bin/kvm.sh
+script is available for mainline testing for x86, arm64, and
+powerpc.  By default, it will run the series of tests specified by
+tools/testing/selftests/rcutorture/configs/rcu/CFLIST, with each test
+running for 30 minutes within a guest OS using a minimal userspace
+supplied by an automatically generated initrd.  After the tests are
+complete, the resulting build products and console output are analyzed
+for errors and the results of the runs are summarized.</p>
+<p>On larger systems, rcutorture testing can be accelerated by passing the
+–cpus argument to kvm.sh.  For example, on a 64-CPU system, “–cpus 43”
+would use up to 43 CPUs to run tests concurrently, which as of v5.4 would
+complete all the scenarios in two batches, reducing the time to complete
+from about eight hours to about one hour (not counting the time to build
+the sixteen kernels).  The “–dryrun sched” argument will not run tests,
+but rather tell you how the tests would be scheduled into batches.  This
+can be useful when working out how many CPUs to specify in the –cpus
+argument.</p>
+<p>Not all changes require that all scenarios be run.  For example, a change
+to Tree SRCU might run only the SRCU-N and SRCU-P scenarios using the
+–configs argument to kvm.sh as follows:  “–configs ‘SRCU-N SRCU-P’”.
+Large systems can run multiple copies of of the full set of scenarios,
+for example, a system with 448 hardware threads can run five instances
+of the full set concurrently.  To make this happen:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>kvm.sh --cpus 448 --configs &#39;5*CFLIST&#39;
+</pre></div>
+</div>
+<p>Alternatively, such a system can run 56 concurrent instances of a single
+eight-CPU scenario:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>kvm.sh --cpus 448 --configs &#39;56*TREE04&#39;
+</pre></div>
+</div>
+<p>Or 28 concurrent instances of each of two eight-CPU scenarios:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>kvm.sh --cpus 448 --configs &#39;28*TREE03 28*TREE04&#39;
+</pre></div>
+</div>
+<p>Of course, each concurrent instance will use memory, which can be
+limited using the –memory argument, which defaults to 512M.  Small
+values for memory may require disabling the callback-flooding tests
+using the –bootargs parameter discussed below.</p>
+<p>Sometimes additional debugging is useful, and in such cases the –kconfig
+parameter to kvm.sh may be used, for example, <code class="docutils literal notranslate"><span class="pre">--kconfig</span> <span class="pre">'CONFIG_KASAN=y'</span></code>.</p>
+<p>Kernel boot arguments can also be supplied, for example, to control
+rcutorture’s module parameters.  For example, to test a change to RCU’s
+CPU stall-warning code, use “–bootargs ‘rcutorture.stall_cpu=30’”.
+This will of course result in the scripting reporting a failure, namely
+the resuling RCU CPU stall warning.  As noted above, reducing memory may
+require disabling rcutorture’s callback-flooding tests:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>kvm.sh --cpus 448 --configs &#39;56*TREE04&#39; --memory 128M \
+        --bootargs &#39;rcutorture.fwd_progress=0&#39;
+</pre></div>
+</div>
+<p>Sometimes all that is needed is a full set of kernel builds.  This is
+what the –buildonly argument does.</p>
+<p>Finally, the –trust-make argument allows each kernel build to reuse what
+it can from the previous kernel build.</p>
+<p>There are additional more arcane arguments that are documented in the
+source code of the kvm.sh script.</p>
+<p>If a run contains failures, the number of buildtime and runtime failures
+is listed at the end of the kvm.sh output, which you really should redirect
+to a file.  The build products and console output of each run is kept in
+tools/testing/selftests/rcutorture/res in timestamped directories.  A
+given directory can be supplied to kvm-find-errors.sh in order to have
+it cycle you through summaries of errors and full error logs.  For example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>tools/testing/selftests/rcutorture/bin/kvm-find-errors.sh \
+        tools/testing/selftests/rcutorture/res/2020.01.20-15.54.23
+</pre></div>
+</div>
+<p>However, it is often more convenient to access the files directly.
+Files pertaining to all scenarios in a run reside in the top-level
+directory (2020.01.20-15.54.23 in the example above), while per-scenario
+files reside in a subdirectory named after the scenario (for example,
+“TREE04”).  If a given scenario ran more than once (as in “–configs
+‘56*TREE04’” above), the directories corresponding to the second and
+subsequent runs of that scenario include a sequence number, for example,
+“TREE04.2”, “TREE04.3”, and so on.</p>
+<p>The most frequently used file in the top-level directory is testid.txt.
+If the test ran in a git repository, then this file contains the commit
+that was tested and any uncommitted changes in diff format.</p>
+<p>The most frequently used files in each per-scenario-run directory are:</p>
+<dl class="simple">
+<dt>.config:</dt><dd><p>This file contains the Kconfig options.</p>
+</dd>
+<dt>Make.out:</dt><dd><p>This contains build output for a specific scenario.</p>
+</dd>
+<dt>console.log:</dt><dd><p>This contains the console output for a specific scenario.
+This file may be examined once the kernel has booted, but
+it might not exist if the build failed.</p>
+</dd>
+<dt>vmlinux:</dt><dd><p>This contains the kernel, which can be useful with tools like
+objdump and gdb.</p>
+</dd>
+</dl>
+<p>A number of additional files are available, but are less frequently used.
+Many are intended for debugging of rcutorture itself or of its scripting.</p>
+<p>As of v5.4, a successful run with the default set of scenarios produces
+the following summary at the end of the run on a 12-CPU system:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>SRCU-N ------- 804233 GPs (148.932/s) [srcu: g10008272 f0x0 ]
+SRCU-P ------- 202320 GPs (37.4667/s) [srcud: g1809476 f0x0 ]
+SRCU-t ------- 1122086 GPs (207.794/s) [srcu: g0 f0x0 ]
+SRCU-u ------- 1111285 GPs (205.794/s) [srcud: g1 f0x0 ]
+TASKS01 ------- 19666 GPs (3.64185/s) [tasks: g0 f0x0 ]
+TASKS02 ------- 20541 GPs (3.80389/s) [tasks: g0 f0x0 ]
+TASKS03 ------- 19416 GPs (3.59556/s) [tasks: g0 f0x0 ]
+TINY01 ------- 836134 GPs (154.84/s) [rcu: g0 f0x0 ] n_max_cbs: 34198
+TINY02 ------- 850371 GPs (157.476/s) [rcu: g0 f0x0 ] n_max_cbs: 2631
+TREE01 ------- 162625 GPs (30.1157/s) [rcu: g1124169 f0x0 ]
+TREE02 ------- 333003 GPs (61.6672/s) [rcu: g2647753 f0x0 ] n_max_cbs: 35844
+TREE03 ------- 306623 GPs (56.782/s) [rcu: g2975325 f0x0 ] n_max_cbs: 1496497
+CPU count limited from 16 to 12
+TREE04 ------- 246149 GPs (45.5831/s) [rcu: g1695737 f0x0 ] n_max_cbs: 434961
+TREE05 ------- 314603 GPs (58.2598/s) [rcu: g2257741 f0x2 ] n_max_cbs: 193997
+TREE07 ------- 167347 GPs (30.9902/s) [rcu: g1079021 f0x0 ] n_max_cbs: 478732
+CPU count limited from 16 to 12
+TREE09 ------- 752238 GPs (139.303/s) [rcu: g13075057 f0x0 ] n_max_cbs: 99011
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="stallwarn.html" class="btn btn-neutral float-right" title="Using RCU’s CPU Stall Detector" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="rcuref.html" class="btn btn-neutral float-left" title="Reference-count design for elements of lists/arrays protected by RCU" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

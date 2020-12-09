@@ -1,0 +1,483 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Immutable biovecs and biovec iterators &mdash; The Linux Kernel  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Multi-Queue Block IO Queueing Mechanism (blk-mq)" href="blk-mq.html" />
+    <link rel="prev" title="Notes on the Generic Block Layer Rewrite in Linux 2.5" href="biodoc.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.10.0-rc7
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Block</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="bfq-iosched.html">BFQ (Budget Fair Queueing)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="biodoc.html">Notes on the Generic Block Layer Rewrite in Linux 2.5</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Immutable biovecs and biovec iterators</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#what-s-all-this-get-us">What’s all this get us?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#other-implications">Other implications:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#usage-of-helpers">Usage of helpers:</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="blk-mq.html">Multi-Queue Block IO Queueing Mechanism (blk-mq)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="capability.html">Generic Block Device Capability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmdline-partition.html">Embedded device command line partition parsing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data-integrity.html">Data Integrity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deadline-iosched.html">Deadline IO scheduler tunables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="inline-encryption.html">Inline Encryption</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ioprio.html">Block io priorities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kyber-iosched.html">Kyber I/O scheduler tunables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="null_blk.html">Null block device driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pr.html">Block layer support for Persistent Reservations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="queue-sysfs.html">Queue sysfs files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="request.html">struct request documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stat.html">Block layer statistics in /sys/block/&lt;dev&gt;/stat</a></li>
+<li class="toctree-l2"><a class="reference internal" href="switching-sched.html">Switching Scheduler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="writeback_cache_control.html">Explicit volatile write back cache control</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="index.html">Block</a> &raquo;</li>
+        
+      <li>Immutable biovecs and biovec iterators</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/block/biovecs.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="immutable-biovecs-and-biovec-iterators">
+<h1>Immutable biovecs and biovec iterators<a class="headerlink" href="#immutable-biovecs-and-biovec-iterators" title="Permalink to this headline">¶</a></h1>
+<p>Kent Overstreet &lt;<a class="reference external" href="mailto:kmo&#37;&#52;&#48;daterainc&#46;com">kmo<span>&#64;</span>daterainc<span>&#46;</span>com</a>&gt;</p>
+<p>As of 3.13, biovecs should never be modified after a bio has been submitted.
+Instead, we have a new struct bvec_iter which represents a range of a biovec -
+the iterator will be modified as the bio is completed, not the biovec.</p>
+<p>More specifically, old code that needed to partially complete a bio would
+update bi_sector and bi_size, and advance bi_idx to the next biovec. If it
+ended up partway through a biovec, it would increment bv_offset and decrement
+bv_len by the number of bytes completed in that biovec.</p>
+<p>In the new scheme of things, everything that must be mutated in order to
+partially complete a bio is segregated into struct bvec_iter: bi_sector,
+bi_size and bi_idx have been moved there; and instead of modifying bv_offset
+and bv_len, struct bvec_iter has bi_bvec_done, which represents the number of
+bytes completed in the current bvec.</p>
+<p>There are a bunch of new helper macros for hiding the gory details - in
+particular, presenting the illusion of partially completed biovecs so that
+normal code doesn’t have to deal with bi_bvec_done.</p>
+<blockquote>
+<div><ul>
+<li><p>Driver code should no longer refer to biovecs directly; we now have
+bio_iovec() and bio_iter_iovec() macros that return literal struct biovecs,
+constructed from the raw biovecs but taking into account bi_bvec_done and
+bi_size.</p>
+<p>bio_for_each_segment() has been updated to take a bvec_iter argument
+instead of an integer (that corresponded to bi_idx); for a lot of code the
+conversion just required changing the types of the arguments to
+bio_for_each_segment().</p>
+</li>
+<li><p>Advancing a bvec_iter is done with bio_advance_iter(); <a class="reference internal" href="../filesystems/api-summary.html#c.bio_advance" title="bio_advance"><code class="xref c c-func docutils literal notranslate"><span class="pre">bio_advance()</span></code></a> is a
+wrapper around bio_advance_iter() that operates on bio-&gt;bi_iter, and also
+advances the bio integrity’s iter if present.</p>
+<p>There is a lower level advance function - bvec_iter_advance() - which takes
+a pointer to a biovec, not a bio; this is used by the bio integrity code.</p>
+</li>
+</ul>
+</div></blockquote>
+<div class="section" id="what-s-all-this-get-us">
+<h2>What’s all this get us?<a class="headerlink" href="#what-s-all-this-get-us" title="Permalink to this headline">¶</a></h2>
+<p>Having a real iterator, and making biovecs immutable, has a number of
+advantages:</p>
+<blockquote>
+<div><ul>
+<li><p>Before, iterating over bios was very awkward when you weren’t processing
+exactly one bvec at a time - for example, <a class="reference internal" href="../filesystems/api-summary.html#c.bio_copy_data" title="bio_copy_data"><code class="xref c c-func docutils literal notranslate"><span class="pre">bio_copy_data()</span></code></a> in block/bio.c,
+which copies the contents of one bio into another. Because the biovecs
+wouldn’t necessarily be the same size, the old code was tricky convoluted -
+it had to walk two different bios at the same time, keeping both bi_idx and
+and offset into the current biovec for each.</p>
+<p>The new code is much more straightforward - have a look. This sort of
+pattern comes up in a lot of places; a lot of drivers were essentially open
+coding bvec iterators before, and having common implementation considerably
+simplifies a lot of code.</p>
+</li>
+<li><p>Before, any code that might need to use the biovec after the bio had been
+completed (perhaps to copy the data somewhere else, or perhaps to resubmit
+it somewhere else if there was an error) had to save the entire bvec array
+- again, this was being done in a fair number of places.</p></li>
+<li><p>Biovecs can be shared between multiple bios - a bvec iter can represent an
+arbitrary range of an existing biovec, both starting and ending midway
+through biovecs. This is what enables efficient splitting of arbitrary
+bios. Note that this means we _only_ use bi_size to determine when we’ve
+reached the end of a bio, not bi_vcnt - and the bio_iovec() macro takes
+bi_size into account when constructing biovecs.</p></li>
+<li><p>Splitting bios is now much simpler. The old <a class="reference internal" href="../filesystems/api-summary.html#c.bio_split" title="bio_split"><code class="xref c c-func docutils literal notranslate"><span class="pre">bio_split()</span></code></a> didn’t even work on
+bios with more than a single bvec! Now, we can efficiently split arbitrary
+size bios - because the new bio can share the old bio’s biovec.</p>
+<p>Care must be taken to ensure the biovec isn’t freed while the split bio is
+still using it, in case the original bio completes first, though. Using
+<a class="reference internal" href="../filesystems/api-summary.html#c.bio_chain" title="bio_chain"><code class="xref c c-func docutils literal notranslate"><span class="pre">bio_chain()</span></code></a> when splitting bios helps with this.</p>
+</li>
+<li><p>Submitting partially completed bios is now perfectly fine - this comes up
+occasionally in stacking block drivers and various code (e.g. md and
+bcache) had some ugly workarounds for this.</p>
+<p>It used to be the case that submitting a partially completed bio would work
+fine to _most_ devices, but since accessing the raw bvec array was the
+norm, not all drivers would respect bi_idx and those would break. Now,
+since all drivers _must_ go through the bvec iterator - and have been
+audited to make sure they are - submitting partially completed bios is
+perfectly fine.</p>
+</li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="other-implications">
+<h2>Other implications:<a class="headerlink" href="#other-implications" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><ul>
+<li><p>Almost all usage of bi_idx is now incorrect and has been removed; instead,
+where previously you would have used bi_idx you’d now use a bvec_iter,
+probably passing it to one of the helper macros.</p>
+<p>I.e. instead of using bio_iovec_idx() (or bio-&gt;bi_iovec[bio-&gt;bi_idx]), you
+now use bio_iter_iovec(), which takes a bvec_iter and returns a
+literal struct bio_vec - constructed on the fly from the raw biovec but
+taking into account bi_bvec_done (and bi_size).</p>
+</li>
+<li><p>bi_vcnt can’t be trusted or relied upon by driver code - i.e. anything that
+doesn’t actually own the bio. The reason is twofold: firstly, it’s not
+actually needed for iterating over the bio anymore - we only use bi_size.
+Secondly, when cloning a bio and reusing (a portion of) the original bio’s
+biovec, in order to calculate bi_vcnt for the new bio we’d have to iterate
+over all the biovecs in the new bio - which is silly as it’s not needed.</p>
+<p>So, don’t use bi_vcnt anymore.</p>
+</li>
+<li><p>The current interface allows the block layer to split bios as needed, so we
+could eliminate a lot of complexity particularly in stacked drivers. Code
+that creates bios can then create whatever size bios are convenient, and
+more importantly stacked drivers don’t have to deal with both their own bio
+size limitations and the limitations of the underlying devices. Thus
+there’s no need to define -&gt;merge_bvec_fn() callbacks for individual block
+drivers.</p></li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="usage-of-helpers">
+<h2>Usage of helpers:<a class="headerlink" href="#usage-of-helpers" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>The following helpers whose names have the suffix of <cite>_all</cite> can only be used
+on non-BIO_CLONED bio. They are usually used by filesystem code. Drivers
+shouldn’t use them because the bio may have been split before it reached the
+driver.</p></li>
+</ul>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>bio_for_each_segment_all()
+bio_for_each_bvec_all()
+bio_first_bvec_all()
+bio_first_page_all()
+bio_last_bvec_all()
+</pre></div>
+</div>
+<ul>
+<li><p>The following helpers iterate over single-page segment. The passed ‘struct
+bio_vec’ will contain a single-page IO vector during the iteration:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>bio_for_each_segment()
+bio_for_each_segment_all()
+</pre></div>
+</div>
+</li>
+<li><p>The following helpers iterate over multi-page bvec. The passed ‘struct
+bio_vec’ will contain a multi-page IO vector during the iteration:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>bio_for_each_bvec()
+bio_for_each_bvec_all()
+rq_for_each_bvec()
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="blk-mq.html" class="btn btn-neutral float-right" title="Multi-Queue Block IO Queueing Mechanism (blk-mq)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="biodoc.html" class="btn btn-neutral float-left" title="Notes on the Generic Block Layer Rewrite in Linux 2.5" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

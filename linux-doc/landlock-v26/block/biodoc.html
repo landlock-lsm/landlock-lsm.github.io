@@ -1,0 +1,1474 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Notes on the Generic Block Layer Rewrite in Linux 2.5 &mdash; The Linux Kernel  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Immutable biovecs and biovec iterators" href="biovecs.html" />
+    <link rel="prev" title="BFQ (Budget Fair Queueing)" href="bfq-iosched.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home" alt="Documentation Home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.10.0-rc7
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Block</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="bfq-iosched.html">BFQ (Budget Fair Queueing)</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Notes on the Generic Block Layer Rewrite in Linux 2.5</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#credits">Credits</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#bio-notes">Bio Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#scope-for-tuning-the-generic-logic-to-satisfy-various-requirements">1. Scope for tuning the generic logic to satisfy various requirements</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#tuning-based-on-low-level-device-driver-capabilities">1.1 Tuning based on low level device / driver capabilities</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#tuning-based-on-high-level-code-capabilities">1.2 Tuning Based on High level code capabilities</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#direct-access-to-low-level-device-driver-capabilities-bypass-mode">1.3 Direct Access to Low level Device/Driver Capabilities (Bypass mode)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#flexible-and-generic-but-minimalist-i-o-structure-descriptor">2. Flexible and generic but minimalist i/o structure/descriptor</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#reason-for-a-new-structure-and-requirements-addressed">2.1 Reason for a new structure and requirements addressed</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#the-bio-struct">2.2 The bio struct</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#changes-in-the-request-structure">2.3 Changes in the Request Structure</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#using-bios">3. Using bios</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#setup-teardown">3.1 Setup/Teardown</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#generic-bio-helper-routines">3.2 Generic bio helper Routines</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#i-o-submission">3.3 I/O Submission</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#the-i-o-scheduler">4. The I/O scheduler</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#i-o-scheduler-api">4.1. I/O scheduler API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#request-flows-seen-by-i-o-schedulers">4.2 Request flows seen by I/O schedulers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#i-o-scheduler-implementation">4.3 I/O scheduler implementation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#i-o-contexts">4.4 I/O contexts</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#scalability-related-changes">5. Scalability related changes</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#granular-locking-io-request-lock-replaced-by-a-per-queue-lock">5.1 Granular Locking: io_request_lock replaced by a per-queue lock</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#bit-sector-numbers-sector-t-prepares-for-64-bit-support">5.2 64 bit sector numbers (sector_t prepares for 64 bit support)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#other-changes-implications">6. Other Changes/Implications</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#partition-re-mapping-handled-by-the-generic-block-layer">6.1 Partition re-mapping handled by the generic block layer</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#a-few-tips-on-migration-of-older-drivers">7. A Few Tips on Migration of older drivers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#prior-related-impacted-patches">8. Prior/Related/Impacted patches</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#earlier-kiobuf-patches-sct-axboe-chait-hch-mkp">8.1. Earlier kiobuf patches (sct/axboe/chait/hch/mkp)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#zero-copy-networking-dave-miller">8.2. Zero-copy networking (Dave Miller)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#sgi-xfs-pagebuf-patches-use-of-kiobufs">8.3. SGI XFS - pagebuf patches - use of kiobufs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#multi-page-pioent-patch-for-bio-christoph-hellwig">8.4. Multi-page pioent patch for bio (Christoph Hellwig)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#direct-i-o-implementation-andrea-arcangeli-since-2-4-10-pre11">8.5. Direct i/o implementation (Andrea Arcangeli) since 2.4.10-pre11</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#async-i-o-implementation-patch-ben-lahaise">8.6. Async i/o implementation patch (Ben LaHaise)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#evms-layering-design-ibm-evms-team">8.7. EVMS layering design (IBM EVMS team)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#larger-page-cache-size-patch-ben-lahaise-and-large-page-size-daniel-phillips">8.8. Larger page cache size patch (Ben LaHaise) and Large page size (Daniel Phillips)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#vm-reservations-patch-ben-lahaise">8.9. VM reservations patch (Ben LaHaise)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#write-clustering-patches-marcelo-quintela-riel">8.10. Write clustering patches ? (Marcelo/Quintela/Riel ?)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#block-device-in-page-cache-patch-andrea-archangeli-now-in-2-4-10">8.11. Block device in page cache patch (Andrea Archangeli) - now in 2.4.10+</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#multiple-block-size-transfers-for-faster-raw-i-o-shailabh-nagar-badari">8.12. Multiple block-size transfers for faster raw i/o (Shailabh Nagar, Badari)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#priority-based-i-o-scheduler-prepatches-arjan-van-de-ven">8.13  Priority based i/o scheduler - prepatches (Arjan van de Ven)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#ide-taskfile-i-o-patch-andre-hedrick">8.14  IDE Taskfile i/o patch (Andre Hedrick)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#multi-page-writeout-and-readahead-patches-andrew-morton">8.15  Multi-page writeout and readahead patches (Andrew Morton)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#direct-i-o-patches-for-2-5-using-kvec-and-bio-badari-pulavarthy">8.16  Direct i/o patches for 2.5 using kvec and bio (Badari Pulavarthy)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#other-references">9. Other References</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#the-splice-i-o-model">9.1 The Splice I/O Model</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#discussions-about-kiobuf-and-bh-design">9.2 Discussions about kiobuf and bh design</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#discussions-on-mempool-on-lkml-dec-2001">9.3 Discussions on mempool on lkml - Dec 2001.</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="biovecs.html">Immutable biovecs and biovec iterators</a></li>
+<li class="toctree-l2"><a class="reference internal" href="blk-mq.html">Multi-Queue Block IO Queueing Mechanism (blk-mq)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="capability.html">Generic Block Device Capability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cmdline-partition.html">Embedded device command line partition parsing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="data-integrity.html">Data Integrity</a></li>
+<li class="toctree-l2"><a class="reference internal" href="deadline-iosched.html">Deadline IO scheduler tunables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="inline-encryption.html">Inline Encryption</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ioprio.html">Block io priorities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kyber-iosched.html">Kyber I/O scheduler tunables</a></li>
+<li class="toctree-l2"><a class="reference internal" href="null_blk.html">Null block device driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pr.html">Block layer support for Persistent Reservations</a></li>
+<li class="toctree-l2"><a class="reference internal" href="queue-sysfs.html">Queue sysfs files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="request.html">struct request documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="stat.html">Block layer statistics in /sys/block/&lt;dev&gt;/stat</a></li>
+<li class="toctree-l2"><a class="reference internal" href="switching-sched.html">Switching Scheduler</a></li>
+<li class="toctree-l2"><a class="reference internal" href="writeback_cache_control.html">Explicit volatile write back cache control</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="index.html">Block</a> &raquo;</li>
+        
+      <li>Notes on the Generic Block Layer Rewrite in Linux 2.5</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/block/biodoc.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="notes-on-the-generic-block-layer-rewrite-in-linux-2-5">
+<h1>Notes on the Generic Block Layer Rewrite in Linux 2.5<a class="headerlink" href="#notes-on-the-generic-block-layer-rewrite-in-linux-2-5" title="Permalink to this headline">¶</a></h1>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>It seems that there are lot of outdated stuff here. This seems
+to be written somewhat as a task list. Yet, eventually, something
+here might still be useful.</p>
+</div>
+<p>Notes Written on Jan 15, 2002:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Jens Axboe &lt;<a class="reference external" href="mailto:jens&#46;axboe&#37;&#52;&#48;oracle&#46;com">jens<span>&#46;</span>axboe<span>&#64;</span>oracle<span>&#46;</span>com</a>&gt;</p></li>
+<li><p>Suparna Bhattacharya &lt;<a class="reference external" href="mailto:suparna&#37;&#52;&#48;in&#46;ibm&#46;com">suparna<span>&#64;</span>in<span>&#46;</span>ibm<span>&#46;</span>com</a>&gt;</p></li>
+</ul>
+</div></blockquote>
+<p>Last Updated May 2, 2002</p>
+<dl class="simple">
+<dt>September 2003: Updated I/O Scheduler portions</dt><dd><ul class="simple">
+<li><p>Nick Piggin &lt;<a class="reference external" href="mailto:npiggin&#37;&#52;&#48;kernel&#46;dk">npiggin<span>&#64;</span>kernel<span>&#46;</span>dk</a>&gt;</p></li>
+</ul>
+</dd>
+</dl>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>These are some notes describing some aspects of the 2.5 block layer in the
+context of the bio rewrite. The idea is to bring out some of the key
+changes and a glimpse of the rationale behind those changes.</p>
+<p>Please mail corrections &amp; suggestions to <a class="reference external" href="mailto:suparna&#37;&#52;&#48;in&#46;ibm&#46;com">suparna<span>&#64;</span>in<span>&#46;</span>ibm<span>&#46;</span>com</a>.</p>
+</div>
+<div class="section" id="credits">
+<h2>Credits<a class="headerlink" href="#credits" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt>2.5 bio rewrite:</dt><dd><ul class="simple">
+<li><p>Jens Axboe &lt;<a class="reference external" href="mailto:jens&#46;axboe&#37;&#52;&#48;oracle&#46;com">jens<span>&#46;</span>axboe<span>&#64;</span>oracle<span>&#46;</span>com</a>&gt;</p></li>
+</ul>
+</dd>
+</dl>
+<p>Many aspects of the generic block layer redesign were driven by and evolved
+over discussions, prior patches and the collective experience of several
+people. See sections 8 and 9 for a list of some related references.</p>
+<p>The following people helped with review comments and inputs for this
+document:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Christoph Hellwig &lt;<a class="reference external" href="mailto:hch&#37;&#52;&#48;infradead&#46;org">hch<span>&#64;</span>infradead<span>&#46;</span>org</a>&gt;</p></li>
+<li><p>Arjan van de Ven &lt;<a class="reference external" href="mailto:arjanv&#37;&#52;&#48;redhat&#46;com">arjanv<span>&#64;</span>redhat<span>&#46;</span>com</a>&gt;</p></li>
+<li><p>Randy Dunlap &lt;<a class="reference external" href="mailto:rdunlap&#37;&#52;&#48;xenotime&#46;net">rdunlap<span>&#64;</span>xenotime<span>&#46;</span>net</a>&gt;</p></li>
+<li><p>Andre Hedrick &lt;<a class="reference external" href="mailto:andre&#37;&#52;&#48;linux-ide&#46;org">andre<span>&#64;</span>linux-ide<span>&#46;</span>org</a>&gt;</p></li>
+</ul>
+</div></blockquote>
+<p>The following people helped with fixes/contributions to the bio patches
+while it was still work-in-progress:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>David S. Miller &lt;<a class="reference external" href="mailto:davem&#37;&#52;&#48;redhat&#46;com">davem<span>&#64;</span>redhat<span>&#46;</span>com</a>&gt;</p></li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="bio-notes">
+<h2>Bio Notes<a class="headerlink" href="#bio-notes" title="Permalink to this headline">¶</a></h2>
+<p>Let us discuss the changes in the context of how some overall goals for the
+block layer are addressed.</p>
+</div>
+<div class="section" id="scope-for-tuning-the-generic-logic-to-satisfy-various-requirements">
+<h2>1. Scope for tuning the generic logic to satisfy various requirements<a class="headerlink" href="#scope-for-tuning-the-generic-logic-to-satisfy-various-requirements" title="Permalink to this headline">¶</a></h2>
+<p>The block layer design supports adaptable abstractions to handle common
+processing with the ability to tune the logic to an appropriate extent
+depending on the nature of the device and the requirements of the caller.
+One of the objectives of the rewrite was to increase the degree of tunability
+and to enable higher level code to utilize underlying device/driver
+capabilities to the maximum extent for better i/o performance. This is
+important especially in the light of ever improving hardware capabilities
+and application/middleware software designed to take advantage of these
+capabilities.</p>
+<div class="section" id="tuning-based-on-low-level-device-driver-capabilities">
+<h3>1.1 Tuning based on low level device / driver capabilities<a class="headerlink" href="#tuning-based-on-low-level-device-driver-capabilities" title="Permalink to this headline">¶</a></h3>
+<p>Sophisticated devices with large built-in caches, intelligent i/o scheduling
+optimizations, high memory DMA support, etc may find some of the
+generic processing an overhead, while for less capable devices the
+generic functionality is essential for performance or correctness reasons.
+Knowledge of some of the capabilities or parameters of the device should be
+used at the generic block layer to take the right decisions on
+behalf of the driver.</p>
+<p>How is this achieved ?</p>
+<p>Tuning at a per-queue level:</p>
+<ol class="lowerroman simple">
+<li><p>Per-queue limits/values exported to the generic layer by the driver</p></li>
+</ol>
+<p>Various parameters that the generic i/o scheduler logic uses are set at
+a per-queue level (e.g maximum request size, maximum number of segments in
+a scatter-gather list, logical block size)</p>
+<p>Some parameters that were earlier available as global arrays indexed by
+major/minor are now directly associated with the queue. Some of these may
+move into the block device structure in the future. Some characteristics
+have been incorporated into a queue flags field rather than separate fields
+in themselves.  There are blk_queue_xxx functions to set the parameters,
+rather than update the fields directly</p>
+<p>Some new queue property settings:</p>
+<blockquote>
+<div><dl>
+<dt>blk_queue_bounce_limit(q, u64 dma_address)</dt><dd><p>Enable I/O to highmem pages, dma_address being the
+limit. No highmem default.</p>
+</dd>
+<dt>blk_queue_max_sectors(q, max_sectors)</dt><dd><p>Sets two variables that limit the size of the request.</p>
+<ul class="simple">
+<li><p>The request queue’s max_sectors, which is a soft size in
+units of 512 byte sectors, and could be dynamically varied
+by the core kernel.</p></li>
+<li><p>The request queue’s max_hw_sectors, which is a hard limit
+and reflects the maximum size request a driver can handle
+in units of 512 byte sectors.</p></li>
+</ul>
+<p>The default for both max_sectors and max_hw_sectors is
+255. The upper limit of max_sectors is 1024.</p>
+</dd>
+<dt>blk_queue_max_phys_segments(q, max_segments)</dt><dd><p>Maximum physical segments you can handle in a request. 128
+default (driver limit). (See 3.2.2)</p>
+</dd>
+<dt>blk_queue_max_hw_segments(q, max_segments)</dt><dd><p>Maximum dma segments the hardware can handle in a request. 128
+default (host adapter limit, after dma remapping).
+(See 3.2.2)</p>
+</dd>
+<dt>blk_queue_max_segment_size(q, max_seg_size)</dt><dd><p>Maximum size of a clustered segment, 64kB default.</p>
+</dd>
+<dt>blk_queue_logical_block_size(q, logical_block_size)</dt><dd><p>Lowest possible sector size that the hardware can operate
+on, 512 bytes default.</p>
+</dd>
+</dl>
+</div></blockquote>
+<p>New queue flags:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>QUEUE_FLAG_CLUSTER (see 3.2.2)</p></li>
+<li><p>QUEUE_FLAG_QUEUED (see 3.2.4)</p></li>
+</ul>
+</div></blockquote>
+<ol class="lowerroman simple" start="2">
+<li><p>High-mem i/o capabilities are now considered the default</p></li>
+</ol>
+<p>The generic bounce buffer logic, present in 2.4, where the block layer would
+by default copyin/out i/o requests on high-memory buffers to low-memory buffers
+assuming that the driver wouldn’t be able to handle it directly, has been
+changed in 2.5. The bounce logic is now applied only for memory ranges
+for which the device cannot handle i/o. A driver can specify this by
+setting the queue bounce limit for the request queue for the device
+(<a class="reference internal" href="../core-api/kernel-api.html#c.blk_queue_bounce_limit" title="blk_queue_bounce_limit"><code class="xref c c-func docutils literal notranslate"><span class="pre">blk_queue_bounce_limit()</span></code></a>). This avoids the inefficiencies of the copyin/out
+where a device is capable of handling high memory i/o.</p>
+<p>In order to enable high-memory i/o where the device is capable of supporting
+it, the pci dma mapping routines and associated data structures have now been
+modified to accomplish a direct page -&gt; bus translation, without requiring
+a virtual address mapping (unlike the earlier scheme of virtual address
+-&gt; bus translation). So this works uniformly for high-memory pages (which
+do not have a corresponding kernel virtual address space mapping) and
+low-memory pages.</p>
+<p>Note: Please refer to <a class="reference internal" href="../core-api/dma-api-howto.html"><span class="doc">Dynamic DMA mapping Guide</span></a> for a discussion
+on PCI high mem DMA aspects and mapping of scatter gather lists, and support
+for 64 bit PCI.</p>
+<p>Special handling is required only for cases where i/o needs to happen on
+pages at physical memory addresses beyond what the device can support. In these
+cases, a bounce bio representing a buffer from the supported memory range
+is used for performing the i/o with copyin/copyout as needed depending on
+the type of the operation.  For example, in case of a read operation, the
+data read has to be copied to the original buffer on i/o completion, so a
+callback routine is set up to do this, while for write, the data is copied
+from the original buffer to the bounce buffer prior to issuing the
+operation. Since an original buffer may be in a high memory area that’s not
+mapped in kernel virtual addr, a kmap operation may be required for
+performing the copy, and special care may be needed in the completion path
+as it may not be in irq context. Special care is also required (by way of
+GFP flags) when allocating bounce buffers, to avoid certain highmem
+deadlock possibilities.</p>
+<p>It is also possible that a bounce buffer may be allocated from high-memory
+area that’s not mapped in kernel virtual addr, but within the range that the
+device can use directly; so the bounce page may need to be kmapped during
+copy operations. [Note: This does not hold in the current implementation,
+though]</p>
+<p>There are some situations when pages from high memory may need to
+be kmapped, even if bounce buffers are not necessary. For example a device
+may need to abort DMA operations and revert to PIO for the transfer, in
+which case a virtual mapping of the page is required. For SCSI it is also
+done in some scenarios where the low level driver cannot be trusted to
+handle a single sg entry correctly. The driver is expected to perform the
+kmaps as needed on such occasions as appropriate. A driver could also use
+the blk_queue_bounce() routine on its own to bounce highmem i/o to low
+memory for specific requests if so desired.</p>
+<ol class="lowerroman simple" start="3">
+<li><p>The i/o scheduler algorithm itself can be replaced/set as appropriate</p></li>
+</ol>
+<p>As in 2.4, it is possible to plugin a brand new i/o scheduler for a particular
+queue or pick from (copy) existing generic schedulers and replace/override
+certain portions of it. The 2.5 rewrite provides improved modularization
+of the i/o scheduler. There are more pluggable callbacks, e.g for init,
+add request, extract request, which makes it possible to abstract specific
+i/o scheduling algorithm aspects and details outside of the generic loop.
+It also makes it possible to completely hide the implementation details of
+the i/o scheduler from block drivers.</p>
+<p>I/O scheduler wrappers are to be used instead of accessing the queue directly.
+See section 4. The I/O scheduler for details.</p>
+</div>
+<div class="section" id="tuning-based-on-high-level-code-capabilities">
+<h3>1.2 Tuning Based on High level code capabilities<a class="headerlink" href="#tuning-based-on-high-level-code-capabilities" title="Permalink to this headline">¶</a></h3>
+<ol class="lowerroman simple">
+<li><p>Application capabilities for raw i/o</p></li>
+</ol>
+<p>This comes from some of the high-performance database/middleware
+requirements where an application prefers to make its own i/o scheduling
+decisions based on an understanding of the access patterns and i/o
+characteristics</p>
+<p>ii. High performance filesystems or other higher level kernel code’s
+capabilities</p>
+<p>Kernel components like filesystems could also take their own i/o scheduling
+decisions for optimizing performance. Journalling filesystems may need
+some control over i/o ordering.</p>
+<p>What kind of support exists at the generic block layer for this ?</p>
+<p>The flags and rw fields in the bio structure can be used for some tuning
+from above e.g indicating that an i/o is just a readahead request, or priority
+settings (currently unused). As far as user applications are concerned they
+would need an additional mechanism either via open flags or ioctls, or some
+other upper level mechanism to communicate such settings to block.</p>
+<div class="section" id="request-priority-latency">
+<h4>1.2.1 Request Priority/Latency<a class="headerlink" href="#request-priority-latency" title="Permalink to this headline">¶</a></h4>
+<p>Todo/Under discussion:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Arjan&#39;s proposed request priority scheme allows higher levels some broad
+control (high/med/low) over the priority  of an i/o request vs other pending
+requests in the queue. For example it allows reads for bringing in an
+executable page on demand to be given a higher priority over pending write
+requests which haven&#39;t aged too much on the queue. Potentially this priority
+could even be exposed to applications in some manner, providing higher level
+tunability. Time based aging avoids starvation of lower priority
+requests. Some bits in the bi_opf flags field in the bio structure are
+intended to be used for this priority information.
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="direct-access-to-low-level-device-driver-capabilities-bypass-mode">
+<h3>1.3 Direct Access to Low level Device/Driver Capabilities (Bypass mode)<a class="headerlink" href="#direct-access-to-low-level-device-driver-capabilities-bypass-mode" title="Permalink to this headline">¶</a></h3>
+<p>(e.g Diagnostics, Systems Management)</p>
+<p>There are situations where high-level code needs to have direct access to
+the low level device capabilities or requires the ability to issue commands
+to the device bypassing some of the intermediate i/o layers.
+These could, for example, be special control commands issued through ioctl
+interfaces, or could be raw read/write commands that stress the drive’s
+capabilities for certain kinds of fitness tests. Having direct interfaces at
+multiple levels without having to pass through upper layers makes
+it possible to perform bottom up validation of the i/o path, layer by
+layer, starting from the media.</p>
+<p>The normal i/o submission interfaces, e.g submit_bio, could be bypassed
+for specially crafted requests which such ioctl or diagnostics
+interfaces would typically use, and the elevator add_request routine
+can instead be used to directly insert such requests in the queue or preferably
+the blk_do_rq routine can be used to place the request on the queue and
+wait for completion. Alternatively, sometimes the caller might just
+invoke a lower level driver specific interface with the request as a
+parameter.</p>
+<p>If the request is a means for passing on special information associated with
+the command, then such information is associated with the request-&gt;special
+field (rather than misuse the request-&gt;buffer field which is meant for the
+request data buffer’s virtual mapping).</p>
+<p>For passing request data, the caller must build up a bio descriptor
+representing the concerned memory buffer if the underlying driver interprets
+bio segments or uses the block layer end*request* functions for i/o
+completion. Alternatively one could directly use the request-&gt;buffer field to
+specify the virtual address of the buffer, if the driver expects buffer
+addresses passed in this way and ignores bio entries for the request type
+involved. In the latter case, the driver would modify and manage the
+request-&gt;buffer, request-&gt;sector and request-&gt;nr_sectors or
+request-&gt;current_nr_sectors fields itself rather than using the block layer
+end_request or end_that_request_first completion interfaces.
+(See 2.3 or <a class="reference internal" href="request.html"><span class="doc">struct request documentation</span></a> for a brief explanation of
+the request structure fields)</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[TBD: end_that_request_last should be usable even in this case;
+Perhaps an end_that_direct_request_first routine could be implemented to make
+handling direct requests easier for such drivers; Also for drivers that
+expect bios, a helper function could be provided for setting up a bio
+corresponding to a data buffer]
+
+&lt;JENS: I dont understand the above, why is end_that_request_first() not
+usable? Or _last for that matter. I must be missing something&gt;
+
+&lt;SUP: What I meant here was that if the request doesn&#39;t have a bio, then
+ end_that_request_first doesn&#39;t modify nr_sectors or current_nr_sectors,
+ and hence can&#39;t be used for advancing request state settings on the
+ completion of partial transfers. The driver has to modify these fields
+ directly by hand.
+ This is because end_that_request_first only iterates over the bio list,
+ and always returns 0 if there are none associated with the request.
+ _last works OK in this case, and is not a problem, as I mentioned earlier
+&gt;
+</pre></div>
+</div>
+<div class="section" id="pre-built-commands">
+<h4>1.3.1 Pre-built Commands<a class="headerlink" href="#pre-built-commands" title="Permalink to this headline">¶</a></h4>
+<p>A request can be created with a pre-built custom command  to be sent directly
+to the device. The cmd block in the request structure has room for filling
+in the command bytes. (i.e rq-&gt;cmd is now 16 bytes in size, and meant for
+command pre-building, and the type of the request is now indicated
+through rq-&gt;flags instead of via rq-&gt;cmd)</p>
+<p>The request structure flags can be set up to indicate the type of request
+in such cases (REQ_PC: direct packet command passed to driver, REQ_BLOCK_PC:
+packet command issued via blk_do_rq, REQ_SPECIAL: special request).</p>
+<p>It can help to pre-build device commands for requests in advance.
+Drivers can now specify a request prepare function (q-&gt;prep_rq_fn) that the
+block layer would invoke to pre-build device commands for a given request,
+or perform other preparatory processing for the request. This is routine is
+called by elv_next_request(), i.e. typically just before servicing a request.
+(The prepare function would not be called for requests that have RQF_DONTPREP
+enabled)</p>
+<dl class="simple">
+<dt>Aside:</dt><dd><p>Pre-building could possibly even be done early, i.e before placing the
+request on the queue, rather than construct the command on the fly in the
+driver while servicing the request queue when it may affect latencies in
+interrupt context or responsiveness in general. One way to add early
+pre-building would be to do it whenever we fail to merge on a request.
+Now REQ_NOMERGE is set in the request flags to skip this one in the future,
+which means that it will not change before we feed it to the device. So
+the pre-builder hook can be invoked there.</p>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="section" id="flexible-and-generic-but-minimalist-i-o-structure-descriptor">
+<h2>2. Flexible and generic but minimalist i/o structure/descriptor<a class="headerlink" href="#flexible-and-generic-but-minimalist-i-o-structure-descriptor" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="reason-for-a-new-structure-and-requirements-addressed">
+<h3>2.1 Reason for a new structure and requirements addressed<a class="headerlink" href="#reason-for-a-new-structure-and-requirements-addressed" title="Permalink to this headline">¶</a></h3>
+<p>Prior to 2.5, buffer heads were used as the unit of i/o at the generic block
+layer, and the low level request structure was associated with a chain of
+buffer heads for a contiguous i/o request. This led to certain inefficiencies
+when it came to large i/o requests and readv/writev style operations, as it
+forced such requests to be broken up into small chunks before being passed
+on to the generic block layer, only to be merged by the i/o scheduler
+when the underlying device was capable of handling the i/o in one shot.
+Also, using the buffer head as an i/o structure for i/os that didn’t originate
+from the buffer cache unnecessarily added to the weight of the descriptors
+which were generated for each such chunk.</p>
+<p>The following were some of the goals and expectations considered in the
+redesign of the block i/o data structure in 2.5.</p>
+<ol class="arabic simple">
+<li><p>Should be appropriate as a descriptor for both raw and buffered i/o  -
+avoid cache related fields which are irrelevant in the direct/page i/o path,
+or filesystem block size alignment restrictions which may not be relevant
+for raw i/o.</p></li>
+<li><p>Ability to represent high-memory buffers (which do not have a virtual
+address mapping in kernel address space).</p></li>
+<li><p>Ability to represent large i/os w/o unnecessarily breaking them up (i.e
+greater than PAGE_SIZE chunks in one shot)</p></li>
+<li><p>At the same time, ability to retain independent identity of i/os from
+different sources or i/o units requiring individual completion (e.g. for
+latency reasons)</p></li>
+<li><p>Ability to represent an i/o involving multiple physical memory segments
+(including non-page aligned page fragments, as specified via readv/writev)
+without unnecessarily breaking it up, if the underlying device is capable of
+handling it.</p></li>
+<li><p>Preferably should be based on a memory descriptor structure that can be
+passed around different types of subsystems or layers, maybe even
+networking, without duplication or extra copies of data/descriptor fields
+themselves in the process</p></li>
+<li><p>Ability to handle the possibility of splits/merges as the structure passes
+through layered drivers (lvm, md, evms), with minimal overhead.</p></li>
+</ol>
+<p>The solution was to define a new structure (bio)  for the block layer,
+instead of using the buffer head structure (bh) directly, the idea being
+avoidance of some associated baggage and limitations. The bio structure
+is uniformly used for all i/o at the block layer ; it forms a part of the
+bh structure for buffered i/o, and in the case of raw/direct i/o kiobufs are
+mapped to bio structures.</p>
+</div>
+<div class="section" id="the-bio-struct">
+<h3>2.2 The bio struct<a class="headerlink" href="#the-bio-struct" title="Permalink to this headline">¶</a></h3>
+<p>The bio structure uses a vector representation pointing to an array of tuples
+of &lt;page, offset, len&gt; to describe the i/o buffer, and has various other
+fields describing i/o parameters and state that needs to be maintained for
+performing the i/o.</p>
+<p>Notice that this representation means that a bio has no virtual address
+mapping at all (unlike buffer heads).</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct bio_vec {
+     struct page     *bv_page;
+     unsigned short  bv_len;
+     unsigned short  bv_offset;
+};
+
+/*
+ * main unit of I/O for the block layer and lower layers (ie drivers)
+ */
+struct bio {
+     struct bio          *bi_next;    /* request queue link */
+     struct block_device *bi_bdev;    /* target device */
+     unsigned long       bi_flags;    /* status, command, etc */
+     unsigned long       bi_opf;       /* low bits: r/w, high: priority */
+
+     unsigned int     bi_vcnt;     /* how may bio_vec&#39;s */
+     struct bvec_iter bi_iter;        /* current index into bio_vec array */
+
+     unsigned int     bi_size;     /* total size in bytes */
+     unsigned short   bi_hw_segments; /* segments after DMA remapping */
+     unsigned int     bi_max;      /* max bio_vecs we can hold
+                                      used as index into pool */
+     struct bio_vec   *bi_io_vec;  /* the actual vec list */
+     bio_end_io_t     *bi_end_io;  /* bi_end_io (bio) */
+     atomic_t         bi_cnt;      /* pin count: free when it hits zero */
+     void             *bi_private;
+};
+</pre></div>
+</div>
+<p>With this multipage bio design:</p>
+<ul class="simple">
+<li><p>Large i/os can be sent down in one go using a bio_vec list consisting
+of an array of &lt;page, offset, len&gt; fragments (similar to the way fragments
+are represented in the zero-copy network code)</p></li>
+<li><p>Splitting of an i/o request across multiple devices (as in the case of
+lvm or raid) is achieved by cloning the bio (where the clone points to
+the same bi_io_vec array, but with the index and size accordingly modified)</p></li>
+<li><p>A linked list of bios is used as before for unrelated merges <a class="footnote-reference brackets" href="#id2" id="id1">1</a> - this
+avoids reallocs and makes independent completions easier to handle.</p></li>
+<li><p>Code that traverses the req list can find all the segments of a bio
+by using rq_for_each_segment.  This handles the fact that a request
+has multiple bios, each of which can have multiple segments.</p></li>
+<li><p>Drivers which can’t process a large bio in one shot can use the bi_iter
+field to keep track of the next bio_vec entry to process.
+(e.g a 1MB bio_vec needs to be handled in max 128kB chunks for IDE)
+[TBD: Should preferably also have a bi_voffset and bi_vlen to avoid modifying
+bi_offset an len fields]</p></li>
+</ul>
+<dl class="footnote brackets">
+<dt class="label" id="id2"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
+<dd><p>unrelated merges – a request ends up containing two or more bios that
+didn’t originate from the same place.</p>
+</dd>
+</dl>
+<p>bi_end_io() i/o callback gets called on i/o completion of the entire bio.</p>
+<p>At a lower level, drivers build a scatter gather list from the merged bios.
+The scatter gather list is in the form of an array of &lt;page, offset, len&gt;
+entries with their corresponding dma address mappings filled in at the
+appropriate time. As an optimization, contiguous physical pages can be
+covered by a single entry where &lt;page&gt; refers to the first page and &lt;len&gt;
+covers the range of pages (up to 16 contiguous pages could be covered this
+way). There is a helper routine (blk_rq_map_sg) which drivers can use to build
+the sg list.</p>
+<p>Note: Right now the only user of bios with more than one page is ll_rw_kio,
+which in turn means that only raw I/O uses it (direct i/o may not work
+right now). The intent however is to enable clustering of pages etc to
+become possible. The pagebuf abstraction layer from SGI also uses multi-page
+bios, but that is currently not included in the stock development kernels.
+The same is true of Andrew Morton’s work-in-progress multipage bio writeout
+and readahead patches.</p>
+</div>
+<div class="section" id="changes-in-the-request-structure">
+<h3>2.3 Changes in the Request Structure<a class="headerlink" href="#changes-in-the-request-structure" title="Permalink to this headline">¶</a></h3>
+<p>The request structure is the structure that gets passed down to low level
+drivers. The block layer make_request function builds up a request structure,
+places it on the queue and invokes the drivers request_fn. The driver makes
+use of block layer helper routine elv_next_request to pull the next request
+off the queue. Control or diagnostic functions might bypass block and directly
+invoke underlying driver entry points passing in a specially constructed
+request structure.</p>
+<p>Only some relevant fields (mainly those which changed or may be referred
+to in some of the discussion here) are listed below, not necessarily in
+the order in which they occur in the structure (see include/linux/blkdev.h)
+Refer to <a class="reference internal" href="request.html"><span class="doc">struct request documentation</span></a> for details about all the request
+structure fields and a quick reference about the layers which are
+supposed to use or modify those fields:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct request {
+      struct list_head queuelist;  /* Not meant to be directly accessed by
+                                      the driver.
+                                      Used by q-&gt;elv_next_request_fn
+                                      rq-&gt;queue is gone
+                                      */
+      .
+      .
+      unsigned char cmd[16]; /* prebuilt command data block */
+      unsigned long flags;   /* also includes earlier rq-&gt;cmd settings */
+      .
+      .
+      sector_t sector; /* this field is now of type sector_t instead of int
+                          preparation for 64 bit sectors */
+      .
+      .
+
+      /* Number of scatter-gather DMA addr+len pairs after
+       * physical address coalescing is performed.
+       */
+      unsigned short nr_phys_segments;
+
+      /* Number of scatter-gather addr+len pairs after
+       * physical and DMA remapping hardware coalescing is performed.
+       * This is the number of scatter-gather entries the driver
+       * will actually have to deal with after DMA mapping is done.
+       */
+      unsigned short nr_hw_segments;
+
+      /* Various sector counts */
+      unsigned long nr_sectors;  /* no. of sectors left: driver modifiable */
+      unsigned long hard_nr_sectors;  /* block internal copy of above */
+      unsigned int current_nr_sectors; /* no. of sectors left in the
+                                         current segment:driver modifiable */
+      unsigned long hard_cur_sectors; /* block internal copy of the above */
+      .
+      .
+      int tag;        /* command tag associated with request */
+      void *special;  /* same as before */
+      char *buffer;   /* valid only for low memory buffers up to
+                       current_nr_sectors */
+      .
+      .
+      struct bio *bio, *biotail;  /* bio list instead of bh */
+      struct request_list *rl;
+}
+</pre></div>
+</div>
+<p>See the req_ops and req_flag_bits definitions for an explanation of the various
+flags available. Some bits are used by the block layer or i/o scheduler.</p>
+<p>The behaviour of the various sector counts are almost the same as before,
+except that since we have multi-segment bios, current_nr_sectors refers
+to the numbers of sectors in the current segment being processed which could
+be one of the many segments in the current bio (i.e i/o completion unit).
+The nr_sectors value refers to the total number of sectors in the whole
+request that remain to be transferred (no change). The purpose of the
+hard_xxx values is for block to remember these counts every time it hands
+over the request to the driver. These values are updated by block on
+end_that_request_first, i.e. every time the driver completes a part of the
+transfer and invokes block end*request helpers to mark this. The
+driver should not modify these values. The block layer sets up the
+nr_sectors and current_nr_sectors fields (based on the corresponding
+hard_xxx values and the number of bytes transferred) and updates it on
+every transfer that invokes end_that_request_first. It does the same for the
+buffer, bio, bio-&gt;bi_iter fields too.</p>
+<p>The buffer field is just a virtual address mapping of the current segment
+of the i/o buffer in cases where the buffer resides in low-memory. For high
+memory i/o, this field is not valid and must not be used by drivers.</p>
+<p>Code that sets up its own request structures and passes them down to
+a driver needs to be careful about interoperation with the block layer helper
+functions which the driver uses. (Section 1.3)</p>
+</div>
+</div>
+<div class="section" id="using-bios">
+<h2>3. Using bios<a class="headerlink" href="#using-bios" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="setup-teardown">
+<h3>3.1 Setup/Teardown<a class="headerlink" href="#setup-teardown" title="Permalink to this headline">¶</a></h3>
+<p>There are routines for managing the allocation, and reference counting, and
+freeing of bios (bio_alloc, bio_get, bio_put).</p>
+<p>This makes use of Ingo Molnar’s mempool implementation, which enables
+subsystems like bio to maintain their own reserve memory pools for guaranteed
+deadlock-free allocations during extreme VM load. For example, the VM
+subsystem makes use of the block layer to writeout dirty pages in order to be
+able to free up memory space, a case which needs careful handling. The
+allocation logic draws from the preallocated emergency reserve in situations
+where it cannot allocate through normal means. If the pool is empty and it
+can wait, then it would trigger action that would help free up memory or
+replenish the pool (without deadlocking) and wait for availability in the pool.
+If it is in IRQ context, and hence not in a position to do this, allocation
+could fail if the pool is empty. In general mempool always first tries to
+perform allocation without having to wait, even if it means digging into the
+pool as long it is not less that 50% full.</p>
+<p>On a free, memory is released to the pool or directly freed depending on
+the current availability in the pool. The mempool interface lets the
+subsystem specify the routines to be used for normal alloc and free. In the
+case of bio, these routines make use of the standard slab allocator.</p>
+<p>The caller of bio_alloc is expected to taken certain steps to avoid
+deadlocks, e.g. avoid trying to allocate more memory from the pool while
+already holding memory obtained from the pool.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[TBD: This is a potential issue, though a rare possibility
+ in the bounce bio allocation that happens in the current code, since
+ it ends up allocating a second bio from the same pool while
+ holding the original bio ]
+</pre></div>
+</div>
+<p>Memory allocated from the pool should be released back within a limited
+amount of time (in the case of bio, that would be after the i/o is completed).
+This ensures that if part of the pool has been used up, some work (in this
+case i/o) must already be in progress and memory would be available when it
+is over. If allocating from multiple pools in the same code path, the order
+or hierarchy of allocation needs to be consistent, just the way one deals
+with multiple locks.</p>
+<p>The bio_alloc routine also needs to allocate the bio_vec_list (bvec_alloc())
+for a non-clone bio. There are the 6 pools setup for different size biovecs,
+so bio_alloc(gfp_mask, nr_iovecs) will allocate a vec_list of the
+given size from these slabs.</p>
+<p>The bio_get() routine may be used to hold an extra reference on a bio prior
+to i/o submission, if the bio fields are likely to be accessed after the
+i/o is issued (since the bio may otherwise get freed in case i/o completion
+happens in the meantime).</p>
+<p>The <a class="reference internal" href="../filesystems/api-summary.html#c.bio_clone_fast" title="bio_clone_fast"><code class="xref c c-func docutils literal notranslate"><span class="pre">bio_clone_fast()</span></code></a> routine may be used to duplicate a bio, where the clone
+shares the bio_vec_list with the original bio (i.e. both point to the
+same bio_vec_list). This would typically be used for splitting i/o requests
+in lvm or md.</p>
+</div>
+<div class="section" id="generic-bio-helper-routines">
+<h3>3.2 Generic bio helper Routines<a class="headerlink" href="#generic-bio-helper-routines" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="traversing-segments-and-completion-units-in-a-request">
+<h4>3.2.1 Traversing segments and completion units in a request<a class="headerlink" href="#traversing-segments-and-completion-units-in-a-request" title="Permalink to this headline">¶</a></h4>
+<p>The macro rq_for_each_segment() should be used for traversing the bios
+in the request list (drivers should avoid directly trying to do it
+themselves). Using these helpers should also make it easier to cope
+with block changes in the future.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct req_iterator iter;
+rq_for_each_segment(bio_vec, rq, iter)
+        /* bio_vec is now current segment */
+</pre></div>
+</div>
+<p>I/O completion callbacks are per-bio rather than per-segment, so drivers
+that traverse bio chains on completion need to keep that in mind. Drivers
+which don’t make a distinction between segments and completion units would
+need to be reorganized to support multi-segment bios.</p>
+</div>
+<div class="section" id="setting-up-dma-scatterlists">
+<h4>3.2.2 Setting up DMA scatterlists<a class="headerlink" href="#setting-up-dma-scatterlists" title="Permalink to this headline">¶</a></h4>
+<p>The blk_rq_map_sg() helper routine would be used for setting up scatter
+gather lists from a request, so a driver need not do it on its own.</p>
+<blockquote>
+<div><p>nr_segments = blk_rq_map_sg(q, rq, scatterlist);</p>
+</div></blockquote>
+<p>The helper routine provides a level of abstraction which makes it easier
+to modify the internals of request to scatterlist conversion down the line
+without breaking drivers. The blk_rq_map_sg routine takes care of several
+things like collapsing physically contiguous segments (if QUEUE_FLAG_CLUSTER
+is set) and correct segment accounting to avoid exceeding the limits which
+the i/o hardware can handle, based on various queue properties.</p>
+<ul class="simple">
+<li><p>Prevents a clustered segment from crossing a 4GB mem boundary</p></li>
+<li><p>Avoids building segments that would exceed the number of physical
+memory segments that the driver can handle (phys_segments) and the
+number that the underlying hardware can handle at once, accounting for
+DMA remapping (hw_segments)  (i.e. IOMMU aware limits).</p></li>
+</ul>
+<p>Routines which the low level driver can use to set up the segment limits:</p>
+<p>blk_queue_max_hw_segments() : Sets an upper limit of the maximum number of
+hw data segments in a request (i.e. the maximum number of address/length
+pairs the host adapter can actually hand to the device at once)</p>
+<p>blk_queue_max_phys_segments() : Sets an upper limit on the maximum number
+of physical data segments in a request (i.e. the largest sized scatter list
+a driver could handle)</p>
+</div>
+<div class="section" id="i-o-completion">
+<h4>3.2.3 I/O completion<a class="headerlink" href="#i-o-completion" title="Permalink to this headline">¶</a></h4>
+<p>The existing generic block layer helper routines end_request,
+end_that_request_first and end_that_request_last can be used for i/o
+completion (and setting things up so the rest of the i/o or the next
+request can be kicked of) as before. With the introduction of multi-page
+bio support, end_that_request_first requires an additional argument indicating
+the number of sectors completed.</p>
+</div>
+<div class="section" id="implications-for-drivers-that-do-not-interpret-bios">
+<h4>3.2.4 Implications for drivers that do not interpret bios<a class="headerlink" href="#implications-for-drivers-that-do-not-interpret-bios" title="Permalink to this headline">¶</a></h4>
+<p>(don’t handle multiple segments)</p>
+<p>Drivers that do not interpret bios e.g those which do not handle multiple
+segments and do not support i/o into high memory addresses (require bounce
+buffers) and expect only virtually mapped buffers, can access the rq-&gt;buffer
+field. As before the driver should use current_nr_sectors to determine the
+size of remaining data in the current segment (that is the maximum it can
+transfer in one go unless it interprets segments), and rely on the block layer
+end_request, or end_that_request_first/last to take care of all accounting
+and transparent mapping of the next bio segment when a segment boundary
+is crossed on completion of a transfer. (The end*request* functions should
+be used if only if the request has come down from block/bio path, not for
+direct access requests which only specify rq-&gt;buffer without a valid rq-&gt;bio)</p>
+</div>
+</div>
+<div class="section" id="i-o-submission">
+<h3>3.3 I/O Submission<a class="headerlink" href="#i-o-submission" title="Permalink to this headline">¶</a></h3>
+<p>The routine <a class="reference internal" href="../core-api/kernel-api.html#c.submit_bio" title="submit_bio"><code class="xref c c-func docutils literal notranslate"><span class="pre">submit_bio()</span></code></a> is used to submit a single io. Higher level i/o
+routines make use of this:</p>
+<ol class="loweralpha simple">
+<li><p>Buffered i/o:</p></li>
+</ol>
+<p>The routine submit_bh() invokes <a class="reference internal" href="../core-api/kernel-api.html#c.submit_bio" title="submit_bio"><code class="xref c c-func docutils literal notranslate"><span class="pre">submit_bio()</span></code></a> on a bio corresponding to the
+bh, allocating the bio if required. <a class="reference internal" href="../filesystems/api-summary.html#c.ll_rw_block" title="ll_rw_block"><code class="xref c c-func docutils literal notranslate"><span class="pre">ll_rw_block()</span></code></a> uses submit_bh() as before.</p>
+<ol class="loweralpha simple" start="2">
+<li><p>Kiobuf i/o (for raw/direct i/o):</p></li>
+</ol>
+<p>The ll_rw_kio() routine breaks up the kiobuf into page sized chunks and
+maps the array to one or more multi-page bios, issuing <a class="reference internal" href="../core-api/kernel-api.html#c.submit_bio" title="submit_bio"><code class="xref c c-func docutils literal notranslate"><span class="pre">submit_bio()</span></code></a> to
+perform the i/o on each of these.</p>
+<p>The embedded bh array in the kiobuf structure has been removed and no
+preallocation of bios is done for kiobufs. [The intent is to remove the
+blocks array as well, but it’s currently in there to kludge around direct i/o.]
+Thus kiobuf allocation has switched back to using kmalloc rather than vmalloc.</p>
+<p>Todo/Observation:</p>
+<blockquote>
+<div><p>A single kiobuf structure is assumed to correspond to a contiguous range
+of data, so brw_kiovec() invokes ll_rw_kio for each kiobuf in a kiovec.
+So right now it wouldn’t work for direct i/o on non-contiguous blocks.
+This is to be resolved.  The eventual direction is to replace kiobuf
+by kvec’s.</p>
+<p>Badari Pulavarty has a patch to implement direct i/o correctly using
+bio and kvec.</p>
+</div></blockquote>
+<ol class="loweralpha simple" start="3">
+<li><p>Page i/o:</p></li>
+</ol>
+<p>Todo/Under discussion:</p>
+<blockquote>
+<div><p>Andrew Morton’s multi-page bio patches attempt to issue multi-page
+writeouts (and reads) from the page cache, by directly building up
+large bios for submission completely bypassing the usage of buffer
+heads. This work is still in progress.</p>
+<p>Christoph Hellwig had some code that uses bios for page-io (rather than
+bh). This isn’t included in bio as yet. Christoph was also working on a
+design for representing virtual/real extents as an entity and modifying
+some of the address space ops interfaces to utilize this abstraction rather
+than buffer_heads. (This is somewhat along the lines of the SGI XFS pagebuf
+abstraction, but intended to be as lightweight as possible).</p>
+</div></blockquote>
+<ol class="loweralpha simple" start="4">
+<li><p>Direct access i/o:</p></li>
+</ol>
+<p>Direct access requests that do not contain bios would be submitted differently
+as discussed earlier in section 1.3.</p>
+<p>Aside:</p>
+<blockquote>
+<div><p>Kvec i/o:</p>
+<p>Ben LaHaise’s aio code uses a slightly different structure instead
+of kiobufs, called a kvec_cb. This contains an array of &lt;page, offset, len&gt;
+tuples (very much like the networking code), together with a callback function
+and data pointer. This is embedded into a brw_cb structure when passed
+to brw_kvec_async().</p>
+<p>Now it should be possible to directly map these kvecs to a bio. Just as while
+cloning, in this case rather than PRE_BUILT bio_vecs, we set the bi_io_vec
+array pointer to point to the veclet array in kvecs.</p>
+<p>TBD: In order for this to work, some changes are needed in the way multi-page
+bios are handled today. The values of the tuples in such a vector passed in
+from higher level code should not be modified by the block layer in the course
+of its request processing, since that would make it hard for the higher layer
+to continue to use the vector descriptor (kvec) after i/o completes. Instead,
+all such transient state should either be maintained in the request structure,
+and passed on in some way to the endio completion routine.</p>
+</div></blockquote>
+</div>
+</div>
+<div class="section" id="the-i-o-scheduler">
+<h2>4. The I/O scheduler<a class="headerlink" href="#the-i-o-scheduler" title="Permalink to this headline">¶</a></h2>
+<p>I/O scheduler, a.k.a. elevator, is implemented in two layers.  Generic dispatch
+queue and specific I/O schedulers.  Unless stated otherwise, elevator is used
+to refer to both parts and I/O scheduler to specific I/O schedulers.</p>
+<p>Block layer implements generic dispatch queue in <cite>block/*.c</cite>.
+The generic dispatch queue is responsible for requeueing, handling non-fs
+requests and all other subtleties.</p>
+<p>Specific I/O schedulers are responsible for ordering normal filesystem
+requests.  They can also choose to delay certain requests to improve
+throughput or whatever purpose.  As the plural form indicates, there are
+multiple I/O schedulers.  They can be built as modules but at least one should
+be built inside the kernel.  Each queue can choose different one and can also
+change to another one dynamically.</p>
+<p>A block layer call to the i/o scheduler follows the convention elv_xxx(). This
+calls elevator_xxx_fn in the elevator switch (block/elevator.c). Oh, xxx
+and xxx might not match exactly, but use your imagination. If an elevator
+doesn’t implement a function, the switch does nothing or some minimal house
+keeping work.</p>
+<div class="section" id="i-o-scheduler-api">
+<h3>4.1. I/O scheduler API<a class="headerlink" href="#i-o-scheduler-api" title="Permalink to this headline">¶</a></h3>
+<p>The functions an elevator may implement are: (* are mandatory)</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 39%" />
+<col style="width: 61%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>elevator_merge_fn</p></td>
+<td><p>called to query requests for merge with a bio</p></td>
+</tr>
+<tr class="row-even"><td><p>elevator_merge_req_fn</p></td>
+<td><p>called when two requests get merged. the one
+which gets merged into the other one will be
+never seen by I/O scheduler again. IOW, after
+being merged, the request is gone.</p></td>
+</tr>
+<tr class="row-odd"><td><p>elevator_merged_fn</p></td>
+<td><p>called when a request in the scheduler has been
+involved in a merge. It is used in the deadline
+scheduler for example, to reposition the request
+if its sorting order has changed.</p></td>
+</tr>
+<tr class="row-even"><td><p>elevator_allow_merge_fn</p></td>
+<td><p>called whenever the block layer determines
+that a bio can be merged into an existing
+request safely. The io scheduler may still
+want to stop a merge at this point if it
+results in some sort of conflict internally,
+this hook allows it to do that. Note however
+that two <em>requests</em> can still be merged at later
+time. Currently the io scheduler has no way to
+prevent that. It can only learn about the fact
+from elevator_merge_req_fn callback.</p></td>
+</tr>
+<tr class="row-odd"><td><p>elevator_dispatch_fn*</p></td>
+<td><p>fills the dispatch queue with ready requests.
+I/O schedulers are free to postpone requests by
+not filling the dispatch queue unless &#64;force
+is non-zero.  Once dispatched, I/O schedulers
+are not allowed to manipulate the requests -
+they belong to generic dispatch queue.</p></td>
+</tr>
+<tr class="row-even"><td><p>elevator_add_req_fn*</p></td>
+<td><p>called to add a new request into the scheduler</p></td>
+</tr>
+<tr class="row-odd"><td><p>elevator_former_req_fn</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>elevator_latter_req_fn</p></td>
+<td><p>These return the request before or after the
+one specified in disk sort order. Used by the
+block layer to find merge possibilities.</p></td>
+</tr>
+<tr class="row-odd"><td><p>elevator_completed_req_fn</p></td>
+<td><p>called when a request is completed.</p></td>
+</tr>
+<tr class="row-even"><td><p>elevator_set_req_fn</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>elevator_put_req_fn</p></td>
+<td><p>Must be used to allocate and free any elevator
+specific storage for a request.</p></td>
+</tr>
+<tr class="row-even"><td><p>elevator_activate_req_fn</p></td>
+<td><p>Called when device driver first sees a request.
+I/O schedulers can use this callback to
+determine when actual execution of a request
+starts.</p></td>
+</tr>
+<tr class="row-odd"><td><p>elevator_deactivate_req_fn</p></td>
+<td><p>Called when device driver decides to delay
+a request by requeueing it.</p></td>
+</tr>
+<tr class="row-even"><td><p>elevator_init_fn*</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>elevator_exit_fn</p></td>
+<td><p>Allocate and free any elevator specific storage
+for a queue.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="request-flows-seen-by-i-o-schedulers">
+<h3>4.2 Request flows seen by I/O schedulers<a class="headerlink" href="#request-flows-seen-by-i-o-schedulers" title="Permalink to this headline">¶</a></h3>
+<p>All requests seen by I/O schedulers strictly follow one of the following three
+flows.</p>
+<blockquote>
+<div><p>set_req_fn -&gt;</p>
+<ol class="lowerroman simple">
+<li><p>add_req_fn -&gt; (merged_fn -&gt;)* -&gt; dispatch_fn -&gt; activate_req_fn -&gt;
+(deactivate_req_fn -&gt; activate_req_fn -&gt;)* -&gt; completed_req_fn</p></li>
+<li><p>add_req_fn -&gt; (merged_fn -&gt;)* -&gt; merge_req_fn</p></li>
+<li><p>[none]</p></li>
+</ol>
+<p>-&gt; put_req_fn</p>
+</div></blockquote>
+</div>
+<div class="section" id="i-o-scheduler-implementation">
+<h3>4.3 I/O scheduler implementation<a class="headerlink" href="#i-o-scheduler-implementation" title="Permalink to this headline">¶</a></h3>
+<p>The generic i/o scheduler algorithm attempts to sort/merge/batch requests for
+optimal disk scan and request servicing performance (based on generic
+principles and device capabilities), optimized for:</p>
+<ol class="lowerroman simple">
+<li><p>improved throughput</p></li>
+<li><p>improved latency</p></li>
+<li><p>better utilization of h/w &amp; CPU time</p></li>
+</ol>
+<p>Characteristics:</p>
+<p>i. Binary tree
+AS and deadline i/o schedulers use red black binary trees for disk position
+sorting and searching, and a fifo linked list for time-based searching. This
+gives good scalability and good availability of information. Requests are
+almost always dispatched in disk sort order, so a cache is kept of the next
+request in sort order to prevent binary tree lookups.</p>
+<p>This arrangement is not a generic block layer characteristic however, so
+elevators may implement queues as they please.</p>
+<p>ii. Merge hash
+AS and deadline use a hash table indexed by the last sector of a request. This
+enables merging code to quickly look up “back merge” candidates, even when
+multiple I/O streams are being performed at once on one disk.</p>
+<p>“Front merges”, a new request being merged at the front of an existing request,
+are far less common than “back merges” due to the nature of most I/O patterns.
+Front merges are handled by the binary trees in AS and deadline schedulers.</p>
+<ol class="lowerroman simple" start="3">
+<li><p>Plugging the queue to batch requests in anticipation of opportunities for
+merge/sort optimizations</p></li>
+</ol>
+<p>Plugging is an approach that the current i/o scheduling algorithm resorts to so
+that it collects up enough requests in the queue to be able to take
+advantage of the sorting/merging logic in the elevator. If the
+queue is empty when a request comes in, then it plugs the request queue
+(sort of like plugging the bath tub of a vessel to get fluid to build up)
+till it fills up with a few more requests, before starting to service
+the requests. This provides an opportunity to merge/sort the requests before
+passing them down to the device. There are various conditions when the queue is
+unplugged (to open up the flow again), either through a scheduled task or
+could be on demand. For example wait_on_buffer sets the unplugging going
+through sync_buffer() running blk_run_address_space(mapping). Or the caller
+can do it explicity through blk_unplug(bdev). So in the read case,
+the queue gets explicitly unplugged as part of waiting for completion on that
+buffer.</p>
+<dl class="simple">
+<dt>Aside:</dt><dd><p>This is kind of controversial territory, as it’s not clear if plugging is
+always the right thing to do. Devices typically have their own queues,
+and allowing a big queue to build up in software, while letting the device be
+idle for a while may not always make sense. The trick is to handle the fine
+balance between when to plug and when to open up. Also now that we have
+multi-page bios being queued in one shot, we may not need to wait to merge
+a big request from the broken up pieces coming by.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="i-o-contexts">
+<h3>4.4 I/O contexts<a class="headerlink" href="#i-o-contexts" title="Permalink to this headline">¶</a></h3>
+<p>I/O contexts provide a dynamically allocated per process data area. They may
+be used in I/O schedulers, and in the block layer (could be used for IO statis,
+priorities for example). See <cite>*io_context</cite> in block/ll_rw_blk.c, and as-iosched.c
+for an example of usage in an i/o scheduler.</p>
+</div>
+</div>
+<div class="section" id="scalability-related-changes">
+<h2>5. Scalability related changes<a class="headerlink" href="#scalability-related-changes" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="granular-locking-io-request-lock-replaced-by-a-per-queue-lock">
+<h3>5.1 Granular Locking: io_request_lock replaced by a per-queue lock<a class="headerlink" href="#granular-locking-io-request-lock-replaced-by-a-per-queue-lock" title="Permalink to this headline">¶</a></h3>
+<p>The global io_request_lock has been removed as of 2.5, to avoid
+the scalability bottleneck it was causing, and has been replaced by more
+granular locking. The request queue structure has a pointer to the
+lock to be used for that queue. As a result, locking can now be
+per-queue, with a provision for sharing a lock across queues if
+necessary (e.g the scsi layer sets the queue lock pointers to the
+corresponding adapter lock, which results in a per host locking
+granularity). The locking semantics are the same, i.e. locking is
+still imposed by the block layer, grabbing the lock before
+request_fn execution which it means that lots of older drivers
+should still be SMP safe. Drivers are free to drop the queue
+lock themselves, if required. Drivers that explicitly used the
+io_request_lock for serialization need to be modified accordingly.
+Usually it’s as easy as adding a global lock:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>static DEFINE_SPINLOCK(my_driver_lock);
+</pre></div>
+</div>
+<p>and passing the address to that lock to blk_init_queue().</p>
+</div>
+<div class="section" id="bit-sector-numbers-sector-t-prepares-for-64-bit-support">
+<h3>5.2 64 bit sector numbers (sector_t prepares for 64 bit support)<a class="headerlink" href="#bit-sector-numbers-sector-t-prepares-for-64-bit-support" title="Permalink to this headline">¶</a></h3>
+<p>The sector number used in the bio structure has been changed to sector_t,
+which could be defined as 64 bit in preparation for 64 bit sector support.</p>
+</div>
+</div>
+<div class="section" id="other-changes-implications">
+<h2>6. Other Changes/Implications<a class="headerlink" href="#other-changes-implications" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="partition-re-mapping-handled-by-the-generic-block-layer">
+<h3>6.1 Partition re-mapping handled by the generic block layer<a class="headerlink" href="#partition-re-mapping-handled-by-the-generic-block-layer" title="Permalink to this headline">¶</a></h3>
+<p>In 2.5 some of the gendisk/partition related code has been reorganized.
+Now the generic block layer performs partition-remapping early and thus
+provides drivers with a sector number relative to whole device, rather than
+having to take partition number into account in order to arrive at the true
+sector number. The routine blk_partition_remap() is invoked by
+submit_bio_noacct even before invoking the queue specific -&gt;submit_bio,
+so the i/o scheduler also gets to operate on whole disk sector numbers. This
+should typically not require changes to block drivers, it just never gets
+to invoke its own partition sector offset calculations since all bios
+sent are offset from the beginning of the device.</p>
+</div>
+</div>
+<div class="section" id="a-few-tips-on-migration-of-older-drivers">
+<h2>7. A Few Tips on Migration of older drivers<a class="headerlink" href="#a-few-tips-on-migration-of-older-drivers" title="Permalink to this headline">¶</a></h2>
+<p>Old-style drivers that just use CURRENT and ignores clustered requests,
+may not need much change.  The generic layer will automatically handle
+clustered requests, multi-page bios, etc for the driver.</p>
+<p>For a low performance driver or hardware that is PIO driven or just doesn’t
+support scatter-gather changes should be minimal too.</p>
+<p>The following are some points to keep in mind when converting old drivers
+to bio.</p>
+<p>Drivers should use elv_next_request to pick up requests and are no longer
+supposed to handle looping directly over the request list.
+(struct request-&gt;queue has been removed)</p>
+<p>Now end_that_request_first takes an additional number_of_sectors argument.
+It used to handle always just the first buffer_head in a request, now
+it will loop and handle as many sectors (on a bio-segment granularity)
+as specified.</p>
+<p>Now bh-&gt;b_end_io is replaced by bio-&gt;bi_end_io, but most of the time the
+right thing to use is bio_endio(bio) instead.</p>
+<p>If the driver is dropping the io_request_lock from its request_fn strategy,
+then it just needs to replace that with q-&gt;queue_lock instead.</p>
+<p>As described in Sec 1.1, drivers can set max sector size, max segment size
+etc per queue now. Drivers that used to define their own merge functions i
+to handle things like this can now just use the blk_queue_* functions at
+blk_init_queue time.</p>
+<p>Drivers no longer have to map a {partition, sector offset} into the
+correct absolute location anymore, this is done by the block layer, so
+where a driver received a request ala this before:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>rq-&gt;rq_dev = mk_kdev(3, 5);     /* /dev/hda5 */
+rq-&gt;sector = 0;                 /* first sector on hda5 */
+</pre></div>
+</div>
+<p>it will now see:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>rq-&gt;rq_dev = mk_kdev(3, 0);     /* /dev/hda */
+rq-&gt;sector = 123128;            /* offset from start of disk */
+</pre></div>
+</div>
+<p>As mentioned, there is no virtual mapping of a bio. For DMA, this is
+not a problem as the driver probably never will need a virtual mapping.
+Instead it needs a bus mapping (dma_map_page for a single segment or
+use dma_map_sg for scatter gather) to be able to ship it to the driver. For
+PIO drivers (or drivers that need to revert to PIO transfer once in a
+while (IDE for example)), where the CPU is doing the actual data
+transfer a virtual mapping is needed. If the driver supports highmem I/O,
+(Sec 1.1, (ii) ) it needs to use kmap_atomic or similar to temporarily map
+a bio into the virtual address space.</p>
+</div>
+<div class="section" id="prior-related-impacted-patches">
+<h2>8. Prior/Related/Impacted patches<a class="headerlink" href="#prior-related-impacted-patches" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="earlier-kiobuf-patches-sct-axboe-chait-hch-mkp">
+<h3>8.1. Earlier kiobuf patches (sct/axboe/chait/hch/mkp)<a class="headerlink" href="#earlier-kiobuf-patches-sct-axboe-chait-hch-mkp" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>orig kiobuf &amp; raw i/o patches (now in 2.4 tree)</p></li>
+<li><p>direct kiobuf based i/o to devices (no intermediate bh’s)</p></li>
+<li><p>page i/o using kiobuf</p></li>
+<li><p>kiobuf splitting for lvm (mkp)</p></li>
+<li><p>elevator support for kiobuf request merging (axboe)</p></li>
+</ul>
+</div>
+<div class="section" id="zero-copy-networking-dave-miller">
+<h3>8.2. Zero-copy networking (Dave Miller)<a class="headerlink" href="#zero-copy-networking-dave-miller" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="sgi-xfs-pagebuf-patches-use-of-kiobufs">
+<h3>8.3. SGI XFS - pagebuf patches - use of kiobufs<a class="headerlink" href="#sgi-xfs-pagebuf-patches-use-of-kiobufs" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="multi-page-pioent-patch-for-bio-christoph-hellwig">
+<h3>8.4. Multi-page pioent patch for bio (Christoph Hellwig)<a class="headerlink" href="#multi-page-pioent-patch-for-bio-christoph-hellwig" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="direct-i-o-implementation-andrea-arcangeli-since-2-4-10-pre11">
+<h3>8.5. Direct i/o implementation (Andrea Arcangeli) since 2.4.10-pre11<a class="headerlink" href="#direct-i-o-implementation-andrea-arcangeli-since-2-4-10-pre11" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="async-i-o-implementation-patch-ben-lahaise">
+<h3>8.6. Async i/o implementation patch (Ben LaHaise)<a class="headerlink" href="#async-i-o-implementation-patch-ben-lahaise" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="evms-layering-design-ibm-evms-team">
+<h3>8.7. EVMS layering design (IBM EVMS team)<a class="headerlink" href="#evms-layering-design-ibm-evms-team" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="larger-page-cache-size-patch-ben-lahaise-and-large-page-size-daniel-phillips">
+<h3>8.8. Larger page cache size patch (Ben LaHaise) and Large page size (Daniel Phillips)<a class="headerlink" href="#larger-page-cache-size-patch-ben-lahaise-and-large-page-size-daniel-phillips" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><p>=&gt; larger contiguous physical memory buffers</p>
+</div></blockquote>
+</div>
+<div class="section" id="vm-reservations-patch-ben-lahaise">
+<h3>8.9. VM reservations patch (Ben LaHaise)<a class="headerlink" href="#vm-reservations-patch-ben-lahaise" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="write-clustering-patches-marcelo-quintela-riel">
+<h3>8.10. Write clustering patches ? (Marcelo/Quintela/Riel ?)<a class="headerlink" href="#write-clustering-patches-marcelo-quintela-riel" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="block-device-in-page-cache-patch-andrea-archangeli-now-in-2-4-10">
+<h3>8.11. Block device in page cache patch (Andrea Archangeli) - now in 2.4.10+<a class="headerlink" href="#block-device-in-page-cache-patch-andrea-archangeli-now-in-2-4-10" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="multiple-block-size-transfers-for-faster-raw-i-o-shailabh-nagar-badari">
+<h3>8.12. Multiple block-size transfers for faster raw i/o (Shailabh Nagar, Badari)<a class="headerlink" href="#multiple-block-size-transfers-for-faster-raw-i-o-shailabh-nagar-badari" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="priority-based-i-o-scheduler-prepatches-arjan-van-de-ven">
+<h3>8.13  Priority based i/o scheduler - prepatches (Arjan van de Ven)<a class="headerlink" href="#priority-based-i-o-scheduler-prepatches-arjan-van-de-ven" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="ide-taskfile-i-o-patch-andre-hedrick">
+<h3>8.14  IDE Taskfile i/o patch (Andre Hedrick)<a class="headerlink" href="#ide-taskfile-i-o-patch-andre-hedrick" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="multi-page-writeout-and-readahead-patches-andrew-morton">
+<h3>8.15  Multi-page writeout and readahead patches (Andrew Morton)<a class="headerlink" href="#multi-page-writeout-and-readahead-patches-andrew-morton" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="direct-i-o-patches-for-2-5-using-kvec-and-bio-badari-pulavarthy">
+<h3>8.16  Direct i/o patches for 2.5 using kvec and bio (Badari Pulavarthy)<a class="headerlink" href="#direct-i-o-patches-for-2-5-using-kvec-and-bio-badari-pulavarthy" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="other-references">
+<h2>9. Other References<a class="headerlink" href="#other-references" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="the-splice-i-o-model">
+<h3>9.1 The Splice I/O Model<a class="headerlink" href="#the-splice-i-o-model" title="Permalink to this headline">¶</a></h3>
+<p>Larry McVoy (and subsequent discussions on lkml, and Linus’ comments - Jan 2001</p>
+</div>
+<div class="section" id="discussions-about-kiobuf-and-bh-design">
+<h3>9.2 Discussions about kiobuf and bh design<a class="headerlink" href="#discussions-about-kiobuf-and-bh-design" title="Permalink to this headline">¶</a></h3>
+<p>On lkml between sct, linus, alan et al - Feb-March 2001 (many of the
+initial thoughts that led to bio were brought up in this discussion thread)</p>
+</div>
+<div class="section" id="discussions-on-mempool-on-lkml-dec-2001">
+<h3>9.3 Discussions on mempool on lkml - Dec 2001.<a class="headerlink" href="#discussions-on-mempool-on-lkml-dec-2001" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="biovecs.html" class="btn btn-neutral float-right" title="Immutable biovecs and biovec iterators" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="bfq-iosched.html" class="btn btn-neutral float-left" title="BFQ (Budget Fair Queueing)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

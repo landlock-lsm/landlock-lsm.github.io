@@ -1,0 +1,885 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Low Level Serial API &mdash; The Linux Kernel  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="The Lockronomicon" href="tty.html" />
+    <link rel="prev" title="Support for Serial devices" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.10.0-rc7
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">The Linux driver implementer’s API guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../driver-model/index.html">Driver Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../basics.html">Driver Basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../infrastructure.html">Device drivers infrastructure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ioctl.html">ioctl based interfaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../early-userspace/index.html">Early Userspace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pm/index.html">CPU and Device Power Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../clk.html">The Common Clk Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../device-io.html">Bus-Independent Device Accesses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dma-buf.html">Buffer Sharing and Synchronization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../device_link.html">Device links</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../component.html">Component Helper for Aggregate Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../message-based.html">Message-based devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../infiniband.html">InfiniBand and Remote DMA (RDMA) Interfaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../frame-buffer.html">Frame Buffer Library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../regulator.html">Voltage and current regulator API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../input.html">Input Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usb/index.html">Linux USB API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../firewire.html">Firewire (IEEE 1394) driver Interface Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pci/index.html">The Linux PCI driver implementer’s API guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../spi.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../i2c.html">I<sup>2</sup>C and SMBus Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ipmb.html">IPMB Driver for a Satellite MC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ipmi.html">The Linux IPMI Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../i3c/index.html">I3C subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../interconnect.html">Generic System Interconnect Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../devfreq.html">Device Frequency Scaling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../hsi.html">High Speed Synchronous Serial Interface (HSI)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../edac.html">Error Detection And Correction (EDAC) Devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../scsi.html">SCSI Interfaces Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../libata.html">libATA Developer’s Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../target.html">target and iSCSI Interfaces Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mailbox.html">The Common Mailbox Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mtdnand.html">MTD NAND Driver Programming Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../miscellaneous.html">Parallel Port Devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../miscellaneous.html#x50-uart-driver">16x50 UART Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../miscellaneous.html#pulse-width-modulation-pwm">Pulse-Width Modulation (PWM)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mei/index.html">Intel(R) Management Engine Interface (Intel(R) MEI)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mtd/index.html">Memory Technology Device (MTD)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mmc/index.html">MMC/SD/SDIO card support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../nvdimm/index.html">Non-Volatile Memory Device (NVDIMM)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../w1.html">W1: Dallas’ 1-wire bus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../rapidio/index.html">The Linux RapidIO Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../s390-drivers.html">Writing s390 channel device drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../vme.html">VME Device Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../80211/index.html">Linux 802.11 Driver Developer’s Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../uio-howto.html">The Userspace I/O HOWTO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../firmware/index.html">Linux Firmware API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pinctl.html">PINCTRL (PIN CONTROL) subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../gpio/index.html">General Purpose Input/Output (GPIO)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../md/index.html">RAID</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../media/index.html">Media subsystem kernel internal API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../misc_devices.html">Miscellaneous Devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../nfc/index.html">Near Field Communication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dmaengine/index.html">DMAEngine documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../slimbus.html">Linux kernel SLIMbus support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../soundwire/index.html">SoundWire Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../thermal/index.html">Thermal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga/index.html">FPGA Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../acpi/index.html">ACPI Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../backlight/lp855x-driver.html">Kernel driver lp855x</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../connector.html">Kernel Connector</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../console.html">Console Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dcdbas.html">Dell Systems Management Base Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../eisa.html">EISA bus support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../isa.html">ISA Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../isapnp.html">ISA Plug &amp; Play support by Jaroslav Kysela &lt;perex&#64;suse.cz&gt;</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../io-mapping.html">The io_mapping functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../io_ordering.html">Ordering I/O writes to memory-mapped addresses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../generic-counter.html">Generic Counter Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../lightnvm-pblk.html">pblk: Physical Block Device Target</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../memory-devices/index.html">Memory Controller drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../men-chameleon-bus.html">MEN Chameleon Bus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ntb.html">NTB Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../nvmem.html">NVMEM Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../parport-lowlevel.html">PARPORT interface documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pps.html">PPS - Pulse Per Second</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ptp.html">PTP hardware clock infrastructure for Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../phy/index.html">Generic PHY Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pti_intel_mid.html">Intel MID PTI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pwm.html">Pulse Width Modulation (PWM) interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pldmfw/index.html">PLDM Firmware Flash Update Library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pldmfw/index.html#overview-of-the-pldmfw-library">Overview of the <code class="docutils literal notranslate"><span class="pre">pldmfw</span></code> library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../rfkill.html">rfkill - RF kill switch support</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">Support for Serial devices</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Low Level Serial API</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#low-level-serial-hardware-driver">Low Level Serial Hardware Driver</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#console-support">Console Support</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#locking">Locking</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#uart-ops">uart_ops</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#other-functions">Other functions</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#other-notes">Other notes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#modem-control-lines-via-gpio">Modem control lines via GPIO</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="tty.html">The Lockronomicon</a></li>
+<li class="toctree-l3"><a class="reference internal" href="index.html#serial-drivers">Serial drivers</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../sm501.html">SM501 Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../switchtec.html">Linux Switchtec Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sync_file.html">Sync File API Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../vfio-mediated-device.html">VFIO Mediated devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../vfio.html">VFIO - “Virtual Function I/O” </a></li>
+<li class="toctree-l2"><a class="reference internal" href="../xilinx/index.html">Xilinx FPGA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../xillybus.html">Xillybus driver for generic FPGA interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../zorro.html">Writing Device Drivers for Zorro Devices</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">The Linux driver implementer’s API guide</a> &raquo;</li>
+        
+          <li><a href="index.html">Support for Serial devices</a> &raquo;</li>
+        
+      <li>Low Level Serial API</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/driver-api/serial/driver.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="low-level-serial-api">
+<h1>Low Level Serial API<a class="headerlink" href="#low-level-serial-api" title="Permalink to this headline">¶</a></h1>
+<p>This document is meant as a brief overview of some aspects of the new serial
+driver.  It is not complete, any questions you have should be directed to
+&lt;<a class="reference external" href="mailto:rmk&#37;&#52;&#48;arm&#46;linux&#46;org&#46;uk">rmk<span>&#64;</span>arm<span>&#46;</span>linux<span>&#46;</span>org<span>&#46;</span>uk</a>&gt;</p>
+<p>The reference implementation is contained within amba-pl011.c.</p>
+<div class="section" id="low-level-serial-hardware-driver">
+<h2>Low Level Serial Hardware Driver<a class="headerlink" href="#low-level-serial-hardware-driver" title="Permalink to this headline">¶</a></h2>
+<p>The low level serial hardware driver is responsible for supplying port
+information (defined by uart_port) and a set of control methods (defined
+by uart_ops) to the core serial driver.  The low level driver is also
+responsible for handling interrupts for the port, and providing any
+console support.</p>
+</div>
+<div class="section" id="console-support">
+<h2>Console Support<a class="headerlink" href="#console-support" title="Permalink to this headline">¶</a></h2>
+<p>The serial core provides a few helper functions.  This includes identifing
+the correct port structure (via uart_get_console) and decoding command line
+arguments (uart_parse_options).</p>
+<p>There is also a helper function (uart_console_write) which performs a
+character by character write, translating newlines to CRLF sequences.
+Driver writers are recommended to use this function rather than implementing
+their own version.</p>
+</div>
+<div class="section" id="locking">
+<h2>Locking<a class="headerlink" href="#locking" title="Permalink to this headline">¶</a></h2>
+<p>It is the responsibility of the low level hardware driver to perform the
+necessary locking using port-&gt;lock.  There are some exceptions (which
+are described in the uart_ops listing below.)</p>
+<p>There are two locks.  A per-port spinlock, and an overall semaphore.</p>
+<p>From the core driver perspective, the port-&gt;lock locks the following
+data:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>port-&gt;mctrl
+port-&gt;icount
+port-&gt;state-&gt;xmit.head (circ_buf-&gt;head)
+port-&gt;state-&gt;xmit.tail (circ_buf-&gt;tail)
+</pre></div>
+</div>
+<p>The low level driver is free to use this lock to provide any additional
+locking.</p>
+<p>The port_sem semaphore is used to protect against ports being added/
+removed or reconfigured at inappropriate times. Since v2.6.27, this
+semaphore has been the ‘mutex’ member of the tty_port struct, and
+commonly referred to as the port mutex.</p>
+</div>
+<div class="section" id="uart-ops">
+<h2>uart_ops<a class="headerlink" href="#uart-ops" title="Permalink to this headline">¶</a></h2>
+<p>The uart_ops structure is the main interface between serial_core and the
+hardware specific driver.  It contains all the methods to control the
+hardware.</p>
+<blockquote>
+<div><dl>
+<dt>tx_empty(port)</dt><dd><p>This function tests whether the transmitter fifo and shifter
+for the port described by ‘port’ is empty.  If it is empty,
+this function should return TIOCSER_TEMT, otherwise return 0.
+If the port does not support this operation, then it should
+return TIOCSER_TEMT.</p>
+<p>Locking: none.</p>
+<p>Interrupts: caller dependent.</p>
+<p>This call must not sleep</p>
+</dd>
+<dt>set_mctrl(port, mctrl)</dt><dd><p>This function sets the modem control lines for port described
+by ‘port’ to the state described by mctrl.  The relevant bits
+of mctrl are:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>TIOCM_RTS     RTS signal.</p></li>
+<li><p>TIOCM_DTR     DTR signal.</p></li>
+<li><p>TIOCM_OUT1    OUT1 signal.</p></li>
+<li><p>TIOCM_OUT2    OUT2 signal.</p></li>
+<li><p>TIOCM_LOOP    Set the port into loopback mode.</p></li>
+</ul>
+</div></blockquote>
+<p>If the appropriate bit is set, the signal should be driven
+active.  If the bit is clear, the signal should be driven
+inactive.</p>
+<p>Locking: port-&gt;lock taken.</p>
+<p>Interrupts: locally disabled.</p>
+<p>This call must not sleep</p>
+</dd>
+<dt>get_mctrl(port)</dt><dd><p>Returns the current state of modem control inputs.  The state
+of the outputs should not be returned, since the core keeps
+track of their state.  The state information should include:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>TIOCM_CAR     state of DCD signal</p></li>
+<li><p>TIOCM_CTS     state of CTS signal</p></li>
+<li><p>TIOCM_DSR     state of DSR signal</p></li>
+<li><p>TIOCM_RI      state of RI signal</p></li>
+</ul>
+</div></blockquote>
+<p>The bit is set if the signal is currently driven active.  If
+the port does not support CTS, DCD or DSR, the driver should
+indicate that the signal is permanently active.  If RI is
+not available, the signal should not be indicated as active.</p>
+<p>Locking: port-&gt;lock taken.</p>
+<p>Interrupts: locally disabled.</p>
+<p>This call must not sleep</p>
+</dd>
+<dt>stop_tx(port)</dt><dd><p>Stop transmitting characters.  This might be due to the CTS
+line becoming inactive or the tty layer indicating we want
+to stop transmission due to an XOFF character.</p>
+<p>The driver should stop transmitting characters as soon as
+possible.</p>
+<p>Locking: port-&gt;lock taken.</p>
+<p>Interrupts: locally disabled.</p>
+<p>This call must not sleep</p>
+</dd>
+<dt>start_tx(port)</dt><dd><p>Start transmitting characters.</p>
+<p>Locking: port-&gt;lock taken.</p>
+<p>Interrupts: locally disabled.</p>
+<p>This call must not sleep</p>
+</dd>
+<dt>throttle(port)</dt><dd><p>Notify the serial driver that input buffers for the line discipline are
+close to full, and it should somehow signal that no more characters
+should be sent to the serial port.
+This will be called only if hardware assisted flow control is enabled.</p>
+<p>Locking: serialized with .unthrottle() and termios modification by the
+tty layer.</p>
+</dd>
+<dt>unthrottle(port)</dt><dd><p>Notify the serial driver that characters can now be sent to the serial
+port without fear of overrunning the input buffers of the line
+disciplines.</p>
+<p>This will be called only if hardware assisted flow control is enabled.</p>
+<p>Locking: serialized with .throttle() and termios modification by the
+tty layer.</p>
+</dd>
+<dt>send_xchar(port,ch)</dt><dd><p>Transmit a high priority character, even if the port is stopped.
+This is used to implement XON/XOFF flow control and tcflow().  If
+the serial driver does not implement this function, the tty core
+will append the character to the circular buffer and then call
+start_tx() / stop_tx() to flush the data out.</p>
+<p>Do not transmit if ch == ‘0’ (__DISABLED_CHAR).</p>
+<p>Locking: none.</p>
+<p>Interrupts: caller dependent.</p>
+</dd>
+<dt>stop_rx(port)</dt><dd><p>Stop receiving characters; the port is in the process of
+being closed.</p>
+<p>Locking: port-&gt;lock taken.</p>
+<p>Interrupts: locally disabled.</p>
+<p>This call must not sleep</p>
+</dd>
+<dt>enable_ms(port)</dt><dd><p>Enable the modem status interrupts.</p>
+<p>This method may be called multiple times.  Modem status
+interrupts should be disabled when the shutdown method is
+called.</p>
+<p>Locking: port-&gt;lock taken.</p>
+<p>Interrupts: locally disabled.</p>
+<p>This call must not sleep</p>
+</dd>
+<dt>break_ctl(port,ctl)</dt><dd><p>Control the transmission of a break signal.  If ctl is
+nonzero, the break signal should be transmitted.  The signal
+should be terminated when another call is made with a zero
+ctl.</p>
+<p>Locking: caller holds tty_port-&gt;mutex</p>
+</dd>
+<dt>startup(port)</dt><dd><p>Grab any interrupt resources and initialise any low level driver
+state.  Enable the port for reception.  It should not activate
+RTS nor DTR; this will be done via a separate call to set_mctrl.</p>
+<p>This method will only be called when the port is initially opened.</p>
+<p>Locking: port_sem taken.</p>
+<p>Interrupts: globally disabled.</p>
+</dd>
+<dt>shutdown(port)</dt><dd><p>Disable the port, disable any break condition that may be in
+effect, and free any interrupt resources.  It should not disable
+RTS nor DTR; this will have already been done via a separate
+call to set_mctrl.</p>
+<p>Drivers must not access port-&gt;state once this call has completed.</p>
+<p>This method will only be called when there are no more users of
+this port.</p>
+<p>Locking: port_sem taken.</p>
+<p>Interrupts: caller dependent.</p>
+</dd>
+<dt>flush_buffer(port)</dt><dd><p>Flush any write buffers, reset any DMA state and stop any
+ongoing DMA transfers.</p>
+<p>This will be called whenever the port-&gt;state-&gt;xmit circular
+buffer is cleared.</p>
+<p>Locking: port-&gt;lock taken.</p>
+<p>Interrupts: locally disabled.</p>
+<p>This call must not sleep</p>
+</dd>
+<dt>set_termios(port,termios,oldtermios)</dt><dd><p>Change the port parameters, including word length, parity, stop
+bits.  Update read_status_mask and ignore_status_mask to indicate
+the types of events we are interested in receiving.  Relevant
+termios-&gt;c_cflag bits are:</p>
+<blockquote>
+<div><dl class="simple">
+<dt>CSIZE</dt><dd><ul class="simple">
+<li><p>word size</p></li>
+</ul>
+</dd>
+<dt>CSTOPB</dt><dd><ul class="simple">
+<li><p>2 stop bits</p></li>
+</ul>
+</dd>
+<dt>PARENB</dt><dd><ul class="simple">
+<li><p>parity enable</p></li>
+</ul>
+</dd>
+<dt>PARODD</dt><dd><ul class="simple">
+<li><p>odd parity (when PARENB is in force)</p></li>
+</ul>
+</dd>
+<dt>CREAD</dt><dd><ul class="simple">
+<li><p>enable reception of characters (if not set,
+still receive characters from the port, but
+throw them away.</p></li>
+</ul>
+</dd>
+<dt>CRTSCTS</dt><dd><ul class="simple">
+<li><p>if set, enable CTS status change reporting</p></li>
+</ul>
+</dd>
+<dt>CLOCAL</dt><dd><ul class="simple">
+<li><p>if not set, enable modem status change
+reporting.</p></li>
+</ul>
+</dd>
+</dl>
+</div></blockquote>
+<p>Relevant termios-&gt;c_iflag bits are:</p>
+<blockquote>
+<div><dl class="simple">
+<dt>INPCK</dt><dd><ul class="simple">
+<li><p>enable frame and parity error events to be
+passed to the TTY layer.</p></li>
+</ul>
+</dd>
+<dt>BRKINT / PARMRK</dt><dd><ul class="simple">
+<li><p>both of these enable break events to be
+passed to the TTY layer.</p></li>
+</ul>
+</dd>
+<dt>IGNPAR</dt><dd><ul class="simple">
+<li><p>ignore parity and framing errors</p></li>
+</ul>
+</dd>
+<dt>IGNBRK</dt><dd><ul class="simple">
+<li><p>ignore break errors,  If IGNPAR is also
+set, ignore overrun errors as well.</p></li>
+</ul>
+</dd>
+</dl>
+</div></blockquote>
+<p>The interaction of the iflag bits is as follows (parity error
+given as an example):</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 26%" />
+<col style="width: 12%" />
+<col style="width: 11%" />
+<col style="width: 51%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Parity error</p></th>
+<th class="head"><p>INPCK</p></th>
+<th class="head"><p>IGNPAR</p></th>
+<th class="head"></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>n/a</p></td>
+<td><p>0</p></td>
+<td><p>n/a</p></td>
+<td><p>character received, marked as
+TTY_NORMAL</p></td>
+</tr>
+<tr class="row-odd"><td><p>None</p></td>
+<td><p>1</p></td>
+<td><p>n/a</p></td>
+<td><p>character received, marked as
+TTY_NORMAL</p></td>
+</tr>
+<tr class="row-even"><td><p>Yes</p></td>
+<td><p>1</p></td>
+<td><p>0</p></td>
+<td><p>character received, marked as
+TTY_PARITY</p></td>
+</tr>
+<tr class="row-odd"><td><p>Yes</p></td>
+<td><p>1</p></td>
+<td><p>1</p></td>
+<td><p>character discarded</p></td>
+</tr>
+</tbody>
+</table>
+<p>Other flags may be used (eg, xon/xoff characters) if your
+hardware supports hardware “soft” flow control.</p>
+<p>Locking: caller holds tty_port-&gt;mutex</p>
+<p>Interrupts: caller dependent.</p>
+<p>This call must not sleep</p>
+</dd>
+<dt>set_ldisc(port,termios)</dt><dd><p>Notifier for discipline change. See <a class="reference internal" href="tty.html"><span class="doc">The Lockronomicon</span></a>.</p>
+<p>Locking: caller holds tty_port-&gt;mutex</p>
+</dd>
+<dt>pm(port,state,oldstate)</dt><dd><p>Perform any power management related activities on the specified
+port.  State indicates the new state (defined by
+enum uart_pm_state), oldstate indicates the previous state.</p>
+<p>This function should not be used to grab any resources.</p>
+<p>This will be called when the port is initially opened and finally
+closed, except when the port is also the system console.  This
+will occur even if CONFIG_PM is not set.</p>
+<p>Locking: none.</p>
+<p>Interrupts: caller dependent.</p>
+</dd>
+<dt>type(port)</dt><dd><p>Return a pointer to a string constant describing the specified
+port, or return NULL, in which case the string ‘unknown’ is
+substituted.</p>
+<p>Locking: none.</p>
+<p>Interrupts: caller dependent.</p>
+</dd>
+<dt>release_port(port)</dt><dd><p>Release any memory and IO region resources currently in use by
+the port.</p>
+<p>Locking: none.</p>
+<p>Interrupts: caller dependent.</p>
+</dd>
+<dt>request_port(port)</dt><dd><p>Request any memory and IO region resources required by the port.
+If any fail, no resources should be registered when this function
+returns, and it should return -EBUSY on failure.</p>
+<p>Locking: none.</p>
+<p>Interrupts: caller dependent.</p>
+</dd>
+<dt>config_port(port,type)</dt><dd><p>Perform any autoconfiguration steps required for the port.  <cite>type</cite>
+contains a bit mask of the required configuration.  UART_CONFIG_TYPE
+indicates that the port requires detection and identification.
+port-&gt;type should be set to the type found, or PORT_UNKNOWN if
+no port was detected.</p>
+<p>UART_CONFIG_IRQ indicates autoconfiguration of the interrupt signal,
+which should be probed using standard kernel autoprobing techniques.
+This is not necessary on platforms where ports have interrupts
+internally hard wired (eg, system on a chip implementations).</p>
+<p>Locking: none.</p>
+<p>Interrupts: caller dependent.</p>
+</dd>
+<dt>verify_port(port,serinfo)</dt><dd><p>Verify the new serial port information contained within serinfo is
+suitable for this port type.</p>
+<p>Locking: none.</p>
+<p>Interrupts: caller dependent.</p>
+</dd>
+<dt>ioctl(port,cmd,arg)</dt><dd><p>Perform any port specific IOCTLs.  IOCTL commands must be defined
+using the standard numbering system found in &lt;asm/ioctl.h&gt;</p>
+<p>Locking: none.</p>
+<p>Interrupts: caller dependent.</p>
+</dd>
+<dt>poll_init(port)</dt><dd><p>Called by kgdb to perform the minimal hardware initialization needed
+to support poll_put_char() and poll_get_char().  Unlike -&gt;startup()
+this should not request interrupts.</p>
+<p>Locking: tty_mutex and tty_port-&gt;mutex taken.</p>
+<p>Interrupts: n/a.</p>
+</dd>
+<dt>poll_put_char(port,ch)</dt><dd><p>Called by kgdb to write a single character directly to the serial
+port.  It can and should block until there is space in the TX FIFO.</p>
+<p>Locking: none.</p>
+<p>Interrupts: caller dependent.</p>
+<p>This call must not sleep</p>
+</dd>
+<dt>poll_get_char(port)</dt><dd><p>Called by kgdb to read a single character directly from the serial
+port.  If data is available, it should be returned; otherwise
+the function should return NO_POLL_CHAR immediately.</p>
+<p>Locking: none.</p>
+<p>Interrupts: caller dependent.</p>
+<p>This call must not sleep</p>
+</dd>
+</dl>
+</div></blockquote>
+</div>
+<div class="section" id="other-functions">
+<h2>Other functions<a class="headerlink" href="#other-functions" title="Permalink to this headline">¶</a></h2>
+<dl>
+<dt>uart_update_timeout(port,cflag,baud)</dt><dd><p>Update the FIFO drain timeout, port-&gt;timeout, according to the
+number of bits, parity, stop bits and baud rate.</p>
+<p>Locking: caller is expected to take port-&gt;lock</p>
+<p>Interrupts: n/a</p>
+</dd>
+<dt>uart_get_baud_rate(port,termios,old,min,max)</dt><dd><p>Return the numeric baud rate for the specified termios, taking
+account of the special 38400 baud “kludge”.  The B0 baud rate
+is mapped to 9600 baud.</p>
+<p>If the baud rate is not within min..max, then if old is non-NULL,
+the original baud rate will be tried.  If that exceeds the
+min..max constraint, 9600 baud will be returned.  termios will
+be updated to the baud rate in use.</p>
+<p>Note: min..max must always allow 9600 baud to be selected.</p>
+<p>Locking: caller dependent.</p>
+<p>Interrupts: n/a</p>
+</dd>
+<dt>uart_get_divisor(port,baud)</dt><dd><p>Return the divisor (baud_base / baud) for the specified baud
+rate, appropriately rounded.</p>
+<p>If 38400 baud and custom divisor is selected, return the
+custom divisor instead.</p>
+<p>Locking: caller dependent.</p>
+<p>Interrupts: n/a</p>
+</dd>
+<dt>uart_match_port(port1,port2)</dt><dd><p>This utility function can be used to determine whether two
+uart_port structures describe the same port.</p>
+<p>Locking: n/a</p>
+<p>Interrupts: n/a</p>
+</dd>
+<dt>uart_write_wakeup(port)</dt><dd><p>A driver is expected to call this function when the number of
+characters in the transmit buffer have dropped below a threshold.</p>
+<p>Locking: port-&gt;lock should be held.</p>
+<p>Interrupts: n/a</p>
+</dd>
+<dt>uart_register_driver(drv)</dt><dd><p>Register a uart driver with the core driver.  We in turn register
+with the tty layer, and initialise the core driver per-port state.</p>
+<p>drv-&gt;port should be NULL, and the per-port structures should be
+registered using uart_add_one_port after this call has succeeded.</p>
+<p>Locking: none</p>
+<p>Interrupts: enabled</p>
+</dd>
+<dt>uart_unregister_driver()</dt><dd><p>Remove all references to a driver from the core driver.  The low
+level driver must have removed all its ports via the
+<a class="reference internal" href="../miscellaneous.html#c.uart_remove_one_port" title="uart_remove_one_port"><code class="xref c c-func docutils literal notranslate"><span class="pre">uart_remove_one_port()</span></code></a> if it registered them with <a class="reference internal" href="../miscellaneous.html#c.uart_add_one_port" title="uart_add_one_port"><code class="xref c c-func docutils literal notranslate"><span class="pre">uart_add_one_port()</span></code></a>.</p>
+<p>Locking: none</p>
+<p>Interrupts: enabled</p>
+</dd>
+</dl>
+<p><strong>uart_suspend_port()</strong></p>
+<p><strong>uart_resume_port()</strong></p>
+<p><strong><a class="reference internal" href="../miscellaneous.html#c.uart_add_one_port" title="uart_add_one_port"><code class="xref c c-func docutils literal notranslate"><span class="pre">uart_add_one_port()</span></code></a></strong></p>
+<p><strong><a class="reference internal" href="../miscellaneous.html#c.uart_remove_one_port" title="uart_remove_one_port"><code class="xref c c-func docutils literal notranslate"><span class="pre">uart_remove_one_port()</span></code></a></strong></p>
+</div>
+<div class="section" id="other-notes">
+<h2>Other notes<a class="headerlink" href="#other-notes" title="Permalink to this headline">¶</a></h2>
+<p>It is intended some day to drop the ‘unused’ entries from uart_port, and
+allow low level drivers to register their own individual uart_port’s with
+the core.  This will allow drivers to use uart_port as a pointer to a
+structure containing both the uart_port entry with their own extensions,
+thus:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct my_port {
+        struct uart_port        port;
+        int                     my_stuff;
+};
+</pre></div>
+</div>
+</div>
+<div class="section" id="modem-control-lines-via-gpio">
+<h2>Modem control lines via GPIO<a class="headerlink" href="#modem-control-lines-via-gpio" title="Permalink to this headline">¶</a></h2>
+<p>Some helpers are provided in order to set/get modem control lines via GPIO.</p>
+<dl class="simple">
+<dt>mctrl_gpio_init(port, idx):</dt><dd><p>This will get the {cts,rts,…}-gpios from device tree if they are
+present and request them, set direction etc, and return an
+allocated structure. <cite>devm_*</cite> functions are used, so there’s no need
+to call mctrl_gpio_free().
+As this sets up the irq handling make sure to not handle changes to the
+gpio input lines in your driver, too.</p>
+</dd>
+<dt>mctrl_gpio_free(dev, gpios):</dt><dd><p>This will free the requested gpios in mctrl_gpio_init().
+As <cite>devm_*</cite> functions are used, there’s generally no need to call
+this function.</p>
+</dd>
+<dt>mctrl_gpio_to_gpiod(gpios, gidx)</dt><dd><p>This returns the gpio_desc structure associated to the modem line
+index.</p>
+</dd>
+<dt>mctrl_gpio_set(gpios, mctrl):</dt><dd><p>This will sets the gpios according to the mctrl state.</p>
+</dd>
+<dt>mctrl_gpio_get(gpios, mctrl):</dt><dd><p>This will update mctrl with the gpios values.</p>
+</dd>
+<dt>mctrl_gpio_enable_ms(gpios):</dt><dd><p>Enables irqs and handling of changes to the ms lines.</p>
+</dd>
+<dt>mctrl_gpio_disable_ms(gpios):</dt><dd><p>Disables irqs and handling of changes to the ms lines.</p>
+</dd>
+</dl>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="tty.html" class="btn btn-neutral float-right" title="The Lockronomicon" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="index.html" class="btn btn-neutral float-left" title="Support for Serial devices" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

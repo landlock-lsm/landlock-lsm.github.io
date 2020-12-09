@@ -1,0 +1,799 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Porting Drivers to the New Driver Model &mdash; The Linux Kernel  documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+  
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/language_data.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Driver Basics" href="../basics.html" />
+    <link rel="prev" title="Platform Devices and Drivers" href="platform.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.10.0-rc7
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">The Linux driver implementer’s API guide</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">Driver Model</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="binding.html">Driver Binding</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bus.html">Bus Types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="class.html">Device Classes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="design-patterns.html">Device Driver Design Patterns</a></li>
+<li class="toctree-l3"><a class="reference internal" href="device.html">The Basic Device Structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="devres.html">Devres - Managed Device Resource</a></li>
+<li class="toctree-l3"><a class="reference internal" href="driver.html">Device Drivers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="overview.html">The Linux Kernel Device Model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="platform.html">Platform Devices and Drivers</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Porting Drivers to the New Driver Model</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../basics.html">Driver Basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../infrastructure.html">Device drivers infrastructure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ioctl.html">ioctl based interfaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../early-userspace/index.html">Early Userspace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pm/index.html">CPU and Device Power Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../clk.html">The Common Clk Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../device-io.html">Bus-Independent Device Accesses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dma-buf.html">Buffer Sharing and Synchronization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../device_link.html">Device links</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../component.html">Component Helper for Aggregate Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../message-based.html">Message-based devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../infiniband.html">InfiniBand and Remote DMA (RDMA) Interfaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../frame-buffer.html">Frame Buffer Library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../regulator.html">Voltage and current regulator API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../input.html">Input Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usb/index.html">Linux USB API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../firewire.html">Firewire (IEEE 1394) driver Interface Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pci/index.html">The Linux PCI driver implementer’s API guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../spi.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../i2c.html">I<sup>2</sup>C and SMBus Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ipmb.html">IPMB Driver for a Satellite MC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ipmi.html">The Linux IPMI Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../i3c/index.html">I3C subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../interconnect.html">Generic System Interconnect Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../devfreq.html">Device Frequency Scaling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../hsi.html">High Speed Synchronous Serial Interface (HSI)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../edac.html">Error Detection And Correction (EDAC) Devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../scsi.html">SCSI Interfaces Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../libata.html">libATA Developer’s Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../target.html">target and iSCSI Interfaces Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mailbox.html">The Common Mailbox Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mtdnand.html">MTD NAND Driver Programming Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../miscellaneous.html">Parallel Port Devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../miscellaneous.html#x50-uart-driver">16x50 UART Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../miscellaneous.html#pulse-width-modulation-pwm">Pulse-Width Modulation (PWM)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mei/index.html">Intel(R) Management Engine Interface (Intel(R) MEI)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mtd/index.html">Memory Technology Device (MTD)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mmc/index.html">MMC/SD/SDIO card support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../nvdimm/index.html">Non-Volatile Memory Device (NVDIMM)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../w1.html">W1: Dallas’ 1-wire bus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../rapidio/index.html">The Linux RapidIO Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../s390-drivers.html">Writing s390 channel device drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../vme.html">VME Device Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../80211/index.html">Linux 802.11 Driver Developer’s Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../uio-howto.html">The Userspace I/O HOWTO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../firmware/index.html">Linux Firmware API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pinctl.html">PINCTRL (PIN CONTROL) subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../gpio/index.html">General Purpose Input/Output (GPIO)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../md/index.html">RAID</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../media/index.html">Media subsystem kernel internal API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../misc_devices.html">Miscellaneous Devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../nfc/index.html">Near Field Communication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dmaengine/index.html">DMAEngine documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../slimbus.html">Linux kernel SLIMbus support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../soundwire/index.html">SoundWire Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../thermal/index.html">Thermal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga/index.html">FPGA Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../acpi/index.html">ACPI Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../backlight/lp855x-driver.html">Kernel driver lp855x</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../connector.html">Kernel Connector</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../console.html">Console Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dcdbas.html">Dell Systems Management Base Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../eisa.html">EISA bus support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../isa.html">ISA Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../isapnp.html">ISA Plug &amp; Play support by Jaroslav Kysela &lt;perex&#64;suse.cz&gt;</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../io-mapping.html">The io_mapping functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../io_ordering.html">Ordering I/O writes to memory-mapped addresses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../generic-counter.html">Generic Counter Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../lightnvm-pblk.html">pblk: Physical Block Device Target</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../memory-devices/index.html">Memory Controller drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../men-chameleon-bus.html">MEN Chameleon Bus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ntb.html">NTB Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../nvmem.html">NVMEM Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../parport-lowlevel.html">PARPORT interface documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pps.html">PPS - Pulse Per Second</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ptp.html">PTP hardware clock infrastructure for Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../phy/index.html">Generic PHY Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pti_intel_mid.html">Intel MID PTI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pwm.html">Pulse Width Modulation (PWM) interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pldmfw/index.html">PLDM Firmware Flash Update Library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pldmfw/index.html#overview-of-the-pldmfw-library">Overview of the <code class="docutils literal notranslate"><span class="pre">pldmfw</span></code> library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../rfkill.html">rfkill - RF kill switch support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../serial/index.html">Support for Serial devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sm501.html">SM501 Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../switchtec.html">Linux Switchtec Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sync_file.html">Sync File API Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../vfio-mediated-device.html">VFIO Mediated devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../vfio.html">VFIO - “Virtual Function I/O” </a></li>
+<li class="toctree-l2"><a class="reference internal" href="../xilinx/index.html">Xilinx FPGA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../xillybus.html">Xillybus driver for generic FPGA interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../zorro.html">Writing Device Drivers for Zorro Devices</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../nios2/nios2.html">Linux on the Nios II architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">The Linux driver implementer’s API guide</a> &raquo;</li>
+        
+          <li><a href="index.html">Driver Model</a> &raquo;</li>
+        
+      <li>Porting Drivers to the New Driver Model</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../../_sources/driver-api/driver-model/porting.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="porting-drivers-to-the-new-driver-model">
+<h1>Porting Drivers to the New Driver Model<a class="headerlink" href="#porting-drivers-to-the-new-driver-model" title="Permalink to this headline">¶</a></h1>
+<p>Patrick Mochel</p>
+<p>7 January 2003</p>
+<p>Overview</p>
+<p>Please refer to <cite>Documentation/driver-api/driver-model/*.rst</cite> for definitions of
+various driver types and concepts.</p>
+<p>Most of the work of porting devices drivers to the new model happens
+at the bus driver layer. This was intentional, to minimize the
+negative effect on kernel drivers, and to allow a gradual transition
+of bus drivers.</p>
+<p>In a nutshell, the driver model consists of a set of objects that can
+be embedded in larger, bus-specific objects. Fields in these generic
+objects can replace fields in the bus-specific objects.</p>
+<p>The generic objects must be registered with the driver model core. By
+doing so, they will exported via the sysfs filesystem. sysfs can be
+mounted by doing:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># mount -t sysfs sysfs /sys
+</pre></div>
+</div>
+<p>The Process</p>
+<p>Step 0: Read include/linux/device.h for object and function definitions.</p>
+<p>Step 1: Registering the bus driver.</p>
+<ul>
+<li><p>Define a struct bus_type for the bus driver:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct bus_type pci_bus_type = {
+      .name           = &quot;pci&quot;,
+};
+</pre></div>
+</div>
+</li>
+<li><p>Register the bus type.</p>
+<p>This should be done in the initialization function for the bus type,
+which is usually the <a class="reference internal" href="../basics.html#c.module_init" title="module_init"><code class="xref c c-func docutils literal notranslate"><span class="pre">module_init()</span></code></a>, or equivalent, function:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>static int __init pci_driver_init(void)
+{
+        return bus_register(&amp;pci_bus_type);
+}
+
+subsys_initcall(pci_driver_init);
+</pre></div>
+</div>
+<p>The bus type may be unregistered (if the bus driver may be compiled
+as a module) by doing:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>bus_unregister(&amp;pci_bus_type);
+</pre></div>
+</div>
+</li>
+<li><p>Export the bus type for others to use.</p>
+<p>Other code may wish to reference the bus type, so declare it in a
+shared header file and export the symbol.</p>
+</li>
+</ul>
+<p>From include/linux/pci.h:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>extern struct bus_type pci_bus_type;
+</pre></div>
+</div>
+<p>From file the above code appears in:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>EXPORT_SYMBOL(pci_bus_type);
+</pre></div>
+</div>
+<ul>
+<li><p>This will cause the bus to show up in /sys/bus/pci/ with two
+subdirectories: ‘devices’ and ‘drivers’:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># tree -d /sys/bus/pci/
+/sys/bus/pci/
+|-- devices
+`-- drivers
+</pre></div>
+</div>
+</li>
+</ul>
+<p>Step 2: Registering Devices.</p>
+<p><a class="reference internal" href="../infrastructure.html#c.device" title="device"><code class="xref c c-struct docutils literal notranslate"><span class="pre">struct</span> <span class="pre">device</span></code></a> represents a single device. It mainly contains metadata
+describing the relationship the device has to other entities.</p>
+<ul>
+<li><p>Embed a <a class="reference internal" href="../infrastructure.html#c.device" title="device"><code class="xref c c-struct docutils literal notranslate"><span class="pre">struct</span> <span class="pre">device</span></code></a> in the bus-specific device type:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct pci_dev {
+       ...
+       struct  device  dev;            /* Generic device interface */
+       ...
+};
+</pre></div>
+</div>
+<p>It is recommended that the generic device not be the first item in
+the struct to discourage programmers from doing mindless casts
+between the object types. Instead macros, or inline functions,
+should be created to convert from the generic object type:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>#define to_pci_dev(n) container_of(n, struct pci_dev, dev)
+
+or
+
+static inline struct pci_dev * to_pci_dev(struct kobject * kobj)
+{
+    return container_of(n, struct pci_dev, dev);
+}
+</pre></div>
+</div>
+<p>This allows the compiler to verify type-safety of the operations
+that are performed (which is Good).</p>
+</li>
+<li><p>Initialize the device on registration.</p>
+<p>When devices are discovered or registered with the bus type, the
+bus driver should initialize the generic device. The most important
+things to initialize are the bus_id, parent, and bus fields.</p>
+<p>The bus_id is an ASCII string that contains the device’s address on
+the bus. The format of this string is bus-specific. This is
+necessary for representing devices in sysfs.</p>
+<p>parent is the physical parent of the device. It is important that
+the bus driver sets this field correctly.</p>
+<p>The driver model maintains an ordered list of devices that it uses
+for power management. This list must be in order to guarantee that
+devices are shutdown before their physical parents, and vice versa.
+The order of this list is determined by the parent of registered
+devices.</p>
+<p>Also, the location of the device’s sysfs directory depends on a
+device’s parent. sysfs exports a directory structure that mirrors
+the device hierarchy. Accurately setting the parent guarantees that
+sysfs will accurately represent the hierarchy.</p>
+<p>The device’s bus field is a pointer to the bus type the device
+belongs to. This should be set to the bus_type that was declared
+and initialized before.</p>
+<p>Optionally, the bus driver may set the device’s name and release
+fields.</p>
+<p>The name field is an ASCII string describing the device, like</p>
+<blockquote>
+<div><p>“ATI Technologies Inc Radeon QD”</p>
+</div></blockquote>
+<p>The release field is a callback that the driver model core calls
+when the device has been removed, and all references to it have
+been released. More on this in a moment.</p>
+</li>
+<li><p>Register the device.</p>
+<p>Once the generic device has been initialized, it can be registered
+with the driver model core by doing:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>device_register(&amp;dev-&gt;dev);
+</pre></div>
+</div>
+<p>It can later be unregistered by doing:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>device_unregister(&amp;dev-&gt;dev);
+</pre></div>
+</div>
+<p>This should happen on buses that support hotpluggable devices.
+If a bus driver unregisters a device, it should not immediately free
+it. It should instead wait for the driver model core to call the
+device’s release method, then free the bus-specific object.
+(There may be other code that is currently referencing the device
+structure, and it would be rude to free the device while that is
+happening).</p>
+<p>When the device is registered, a directory in sysfs is created.
+The PCI tree in sysfs looks like:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>/sys/devices/pci0/
+|-- 00:00.0
+|-- 00:01.0
+|   `-- 01:00.0
+|-- 00:02.0
+|   `-- 02:1f.0
+|       `-- 03:00.0
+|-- 00:1e.0
+|   `-- 04:04.0
+|-- 00:1f.0
+|-- 00:1f.1
+|   |-- ide0
+|   |   |-- 0.0
+|   |   `-- 0.1
+|   `-- ide1
+|       `-- 1.0
+|-- 00:1f.2
+|-- 00:1f.3
+`-- 00:1f.5
+</pre></div>
+</div>
+<p>Also, symlinks are created in the bus’s ‘devices’ directory
+that point to the device’s directory in the physical hierarchy:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>/sys/bus/pci/devices/
+|-- 00:00.0 -&gt; ../../../devices/pci0/00:00.0
+|-- 00:01.0 -&gt; ../../../devices/pci0/00:01.0
+|-- 00:02.0 -&gt; ../../../devices/pci0/00:02.0
+|-- 00:1e.0 -&gt; ../../../devices/pci0/00:1e.0
+|-- 00:1f.0 -&gt; ../../../devices/pci0/00:1f.0
+|-- 00:1f.1 -&gt; ../../../devices/pci0/00:1f.1
+|-- 00:1f.2 -&gt; ../../../devices/pci0/00:1f.2
+|-- 00:1f.3 -&gt; ../../../devices/pci0/00:1f.3
+|-- 00:1f.5 -&gt; ../../../devices/pci0/00:1f.5
+|-- 01:00.0 -&gt; ../../../devices/pci0/00:01.0/01:00.0
+|-- 02:1f.0 -&gt; ../../../devices/pci0/00:02.0/02:1f.0
+|-- 03:00.0 -&gt; ../../../devices/pci0/00:02.0/02:1f.0/03:00.0
+`-- 04:04.0 -&gt; ../../../devices/pci0/00:1e.0/04:04.0
+</pre></div>
+</div>
+</li>
+</ul>
+<p>Step 3: Registering Drivers.</p>
+<p>struct device_driver is a simple driver structure that contains a set
+of operations that the driver model core may call.</p>
+<ul>
+<li><p>Embed a struct device_driver in the bus-specific driver.</p>
+<p>Just like with devices, do something like:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct pci_driver {
+       ...
+       struct device_driver    driver;
+};
+</pre></div>
+</div>
+</li>
+<li><p>Initialize the generic driver structure.</p>
+<p>When the driver registers with the bus (e.g. doing pci_register_driver()),
+initialize the necessary fields of the driver: the name and bus
+fields.</p>
+</li>
+<li><p>Register the driver.</p>
+<p>After the generic driver has been initialized, call:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>driver_register(&amp;drv-&gt;driver);
+</pre></div>
+</div>
+<p>to register the driver with the core.</p>
+<p>When the driver is unregistered from the bus, unregister it from the
+core by doing:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>driver_unregister(&amp;drv-&gt;driver);
+</pre></div>
+</div>
+<p>Note that this will block until all references to the driver have
+gone away. Normally, there will not be any.</p>
+</li>
+<li><p>Sysfs representation.</p>
+<p>Drivers are exported via sysfs in their bus’s ‘driver’s directory.
+For example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>/sys/bus/pci/drivers/
+|-- 3c59x
+|-- Ensoniq AudioPCI
+|-- agpgart-amdk7
+|-- e100
+`-- serial
+</pre></div>
+</div>
+</li>
+</ul>
+<p>Step 4: Define Generic Methods for Drivers.</p>
+<p>struct device_driver defines a set of operations that the driver model
+core calls. Most of these operations are probably similar to
+operations the bus already defines for drivers, but taking different
+parameters.</p>
+<p>It would be difficult and tedious to force every driver on a bus to
+simultaneously convert their drivers to generic format. Instead, the
+bus driver should define single instances of the generic methods that
+forward call to the bus-specific drivers. For instance:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>static int pci_device_remove(struct device * dev)
+{
+        struct pci_dev * pci_dev = to_pci_dev(dev);
+        struct pci_driver * drv = pci_dev-&gt;driver;
+
+        if (drv) {
+                if (drv-&gt;remove)
+                        drv-&gt;remove(pci_dev);
+                pci_dev-&gt;driver = NULL;
+        }
+        return 0;
+}
+</pre></div>
+</div>
+<p>The generic driver should be initialized with these methods before it
+is registered:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>/* initialize common driver fields */
+drv-&gt;driver.name = drv-&gt;name;
+drv-&gt;driver.bus = &amp;pci_bus_type;
+drv-&gt;driver.probe = pci_device_probe;
+drv-&gt;driver.resume = pci_device_resume;
+drv-&gt;driver.suspend = pci_device_suspend;
+drv-&gt;driver.remove = pci_device_remove;
+
+/* register with core */
+driver_register(&amp;drv-&gt;driver);
+</pre></div>
+</div>
+<p>Ideally, the bus should only initialize the fields if they are not
+already set. This allows the drivers to implement their own generic
+methods.</p>
+<p>Step 5: Support generic driver binding.</p>
+<p>The model assumes that a device or driver can be dynamically
+registered with the bus at any time. When registration happens,
+devices must be bound to a driver, or drivers must be bound to all
+devices that it supports.</p>
+<p>A driver typically contains a list of device IDs that it supports. The
+bus driver compares these IDs to the IDs of devices registered with it.
+The format of the device IDs, and the semantics for comparing them are
+bus-specific, so the generic model does attempt to generalize them.</p>
+<p>Instead, a bus may supply a method in struct bus_type that does the
+comparison:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int (*match)(struct device * dev, struct device_driver * drv);
+</pre></div>
+</div>
+<p>match should return positive value if the driver supports the device,
+and zero otherwise. It may also return error code (for example
+-EPROBE_DEFER) if determining that given driver supports the device is
+not possible.</p>
+<p>When a device is registered, the bus’s list of drivers is iterated
+over. bus-&gt;match() is called for each one until a match is found.</p>
+<p>When a driver is registered, the bus’s list of devices is iterated
+over. bus-&gt;match() is called for each device that is not already
+claimed by a driver.</p>
+<p>When a device is successfully bound to a driver, device-&gt;driver is
+set, the device is added to a per-driver list of devices, and a
+symlink is created in the driver’s sysfs directory that points to the
+device’s physical directory:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>/sys/bus/pci/drivers/
+|-- 3c59x
+|   `-- 00:0b.0 -&gt; ../../../../devices/pci0/00:0b.0
+|-- Ensoniq AudioPCI
+|-- agpgart-amdk7
+|   `-- 00:00.0 -&gt; ../../../../devices/pci0/00:00.0
+|-- e100
+|   `-- 00:0c.0 -&gt; ../../../../devices/pci0/00:0c.0
+`-- serial
+</pre></div>
+</div>
+<p>This driver binding should replace the existing driver binding
+mechanism the bus currently uses.</p>
+<p>Step 6: Supply a hotplug callback.</p>
+<p>Whenever a device is registered with the driver model core, the
+userspace program /sbin/hotplug is called to notify userspace.
+Users can define actions to perform when a device is inserted or
+removed.</p>
+<p>The driver model core passes several arguments to userspace via
+environment variables, including</p>
+<ul class="simple">
+<li><p>ACTION: set to ‘add’ or ‘remove’</p></li>
+<li><p>DEVPATH: set to the device’s physical path in sysfs.</p></li>
+</ul>
+<p>A bus driver may also supply additional parameters for userspace to
+consume. To do this, a bus must implement the ‘hotplug’ method in
+struct bus_type:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int (*hotplug) (struct device *dev, char **envp,
+                int num_envp, char *buffer, int buffer_size);
+</pre></div>
+</div>
+<p>This is called immediately before /sbin/hotplug is executed.</p>
+<p>Step 7: Cleaning up the bus driver.</p>
+<p>The generic bus, device, and driver structures provide several fields
+that can replace those defined privately to the bus driver.</p>
+<ul class="simple">
+<li><p>Device list.</p></li>
+</ul>
+<p>struct bus_type contains a list of all devices registered with the bus
+type. This includes all devices on all instances of that bus type.
+An internal list that the bus uses may be removed, in favor of using
+this one.</p>
+<p>The core provides an iterator to access these devices:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int bus_for_each_dev(struct bus_type * bus, struct device * start,
+                     void * data, int (*fn)(struct device *, void *));
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Driver list.</p></li>
+</ul>
+<p>struct bus_type also contains a list of all drivers registered with
+it. An internal list of drivers that the bus driver maintains may
+be removed in favor of using the generic one.</p>
+<p>The drivers may be iterated over, like devices:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int bus_for_each_drv(struct bus_type * bus, struct device_driver * start,
+                     void * data, int (*fn)(struct device_driver *, void *));
+</pre></div>
+</div>
+<p>Please see drivers/base/bus.c for more information.</p>
+<ul class="simple">
+<li><p>rwsem</p></li>
+</ul>
+<p>struct bus_type contains an rwsem that protects all core accesses to
+the device and driver lists. This can be used by the bus driver
+internally, and should be used when accessing the device or driver
+lists the bus maintains.</p>
+<ul class="simple">
+<li><p>Device and driver fields.</p></li>
+</ul>
+<p>Some of the fields in <a class="reference internal" href="../infrastructure.html#c.device" title="device"><code class="xref c c-struct docutils literal notranslate"><span class="pre">struct</span> <span class="pre">device</span></code></a> and struct device_driver duplicate
+fields in the bus-specific representations of these objects. Feel free
+to remove the bus-specific ones and favor the generic ones. Note
+though, that this will likely mean fixing up all the drivers that
+reference the bus-specific fields (though those should all be 1-line
+changes).</p>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../basics.html" class="btn btn-neutral float-right" title="Driver Basics" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="platform.html" class="btn btn-neutral float-left" title="Platform Devices and Drivers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        
+        &copy; Copyright The kernel development community
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
