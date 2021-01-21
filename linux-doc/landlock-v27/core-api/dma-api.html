@@ -1,0 +1,1014 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Dynamic DMA mapping using the generic device &mdash; The Linux Kernel 5.11.0-rc4+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Dynamic DMA mapping Guide" href="dma-api-howto.html" />
+    <link rel="prev" title="Memory Allocation Guide" href="memory-allocation.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.11.0-rc4
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Core API Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="index.html#core-utilities">Core utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#data-structures-and-low-level-utilities">Data structures and low-level utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#concurrency-primitives">Concurrency primitives</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#low-level-hardware-management">Low-level hardware management</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#memory-management">Memory management</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="memory-allocation.html">Memory Allocation Guide</a></li>
+<li class="toctree-l3"><a class="reference internal" href="unaligned-memory-access.html">Unaligned Memory Accesses</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Dynamic DMA mapping using the generic device</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#part-i-dma-api">Part I - dma_API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#part-ia-using-large-dma-coherent-buffers">Part Ia - Using large DMA-coherent buffers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#part-ib-using-small-dma-coherent-buffers">Part Ib - Using small DMA-coherent buffers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#part-ic-dma-addressing-limitations">Part Ic - DMA addressing limitations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#part-id-streaming-dma-mappings">Part Id - Streaming DMA mappings</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#part-ii-non-coherent-dma-allocations">Part II - Non-coherent DMA allocations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#part-iii-debug-drivers-use-of-the-dma-api">Part III - Debug drivers use of the DMA-API</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="dma-api-howto.html">Dynamic DMA mapping Guide</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dma-attributes.html">DMA attributes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dma-isa-lpc.html">DMA with ISA and LPC devices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mm-api.html">Memory Management APIs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="genalloc.html">The genalloc/genpool subsystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pin_user_pages.html">pin_user_pages() and related calls</a></li>
+<li class="toctree-l3"><a class="reference internal" href="boot-time-mm.html">Boot time memory management</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gfp_mask-from-fs-io.html">GFP masks used from FS/IO context</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#interfaces-for-kernel-debugging">Interfaces for kernel debugging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#everything-else">Everything else</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/index.html">Nios II Specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="index.html">Core API Documentation</a> &raquo;</li>
+        
+      <li>Dynamic DMA mapping using the generic device</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/core-api/dma-api.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="dynamic-dma-mapping-using-the-generic-device">
+<h1>Dynamic DMA mapping using the generic device<a class="headerlink" href="#dynamic-dma-mapping-using-the-generic-device" title="Permalink to this headline">¶</a></h1>
+<dl class="field-list simple">
+<dt class="field-odd">Author</dt>
+<dd class="field-odd"><p>James E.J. Bottomley &lt;<a class="reference external" href="mailto:James&#46;Bottomley&#37;&#52;&#48;HansenPartnership&#46;com">James<span>&#46;</span>Bottomley<span>&#64;</span>HansenPartnership<span>&#46;</span>com</a>&gt;</p>
+</dd>
+</dl>
+<p>This document describes the DMA API.  For a more gentle introduction
+of the API (and actual examples), see <a class="reference internal" href="dma-api-howto.html"><span class="doc">Dynamic DMA mapping Guide</span></a>.</p>
+<p>This API is split into two pieces.  Part I describes the basic API.
+Part II describes extensions for supporting non-consistent memory
+machines.  Unless you know that your driver absolutely has to support
+non-consistent platforms (this is usually only legacy platforms) you
+should only use the API described in part I.</p>
+<div class="section" id="part-i-dma-api">
+<h2>Part I - dma_API<a class="headerlink" href="#part-i-dma-api" title="Permalink to this headline">¶</a></h2>
+<p>To get the dma_API, you must #include &lt;linux/dma-mapping.h&gt;.  This
+provides dma_addr_t and the interfaces described below.</p>
+<p>A dma_addr_t can hold any valid DMA address for the platform.  It can be
+given to a device to use as a DMA source or target.  A CPU cannot reference
+a dma_addr_t directly because there may be translation between its physical
+address space and the DMA address space.</p>
+</div>
+<div class="section" id="part-ia-using-large-dma-coherent-buffers">
+<h2>Part Ia - Using large DMA-coherent buffers<a class="headerlink" href="#part-ia-using-large-dma-coherent-buffers" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void *
+dma_alloc_coherent(struct device *dev, size_t size,
+                   dma_addr_t *dma_handle, gfp_t flag)
+</pre></div>
+</div>
+<p>Consistent memory is memory for which a write by either the device or
+the processor can immediately be read by the processor or device
+without having to worry about caching effects.  (You may however need
+to make sure to flush the processor’s write buffers before telling
+devices to read that memory.)</p>
+<p>This routine allocates a region of &lt;size&gt; bytes of consistent memory.</p>
+<p>It returns a pointer to the allocated region (in the processor’s virtual
+address space) or NULL if the allocation failed.</p>
+<p>It also returns a &lt;dma_handle&gt; which may be cast to an unsigned integer the
+same width as the bus and given to the device as the DMA address base of
+the region.</p>
+<p>Note: consistent memory can be expensive on some platforms, and the
+minimum allocation length may be as big as a page, so you should
+consolidate your requests for consistent memory as much as possible.
+The simplest way to do that is to use the dma_pool calls (see below).</p>
+<p>The flag parameter (dma_alloc_coherent() only) allows the caller to
+specify the <code class="docutils literal notranslate"><span class="pre">GFP_</span></code> flags (see <a class="reference internal" href="mm-api.html#c.kmalloc" title="kmalloc"><code class="xref c c-func docutils literal notranslate"><span class="pre">kmalloc()</span></code></a>) for the allocation (the
+implementation may choose to ignore flags that affect the location of
+the returned memory, like GFP_DMA).</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void
+dma_free_coherent(struct device *dev, size_t size, void *cpu_addr,
+                  dma_addr_t dma_handle)
+</pre></div>
+</div>
+<p>Free a region of consistent memory you previously allocated.  dev,
+size and dma_handle must all be the same as those passed into
+dma_alloc_coherent().  cpu_addr must be the virtual address returned by
+the dma_alloc_coherent().</p>
+<p>Note that unlike their sibling allocation calls, these routines
+may only be called with IRQs enabled.</p>
+</div>
+<div class="section" id="part-ib-using-small-dma-coherent-buffers">
+<h2>Part Ib - Using small DMA-coherent buffers<a class="headerlink" href="#part-ib-using-small-dma-coherent-buffers" title="Permalink to this headline">¶</a></h2>
+<p>To get this part of the dma_API, you must #include &lt;linux/dmapool.h&gt;</p>
+<p>Many drivers need lots of small DMA-coherent memory regions for DMA
+descriptors or I/O buffers.  Rather than allocating in units of a page
+or more using dma_alloc_coherent(), you can use DMA pools.  These work
+much like a struct kmem_cache, except that they use the DMA-coherent allocator,
+not __get_free_pages().  Also, they understand common hardware constraints
+for alignment, like queue heads needing to be aligned on N-byte boundaries.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct dma_pool *
+dma_pool_create(const char *name, struct device *dev,
+                size_t size, size_t align, size_t alloc);
+</pre></div>
+</div>
+<p><a class="reference internal" href="mm-api.html#c.dma_pool_create" title="dma_pool_create"><code class="xref c c-func docutils literal notranslate"><span class="pre">dma_pool_create()</span></code></a> initializes a pool of DMA-coherent buffers
+for use with a given device.  It must be called in a context which
+can sleep.</p>
+<p>The “name” is for diagnostics (like a struct kmem_cache name); dev and size
+are like what you’d pass to dma_alloc_coherent().  The device’s hardware
+alignment requirement for this type of data is “align” (which is expressed
+in bytes, and must be a power of two).  If your device has no boundary
+crossing restrictions, pass 0 for alloc; passing 4096 says memory allocated
+from this pool must not cross 4KByte boundaries.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void *
+dma_pool_zalloc(struct dma_pool *pool, gfp_t mem_flags,
+                dma_addr_t *handle)
+</pre></div>
+</div>
+<p>Wraps <a class="reference internal" href="mm-api.html#c.dma_pool_alloc" title="dma_pool_alloc"><code class="xref c c-func docutils literal notranslate"><span class="pre">dma_pool_alloc()</span></code></a> and also zeroes the returned memory if the
+allocation attempt succeeded.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void *
+dma_pool_alloc(struct dma_pool *pool, gfp_t gfp_flags,
+               dma_addr_t *dma_handle);
+</pre></div>
+</div>
+<p>This allocates memory from the pool; the returned memory will meet the
+size and alignment requirements specified at creation time.  Pass
+GFP_ATOMIC to prevent blocking, or if it’s permitted (not
+in_interrupt, not holding SMP locks), pass GFP_KERNEL to allow
+blocking.  Like dma_alloc_coherent(), this returns two values:  an
+address usable by the CPU, and the DMA address usable by the pool’s
+device.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void
+dma_pool_free(struct dma_pool *pool, void *vaddr,
+              dma_addr_t addr);
+</pre></div>
+</div>
+<p>This puts memory back into the pool.  The pool is what was passed to
+<a class="reference internal" href="mm-api.html#c.dma_pool_alloc" title="dma_pool_alloc"><code class="xref c c-func docutils literal notranslate"><span class="pre">dma_pool_alloc()</span></code></a>; the CPU (vaddr) and DMA addresses are what
+were returned when that routine allocated the memory being freed.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void
+dma_pool_destroy(struct dma_pool *pool);
+</pre></div>
+</div>
+<p><a class="reference internal" href="mm-api.html#c.dma_pool_destroy" title="dma_pool_destroy"><code class="xref c c-func docutils literal notranslate"><span class="pre">dma_pool_destroy()</span></code></a> frees the resources of the pool.  It must be
+called in a context which can sleep.  Make sure you’ve freed all allocated
+memory back to the pool before you destroy it.</p>
+</div>
+<div class="section" id="part-ic-dma-addressing-limitations">
+<h2>Part Ic - DMA addressing limitations<a class="headerlink" href="#part-ic-dma-addressing-limitations" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int
+dma_set_mask_and_coherent(struct device *dev, u64 mask)
+</pre></div>
+</div>
+<p>Checks to see if the mask is possible and updates the device
+streaming and coherent DMA mask parameters if it is.</p>
+<p>Returns: 0 if successful and a negative error if not.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int
+dma_set_mask(struct device *dev, u64 mask)
+</pre></div>
+</div>
+<p>Checks to see if the mask is possible and updates the device
+parameters if it is.</p>
+<p>Returns: 0 if successful and a negative error if not.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int
+dma_set_coherent_mask(struct device *dev, u64 mask)
+</pre></div>
+</div>
+<p>Checks to see if the mask is possible and updates the device
+parameters if it is.</p>
+<p>Returns: 0 if successful and a negative error if not.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>u64
+dma_get_required_mask(struct device *dev)
+</pre></div>
+</div>
+<p>This API returns the mask that the platform requires to
+operate efficiently.  Usually this means the returned mask
+is the minimum required to cover all of memory.  Examining the
+required mask gives drivers with variable descriptor sizes the
+opportunity to use smaller descriptors as necessary.</p>
+<p>Requesting the required mask does not alter the current mask.  If you
+wish to take advantage of it, you should issue a dma_set_mask()
+call to set the mask to the value returned.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>size_t
+dma_max_mapping_size(struct device *dev);
+</pre></div>
+</div>
+<p>Returns the maximum size of a mapping for the device. The size parameter
+of the mapping functions like dma_map_single(), dma_map_page() and
+others should not be larger than the returned value.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>bool
+dma_need_sync(struct device *dev, dma_addr_t dma_addr);
+</pre></div>
+</div>
+<p>Returns %true if dma_sync_single_for_{device,cpu} calls are required to
+transfer memory ownership.  Returns %false if those calls can be skipped.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>unsigned long
+dma_get_merge_boundary(struct device *dev);
+</pre></div>
+</div>
+<p>Returns the DMA merge boundary. If the device cannot merge any the DMA address
+segments, the function returns 0.</p>
+</div>
+<div class="section" id="part-id-streaming-dma-mappings">
+<h2>Part Id - Streaming DMA mappings<a class="headerlink" href="#part-id-streaming-dma-mappings" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>dma_addr_t
+dma_map_single(struct device *dev, void *cpu_addr, size_t size,
+               enum dma_data_direction direction)
+</pre></div>
+</div>
+<p>Maps a piece of processor virtual memory so it can be accessed by the
+device and returns the DMA address of the memory.</p>
+<p>The direction for both APIs may be converted freely by casting.
+However the dma_API uses a strongly typed enumerator for its
+direction:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 34%" />
+<col style="width: 66%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>DMA_NONE</p></td>
+<td><p>no direction (used for debugging)</p></td>
+</tr>
+<tr class="row-even"><td><p>DMA_TO_DEVICE</p></td>
+<td><p>data is going from the memory to the device</p></td>
+</tr>
+<tr class="row-odd"><td><p>DMA_FROM_DEVICE</p></td>
+<td><p>data is coming from the device to the memory</p></td>
+</tr>
+<tr class="row-even"><td><p>DMA_BIDIRECTIONAL</p></td>
+<td><p>direction isn’t known</p></td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Not all memory regions in a machine can be mapped by this API.
+Further, contiguous kernel virtual space may not be contiguous as
+physical memory.  Since this API does not provide any scatter/gather
+capability, it will fail if the user tries to map a non-physically
+contiguous piece of memory.  For this reason, memory to be mapped by
+this API should be obtained from sources which guarantee it to be
+physically contiguous (like kmalloc).</p>
+<p>Further, the DMA address of the memory must be within the
+dma_mask of the device (the dma_mask is a bit mask of the
+addressable region for the device, i.e., if the DMA address of
+the memory ANDed with the dma_mask is still equal to the DMA
+address, then the device can perform DMA to the memory).  To
+ensure that the memory allocated by kmalloc is within the dma_mask,
+the driver may specify various platform-dependent flags to restrict
+the DMA address range of the allocation (e.g., on x86, GFP_DMA
+guarantees to be within the first 16MB of available DMA addresses,
+as required by ISA devices).</p>
+<p>Note also that the above constraints on physical contiguity and
+dma_mask may not apply if the platform has an IOMMU (a device which
+maps an I/O DMA address to a physical memory address).  However, to be
+portable, device driver writers may <em>not</em> assume that such an IOMMU
+exists.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Memory coherency operates at a granularity called the cache
+line width.  In order for memory mapped by this API to operate
+correctly, the mapped region must begin exactly on a cache line
+boundary and end exactly on one (to prevent two separately mapped
+regions from sharing a single cache line).  Since the cache line size
+may not be known at compile time, the API will not enforce this
+requirement.  Therefore, it is recommended that driver writers who
+don’t take special care to determine the cache line size at run time
+only map virtual regions that begin and end on page boundaries (which
+are guaranteed also to be cache line boundaries).</p>
+<p>DMA_TO_DEVICE synchronisation must be done after the last modification
+of the memory region by the software and before it is handed off to
+the device.  Once this primitive is used, memory covered by this
+primitive should be treated as read-only by the device.  If the device
+may write to it at any point, it should be DMA_BIDIRECTIONAL (see
+below).</p>
+<p>DMA_FROM_DEVICE synchronisation must be done before the driver
+accesses data that may be changed by the device.  This memory should
+be treated as read-only by the driver.  If the driver needs to write
+to it at any point, it should be DMA_BIDIRECTIONAL (see below).</p>
+<p>DMA_BIDIRECTIONAL requires special handling: it means that the driver
+isn’t sure if the memory was modified before being handed off to the
+device and also isn’t sure if the device will also modify it.  Thus,
+you must always sync bidirectional memory twice: once before the
+memory is handed off to the device (to make sure all memory changes
+are flushed from the processor) and once before the data may be
+accessed after being used by the device (to make sure any processor
+cache lines are updated with data that the device may have changed).</p>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void
+dma_unmap_single(struct device *dev, dma_addr_t dma_addr, size_t size,
+                 enum dma_data_direction direction)
+</pre></div>
+</div>
+<p>Unmaps the region previously mapped.  All the parameters passed in
+must be identical to those passed in (and returned) by the mapping
+API.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>dma_addr_t
+dma_map_page(struct device *dev, struct page *page,
+             unsigned long offset, size_t size,
+             enum dma_data_direction direction)
+
+void
+dma_unmap_page(struct device *dev, dma_addr_t dma_address, size_t size,
+               enum dma_data_direction direction)
+</pre></div>
+</div>
+<p>API for mapping and unmapping for pages.  All the notes and warnings
+for the other mapping APIs apply here.  Also, although the &lt;offset&gt;
+and &lt;size&gt; parameters are provided to do partial page mapping, it is
+recommended that you never use these unless you really know what the
+cache width is.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>dma_addr_t
+dma_map_resource(struct device *dev, phys_addr_t phys_addr, size_t size,
+                 enum dma_data_direction dir, unsigned long attrs)
+
+void
+dma_unmap_resource(struct device *dev, dma_addr_t addr, size_t size,
+                   enum dma_data_direction dir, unsigned long attrs)
+</pre></div>
+</div>
+<p>API for mapping and unmapping for MMIO resources. All the notes and
+warnings for the other mapping APIs apply here. The API should only be
+used to map device MMIO resources, mapping of RAM is not permitted.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int
+dma_mapping_error(struct device *dev, dma_addr_t dma_addr)
+</pre></div>
+</div>
+<p>In some circumstances dma_map_single(), dma_map_page() and dma_map_resource()
+will fail to create a mapping. A driver can check for these errors by testing
+the returned DMA address with dma_mapping_error(). A non-zero return value
+means the mapping could not be created and the driver should take appropriate
+action (e.g. reduce current DMA mapping usage or delay and try again later).</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int
+dma_map_sg(struct device *dev, struct scatterlist *sg,
+           int nents, enum dma_data_direction direction)
+</pre></div>
+</div>
+<p>Returns: the number of DMA address segments mapped (this may be shorter
+than &lt;nents&gt; passed in if some elements of the scatter/gather list are
+physically or virtually adjacent and an IOMMU maps them with a single
+entry).</p>
+<p>Please note that the sg cannot be mapped again if it has been mapped once.
+The mapping process is allowed to destroy information in the sg.</p>
+<p>As with the other mapping interfaces, dma_map_sg() can fail. When it
+does, 0 is returned and a driver must take appropriate action. It is
+critical that the driver do something, in the case of a block driver
+aborting the request or even oopsing is better than doing nothing and
+corrupting the filesystem.</p>
+<p>With scatterlists, you use the resulting mapping like this:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int i, count = dma_map_sg(dev, sglist, nents, direction);
+struct scatterlist *sg;
+
+for_each_sg(sglist, sg, count, i) {
+        hw_address[i] = sg_dma_address(sg);
+        hw_len[i] = sg_dma_len(sg);
+}
+</pre></div>
+</div>
+<p>where nents is the number of entries in the sglist.</p>
+<p>The implementation is free to merge several consecutive sglist entries
+into one (e.g. with an IOMMU, or if several pages just happen to be
+physically contiguous) and returns the actual number of sg entries it
+mapped them to. On failure 0, is returned.</p>
+<p>Then you should loop count times (note: this can be less than nents times)
+and use sg_dma_address() and sg_dma_len() macros where you previously
+accessed sg-&gt;address and sg-&gt;length as shown above.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void
+dma_unmap_sg(struct device *dev, struct scatterlist *sg,
+             int nents, enum dma_data_direction direction)
+</pre></div>
+</div>
+<p>Unmap the previously mapped scatter/gather list.  All the parameters
+must be the same as those and passed in to the scatter/gather mapping
+API.</p>
+<p>Note: &lt;nents&gt; must be the number you passed in, <em>not</em> the number of
+DMA address entries returned.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void
+dma_sync_single_for_cpu(struct device *dev, dma_addr_t dma_handle,
+                        size_t size,
+                        enum dma_data_direction direction)
+
+void
+dma_sync_single_for_device(struct device *dev, dma_addr_t dma_handle,
+                           size_t size,
+                           enum dma_data_direction direction)
+
+void
+dma_sync_sg_for_cpu(struct device *dev, struct scatterlist *sg,
+                    int nents,
+                    enum dma_data_direction direction)
+
+void
+dma_sync_sg_for_device(struct device *dev, struct scatterlist *sg,
+                       int nents,
+                       enum dma_data_direction direction)
+</pre></div>
+</div>
+<p>Synchronise a single contiguous or scatter/gather mapping for the CPU
+and device. With the sync_sg API, all the parameters must be the same
+as those passed into the single mapping API. With the sync_single API,
+you can use dma_handle and size parameters that aren’t identical to
+those passed into the single mapping API to do a partial sync.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>You must do this:</p>
+<ul class="simple">
+<li><p>Before reading values that have been written by DMA from the device
+(use the DMA_FROM_DEVICE direction)</p></li>
+<li><p>After writing values that will be written to the device using DMA
+(use the DMA_TO_DEVICE) direction</p></li>
+<li><p>before <em>and</em> after handing memory to the device if the memory is
+DMA_BIDIRECTIONAL</p></li>
+</ul>
+</div>
+<p>See also dma_map_single().</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>dma_addr_t
+dma_map_single_attrs(struct device *dev, void *cpu_addr, size_t size,
+                     enum dma_data_direction dir,
+                     unsigned long attrs)
+
+void
+dma_unmap_single_attrs(struct device *dev, dma_addr_t dma_addr,
+                       size_t size, enum dma_data_direction dir,
+                       unsigned long attrs)
+
+int
+dma_map_sg_attrs(struct device *dev, struct scatterlist *sgl,
+                 int nents, enum dma_data_direction dir,
+                 unsigned long attrs)
+
+void
+dma_unmap_sg_attrs(struct device *dev, struct scatterlist *sgl,
+                   int nents, enum dma_data_direction dir,
+                   unsigned long attrs)
+</pre></div>
+</div>
+<p>The four functions above are just like the counterpart functions
+without the _attrs suffixes, except that they pass an optional
+dma_attrs.</p>
+<p>The interpretation of DMA attributes is architecture-specific, and
+each attribute should be documented in <a class="reference internal" href="dma-attributes.html"><span class="doc">DMA attributes</span></a>.</p>
+<p>If dma_attrs are 0, the semantics of each of these functions
+is identical to those of the corresponding function
+without the _attrs suffix. As a result dma_map_single_attrs()
+can generally replace dma_map_single(), etc.</p>
+<p>As an example of the use of the <code class="docutils literal notranslate"><span class="pre">*_attrs</span></code> functions, here’s how
+you could pass an attribute DMA_ATTR_FOO when mapping memory
+for DMA:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>#include &lt;linux/dma-mapping.h&gt;
+/* DMA_ATTR_FOO should be defined in linux/dma-mapping.h and
+* documented in Documentation/core-api/dma-attributes.rst */
+...
+
+        unsigned long attr;
+        attr |= DMA_ATTR_FOO;
+        ....
+        n = dma_map_sg_attrs(dev, sg, nents, DMA_TO_DEVICE, attr);
+        ....
+</pre></div>
+</div>
+<p>Architectures that care about DMA_ATTR_FOO would check for its
+presence in their implementations of the mapping and unmapping
+routines, e.g.::</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void whizco_dma_map_sg_attrs(struct device *dev, dma_addr_t dma_addr,
+                             size_t size, enum dma_data_direction dir,
+                             unsigned long attrs)
+{
+        ....
+        if (attrs &amp; DMA_ATTR_FOO)
+                /* twizzle the frobnozzle */
+        ....
+}
+</pre></div>
+</div>
+</div>
+<div class="section" id="part-ii-non-coherent-dma-allocations">
+<h2>Part II - Non-coherent DMA allocations<a class="headerlink" href="#part-ii-non-coherent-dma-allocations" title="Permalink to this headline">¶</a></h2>
+<p>These APIs allow to allocate pages that are guaranteed to be DMA addressable
+by the passed in device, but which need explicit management of memory ownership
+for the kernel vs the device.</p>
+<p>If you don’t understand how cache line coherency works between a processor and
+an I/O device, you should not be using this part of the API.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void *
+dma_alloc_noncoherent(struct device *dev, size_t size,
+                dma_addr_t *dma_handle, enum dma_data_direction dir,
+                gfp_t gfp)
+</pre></div>
+</div>
+<p>This routine allocates a region of &lt;size&gt; bytes of consistent memory.  It
+returns a pointer to the allocated region (in the processor’s virtual address
+space) or NULL if the allocation failed.  The returned memory may or may not
+be in the kernel direct mapping.  Drivers must not call virt_to_page on
+the returned memory region.</p>
+<p>It also returns a &lt;dma_handle&gt; which may be cast to an unsigned integer the
+same width as the bus and given to the device as the DMA address base of
+the region.</p>
+<p>The dir parameter specified if data is read and/or written by the device,
+see dma_map_single() for details.</p>
+<p>The gfp parameter allows the caller to specify the <code class="docutils literal notranslate"><span class="pre">GFP_</span></code> flags (see
+<a class="reference internal" href="mm-api.html#c.kmalloc" title="kmalloc"><code class="xref c c-func docutils literal notranslate"><span class="pre">kmalloc()</span></code></a>) for the allocation, but rejects flags used to specify a memory
+zone such as GFP_DMA or GFP_HIGHMEM.</p>
+<p>Before giving the memory to the device, dma_sync_single_for_device() needs
+to be called, and before reading memory written by the device,
+dma_sync_single_for_cpu(), just like for streaming DMA mappings that are
+reused.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void
+dma_free_noncoherent(struct device *dev, size_t size, void *cpu_addr,
+                dma_addr_t dma_handle, enum dma_data_direction dir)
+</pre></div>
+</div>
+<p>Free a region of memory previously allocated using dma_alloc_noncoherent().
+dev, size and dma_handle and dir must all be the same as those passed into
+dma_alloc_noncoherent().  cpu_addr must be the virtual address returned by
+dma_alloc_noncoherent().</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct page *
+dma_alloc_pages(struct device *dev, size_t size, dma_addr_t *dma_handle,
+                enum dma_data_direction dir, gfp_t gfp)
+</pre></div>
+</div>
+<p>This routine allocates a region of &lt;size&gt; bytes of non-coherent memory.  It
+returns a pointer to first struct page for the region, or NULL if the
+allocation failed. The resulting struct page can be used for everything a
+struct page is suitable for.</p>
+<p>It also returns a &lt;dma_handle&gt; which may be cast to an unsigned integer the
+same width as the bus and given to the device as the DMA address base of
+the region.</p>
+<p>The dir parameter specified if data is read and/or written by the device,
+see dma_map_single() for details.</p>
+<p>The gfp parameter allows the caller to specify the <code class="docutils literal notranslate"><span class="pre">GFP_</span></code> flags (see
+<a class="reference internal" href="mm-api.html#c.kmalloc" title="kmalloc"><code class="xref c c-func docutils literal notranslate"><span class="pre">kmalloc()</span></code></a>) for the allocation, but rejects flags used to specify a memory
+zone such as GFP_DMA or GFP_HIGHMEM.</p>
+<p>Before giving the memory to the device, dma_sync_single_for_device() needs
+to be called, and before reading memory written by the device,
+dma_sync_single_for_cpu(), just like for streaming DMA mappings that are
+reused.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void
+dma_free_pages(struct device *dev, size_t size, struct page *page,
+                dma_addr_t dma_handle, enum dma_data_direction dir)
+</pre></div>
+</div>
+<p>Free a region of memory previously allocated using dma_alloc_pages().
+dev, size and dma_handle and dir must all be the same as those passed into
+dma_alloc_noncoherent().  page must be the pointer returned by
+dma_alloc_pages().</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int
+dma_get_cache_alignment(void)
+</pre></div>
+</div>
+<p>Returns the processor cache alignment.  This is the absolute minimum
+alignment <em>and</em> width that you must observe when either mapping
+memory or doing partial flushes.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This API may return a number <em>larger</em> than the actual cache
+line, but it will guarantee that one or more cache lines fit exactly
+into the width returned by this call.  It will also always be a power
+of two for easy alignment.</p>
+</div>
+</div>
+<div class="section" id="part-iii-debug-drivers-use-of-the-dma-api">
+<h2>Part III - Debug drivers use of the DMA-API<a class="headerlink" href="#part-iii-debug-drivers-use-of-the-dma-api" title="Permalink to this headline">¶</a></h2>
+<p>The DMA-API as described above has some constraints. DMA addresses must be
+released with the corresponding function with the same size for example. With
+the advent of hardware IOMMUs it becomes more and more important that drivers
+do not violate those constraints. In the worst case such a violation can
+result in data corruption up to destroyed filesystems.</p>
+<p>To debug drivers and find bugs in the usage of the DMA-API checking code can
+be compiled into the kernel which will tell the developer about those
+violations. If your architecture supports it you can select the “Enable
+debugging of DMA-API usage” option in your kernel configuration. Enabling this
+option has a performance impact. Do not enable it in production kernels.</p>
+<p>If you boot the resulting kernel will contain code which does some bookkeeping
+about what DMA memory was allocated for which device. If this code detects an
+error it prints a warning message with some details into your kernel log. An
+example warning message may look like this:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>WARNING: at /data2/repos/linux-2.6-iommu/lib/dma-debug.c:448
+        check_unmap+0x203/0x490()
+Hardware name:
+forcedeth 0000:00:08.0: DMA-API: device driver frees DMA memory with wrong
+        function [device address=0x00000000640444be] [size=66 bytes] [mapped as
+single] [unmapped as page]
+Modules linked in: nfsd exportfs bridge stp llc r8169
+Pid: 0, comm: swapper Tainted: G        W  2.6.28-dmatest-09289-g8bb99c0 #1
+Call Trace:
+&lt;IRQ&gt;  [&lt;ffffffff80240b22&gt;] warn_slowpath+0xf2/0x130
+[&lt;ffffffff80647b70&gt;] _spin_unlock+0x10/0x30
+[&lt;ffffffff80537e75&gt;] usb_hcd_link_urb_to_ep+0x75/0xc0
+[&lt;ffffffff80647c22&gt;] _spin_unlock_irqrestore+0x12/0x40
+[&lt;ffffffff8055347f&gt;] ohci_urb_enqueue+0x19f/0x7c0
+[&lt;ffffffff80252f96&gt;] queue_work+0x56/0x60
+[&lt;ffffffff80237e10&gt;] enqueue_task_fair+0x20/0x50
+[&lt;ffffffff80539279&gt;] usb_hcd_submit_urb+0x379/0xbc0
+[&lt;ffffffff803b78c3&gt;] cpumask_next_and+0x23/0x40
+[&lt;ffffffff80235177&gt;] find_busiest_group+0x207/0x8a0
+[&lt;ffffffff8064784f&gt;] _spin_lock_irqsave+0x1f/0x50
+[&lt;ffffffff803c7ea3&gt;] check_unmap+0x203/0x490
+[&lt;ffffffff803c8259&gt;] debug_dma_unmap_page+0x49/0x50
+[&lt;ffffffff80485f26&gt;] nv_tx_done_optimized+0xc6/0x2c0
+[&lt;ffffffff80486c13&gt;] nv_nic_irq_optimized+0x73/0x2b0
+[&lt;ffffffff8026df84&gt;] handle_IRQ_event+0x34/0x70
+[&lt;ffffffff8026ffe9&gt;] handle_edge_irq+0xc9/0x150
+[&lt;ffffffff8020e3ab&gt;] do_IRQ+0xcb/0x1c0
+[&lt;ffffffff8020c093&gt;] ret_from_intr+0x0/0xa
+&lt;EOI&gt; &lt;4&gt;---[ end trace f6435a98e2a38c0e ]---
+</pre></div>
+</div>
+<p>The driver developer can find the driver and the device including a stacktrace
+of the DMA-API call which caused this warning.</p>
+<p>Per default only the first error will result in a warning message. All other
+errors will only silently counted. This limitation exist to prevent the code
+from flooding your kernel log. To support debugging a device driver this can
+be disabled via debugfs. See the debugfs interface documentation below for
+details.</p>
+<p>The debugfs directory for the DMA-API debugging code is called dma-api/. In
+this directory the following files can currently be found:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 40%" />
+<col style="width: 60%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>dma-api/all_errors</p></td>
+<td><p>This file contains a numeric value. If this
+value is not equal to zero the debugging code
+will print a warning for every error it finds
+into the kernel log. Be careful with this
+option, as it can easily flood your logs.</p></td>
+</tr>
+<tr class="row-even"><td><p>dma-api/disabled</p></td>
+<td><p>This read-only file contains the character ‘Y’
+if the debugging code is disabled. This can
+happen when it runs out of memory or if it was
+disabled at boot time</p></td>
+</tr>
+<tr class="row-odd"><td><p>dma-api/dump</p></td>
+<td><p>This read-only file contains current DMA
+mappings.</p></td>
+</tr>
+<tr class="row-even"><td><p>dma-api/error_count</p></td>
+<td><p>This file is read-only and shows the total
+numbers of errors found.</p></td>
+</tr>
+<tr class="row-odd"><td><p>dma-api/num_errors</p></td>
+<td><p>The number in this file shows how many
+warnings will be printed to the kernel log
+before it stops. This number is initialized to
+one at system boot and be set by writing into
+this file</p></td>
+</tr>
+<tr class="row-even"><td><p>dma-api/min_free_entries</p></td>
+<td><p>This read-only file can be read to get the
+minimum number of free dma_debug_entries the
+allocator has ever seen. If this value goes
+down to zero the code will attempt to increase
+nr_total_entries to compensate.</p></td>
+</tr>
+<tr class="row-odd"><td><p>dma-api/num_free_entries</p></td>
+<td><p>The current number of free dma_debug_entries
+in the allocator.</p></td>
+</tr>
+<tr class="row-even"><td><p>dma-api/nr_total_entries</p></td>
+<td><p>The total number of dma_debug_entries in the
+allocator, both free and used.</p></td>
+</tr>
+<tr class="row-odd"><td><p>dma-api/driver_filter</p></td>
+<td><p>You can write a name of a driver into this file
+to limit the debug output to requests from that
+particular driver. Write an empty string to
+that file to disable the filter and see
+all errors again.</p></td>
+</tr>
+</tbody>
+</table>
+<p>If you have this code compiled into your kernel it will be enabled by default.
+If you want to boot without the bookkeeping anyway you can provide
+‘dma_debug=off’ as a boot parameter. This will disable DMA-API debugging.
+Notice that you can not enable it again at runtime. You have to reboot to do
+so.</p>
+<p>If you want to see debug messages only for a special device driver you can
+specify the dma_debug_driver=&lt;drivername&gt; parameter. This will enable the
+driver filter at boot time. The debug code will only print errors for that
+driver afterwards. This filter can be disabled or changed later using debugfs.</p>
+<p>When the code disables itself at runtime this is most likely because it ran
+out of dma_debug_entries and was unable to allocate more on-demand. 65536
+entries are preallocated at boot - if this is too low for you boot with
+‘dma_debug_entries=&lt;your_desired_number&gt;’ to overwrite the default. Note
+that the code allocates entries in batches, so the exact number of
+preallocated entries may be greater than the actual number requested. The
+code will print to the kernel log each time it has dynamically allocated
+as many entries as were initially preallocated. This is to indicate that a
+larger preallocation size may be appropriate, or if it happens continually
+that a driver may be leaking mappings.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void
+debug_dma_mapping_error(struct device *dev, dma_addr_t dma_addr);
+</pre></div>
+</div>
+<p>dma-debug interface debug_dma_mapping_error() to debug drivers that fail
+to check DMA mapping errors on addresses returned by dma_map_single() and
+dma_map_page() interfaces. This interface clears a flag set by
+debug_dma_map_page() to indicate that dma_mapping_error() has been called by
+the driver. When driver does unmap, debug_dma_unmap() checks the flag and if
+this flag is still set, prints warning message that includes call trace that
+leads up to the unmap. This interface can be called from dma_mapping_error()
+routines to enable DMA mapping error check debugging.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="dma-api-howto.html" class="btn btn-neutral float-right" title="Dynamic DMA mapping Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="memory-allocation.html" class="btn btn-neutral float-left" title="Memory Allocation Guide" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright The kernel development community.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

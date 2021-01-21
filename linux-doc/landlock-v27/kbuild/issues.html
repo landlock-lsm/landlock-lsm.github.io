@@ -1,0 +1,453 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Recursion issues &mdash; The Linux Kernel 5.11.0-rc4+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Reproducible builds" href="reproducible-builds.html" />
+    <link rel="prev" title="Exporting kernel headers for use by userspace" href="headers_install.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.11.0-rc4
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Kernel Build System</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="kconfig-language.html">Kconfig Language</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kconfig-macro-language.html">Kconfig macro language</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kbuild.html">Kbuild</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kconfig.html">Kconfig make config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="makefiles.html">Linux Kernel Makefiles</a></li>
+<li class="toctree-l2"><a class="reference internal" href="modules.html">Building External Modules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="headers_install.html">Exporting kernel headers for use by userspace</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Recursion issues</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#issue-1">issue #1</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#issue-2">issue #2</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="reproducible-builds.html">Reproducible builds</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gcc-plugins.html">GCC plugin infrastructure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="llvm.html">Building Linux with Clang/LLVM</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/index.html">Nios II Specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="index.html">Kernel Build System</a> &raquo;</li>
+        
+      <li>Recursion issues</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/kbuild/issues.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="recursion-issues">
+<h1>Recursion issues<a class="headerlink" href="#recursion-issues" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="issue-1">
+<h2>issue #1<a class="headerlink" href="#issue-1" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-kconfig notranslate"><div class="highlight"><pre><span></span><span class="c1"># Simple Kconfig recursive issue</span>
+<span class="c1"># ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
+<span class="c1">#</span>
+<span class="c1"># Test with:</span>
+<span class="c1">#</span>
+<span class="c1"># make KBUILD_KCONFIG=Documentation/kbuild/Kconfig.recursion-issue-01 allnoconfig</span>
+<span class="c1">#</span>
+<span class="c1"># This Kconfig file has a simple recursive dependency issue. In order to</span>
+<span class="c1"># understand why this recursive dependency issue occurs lets consider what</span>
+<span class="c1"># Kconfig needs to address. We iterate over what Kconfig needs to address</span>
+<span class="c1"># by stepping through the questions it needs to address sequentially.</span>
+<span class="c1">#</span>
+<span class="c1">#  * What values are possible for CORE?</span>
+<span class="c1">#</span>
+<span class="c1"># CORE_BELL_A_ADVANCED selects CORE, which means that it influences the values</span>
+<span class="c1"># that are possible for CORE. So for example if CORE_BELL_A_ADVANCED is &#39;y&#39;,</span>
+<span class="c1"># CORE must be &#39;y&#39; too.</span>
+<span class="c1">#</span>
+<span class="c1">#  * What influences CORE_BELL_A_ADVANCED ?</span>
+<span class="c1">#</span>
+<span class="c1"># As the name implies CORE_BELL_A_ADVANCED is an advanced feature of</span>
+<span class="c1"># CORE_BELL_A so naturally it depends on CORE_BELL_A. So if CORE_BELL_A is &#39;y&#39;</span>
+<span class="c1"># we know CORE_BELL_A_ADVANCED can be &#39;y&#39; too.</span>
+<span class="c1">#</span>
+<span class="c1">#   * What influences CORE_BELL_A ?</span>
+<span class="c1">#</span>
+<span class="c1"># CORE_BELL_A depends on CORE, so CORE influences CORE_BELL_A.</span>
+<span class="c1">#</span>
+<span class="c1"># But that is a problem, because this means that in order to determine</span>
+<span class="c1"># what values are possible for CORE we ended up needing to address questions</span>
+<span class="c1"># regarding possible values of CORE itself again. Answering the original</span>
+<span class="c1"># question of what are the possible values of CORE would make the kconfig</span>
+<span class="c1"># tools run in a loop. When this happens Kconfig exits and complains about</span>
+<span class="c1"># the &quot;recursive dependency detected&quot; error.</span>
+<span class="c1">#</span>
+<span class="c1"># Reading the Documentation/kbuild/Kconfig.recursion-issue-01 file it may be</span>
+<span class="c1"># obvious that an easy to solution to this problem should just be the removal</span>
+<span class="c1"># of the &quot;select CORE&quot; from CORE_BELL_A_ADVANCED as that is implicit already</span>
+<span class="c1"># since CORE_BELL_A depends on CORE. Recursive dependency issues are not always</span>
+<span class="c1"># so trivial to resolve, we provide another example below of practical</span>
+<span class="c1"># implications of this recursive issue where the solution is perhaps not so</span>
+<span class="c1"># easy to understand. Note that matching semantics on the dependency on</span>
+<span class="c1"># CORE also consist of a solution to this recursive problem.</span>
+
+<span class="k">mainmenu</span> <span class="s2">&quot;Simple example to demo kconfig recursive dependency issue&quot;</span>
+
+<span class="k">config</span> CORE
+	<span class="nb">tristate</span>
+
+<span class="k">config</span> CORE_BELL_A
+	<span class="nb">tristate</span>
+	<span class="k">depends on</span> CORE
+
+<span class="k">config</span> CORE_BELL_A_ADVANCED
+	<span class="nb">tristate</span>
+	<span class="k">depends on</span> CORE_BELL_A
+	<span class="k">select</span> CORE
+</pre></div>
+</div>
+</div>
+<div class="section" id="issue-2">
+<h2>issue #2<a class="headerlink" href="#issue-2" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-kconfig notranslate"><div class="highlight"><pre><span></span><span class="c1"># Cumulative Kconfig recursive issue</span>
+<span class="c1"># ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~</span>
+<span class="c1">#</span>
+<span class="c1"># Test with:</span>
+<span class="c1">#</span>
+<span class="c1"># make KBUILD_KCONFIG=Documentation/kbuild/Kconfig.recursion-issue-02 allnoconfig</span>
+<span class="c1">#</span>
+<span class="c1"># The recursive limitations with Kconfig has some non intuitive implications on</span>
+<span class="c1"># kconfig sematics which are documented here. One known practical implication</span>
+<span class="c1"># of the recursive limitation is that drivers cannot negate features from other</span>
+<span class="c1"># drivers if they share a common core requirement and use disjoint semantics to</span>
+<span class="c1"># annotate those requirements, ie, some drivers use &quot;depends on&quot; while others</span>
+<span class="c1"># use &quot;select&quot;. For instance it means if a driver A and driver B share the same</span>
+<span class="c1"># core requirement, and one uses &quot;select&quot; while the other uses &quot;depends on&quot; to</span>
+<span class="c1"># annotate this, all features that driver A selects cannot now be negated by</span>
+<span class="c1"># driver B.</span>
+<span class="c1">#</span>
+<span class="c1"># A perhaps not so obvious implication of this is that, if semantics on these</span>
+<span class="c1"># core requirements are not carefully synced, as drivers evolve features</span>
+<span class="c1"># they select or depend on end up becoming shared requirements which cannot be</span>
+<span class="c1"># negated by other drivers.</span>
+<span class="c1">#</span>
+<span class="c1"># The example provided in Documentation/kbuild/Kconfig.recursion-issue-02</span>
+<span class="c1"># describes a simple driver core layout of example features a kernel might</span>
+<span class="c1"># have. Let&#39;s assume we have some CORE functionality, then the kernel has a</span>
+<span class="c1"># series of bells and whistles it desires to implement, its not so advanced so</span>
+<span class="c1"># it only supports bells at this time: CORE_BELL_A and CORE_BELL_B. If</span>
+<span class="c1"># CORE_BELL_A has some advanced feature CORE_BELL_A_ADVANCED which selects</span>
+<span class="c1"># CORE_BELL_A then CORE_BELL_A ends up becoming a common BELL feature which</span>
+<span class="c1"># other bells in the system cannot negate. The reason for this issue is</span>
+<span class="c1"># due to the disjoint use of semantics on expressing each bell&#39;s relationship</span>
+<span class="c1"># with CORE, one uses &quot;depends on&quot; while the other uses &quot;select&quot;. Another</span>
+<span class="c1"># more important reason is that kconfig does not check for dependencies listed</span>
+<span class="c1"># under &#39;select&#39; for a symbol, when such symbols are selected kconfig them</span>
+<span class="c1"># as mandatory required symbols. For more details on the heavy handed nature</span>
+<span class="c1"># of select refer to Documentation/kbuild/Kconfig.select-break</span>
+<span class="c1">#</span>
+<span class="c1"># To fix this the &quot;depends on CORE&quot; must be changed to &quot;select CORE&quot;, or the</span>
+<span class="c1"># &quot;select CORE&quot; must be changed to &quot;depends on CORE&quot;.</span>
+<span class="c1">#</span>
+<span class="c1"># For an example real world scenario issue refer to the attempt to remove</span>
+<span class="c1"># &quot;select FW_LOADER&quot; [0], in the end the simple alternative solution to this</span>
+<span class="c1"># problem consisted on matching semantics with newly introduced features.</span>
+<span class="c1">#</span>
+<span class="c1"># [0] https://lkml.kernel.org/r/1432241149-8762-1-git-send-email-mcgrof@do-not-panic.com</span>
+
+<span class="k">mainmenu</span> <span class="s2">&quot;Simple example to demo cumulative kconfig recursive dependency implication&quot;</span>
+
+<span class="k">config</span> CORE
+	<span class="nb">tristate</span>
+
+<span class="k">config</span> CORE_BELL_A
+	<span class="nb">tristate</span>
+	<span class="k">depends on</span> CORE
+
+<span class="k">config</span> CORE_BELL_A_ADVANCED
+	<span class="nb">tristate</span>
+	<span class="k">select</span> CORE_BELL_A
+
+<span class="k">config</span> CORE_BELL_B
+	<span class="nb">tristate</span>
+	<span class="k">depends on</span> <span class="o">!</span>CORE_BELL_A
+	<span class="k">select</span> CORE
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="reproducible-builds.html" class="btn btn-neutral float-right" title="Reproducible builds" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="headers_install.html" class="btn btn-neutral float-left" title="Exporting kernel headers for use by userspace" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright The kernel development community.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

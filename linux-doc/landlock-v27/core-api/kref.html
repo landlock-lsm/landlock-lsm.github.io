@@ -1,0 +1,654 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Adding reference counters (krefs) to kernel objects &mdash; The Linux Kernel 5.11.0-rc4+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Generic Associative Array Implementation" href="assoc_array.html" />
+    <link rel="prev" title="Everything you never wanted to know about kobjects, ksets, and ktypes" href="kobject.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.11.0-rc4
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Core API Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="index.html#core-utilities">Core utilities</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#data-structures-and-low-level-utilities">Data structures and low-level utilities</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="kobject.html">Everything you never wanted to know about kobjects, ksets, and ktypes</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Adding reference counters (krefs) to kernel objects</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#initialization">Initialization</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#kref-rules">Kref rules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#krefs-and-rcu">Krefs and RCU</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="assoc_array.html">Generic Associative Array Implementation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xarray.html">XArray</a></li>
+<li class="toctree-l3"><a class="reference internal" href="idr.html">ID Allocation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="circular-buffers.html">Circular Buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="rbtree.html">Red-black Trees (rbtree) in Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="generic-radix-tree.html">Generic radix trees/sparse arrays</a></li>
+<li class="toctree-l3"><a class="reference internal" href="packing.html">Generic bitfield packing and unpacking functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bus-virt-phys-mapping.html">How to access I/O mapped memory from within device drivers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="this_cpu_ops.html">this_cpu operations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="timekeeping.html">ktime accessors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="errseq.html">The errseq_t datatype</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#concurrency-primitives">Concurrency primitives</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#low-level-hardware-management">Low-level hardware management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#memory-management">Memory management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#interfaces-for-kernel-debugging">Interfaces for kernel debugging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#everything-else">Everything else</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/index.html">Nios II Specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="index.html">Core API Documentation</a> &raquo;</li>
+        
+      <li>Adding reference counters (krefs) to kernel objects</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/core-api/kref.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="adding-reference-counters-krefs-to-kernel-objects">
+<h1>Adding reference counters (krefs) to kernel objects<a class="headerlink" href="#adding-reference-counters-krefs-to-kernel-objects" title="Permalink to this headline">¶</a></h1>
+<dl class="field-list simple">
+<dt class="field-odd">Author</dt>
+<dd class="field-odd"><p>Corey Minyard &lt;<a class="reference external" href="mailto:minyard&#37;&#52;&#48;acm&#46;org">minyard<span>&#64;</span>acm<span>&#46;</span>org</a>&gt;</p>
+</dd>
+<dt class="field-even">Author</dt>
+<dd class="field-even"><p>Thomas Hellstrom &lt;<a class="reference external" href="mailto:thellstrom&#37;&#52;&#48;vmware&#46;com">thellstrom<span>&#64;</span>vmware<span>&#46;</span>com</a>&gt;</p>
+</dd>
+</dl>
+<p>A lot of this was lifted from Greg Kroah-Hartman’s 2004 OLS paper and
+presentation on krefs, which can be found at:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference external" href="http://www.kroah.com/linux/talks/ols_2004_kref_paper/Reprint-Kroah-Hartman-OLS2004.pdf">http://www.kroah.com/linux/talks/ols_2004_kref_paper/Reprint-Kroah-Hartman-OLS2004.pdf</a></p></li>
+<li><p><a class="reference external" href="http://www.kroah.com/linux/talks/ols_2004_kref_talk/">http://www.kroah.com/linux/talks/ols_2004_kref_talk/</a></p></li>
+</ul>
+</div></blockquote>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>krefs allow you to add reference counters to your objects.  If you
+have objects that are used in multiple places and passed around, and
+you don’t have refcounts, your code is almost certainly broken.  If
+you want refcounts, krefs are the way to go.</p>
+<p>To use a kref, add one to your data structures like:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct my_data
+{
+    .
+    .
+    struct kref refcount;
+    .
+    .
+};
+</pre></div>
+</div>
+<p>The kref can occur anywhere within the data structure.</p>
+</div>
+<div class="section" id="initialization">
+<h2>Initialization<a class="headerlink" href="#initialization" title="Permalink to this headline">¶</a></h2>
+<p>You must initialize the kref after you allocate it.  To do this, call
+kref_init as so:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct my_data *data;
+
+data = kmalloc(sizeof(*data), GFP_KERNEL);
+if (!data)
+       return -ENOMEM;
+kref_init(&amp;data-&gt;refcount);
+</pre></div>
+</div>
+<p>This sets the refcount in the kref to 1.</p>
+</div>
+<div class="section" id="kref-rules">
+<h2>Kref rules<a class="headerlink" href="#kref-rules" title="Permalink to this headline">¶</a></h2>
+<p>Once you have an initialized kref, you must follow the following
+rules:</p>
+<ol class="arabic">
+<li><p>If you make a non-temporary copy of a pointer, especially if
+it can be passed to another thread of execution, you must
+increment the refcount with kref_get() before passing it off:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>kref_get(&amp;data-&gt;refcount);
+</pre></div>
+</div>
+<p>If you already have a valid pointer to a kref-ed structure (the
+refcount cannot go to zero) you may do this without a lock.</p>
+</li>
+<li><p>When you are done with a pointer, you must call kref_put():</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>kref_put(&amp;data-&gt;refcount, data_release);
+</pre></div>
+</div>
+<p>If this is the last reference to the pointer, the release
+routine will be called.  If the code never tries to get
+a valid pointer to a kref-ed structure without already
+holding a valid pointer, it is safe to do this without
+a lock.</p>
+</li>
+<li><p>If the code attempts to gain a reference to a kref-ed structure
+without already holding a valid pointer, it must serialize access
+where a kref_put() cannot occur during the kref_get(), and the
+structure must remain valid during the kref_get().</p></li>
+</ol>
+<p>For example, if you allocate some data and then pass it to another
+thread to process:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void data_release(struct kref *ref)
+{
+    struct my_data *data = container_of(ref, struct my_data, refcount);
+    kfree(data);
+}
+
+void more_data_handling(void *cb_data)
+{
+    struct my_data *data = cb_data;
+    .
+    . do stuff with data here
+    .
+    kref_put(&amp;data-&gt;refcount, data_release);
+}
+
+int my_data_handler(void)
+{
+    int rv = 0;
+    struct my_data *data;
+    struct task_struct *task;
+    data = kmalloc(sizeof(*data), GFP_KERNEL);
+    if (!data)
+            return -ENOMEM;
+    kref_init(&amp;data-&gt;refcount);
+
+    kref_get(&amp;data-&gt;refcount);
+    task = kthread_run(more_data_handling, data, &quot;more_data_handling&quot;);
+    if (task == ERR_PTR(-ENOMEM)) {
+            rv = -ENOMEM;
+            kref_put(&amp;data-&gt;refcount, data_release);
+            goto out;
+    }
+
+    .
+    . do stuff with data here
+    .
+out:
+    kref_put(&amp;data-&gt;refcount, data_release);
+    return rv;
+}
+</pre></div>
+</div>
+<p>This way, it doesn’t matter what order the two threads handle the
+data, the kref_put() handles knowing when the data is not referenced
+any more and releasing it.  The kref_get() does not require a lock,
+since we already have a valid pointer that we own a refcount for.  The
+put needs no lock because nothing tries to get the data without
+already holding a pointer.</p>
+<p>In the above example, kref_put() will be called 2 times in both success
+and error paths. This is necessary because the reference count got
+incremented 2 times by kref_init() and kref_get().</p>
+<p>Note that the “before” in rule 1 is very important.  You should never
+do something like:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>task = kthread_run(more_data_handling, data, &quot;more_data_handling&quot;);
+if (task == ERR_PTR(-ENOMEM)) {
+        rv = -ENOMEM;
+        goto out;
+} else
+        /* BAD BAD BAD - get is after the handoff */
+        kref_get(&amp;data-&gt;refcount);
+</pre></div>
+</div>
+<p>Don’t assume you know what you are doing and use the above construct.
+First of all, you may not know what you are doing.  Second, you may
+know what you are doing (there are some situations where locking is
+involved where the above may be legal) but someone else who doesn’t
+know what they are doing may change the code or copy the code.  It’s
+bad style.  Don’t do it.</p>
+<p>There are some situations where you can optimize the gets and puts.
+For instance, if you are done with an object and enqueuing it for
+something else or passing it off to something else, there is no reason
+to do a get then a put:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>/* Silly extra get and put */
+kref_get(&amp;obj-&gt;ref);
+enqueue(obj);
+kref_put(&amp;obj-&gt;ref, obj_cleanup);
+</pre></div>
+</div>
+<p>Just do the enqueue.  A comment about this is always welcome:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>enqueue(obj);
+/* We are done with obj, so we pass our refcount off
+   to the queue.  DON&#39;T TOUCH obj AFTER HERE! */
+</pre></div>
+</div>
+<p>The last rule (rule 3) is the nastiest one to handle.  Say, for
+instance, you have a list of items that are each kref-ed, and you wish
+to get the first one.  You can’t just pull the first item off the list
+and kref_get() it.  That violates rule 3 because you are not already
+holding a valid pointer.  You must add a mutex (or some other lock).
+For instance:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>static DEFINE_MUTEX(mutex);
+static LIST_HEAD(q);
+struct my_data
+{
+        struct kref      refcount;
+        struct list_head link;
+};
+
+static struct my_data *get_entry()
+{
+        struct my_data *entry = NULL;
+        mutex_lock(&amp;mutex);
+        if (!list_empty(&amp;q)) {
+                entry = container_of(q.next, struct my_data, link);
+                kref_get(&amp;entry-&gt;refcount);
+        }
+        mutex_unlock(&amp;mutex);
+        return entry;
+}
+
+static void release_entry(struct kref *ref)
+{
+        struct my_data *entry = container_of(ref, struct my_data, refcount);
+
+        list_del(&amp;entry-&gt;link);
+        kfree(entry);
+}
+
+static void put_entry(struct my_data *entry)
+{
+        mutex_lock(&amp;mutex);
+        kref_put(&amp;entry-&gt;refcount, release_entry);
+        mutex_unlock(&amp;mutex);
+}
+</pre></div>
+</div>
+<p>The kref_put() return value is useful if you do not want to hold the
+lock during the whole release operation.  Say you didn’t want to call
+<a class="reference internal" href="mm-api.html#c.kfree" title="kfree"><code class="xref c c-func docutils literal notranslate"><span class="pre">kfree()</span></code></a> with the lock held in the example above (since it is kind of
+pointless to do so).  You could use kref_put() as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>static void release_entry(struct kref *ref)
+{
+        /* All work is done after the return from kref_put(). */
+}
+
+static void put_entry(struct my_data *entry)
+{
+        mutex_lock(&amp;mutex);
+        if (kref_put(&amp;entry-&gt;refcount, release_entry)) {
+                list_del(&amp;entry-&gt;link);
+                mutex_unlock(&amp;mutex);
+                kfree(entry);
+        } else
+                mutex_unlock(&amp;mutex);
+}
+</pre></div>
+</div>
+<p>This is really more useful if you have to call other routines as part
+of the free operations that could take a long time or might claim the
+same lock.  Note that doing everything in the release routine is still
+preferred as it is a little neater.</p>
+<p>The above example could also be optimized using kref_get_unless_zero() in
+the following way:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>static struct my_data *get_entry()
+{
+        struct my_data *entry = NULL;
+        mutex_lock(&amp;mutex);
+        if (!list_empty(&amp;q)) {
+                entry = container_of(q.next, struct my_data, link);
+                if (!kref_get_unless_zero(&amp;entry-&gt;refcount))
+                        entry = NULL;
+        }
+        mutex_unlock(&amp;mutex);
+        return entry;
+}
+
+static void release_entry(struct kref *ref)
+{
+        struct my_data *entry = container_of(ref, struct my_data, refcount);
+
+        mutex_lock(&amp;mutex);
+        list_del(&amp;entry-&gt;link);
+        mutex_unlock(&amp;mutex);
+        kfree(entry);
+}
+
+static void put_entry(struct my_data *entry)
+{
+        kref_put(&amp;entry-&gt;refcount, release_entry);
+}
+</pre></div>
+</div>
+<p>Which is useful to remove the mutex lock around kref_put() in put_entry(), but
+it’s important that kref_get_unless_zero is enclosed in the same critical
+section that finds the entry in the lookup table,
+otherwise kref_get_unless_zero may reference already freed memory.
+Note that it is illegal to use kref_get_unless_zero without checking its
+return value. If you are sure (by already having a valid pointer) that
+kref_get_unless_zero() will return true, then use kref_get() instead.</p>
+</div>
+<div class="section" id="krefs-and-rcu">
+<h2>Krefs and RCU<a class="headerlink" href="#krefs-and-rcu" title="Permalink to this headline">¶</a></h2>
+<p>The function kref_get_unless_zero also makes it possible to use rcu
+locking for lookups in the above example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct my_data
+{
+        struct rcu_head rhead;
+        .
+        struct kref refcount;
+        .
+        .
+};
+
+static struct my_data *get_entry_rcu()
+{
+        struct my_data *entry = NULL;
+        rcu_read_lock();
+        if (!list_empty(&amp;q)) {
+                entry = container_of(q.next, struct my_data, link);
+                if (!kref_get_unless_zero(&amp;entry-&gt;refcount))
+                        entry = NULL;
+        }
+        rcu_read_unlock();
+        return entry;
+}
+
+static void release_entry_rcu(struct kref *ref)
+{
+        struct my_data *entry = container_of(ref, struct my_data, refcount);
+
+        mutex_lock(&amp;mutex);
+        list_del_rcu(&amp;entry-&gt;link);
+        mutex_unlock(&amp;mutex);
+        kfree_rcu(entry, rhead);
+}
+
+static void put_entry(struct my_data *entry)
+{
+        kref_put(&amp;entry-&gt;refcount, release_entry_rcu);
+}
+</pre></div>
+</div>
+<p>But note that the struct kref member needs to remain in valid memory for a
+rcu grace period after release_entry_rcu was called. That can be accomplished
+by using kfree_rcu(entry, rhead) as done above, or by calling <a class="reference internal" href="kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a>
+before using kfree, but note that <a class="reference internal" href="kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a> may sleep for a
+substantial amount of time.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="assoc_array.html" class="btn btn-neutral float-right" title="Generic Associative Array Implementation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="kobject.html" class="btn btn-neutral float-left" title="Everything you never wanted to know about kobjects, ksets, and ktypes" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright The kernel development community.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

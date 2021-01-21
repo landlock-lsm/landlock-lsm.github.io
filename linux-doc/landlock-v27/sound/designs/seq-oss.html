@@ -1,0 +1,706 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>OSS Sequencer Emulation on ALSA &mdash; The Linux Kernel 5.11.0-rc4+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="ALSA SoC Layer" href="../soc/index.html" />
+    <link rel="prev" title="Notes on Kernel OSS-Emulation" href="oss-emulation.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.11.0-rc4
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Linux Sound Subsystem Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../kernel-api/index.html">ALSA Kernel API Documentation</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">Designs and Implementations</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="control-names.html">Standard ALSA Control Names</a></li>
+<li class="toctree-l3"><a class="reference internal" href="channel-mapping-api.html">ALSA PCM channel-mapping API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="compress-offload.html">ALSA Compress-Offload API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="timestamping.html">ALSA PCM Timestamping</a></li>
+<li class="toctree-l3"><a class="reference internal" href="jack-controls.html">ALSA Jack Controls</a></li>
+<li class="toctree-l3"><a class="reference internal" href="tracepoints.html">Tracepoints in ALSA</a></li>
+<li class="toctree-l3"><a class="reference internal" href="procfile.html">Proc Files of ALSA Drivers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="powersave.html">Notes on Power-Saving Mode</a></li>
+<li class="toctree-l3"><a class="reference internal" href="oss-emulation.html">Notes on Kernel OSS-Emulation</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">OSS Sequencer Emulation on ALSA</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#description">Description</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#installation">Installation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#using-synthesizer-devices">Using Synthesizer Devices</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#using-midi-devices">Using MIDI Devices</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-options">Module Options</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#queue-mechanism">Queue Mechanism</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#interface-to-synthesizer-device">Interface to Synthesizer Device</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#events">Events</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#interface-to-midi-device">Interface to MIDI Device</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#known-problems-todo-s">Known Problems / TODO’s</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../soc/index.html">ALSA SoC Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../alsa-configuration.html">Advanced Linux Sound Architecture - Driver Configuration guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../hd-audio/index.html">HD-Audio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cards/index.html">Card-Specific Information</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../nios2/index.html">Nios II Specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">Linux Sound Subsystem Documentation</a> &raquo;</li>
+        
+          <li><a href="index.html">Designs and Implementations</a> &raquo;</li>
+        
+      <li>OSS Sequencer Emulation on ALSA</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../../_sources/sound/designs/seq-oss.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="oss-sequencer-emulation-on-alsa">
+<h1>OSS Sequencer Emulation on ALSA<a class="headerlink" href="#oss-sequencer-emulation-on-alsa" title="Permalink to this headline">¶</a></h1>
+<p>Copyright (c) 1998,1999 by Takashi Iwai</p>
+<p>ver.0.1.8; Nov. 16, 1999</p>
+<div class="section" id="description">
+<h2>Description<a class="headerlink" href="#description" title="Permalink to this headline">¶</a></h2>
+<p>This directory contains the OSS sequencer emulation driver on ALSA. Note
+that this program is still in the development state.</p>
+<p>What this does - it provides the emulation of the OSS sequencer, access
+via <code class="docutils literal notranslate"><span class="pre">/dev/sequencer</span></code> and <code class="docutils literal notranslate"><span class="pre">/dev/music</span></code> devices.
+The most of applications using OSS can run if the appropriate ALSA
+sequencer is prepared.</p>
+<p>The following features are emulated by this driver:</p>
+<ul>
+<li><p>Normal sequencer and MIDI events:</p>
+<blockquote>
+<div><p>They are converted to the ALSA sequencer events, and sent to the
+corresponding port.</p>
+</div></blockquote>
+</li>
+<li><p>Timer events:</p>
+<blockquote>
+<div><p>The timer is not selectable by ioctl. The control rate is fixed to
+100 regardless of HZ. That is, even on Alpha system, a tick is always
+1/100 second. The base rate and tempo can be changed in <code class="docutils literal notranslate"><span class="pre">/dev/music</span></code>.</p>
+</div></blockquote>
+</li>
+<li><p>Patch loading:</p>
+<blockquote>
+<div><p>It purely depends on the synth drivers whether it’s supported since
+the patch loading is realized by callback to the synth driver.</p>
+</div></blockquote>
+</li>
+<li><p>I/O controls:</p>
+<blockquote>
+<div><p>Most of controls are accepted. Some controls
+are dependent on the synth driver, as well as even on original OSS.</p>
+</div></blockquote>
+</li>
+</ul>
+<p>Furthermore, you can find the following advanced features:</p>
+<ul>
+<li><p>Better queue mechanism:</p>
+<blockquote>
+<div><p>The events are queued before processing them.</p>
+</div></blockquote>
+</li>
+<li><p>Multiple applications:</p>
+<blockquote>
+<div><p>You can run two or more applications simultaneously (even for OSS
+sequencer)!
+However, each MIDI device is exclusive - that is, if a MIDI device
+is opened once by some application, other applications can’t use
+it. No such a restriction in synth devices.</p>
+</div></blockquote>
+</li>
+<li><p>Real-time event processing:</p>
+<blockquote>
+<div><p>The events can be processed in real time without using out of bound
+ioctl. To switch to real-time mode, send ABSTIME 0 event. The followed
+events will be processed in real-time without queued. To switch off the
+real-time mode, send RELTIME 0 event.</p>
+</div></blockquote>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">/proc</span></code> interface:</p>
+<blockquote>
+<div><p>The status of applications and devices can be shown via
+<code class="docutils literal notranslate"><span class="pre">/proc/asound/seq/oss</span></code> at any time. In the later version,
+configuration will be changed via <code class="docutils literal notranslate"><span class="pre">/proc</span></code> interface, too.</p>
+</div></blockquote>
+</li>
+</ul>
+</div>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>Run configure script with both sequencer support (<code class="docutils literal notranslate"><span class="pre">--with-sequencer=yes</span></code>)
+and OSS emulation (<code class="docutils literal notranslate"><span class="pre">--with-oss=yes</span></code>) options. A module <code class="docutils literal notranslate"><span class="pre">snd-seq-oss.o</span></code>
+will be created. If the synth module of your sound card supports for OSS
+emulation (so far, only Emu8000 driver), this module will be loaded
+automatically.
+Otherwise, you need to load this module manually.</p>
+<p>At beginning, this module probes all the MIDI ports which have been
+already connected to the sequencer. Once after that, the creation and deletion
+of ports are watched by announcement mechanism of ALSA sequencer.</p>
+<p>The available synth and MIDI devices can be found in proc interface.
+Run <code class="docutils literal notranslate"><span class="pre">cat</span> <span class="pre">/proc/asound/seq/oss</span></code>, and check the devices. For example,
+if you use an AWE64 card, you’ll see like the following:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>OSS sequencer emulation version 0.1.8
+ALSA client number 63
+ALSA receiver port 0
+
+Number of applications: 0
+
+Number of synth devices: 1
+synth 0: [EMU8000]
+  type 0x1 : subtype 0x20 : voices 32
+  capabilties : ioctl enabled / load_patch enabled
+
+Number of MIDI devices: 3
+midi 0: [Emu8000 Port-0] ALSA port 65:0
+  capability write / opened none
+
+midi 1: [Emu8000 Port-1] ALSA port 65:1
+  capability write / opened none
+
+midi 2: [0: MPU-401 (UART)] ALSA port 64:0
+  capability read/write / opened none
+</pre></div>
+</div>
+<p>Note that the device number may be different from the information of
+<code class="docutils literal notranslate"><span class="pre">/proc/asound/oss-devices</span></code> or ones of the original OSS driver.
+Use the device number listed in <code class="docutils literal notranslate"><span class="pre">/proc/asound/seq/oss</span></code>
+to play via OSS sequencer emulation.</p>
+</div>
+<div class="section" id="using-synthesizer-devices">
+<h2>Using Synthesizer Devices<a class="headerlink" href="#using-synthesizer-devices" title="Permalink to this headline">¶</a></h2>
+<p>Run your favorite program. I’ve tested playmidi-2.4, awemidi-0.4.3, gmod-3.1
+and xmp-1.1.5. You can load samples via <code class="docutils literal notranslate"><span class="pre">/dev/sequencer</span></code> like sfxload,
+too.</p>
+<p>If the lowlevel driver supports multiple access to synth devices (like
+Emu8000 driver), two or more applications are allowed to run at the same
+time.</p>
+</div>
+<div class="section" id="using-midi-devices">
+<h2>Using MIDI Devices<a class="headerlink" href="#using-midi-devices" title="Permalink to this headline">¶</a></h2>
+<p>So far, only MIDI output was tested. MIDI input was not checked at all,
+but hopefully it will work. Use the device number listed in
+<code class="docutils literal notranslate"><span class="pre">/proc/asound/seq/oss</span></code>.
+Be aware that these numbers are mostly different from the list in
+<code class="docutils literal notranslate"><span class="pre">/proc/asound/oss-devices</span></code>.</p>
+</div>
+<div class="section" id="module-options">
+<h2>Module Options<a class="headerlink" href="#module-options" title="Permalink to this headline">¶</a></h2>
+<p>The following module options are available:</p>
+<dl class="simple">
+<dt>maxqlen</dt><dd><p>specifies the maximum read/write queue length. This queue is private
+for OSS sequencer, so that it is independent from the queue length of ALSA
+sequencer. Default value is 1024.</p>
+</dd>
+<dt>seq_oss_debug</dt><dd><p>specifies the debug level and accepts zero (= no debug message) or
+positive integer. Default value is 0.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="queue-mechanism">
+<h2>Queue Mechanism<a class="headerlink" href="#queue-mechanism" title="Permalink to this headline">¶</a></h2>
+<p>OSS sequencer emulation uses an ALSA priority queue. The
+events from <code class="docutils literal notranslate"><span class="pre">/dev/sequencer</span></code> are processed and put onto the queue
+specified by module option.</p>
+<p>All the events from <code class="docutils literal notranslate"><span class="pre">/dev/sequencer</span></code> are parsed at beginning.
+The timing events are also parsed at this moment, so that the events may
+be processed in real-time. Sending an event ABSTIME 0 switches the operation
+mode to real-time mode, and sending an event RELTIME 0 switches it off.
+In the real-time mode, all events are dispatched immediately.</p>
+<p>The queued events are dispatched to the corresponding ALSA sequencer
+ports after scheduled time by ALSA sequencer dispatcher.</p>
+<p>If the write-queue is full, the application sleeps until a certain amount
+(as default one half) becomes empty in blocking mode. The synchronization
+to write timing was implemented, too.</p>
+<p>The input from MIDI devices or echo-back events are stored on read FIFO
+queue. If application reads <code class="docutils literal notranslate"><span class="pre">/dev/sequencer</span></code> in blocking mode, the
+process will be awaked.</p>
+</div>
+<div class="section" id="interface-to-synthesizer-device">
+<h2>Interface to Synthesizer Device<a class="headerlink" href="#interface-to-synthesizer-device" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="registration">
+<h3>Registration<a class="headerlink" href="#registration" title="Permalink to this headline">¶</a></h3>
+<p>To register an OSS synthesizer device, use snd_seq_oss_synth_register()
+function:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int snd_seq_oss_synth_register(char *name, int type, int subtype, int nvoices,
+        snd_seq_oss_callback_t *oper, void *private_data)
+</pre></div>
+</div>
+<p>The arguments <code class="docutils literal notranslate"><span class="pre">name</span></code>, <code class="docutils literal notranslate"><span class="pre">type</span></code>, <code class="docutils literal notranslate"><span class="pre">subtype</span></code> and <code class="docutils literal notranslate"><span class="pre">nvoices</span></code>
+are used for making the appropriate synth_info structure for ioctl. The
+return value is an index number of this device. This index must be remembered
+for unregister. If registration is failed, -errno will be returned.</p>
+<p>To release this device, call snd_seq_oss_synth_unregister() function:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int snd_seq_oss_synth_unregister(int index)
+</pre></div>
+</div>
+<p>where the <code class="docutils literal notranslate"><span class="pre">index</span></code> is the index number returned by register function.</p>
+</div>
+<div class="section" id="callbacks">
+<h3>Callbacks<a class="headerlink" href="#callbacks" title="Permalink to this headline">¶</a></h3>
+<p>OSS synthesizer devices have capability for sample downloading and ioctls
+like sample reset. In OSS emulation, these special features are realized
+by using callbacks. The registration argument oper is used to specify these
+callbacks. The following callback functions must be defined:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>snd_seq_oss_callback_t:
+ int (*open)(snd_seq_oss_arg_t *p, void *closure);
+ int (*close)(snd_seq_oss_arg_t *p);
+ int (*ioctl)(snd_seq_oss_arg_t *p, unsigned int cmd, unsigned long arg);
+ int (*load_patch)(snd_seq_oss_arg_t *p, int format, const char *buf, int offs, int count);
+ int (*reset)(snd_seq_oss_arg_t *p);
+</pre></div>
+</div>
+<p>Except for <code class="docutils literal notranslate"><span class="pre">open</span></code> and <code class="docutils literal notranslate"><span class="pre">close</span></code> callbacks, they are allowed to be NULL.</p>
+<p>Each callback function takes the argument type <code class="docutils literal notranslate"><span class="pre">snd_seq_oss_arg_t</span></code> as the
+first argument.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct snd_seq_oss_arg_t {
+    int app_index;
+    int file_mode;
+    int seq_mode;
+    snd_seq_addr_t addr;
+    void *private_data;
+    int event_passing;
+};
+</pre></div>
+</div>
+<p>The first three fields, <code class="docutils literal notranslate"><span class="pre">app_index</span></code>, <code class="docutils literal notranslate"><span class="pre">file_mode</span></code> and <code class="docutils literal notranslate"><span class="pre">seq_mode</span></code>
+are initialized by OSS sequencer. The <code class="docutils literal notranslate"><span class="pre">app_index</span></code> is the application
+index which is unique to each application opening OSS sequencer. The
+<code class="docutils literal notranslate"><span class="pre">file_mode</span></code> is bit-flags indicating the file operation mode. See
+<code class="docutils literal notranslate"><span class="pre">seq_oss.h</span></code> for its meaning. The <code class="docutils literal notranslate"><span class="pre">seq_mode</span></code> is sequencer operation
+mode. In the current version, only <code class="docutils literal notranslate"><span class="pre">SND_OSSSEQ_MODE_SYNTH</span></code> is used.</p>
+<p>The next two fields, <code class="docutils literal notranslate"><span class="pre">addr</span></code> and <code class="docutils literal notranslate"><span class="pre">private_data</span></code>, must be
+filled by the synth driver at open callback. The <code class="docutils literal notranslate"><span class="pre">addr</span></code> contains
+the address of ALSA sequencer port which is assigned to this device. If
+the driver allocates memory for <code class="docutils literal notranslate"><span class="pre">private_data</span></code>, it must be released
+in close callback by itself.</p>
+<p>The last field, <code class="docutils literal notranslate"><span class="pre">event_passing</span></code>, indicates how to translate note-on
+/ off events. In <code class="docutils literal notranslate"><span class="pre">PROCESS_EVENTS</span></code> mode, the note 255 is regarded
+as velocity change, and key pressure event is passed to the port. In
+<code class="docutils literal notranslate"><span class="pre">PASS_EVENTS</span></code> mode, all note on/off events are passed to the port
+without modified. <code class="docutils literal notranslate"><span class="pre">PROCESS_KEYPRESS</span></code> mode checks the note above 128
+and regards it as key pressure event (mainly for Emu8000 driver).</p>
+</div>
+<div class="section" id="open-callback">
+<h3>Open Callback<a class="headerlink" href="#open-callback" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">open</span></code> is called at each time this device is opened by an application
+using OSS sequencer. This must not be NULL. Typically, the open callback
+does the following procedure:</p>
+<ol class="arabic simple">
+<li><p>Allocate private data record.</p></li>
+<li><p>Create an ALSA sequencer port.</p></li>
+<li><p>Set the new port address on <code class="docutils literal notranslate"><span class="pre">arg-&gt;addr</span></code>.</p></li>
+<li><p>Set the private data record pointer on <code class="docutils literal notranslate"><span class="pre">arg-&gt;private_data</span></code>.</p></li>
+</ol>
+<p>Note that the type bit-flags in port_info of this synth port must NOT contain
+<code class="docutils literal notranslate"><span class="pre">TYPE_MIDI_GENERIC</span></code>
+bit. Instead, <code class="docutils literal notranslate"><span class="pre">TYPE_SPECIFIC</span></code> should be used. Also, <code class="docutils literal notranslate"><span class="pre">CAP_SUBSCRIPTION</span></code>
+bit should NOT be included, too. This is necessary to tell it from other
+normal MIDI devices. If the open procedure succeeded, return zero. Otherwise,
+return -errno.</p>
+</div>
+<div class="section" id="ioctl-callback">
+<h3>Ioctl Callback<a class="headerlink" href="#ioctl-callback" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">ioctl</span></code> callback is called when the sequencer receives device-specific
+ioctls. The following two ioctls should be processed by this callback:</p>
+<dl class="simple">
+<dt>IOCTL_SEQ_RESET_SAMPLES</dt><dd><p>reset all samples on memory – return 0</p>
+</dd>
+<dt>IOCTL_SYNTH_MEMAVL</dt><dd><p>return the available memory size</p>
+</dd>
+<dt>FM_4OP_ENABLE</dt><dd><p>can be ignored usually</p>
+</dd>
+</dl>
+<p>The other ioctls are processed inside the sequencer without passing to
+the lowlevel driver.</p>
+</div>
+<div class="section" id="load-patch-callback">
+<h3>Load_Patch Callback<a class="headerlink" href="#load-patch-callback" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">load_patch</span></code> callback is used for sample-downloading. This callback
+must read the data on user-space and transfer to each device. Return 0
+if succeeded, and -errno if failed. The format argument is the patch key
+in patch_info record. The buf is user-space pointer where patch_info record
+is stored. The offs can be ignored. The count is total data size of this
+sample data.</p>
+</div>
+<div class="section" id="close-callback">
+<h3>Close Callback<a class="headerlink" href="#close-callback" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">close</span></code> callback is called when this device is closed by the
+application. If any private data was allocated in open callback, it must
+be released in the close callback. The deletion of ALSA port should be
+done here, too. This callback must not be NULL.</p>
+</div>
+<div class="section" id="reset-callback">
+<h3>Reset Callback<a class="headerlink" href="#reset-callback" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">reset</span></code> callback is called when sequencer device is reset or
+closed by applications. The callback should turn off the sounds on the
+relevant port immediately, and initialize the status of the port. If this
+callback is undefined, OSS seq sends a <code class="docutils literal notranslate"><span class="pre">HEARTBEAT</span></code> event to the
+port.</p>
+</div>
+</div>
+<div class="section" id="events">
+<h2>Events<a class="headerlink" href="#events" title="Permalink to this headline">¶</a></h2>
+<p>Most of the events are processed by sequencer and translated to the adequate
+ALSA sequencer events, so that each synth device can receive by input_event
+callback of ALSA sequencer port. The following ALSA events should be
+implemented by the driver:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 75%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>ALSA event</p></th>
+<th class="head"><p>Original OSS events</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>NOTEON</p></td>
+<td><p>SEQ_NOTEON, MIDI_NOTEON</p></td>
+</tr>
+<tr class="row-odd"><td><p>NOTE</p></td>
+<td><p>SEQ_NOTEOFF, MIDI_NOTEOFF</p></td>
+</tr>
+<tr class="row-even"><td><p>KEYPRESS</p></td>
+<td><p>MIDI_KEY_PRESSURE</p></td>
+</tr>
+<tr class="row-odd"><td><p>CHANPRESS</p></td>
+<td><p>SEQ_AFTERTOUCH, MIDI_CHN_PRESSURE</p></td>
+</tr>
+<tr class="row-even"><td><p>PGMCHANGE</p></td>
+<td><p>SEQ_PGMCHANGE, MIDI_PGM_CHANGE</p></td>
+</tr>
+<tr class="row-odd"><td><p>PITCHBEND</p></td>
+<td><p>SEQ_CONTROLLER(CTRL_PITCH_BENDER),
+MIDI_PITCH_BEND</p></td>
+</tr>
+<tr class="row-even"><td><p>CONTROLLER</p></td>
+<td><p>MIDI_CTL_CHANGE,
+SEQ_BALANCE (with CTL_PAN)</p></td>
+</tr>
+<tr class="row-odd"><td><p>CONTROL14</p></td>
+<td><p>SEQ_CONTROLLER</p></td>
+</tr>
+<tr class="row-even"><td><p>REGPARAM</p></td>
+<td><p>SEQ_CONTROLLER(CTRL_PITCH_BENDER_RANGE)</p></td>
+</tr>
+<tr class="row-odd"><td><p>SYSEX</p></td>
+<td><p>SEQ_SYSEX</p></td>
+</tr>
+</tbody>
+</table>
+<p>The most of these behavior can be realized by MIDI emulation driver
+included in the Emu8000 lowlevel driver. In the future release, this module
+will be independent.</p>
+<p>Some OSS events (<code class="docutils literal notranslate"><span class="pre">SEQ_PRIVATE</span></code> and <code class="docutils literal notranslate"><span class="pre">SEQ_VOLUME</span></code> events) are passed as event
+type SND_SEQ_OSS_PRIVATE.  The OSS sequencer passes these event 8 byte
+packets without any modification. The lowlevel driver should process these
+events appropriately.</p>
+</div>
+<div class="section" id="interface-to-midi-device">
+<h2>Interface to MIDI Device<a class="headerlink" href="#interface-to-midi-device" title="Permalink to this headline">¶</a></h2>
+<p>Since the OSS emulation probes the creation and deletion of ALSA MIDI
+sequencer ports automatically by receiving announcement from ALSA
+sequencer, the MIDI devices don’t need to be registered explicitly
+like synth devices.
+However, the MIDI port_info registered to ALSA sequencer must include
+a group name <code class="docutils literal notranslate"><span class="pre">SND_SEQ_GROUP_DEVICE</span></code> and a capability-bit
+<code class="docutils literal notranslate"><span class="pre">CAP_READ</span></code> or <code class="docutils literal notranslate"><span class="pre">CAP_WRITE</span></code>. Also, subscription capabilities,
+<code class="docutils literal notranslate"><span class="pre">CAP_SUBS_READ</span></code> or <code class="docutils literal notranslate"><span class="pre">CAP_SUBS_WRITE</span></code>, must be defined, too. If
+these conditions are not satisfied, the port is not registered as OSS
+sequencer MIDI device.</p>
+<p>The events via MIDI devices are parsed in OSS sequencer and converted
+to the corresponding ALSA sequencer events. The input from MIDI sequencer
+is also converted to MIDI byte events by OSS sequencer. This works just
+a reverse way of seq_midi module.</p>
+</div>
+<div class="section" id="known-problems-todo-s">
+<h2>Known Problems / TODO’s<a class="headerlink" href="#known-problems-todo-s" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Patch loading via ALSA instrument layer is not implemented yet.</p></li>
+</ul>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="../soc/index.html" class="btn btn-neutral float-right" title="ALSA SoC Layer" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="oss-emulation.html" class="btn btn-neutral float-left" title="Notes on Kernel OSS-Emulation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright The kernel development community.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

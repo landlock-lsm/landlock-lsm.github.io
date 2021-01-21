@@ -1,0 +1,693 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Message logging with printk &mdash; The Linux Kernel 5.11.0-rc4+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="How to get printk format specifiers right" href="printk-formats.html" />
+    <link rel="prev" title="Concurrency Managed Workqueue (cmwq)" href="workqueue.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.11.0-rc4
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Core API Documentation</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#core-utilities">Core utilities</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="kernel-api.html">The Linux Kernel API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="workqueue.html">Concurrency Managed Workqueue (cmwq)</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Message logging with printk</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#function-reference">Function reference</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="printk-formats.html">How to get printk format specifiers right</a></li>
+<li class="toctree-l3"><a class="reference internal" href="symbol-namespaces.html">Symbol Namespaces</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#data-structures-and-low-level-utilities">Data structures and low-level utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#concurrency-primitives">Concurrency primitives</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#low-level-hardware-management">Low-level hardware management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#memory-management">Memory management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#interfaces-for-kernel-debugging">Interfaces for kernel debugging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#everything-else">Everything else</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/index.html">Nios II Specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="index.html">Core API Documentation</a> &raquo;</li>
+        
+      <li>Message logging with printk</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/core-api/printk-basics.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="message-logging-with-printk">
+<h1>Message logging with printk<a class="headerlink" href="#message-logging-with-printk" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference internal" href="#c.printk" title="printk"><code class="xref c c-func docutils literal notranslate"><span class="pre">printk()</span></code></a> is one of the most widely known functions in the Linux kernel. It’s the
+standard tool we have for printing messages and usually the most basic way of
+tracing and debugging. If you’re familiar with printf(3) you can tell <a class="reference internal" href="#c.printk" title="printk"><code class="xref c c-func docutils literal notranslate"><span class="pre">printk()</span></code></a>
+is based on it, although it has some functional differences:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><a class="reference internal" href="#c.printk" title="printk"><code class="xref c c-func docutils literal notranslate"><span class="pre">printk()</span></code></a> messages can specify a log level.</p></li>
+<li><p>the format string, while largely compatible with C99, doesn’t follow the
+exact same specification. It has some extensions and a few limitations
+(no <code class="docutils literal notranslate"><span class="pre">%n</span></code> or floating point conversion specifiers). See <a class="reference internal" href="printk-formats.html#printk-specifiers"><span class="std std-ref">How to get
+printk format specifiers right</span></a>.</p></li>
+</ul>
+</div></blockquote>
+<p>All <a class="reference internal" href="#c.printk" title="printk"><code class="xref c c-func docutils literal notranslate"><span class="pre">printk()</span></code></a> messages are printed to the kernel log buffer, which is a ring
+buffer exported to userspace through /dev/kmsg. The usual way to read it is
+using <code class="docutils literal notranslate"><span class="pre">dmesg</span></code>.</p>
+<p><a class="reference internal" href="#c.printk" title="printk"><code class="xref c c-func docutils literal notranslate"><span class="pre">printk()</span></code></a> is typically used like this:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>printk(KERN_INFO &quot;Message: %s\n&quot;, arg);
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">KERN_INFO</span></code> is the log level (note that it’s concatenated to the format
+string, the log level is not a separate argument). The available log levels are:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 23%" />
+<col style="width: 11%" />
+<col style="width: 66%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Name</p></th>
+<th class="head"><p>String</p></th>
+<th class="head"><p>Alias function</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>KERN_EMERG</p></td>
+<td><p>“0”</p></td>
+<td><p><a class="reference internal" href="#c.pr_emerg" title="pr_emerg"><code class="xref c c-func docutils literal notranslate"><span class="pre">pr_emerg()</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p>KERN_ALERT</p></td>
+<td><p>“1”</p></td>
+<td><p><a class="reference internal" href="#c.pr_alert" title="pr_alert"><code class="xref c c-func docutils literal notranslate"><span class="pre">pr_alert()</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p>KERN_CRIT</p></td>
+<td><p>“2”</p></td>
+<td><p><a class="reference internal" href="#c.pr_crit" title="pr_crit"><code class="xref c c-func docutils literal notranslate"><span class="pre">pr_crit()</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p>KERN_ERR</p></td>
+<td><p>“3”</p></td>
+<td><p><a class="reference internal" href="#c.pr_err" title="pr_err"><code class="xref c c-func docutils literal notranslate"><span class="pre">pr_err()</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p>KERN_WARNING</p></td>
+<td><p>“4”</p></td>
+<td><p><a class="reference internal" href="#c.pr_warn" title="pr_warn"><code class="xref c c-func docutils literal notranslate"><span class="pre">pr_warn()</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p>KERN_NOTICE</p></td>
+<td><p>“5”</p></td>
+<td><p><a class="reference internal" href="#c.pr_notice" title="pr_notice"><code class="xref c c-func docutils literal notranslate"><span class="pre">pr_notice()</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p>KERN_INFO</p></td>
+<td><p>“6”</p></td>
+<td><p><a class="reference internal" href="#c.pr_info" title="pr_info"><code class="xref c c-func docutils literal notranslate"><span class="pre">pr_info()</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p>KERN_DEBUG</p></td>
+<td><p>“7”</p></td>
+<td><p><a class="reference internal" href="#c.pr_debug" title="pr_debug"><code class="xref c c-func docutils literal notranslate"><span class="pre">pr_debug()</span></code></a> and <a class="reference internal" href="#c.pr_devel" title="pr_devel"><code class="xref c c-func docutils literal notranslate"><span class="pre">pr_devel()</span></code></a> if DEBUG is defined</p></td>
+</tr>
+<tr class="row-even"><td><p>KERN_DEFAULT</p></td>
+<td><p>“”</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>KERN_CONT</p></td>
+<td><p>“c”</p></td>
+<td><p><a class="reference internal" href="#c.pr_cont" title="pr_cont"><code class="xref c c-func docutils literal notranslate"><span class="pre">pr_cont()</span></code></a></p></td>
+</tr>
+</tbody>
+</table>
+<p>The log level specifies the importance of a message. The kernel decides whether
+to show the message immediately (printing it to the current console) depending
+on its log level and the current <em>console_loglevel</em> (a kernel variable). If the
+message priority is higher (lower log level value) than the <em>console_loglevel</em>
+the message will be printed to the console.</p>
+<p>If the log level is omitted, the message is printed with <code class="docutils literal notranslate"><span class="pre">KERN_DEFAULT</span></code>
+level.</p>
+<p>You can check the current <em>console_loglevel</em> with:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ cat /proc/sys/kernel/printk
+4        4        1        7
+</pre></div>
+</div>
+<p>The result shows the <em>current</em>, <em>default</em>, <em>minimum</em> and <em>boot-time-default</em> log
+levels.</p>
+<p>To change the current console_loglevel simply write the desired level to
+<code class="docutils literal notranslate"><span class="pre">/proc/sys/kernel/printk</span></code>. For example, to print all messages to the console:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo 8 &gt; /proc/sys/kernel/printk
+</pre></div>
+</div>
+<p>Another way, using <code class="docutils literal notranslate"><span class="pre">dmesg</span></code>:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># dmesg -n 5
+</pre></div>
+</div>
+<p>sets the console_loglevel to print KERN_WARNING (4) or more severe messages to
+console. See <code class="docutils literal notranslate"><span class="pre">dmesg(1)</span></code> for more information.</p>
+<p>As an alternative to <a class="reference internal" href="#c.printk" title="printk"><code class="xref c c-func docutils literal notranslate"><span class="pre">printk()</span></code></a> you can use the <code class="docutils literal notranslate"><span class="pre">pr_*()</span></code> aliases for
+logging. This family of macros embed the log level in the macro names. For
+example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pr_info(&quot;Info message no. %d\n&quot;, msg_num);
+</pre></div>
+</div>
+<p>prints a <code class="docutils literal notranslate"><span class="pre">KERN_INFO</span></code> message.</p>
+<p>Besides being more concise than the equivalent <a class="reference internal" href="#c.printk" title="printk"><code class="xref c c-func docutils literal notranslate"><span class="pre">printk()</span></code></a> calls, they can use a
+common definition for the format string through the <a class="reference internal" href="#c.pr_fmt" title="pr_fmt"><code class="xref c c-func docutils literal notranslate"><span class="pre">pr_fmt()</span></code></a> macro. For
+instance, defining this at the top of a source file (before any <code class="docutils literal notranslate"><span class="pre">#include</span></code>
+directive):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>#define pr_fmt(fmt) &quot;%s:%s: &quot; fmt, KBUILD_MODNAME, __func__
+</pre></div>
+</div>
+<p>would prefix every pr_*() message in that file with the module and function name
+that originated the message.</p>
+<p>For debugging purposes there are also two conditionally-compiled macros:
+<a class="reference internal" href="#c.pr_debug" title="pr_debug"><code class="xref c c-func docutils literal notranslate"><span class="pre">pr_debug()</span></code></a> and <a class="reference internal" href="#c.pr_devel" title="pr_devel"><code class="xref c c-func docutils literal notranslate"><span class="pre">pr_devel()</span></code></a>, which are compiled-out unless <code class="docutils literal notranslate"><span class="pre">DEBUG</span></code> (or
+also <code class="docutils literal notranslate"><span class="pre">CONFIG_DYNAMIC_DEBUG</span></code> in the case of <a class="reference internal" href="#c.pr_debug" title="pr_debug"><code class="xref c c-func docutils literal notranslate"><span class="pre">pr_debug()</span></code></a>) is defined.</p>
+<div class="section" id="function-reference">
+<h2>Function reference<a class="headerlink" href="#function-reference" title="Permalink to this headline">¶</a></h2>
+<dl class="c function">
+<dt id="c.printk">
+__visible int <code class="sig-name descname">printk</code><span class="sig-paren">(</span><em class="property">const</em> char *<em>fmt</em>, ...<span class="sig-paren">)</span><a class="headerlink" href="#c.printk" title="Permalink to this definition">¶</a><br /></dt>
+<dd><p>print a kernel message</p>
+</dd></dl>
+
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">const</span> <span class="pre">char</span> <span class="pre">*fmt</span></code></dt><dd><p>format string</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">...</span></code></dt><dd><p>variable arguments</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This is <a class="reference internal" href="#c.printk" title="printk"><code class="xref c c-func docutils literal notranslate"><span class="pre">printk()</span></code></a>. It can be called from any context. We want it to work.</p>
+<p>We try to grab the console_lock. If we succeed, it’s easy - we log the
+output and call the console drivers.  If we fail to get the semaphore, we
+place the output into the log buffer and return. The current holder of
+the console_sem will notice the new output in <a class="reference internal" href="../driver-api/basics.html#c.console_unlock" title="console_unlock"><code class="xref c c-func docutils literal notranslate"><span class="pre">console_unlock()</span></code></a>; and will
+send it to the consoles before releasing the lock.</p>
+<p>One effect of this deferred printing is that code which calls <a class="reference internal" href="#c.printk" title="printk"><code class="xref c c-func docutils literal notranslate"><span class="pre">printk()</span></code></a> and
+then changes console_loglevel may break. This is because console_loglevel
+is inspected when the actual printing occurs.</p>
+<p>See also:
+printf(3)</p>
+<p>See the <a class="reference internal" href="kernel-api.html#c.vsnprintf" title="vsnprintf"><code class="xref c c-func docutils literal notranslate"><span class="pre">vsnprintf()</span></code></a> documentation for format string extensions over C99.</p>
+<dl class="c macro">
+<dt id="c.pr_fmt">
+<code class="sig-name descname">pr_fmt</code><a class="headerlink" href="#c.pr_fmt" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><code class="docutils literal notranslate"><span class="pre">pr_fmt</span> <span class="pre">(fmt)</span></code></p>
+<blockquote>
+<div><p>used by the pr_*() macros to generate the printk format string</p>
+</div></blockquote>
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">fmt</span></code></dt><dd><p>format string passed from a pr_*() macro</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This macro can be used to generate a unified format string for pr_*()
+macros. A common use is to prefix all pr_*() messages in a file with a common
+string. For example, defining this at the top of a source file:</p>
+<blockquote>
+<div><p>#define pr_fmt(fmt) KBUILD_MODNAME “: ” fmt</p>
+</div></blockquote>
+<p>would prefix all pr_info, pr_emerg… messages in the file with the module
+name.</p>
+<dl class="c macro">
+<dt id="c.pr_emerg">
+<code class="sig-name descname">pr_emerg</code><a class="headerlink" href="#c.pr_emerg" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><code class="docutils literal notranslate"><span class="pre">pr_emerg</span> <span class="pre">(fmt,</span> <span class="pre">...)</span></code></p>
+<blockquote>
+<div><p>Print an emergency-level message</p>
+</div></blockquote>
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">fmt</span></code></dt><dd><p>format string</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">...</span></code></dt><dd><p>arguments for the format string</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This macro expands to a printk with KERN_EMERG loglevel. It uses <a class="reference internal" href="#c.pr_fmt" title="pr_fmt"><code class="xref c c-func docutils literal notranslate"><span class="pre">pr_fmt()</span></code></a> to
+generate the format string.</p>
+<dl class="c macro">
+<dt id="c.pr_alert">
+<code class="sig-name descname">pr_alert</code><a class="headerlink" href="#c.pr_alert" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><code class="docutils literal notranslate"><span class="pre">pr_alert</span> <span class="pre">(fmt,</span> <span class="pre">...)</span></code></p>
+<blockquote>
+<div><p>Print an alert-level message</p>
+</div></blockquote>
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">fmt</span></code></dt><dd><p>format string</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">...</span></code></dt><dd><p>arguments for the format string</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This macro expands to a printk with KERN_ALERT loglevel. It uses <a class="reference internal" href="#c.pr_fmt" title="pr_fmt"><code class="xref c c-func docutils literal notranslate"><span class="pre">pr_fmt()</span></code></a> to
+generate the format string.</p>
+<dl class="c macro">
+<dt id="c.pr_crit">
+<code class="sig-name descname">pr_crit</code><a class="headerlink" href="#c.pr_crit" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><code class="docutils literal notranslate"><span class="pre">pr_crit</span> <span class="pre">(fmt,</span> <span class="pre">...)</span></code></p>
+<blockquote>
+<div><p>Print a critical-level message</p>
+</div></blockquote>
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">fmt</span></code></dt><dd><p>format string</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">...</span></code></dt><dd><p>arguments for the format string</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This macro expands to a printk with KERN_CRIT loglevel. It uses <a class="reference internal" href="#c.pr_fmt" title="pr_fmt"><code class="xref c c-func docutils literal notranslate"><span class="pre">pr_fmt()</span></code></a> to
+generate the format string.</p>
+<dl class="c macro">
+<dt id="c.pr_err">
+<code class="sig-name descname">pr_err</code><a class="headerlink" href="#c.pr_err" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><code class="docutils literal notranslate"><span class="pre">pr_err</span> <span class="pre">(fmt,</span> <span class="pre">...)</span></code></p>
+<blockquote>
+<div><p>Print an error-level message</p>
+</div></blockquote>
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">fmt</span></code></dt><dd><p>format string</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">...</span></code></dt><dd><p>arguments for the format string</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This macro expands to a printk with KERN_ERR loglevel. It uses <a class="reference internal" href="#c.pr_fmt" title="pr_fmt"><code class="xref c c-func docutils literal notranslate"><span class="pre">pr_fmt()</span></code></a> to
+generate the format string.</p>
+<dl class="c macro">
+<dt id="c.pr_warn">
+<code class="sig-name descname">pr_warn</code><a class="headerlink" href="#c.pr_warn" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><code class="docutils literal notranslate"><span class="pre">pr_warn</span> <span class="pre">(fmt,</span> <span class="pre">...)</span></code></p>
+<blockquote>
+<div><p>Print a warning-level message</p>
+</div></blockquote>
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">fmt</span></code></dt><dd><p>format string</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">...</span></code></dt><dd><p>arguments for the format string</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This macro expands to a printk with KERN_WARNING loglevel. It uses <a class="reference internal" href="#c.pr_fmt" title="pr_fmt"><code class="xref c c-func docutils literal notranslate"><span class="pre">pr_fmt()</span></code></a>
+to generate the format string.</p>
+<dl class="c macro">
+<dt id="c.pr_notice">
+<code class="sig-name descname">pr_notice</code><a class="headerlink" href="#c.pr_notice" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><code class="docutils literal notranslate"><span class="pre">pr_notice</span> <span class="pre">(fmt,</span> <span class="pre">...)</span></code></p>
+<blockquote>
+<div><p>Print a notice-level message</p>
+</div></blockquote>
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">fmt</span></code></dt><dd><p>format string</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">...</span></code></dt><dd><p>arguments for the format string</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This macro expands to a printk with KERN_NOTICE loglevel. It uses <a class="reference internal" href="#c.pr_fmt" title="pr_fmt"><code class="xref c c-func docutils literal notranslate"><span class="pre">pr_fmt()</span></code></a> to
+generate the format string.</p>
+<dl class="c macro">
+<dt id="c.pr_info">
+<code class="sig-name descname">pr_info</code><a class="headerlink" href="#c.pr_info" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><code class="docutils literal notranslate"><span class="pre">pr_info</span> <span class="pre">(fmt,</span> <span class="pre">...)</span></code></p>
+<blockquote>
+<div><p>Print an info-level message</p>
+</div></blockquote>
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">fmt</span></code></dt><dd><p>format string</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">...</span></code></dt><dd><p>arguments for the format string</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This macro expands to a printk with KERN_INFO loglevel. It uses <a class="reference internal" href="#c.pr_fmt" title="pr_fmt"><code class="xref c c-func docutils literal notranslate"><span class="pre">pr_fmt()</span></code></a> to
+generate the format string.</p>
+<dl class="c macro">
+<dt id="c.pr_cont">
+<code class="sig-name descname">pr_cont</code><a class="headerlink" href="#c.pr_cont" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><code class="docutils literal notranslate"><span class="pre">pr_cont</span> <span class="pre">(fmt,</span> <span class="pre">...)</span></code></p>
+<blockquote>
+<div><p>Continues a previous log message in the same line.</p>
+</div></blockquote>
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">fmt</span></code></dt><dd><p>format string</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">...</span></code></dt><dd><p>arguments for the format string</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This macro expands to a printk with KERN_CONT loglevel. It should only be
+used when continuing a log message with no newline (‘n’) enclosed. Otherwise
+it defaults back to KERN_DEFAULT loglevel.</p>
+<dl class="c macro">
+<dt id="c.pr_devel">
+<code class="sig-name descname">pr_devel</code><a class="headerlink" href="#c.pr_devel" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><code class="docutils literal notranslate"><span class="pre">pr_devel</span> <span class="pre">(fmt,</span> <span class="pre">...)</span></code></p>
+<blockquote>
+<div><p>Print a debug-level message conditionally</p>
+</div></blockquote>
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">fmt</span></code></dt><dd><p>format string</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">...</span></code></dt><dd><p>arguments for the format string</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This macro expands to a printk with KERN_DEBUG loglevel if DEBUG is
+defined. Otherwise it does nothing.</p>
+<p>It uses <a class="reference internal" href="#c.pr_fmt" title="pr_fmt"><code class="xref c c-func docutils literal notranslate"><span class="pre">pr_fmt()</span></code></a> to generate the format string.</p>
+<dl class="c macro">
+<dt id="c.pr_debug">
+<code class="sig-name descname">pr_debug</code><a class="headerlink" href="#c.pr_debug" title="Permalink to this definition">¶</a><br /></dt>
+<dd></dd></dl>
+
+<p><code class="docutils literal notranslate"><span class="pre">pr_debug</span> <span class="pre">(fmt,</span> <span class="pre">...)</span></code></p>
+<blockquote>
+<div><p>Print a debug-level message conditionally</p>
+</div></blockquote>
+<p><strong>Parameters</strong></p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">fmt</span></code></dt><dd><p>format string</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">...</span></code></dt><dd><p>arguments for the format string</p>
+</dd>
+</dl>
+<p><strong>Description</strong></p>
+<p>This macro expands to dynamic_pr_debug() if CONFIG_DYNAMIC_DEBUG is
+set. Otherwise, if DEBUG is defined, it’s equivalent to a printk with
+KERN_DEBUG loglevel. If DEBUG is not defined it does nothing.</p>
+<p>It uses <a class="reference internal" href="#c.pr_fmt" title="pr_fmt"><code class="xref c c-func docutils literal notranslate"><span class="pre">pr_fmt()</span></code></a> to generate the format string (dynamic_pr_debug() uses
+<a class="reference internal" href="#c.pr_fmt" title="pr_fmt"><code class="xref c c-func docutils literal notranslate"><span class="pre">pr_fmt()</span></code></a> internally).</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="printk-formats.html" class="btn btn-neutral float-right" title="How to get printk format specifiers right" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="workqueue.html" class="btn btn-neutral float-left" title="Concurrency Managed Workqueue (cmwq)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright The kernel development community.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
