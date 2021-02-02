@@ -1,0 +1,692 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>USB Request Block (URB) &mdash; The Linux Kernel 5.11.0-rc6+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Power Management for USB" href="power-management.html" />
+    <link rel="prev" title="USB DMA" href="dma.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.11.0-rc6
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">The Linux driver implementer’s API guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../driver-model/index.html">Driver Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../basics.html">Driver Basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../infrastructure.html">Device drivers infrastructure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ioctl.html">ioctl based interfaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../early-userspace/index.html">Early Userspace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pm/index.html">CPU and Device Power Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../clk.html">The Common Clk Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../device-io.html">Bus-Independent Device Accesses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dma-buf.html">Buffer Sharing and Synchronization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../device_link.html">Device links</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../component.html">Component Helper for Aggregate Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../message-based.html">Message-based devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../infiniband.html">InfiniBand and Remote DMA (RDMA) Interfaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../frame-buffer.html">Frame Buffer Library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../regulator.html">Voltage and current regulator API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reset.html">Reset controller API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../input.html">Input Subsystem</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">Linux USB API</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="usb.html">The Linux-USB Host Side API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="gadget.html">USB Gadget API for Linux</a></li>
+<li class="toctree-l3"><a class="reference internal" href="anchors.html">USB Anchors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bulk-streams.html">USB bulk streams</a></li>
+<li class="toctree-l3"><a class="reference internal" href="callbacks.html">USB core callbacks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dma.html">USB DMA</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">USB Request Block (URB)</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#basic-concept-or-what-is-an-urb">Basic concept or ‘What is an URB?’</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#the-urb-structure">The URB structure</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#how-to-get-an-urb">How to get an URB?</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#what-has-to-be-filled-in">What has to be filled in?</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#how-to-submit-an-urb">How to submit an URB?</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#how-to-cancel-an-already-running-urb">How to cancel an already running URB?</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#what-about-the-completion-handler">What about the completion handler?</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#how-to-do-isochronous-iso-transfers">How to do isochronous (ISO) transfers?</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#how-to-start-interrupt-int-transfers">How to start interrupt (INT) transfers?</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="power-management.html">Power Management for USB</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hotplug.html">USB hotplugging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="persist.html">USB device persistence during system suspend</a></li>
+<li class="toctree-l3"><a class="reference internal" href="error-codes.html">USB Error codes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="writing_usb_driver.html">Writing USB Device Drivers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dwc3.html">Synopsys DesignWare Core SuperSpeed USB 3.0 Controller</a></li>
+<li class="toctree-l3"><a class="reference internal" href="writing_musb_glue_layer.html">Writing a MUSB Glue Layer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="typec.html">USB Type-C connector class</a></li>
+<li class="toctree-l3"><a class="reference internal" href="typec_bus.html">API for USB Type-C Alternate Mode drivers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="usb3-debug-port.html">USB3 debug port</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../firewire.html">Firewire (IEEE 1394) driver Interface Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pci/index.html">The Linux PCI driver implementer’s API guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../spi.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../i2c.html">I<sup>2</sup>C and SMBus Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ipmb.html">IPMB Driver for a Satellite MC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ipmi.html">The Linux IPMI Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../i3c/index.html">I3C subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../interconnect.html">Generic System Interconnect Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../devfreq.html">Device Frequency Scaling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../hsi.html">High Speed Synchronous Serial Interface (HSI)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../edac.html">Error Detection And Correction (EDAC) Devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../scsi.html">SCSI Interfaces Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../libata.html">libATA Developer’s Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../target.html">target and iSCSI Interfaces Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mailbox.html">The Common Mailbox Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mtdnand.html">MTD NAND Driver Programming Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../miscellaneous.html">Parallel Port Devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../miscellaneous.html#x50-uart-driver">16x50 UART Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../miscellaneous.html#pulse-width-modulation-pwm">Pulse-Width Modulation (PWM)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mei/index.html">Intel(R) Management Engine Interface (Intel(R) MEI)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mtd/index.html">Memory Technology Device (MTD)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mmc/index.html">MMC/SD/SDIO card support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../nvdimm/index.html">Non-Volatile Memory Device (NVDIMM)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../w1.html">W1: Dallas’ 1-wire bus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../rapidio/index.html">The Linux RapidIO Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../s390-drivers.html">Writing s390 channel device drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../vme.html">VME Device Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../80211/index.html">Linux 802.11 Driver Developer’s Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../uio-howto.html">The Userspace I/O HOWTO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../firmware/index.html">Linux Firmware API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pinctl.html">PINCTRL (PIN CONTROL) subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../gpio/index.html">General Purpose Input/Output (GPIO)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../md/index.html">RAID</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../media/index.html">Media subsystem kernel internal API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../misc_devices.html">Miscellaneous Devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../nfc/index.html">Near Field Communication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dmaengine/index.html">DMAEngine documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../slimbus.html">Linux kernel SLIMbus support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../soundwire/index.html">SoundWire Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../thermal/index.html">Thermal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga/index.html">FPGA Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../acpi/index.html">ACPI Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../auxiliary_bus.html">Auxiliary Bus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../backlight/lp855x-driver.html">Kernel driver lp855x</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../connector.html">Kernel Connector</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../console.html">Console Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dcdbas.html">Dell Systems Management Base Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../eisa.html">EISA bus support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../isa.html">ISA Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../isapnp.html">ISA Plug &amp; Play support by Jaroslav Kysela &lt;perex&#64;suse.cz&gt;</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../io-mapping.html">The io_mapping functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../io_ordering.html">Ordering I/O writes to memory-mapped addresses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../generic-counter.html">Generic Counter Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../lightnvm-pblk.html">pblk: Physical Block Device Target</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../memory-devices/index.html">Memory Controller drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../men-chameleon-bus.html">MEN Chameleon Bus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ntb.html">NTB Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../nvmem.html">NVMEM Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../parport-lowlevel.html">PARPORT interface documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pps.html">PPS - Pulse Per Second</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ptp.html">PTP hardware clock infrastructure for Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../phy/index.html">Generic PHY Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pti_intel_mid.html">Intel MID PTI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pwm.html">Pulse Width Modulation (PWM) interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pldmfw/index.html">PLDM Firmware Flash Update Library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pldmfw/index.html#overview-of-the-pldmfw-library">Overview of the <code class="docutils literal notranslate"><span class="pre">pldmfw</span></code> library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../rfkill.html">rfkill - RF kill switch support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../serial/index.html">Support for Serial devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sm501.html">SM501 Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../switchtec.html">Linux Switchtec Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sync_file.html">Sync File API Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../vfio-mediated-device.html">VFIO Mediated devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../vfio.html">VFIO - “Virtual Function I/O” </a></li>
+<li class="toctree-l2"><a class="reference internal" href="../xilinx/index.html">Xilinx FPGA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../xillybus.html">Xillybus driver for generic FPGA interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../zorro.html">Writing Device Drivers for Zorro Devices</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../nios2/index.html">Nios II Specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">The Linux driver implementer’s API guide</a> &raquo;</li>
+        
+          <li><a href="index.html">Linux USB API</a> &raquo;</li>
+        
+      <li>USB Request Block (URB)</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../../_sources/driver-api/usb/URB.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="usb-request-block-urb">
+<span id="usb-urb"></span><h1>USB Request Block (URB)<a class="headerlink" href="#usb-request-block-urb" title="Permalink to this headline">¶</a></h1>
+<dl class="field-list simple">
+<dt class="field-odd">Revised</dt>
+<dd class="field-odd"><p>2000-Dec-05</p>
+</dd>
+<dt class="field-even">Again</dt>
+<dd class="field-even"><p>2002-Jul-06</p>
+</dd>
+<dt class="field-odd">Again</dt>
+<dd class="field-odd"><p>2005-Sep-19</p>
+</dd>
+<dt class="field-even">Again</dt>
+<dd class="field-even"><p>2017-Mar-29</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The USB subsystem now has a substantial section at <a class="reference internal" href="usb.html#usb-hostside-api"><span class="std std-ref">The Linux-USB Host Side API</span></a>
+section, generated from the current source code.
+This particular documentation file isn’t complete and may not be
+updated to the last version; don’t rely on it except for a quick
+overview.</p>
+</div>
+<div class="section" id="basic-concept-or-what-is-an-urb">
+<h2>Basic concept or ‘What is an URB?’<a class="headerlink" href="#basic-concept-or-what-is-an-urb" title="Permalink to this headline">¶</a></h2>
+<p>The basic idea of the new driver is message passing, the message itself is
+called USB Request Block, or URB for short.</p>
+<ul class="simple">
+<li><p>An URB consists of all relevant information to execute any USB transaction
+and deliver the data and status back.</p></li>
+<li><p>Execution of an URB is inherently an asynchronous operation, i.e. the
+<a class="reference internal" href="usb.html#c.usb_submit_urb" title="usb_submit_urb"><code class="xref c c-func docutils literal notranslate"><span class="pre">usb_submit_urb()</span></code></a> call returns immediately after it has successfully
+queued the requested action.</p></li>
+<li><p>Transfers for one URB can be canceled with <a class="reference internal" href="usb.html#c.usb_unlink_urb" title="usb_unlink_urb"><code class="xref c c-func docutils literal notranslate"><span class="pre">usb_unlink_urb()</span></code></a>
+at any time.</p></li>
+<li><p>Each URB has a completion handler, which is called after the action
+has been successfully completed or canceled. The URB also contains a
+context-pointer for passing information to the completion handler.</p></li>
+<li><p>Each endpoint for a device logically supports a queue of requests.
+You can fill that queue, so that the USB hardware can still transfer
+data to an endpoint while your driver handles completion of another.
+This maximizes use of USB bandwidth, and supports seamless streaming
+of data to (or from) devices when using periodic transfer modes.</p></li>
+</ul>
+</div>
+<div class="section" id="the-urb-structure">
+<h2>The URB structure<a class="headerlink" href="#the-urb-structure" title="Permalink to this headline">¶</a></h2>
+<p>Some of the fields in <a class="reference internal" href="usb.html#c.urb" title="urb"><code class="xref c c-struct docutils literal notranslate"><span class="pre">struct</span> <span class="pre">urb</span></code></a> are:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct urb
+{
+// (IN) device and pipe specify the endpoint queue
+      struct usb_device *dev;         // pointer to associated USB device
+      unsigned int pipe;              // endpoint information
+
+      unsigned int transfer_flags;    // URB_ISO_ASAP, URB_SHORT_NOT_OK, etc.
+
+// (IN) all urbs need completion routines
+      void *context;                  // context for completion routine
+      usb_complete_t complete;        // pointer to completion routine
+
+// (OUT) status after each completion
+      int status;                     // returned status
+
+// (IN) buffer used for data transfers
+      void *transfer_buffer;          // associated data buffer
+      u32 transfer_buffer_length;     // data buffer length
+      int number_of_packets;          // size of iso_frame_desc
+
+// (OUT) sometimes only part of CTRL/BULK/INTR transfer_buffer is used
+      u32 actual_length;              // actual data buffer length
+
+// (IN) setup stage for CTRL (pass a struct usb_ctrlrequest)
+      unsigned char *setup_packet;    // setup packet (control only)
+
+// Only for PERIODIC transfers (ISO, INTERRUPT)
+  // (IN/OUT) start_frame is set unless URB_ISO_ASAP isn&#39;t set
+      int start_frame;                // start frame
+      int interval;                   // polling interval
+
+  // ISO only: packets are only &quot;best effort&quot;; each can have errors
+      int error_count;                // number of errors
+      struct usb_iso_packet_descriptor iso_frame_desc[0];
+};
+</pre></div>
+</div>
+<p>Your driver must create the “pipe” value using values from the appropriate
+endpoint descriptor in an interface that it’s claimed.</p>
+</div>
+<div class="section" id="how-to-get-an-urb">
+<h2>How to get an URB?<a class="headerlink" href="#how-to-get-an-urb" title="Permalink to this headline">¶</a></h2>
+<p>URBs are allocated by calling <a class="reference internal" href="usb.html#c.usb_alloc_urb" title="usb_alloc_urb"><code class="xref c c-func docutils literal notranslate"><span class="pre">usb_alloc_urb()</span></code></a>:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct urb *usb_alloc_urb(int isoframes, int mem_flags)
+</pre></div>
+</div>
+<p>Return value is a pointer to the allocated URB, 0 if allocation failed.
+The parameter isoframes specifies the number of isochronous transfer frames
+you want to schedule. For CTRL/BULK/INT, use 0.  The mem_flags parameter
+holds standard memory allocation flags, letting you control (among other
+things) whether the underlying code may block or not.</p>
+<p>To free an URB, use <a class="reference internal" href="usb.html#c.usb_free_urb" title="usb_free_urb"><code class="xref c c-func docutils literal notranslate"><span class="pre">usb_free_urb()</span></code></a>:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void usb_free_urb(struct urb *urb)
+</pre></div>
+</div>
+<p>You may free an urb that you’ve submitted, but which hasn’t yet been
+returned to you in a completion callback.  It will automatically be
+deallocated when it is no longer in use.</p>
+</div>
+<div class="section" id="what-has-to-be-filled-in">
+<h2>What has to be filled in?<a class="headerlink" href="#what-has-to-be-filled-in" title="Permalink to this headline">¶</a></h2>
+<p>Depending on the type of transaction, there are some inline functions
+defined in <code class="docutils literal notranslate"><span class="pre">linux/usb.h</span></code> to simplify the initialization, such as
+<a class="reference internal" href="usb.html#c.usb_fill_control_urb" title="usb_fill_control_urb"><code class="xref c c-func docutils literal notranslate"><span class="pre">usb_fill_control_urb()</span></code></a>, <a class="reference internal" href="usb.html#c.usb_fill_bulk_urb" title="usb_fill_bulk_urb"><code class="xref c c-func docutils literal notranslate"><span class="pre">usb_fill_bulk_urb()</span></code></a> and
+<a class="reference internal" href="usb.html#c.usb_fill_int_urb" title="usb_fill_int_urb"><code class="xref c c-func docutils literal notranslate"><span class="pre">usb_fill_int_urb()</span></code></a>.  In general, they need the usb device pointer,
+the pipe (usual format from usb.h), the transfer buffer, the desired transfer
+length, the completion handler, and its context. Take a look at the some
+existing drivers to see how they’re used.</p>
+<p>Flags:</p>
+<ul class="simple">
+<li><p>For ISO there are two startup behaviors: Specified start_frame or ASAP.</p></li>
+<li><p>For ASAP set <code class="docutils literal notranslate"><span class="pre">URB_ISO_ASAP</span></code> in transfer_flags.</p></li>
+</ul>
+<p>If short packets should NOT be tolerated, set <code class="docutils literal notranslate"><span class="pre">URB_SHORT_NOT_OK</span></code> in
+transfer_flags.</p>
+</div>
+<div class="section" id="how-to-submit-an-urb">
+<h2>How to submit an URB?<a class="headerlink" href="#how-to-submit-an-urb" title="Permalink to this headline">¶</a></h2>
+<p>Just call <a class="reference internal" href="usb.html#c.usb_submit_urb" title="usb_submit_urb"><code class="xref c c-func docutils literal notranslate"><span class="pre">usb_submit_urb()</span></code></a>:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int usb_submit_urb(struct urb *urb, int mem_flags)
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">mem_flags</span></code> parameter, such as <code class="docutils literal notranslate"><span class="pre">GFP_ATOMIC</span></code>, controls memory
+allocation, such as whether the lower levels may block when memory is tight.</p>
+<p>It immediately returns, either with status 0 (request queued) or some
+error code, usually caused by the following:</p>
+<ul class="simple">
+<li><p>Out of memory (<code class="docutils literal notranslate"><span class="pre">-ENOMEM</span></code>)</p></li>
+<li><p>Unplugged device (<code class="docutils literal notranslate"><span class="pre">-ENODEV</span></code>)</p></li>
+<li><p>Stalled endpoint (<code class="docutils literal notranslate"><span class="pre">-EPIPE</span></code>)</p></li>
+<li><p>Too many queued ISO transfers (<code class="docutils literal notranslate"><span class="pre">-EAGAIN</span></code>)</p></li>
+<li><p>Too many requested ISO frames (<code class="docutils literal notranslate"><span class="pre">-EFBIG</span></code>)</p></li>
+<li><p>Invalid INT interval (<code class="docutils literal notranslate"><span class="pre">-EINVAL</span></code>)</p></li>
+<li><p>More than one packet for INT (<code class="docutils literal notranslate"><span class="pre">-EINVAL</span></code>)</p></li>
+</ul>
+<p>After submission, <code class="docutils literal notranslate"><span class="pre">urb-&gt;status</span></code> is <code class="docutils literal notranslate"><span class="pre">-EINPROGRESS</span></code>; however, you should
+never look at that value except in your completion callback.</p>
+<p>For isochronous endpoints, your completion handlers should (re)submit
+URBs to the same endpoint with the <code class="docutils literal notranslate"><span class="pre">URB_ISO_ASAP</span></code> flag, using
+multi-buffering, to get seamless ISO streaming.</p>
+</div>
+<div class="section" id="how-to-cancel-an-already-running-urb">
+<h2>How to cancel an already running URB?<a class="headerlink" href="#how-to-cancel-an-already-running-urb" title="Permalink to this headline">¶</a></h2>
+<p>There are two ways to cancel an URB you’ve submitted but which hasn’t
+been returned to your driver yet.  For an asynchronous cancel, call
+<a class="reference internal" href="usb.html#c.usb_unlink_urb" title="usb_unlink_urb"><code class="xref c c-func docutils literal notranslate"><span class="pre">usb_unlink_urb()</span></code></a>:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int usb_unlink_urb(struct urb *urb)
+</pre></div>
+</div>
+<p>It removes the urb from the internal list and frees all allocated
+HW descriptors. The status is changed to reflect unlinking.  Note
+that the URB will not normally have finished when <a class="reference internal" href="usb.html#c.usb_unlink_urb" title="usb_unlink_urb"><code class="xref c c-func docutils literal notranslate"><span class="pre">usb_unlink_urb()</span></code></a>
+returns; you must still wait for the completion handler to be called.</p>
+<p>To cancel an URB synchronously, call <a class="reference internal" href="usb.html#c.usb_kill_urb" title="usb_kill_urb"><code class="xref c c-func docutils literal notranslate"><span class="pre">usb_kill_urb()</span></code></a>:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void usb_kill_urb(struct urb *urb)
+</pre></div>
+</div>
+<p>It does everything <a class="reference internal" href="usb.html#c.usb_unlink_urb" title="usb_unlink_urb"><code class="xref c c-func docutils literal notranslate"><span class="pre">usb_unlink_urb()</span></code></a> does, and in addition it waits
+until after the URB has been returned and the completion handler
+has finished.  It also marks the URB as temporarily unusable, so
+that if the completion handler or anyone else tries to resubmit it
+they will get a <code class="docutils literal notranslate"><span class="pre">-EPERM</span></code> error.  Thus you can be sure that when
+<a class="reference internal" href="usb.html#c.usb_kill_urb" title="usb_kill_urb"><code class="xref c c-func docutils literal notranslate"><span class="pre">usb_kill_urb()</span></code></a> returns, the URB is totally idle.</p>
+<p>There is a lifetime issue to consider.  An URB may complete at any
+time, and the completion handler may free the URB.  If this happens
+while <a class="reference internal" href="usb.html#c.usb_unlink_urb" title="usb_unlink_urb"><code class="xref c c-func docutils literal notranslate"><span class="pre">usb_unlink_urb()</span></code></a> or <a class="reference internal" href="usb.html#c.usb_kill_urb" title="usb_kill_urb"><code class="xref c c-func docutils literal notranslate"><span class="pre">usb_kill_urb()</span></code></a> is running, it will
+cause a memory-access violation.  The driver is responsible for avoiding this,
+which often means some sort of lock will be needed to prevent the URB
+from being deallocated while it is still in use.</p>
+<p>On the other hand, since usb_unlink_urb may end up calling the
+completion handler, the handler must not take any lock that is held
+when usb_unlink_urb is invoked.  The general solution to this problem
+is to increment the URB’s reference count while holding the lock, then
+drop the lock and call usb_unlink_urb or usb_kill_urb, and then
+decrement the URB’s reference count.  You increment the reference
+count by calling :c:func`usb_get_urb`:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct urb *usb_get_urb(struct urb *urb)
+</pre></div>
+</div>
+<p>(ignore the return value; it is the same as the argument) and
+decrement the reference count by calling <a class="reference internal" href="usb.html#c.usb_free_urb" title="usb_free_urb"><code class="xref c c-func docutils literal notranslate"><span class="pre">usb_free_urb()</span></code></a>.  Of course,
+none of this is necessary if there’s no danger of the URB being freed
+by the completion handler.</p>
+</div>
+<div class="section" id="what-about-the-completion-handler">
+<h2>What about the completion handler?<a class="headerlink" href="#what-about-the-completion-handler" title="Permalink to this headline">¶</a></h2>
+<p>The handler is of the following type:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>typedef void (*usb_complete_t)(struct urb *)
+</pre></div>
+</div>
+<p>I.e., it gets the URB that caused the completion call. In the completion
+handler, you should have a look at <code class="docutils literal notranslate"><span class="pre">urb-&gt;status</span></code> to detect any USB errors.
+Since the context parameter is included in the URB, you can pass
+information to the completion handler.</p>
+<p>Note that even when an error (or unlink) is reported, data may have been
+transferred.  That’s because USB transfers are packetized; it might take
+sixteen packets to transfer your 1KByte buffer, and ten of them might
+have transferred successfully before the completion was called.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>NEVER SLEEP IN A COMPLETION HANDLER.</p>
+<p>These are often called in atomic context.</p>
+</div>
+<p>In the current kernel, completion handlers run with local interrupts
+disabled, but in the future this will be changed, so don’t assume that
+local IRQs are always disabled inside completion handlers.</p>
+</div>
+<div class="section" id="how-to-do-isochronous-iso-transfers">
+<h2>How to do isochronous (ISO) transfers?<a class="headerlink" href="#how-to-do-isochronous-iso-transfers" title="Permalink to this headline">¶</a></h2>
+<p>Besides the fields present on a bulk transfer, for ISO, you also
+have to set <code class="docutils literal notranslate"><span class="pre">urb-&gt;interval</span></code> to say how often to make transfers; it’s
+often one per frame (which is once every microframe for highspeed devices).
+The actual interval used will be a power of two that’s no bigger than what
+you specify. You can use the <a class="reference internal" href="usb.html#c.usb_fill_int_urb" title="usb_fill_int_urb"><code class="xref c c-func docutils literal notranslate"><span class="pre">usb_fill_int_urb()</span></code></a> macro to fill
+most ISO transfer fields.</p>
+<p>For ISO transfers you also have to fill a <code class="xref c c-type docutils literal notranslate"><span class="pre">usb_iso_packet_descriptor</span></code>
+structure, allocated at the end of the URB by <a class="reference internal" href="usb.html#c.usb_alloc_urb" title="usb_alloc_urb"><code class="xref c c-func docutils literal notranslate"><span class="pre">usb_alloc_urb()</span></code></a>, for
+each packet you want to schedule.</p>
+<p>The <a class="reference internal" href="usb.html#c.usb_submit_urb" title="usb_submit_urb"><code class="xref c c-func docutils literal notranslate"><span class="pre">usb_submit_urb()</span></code></a> call modifies <code class="docutils literal notranslate"><span class="pre">urb-&gt;interval</span></code> to the implemented
+interval value that is less than or equal to the requested interval value.  If
+<code class="docutils literal notranslate"><span class="pre">URB_ISO_ASAP</span></code> scheduling is used, <code class="docutils literal notranslate"><span class="pre">urb-&gt;start_frame</span></code> is also updated.</p>
+<p>For each entry you have to specify the data offset for this frame (base is
+transfer_buffer), and the length you want to write/expect to read.
+After completion, actual_length contains the actual transferred length and
+status contains the resulting status for the ISO transfer for this frame.
+It is allowed to specify a varying length from frame to frame (e.g. for
+audio synchronisation/adaptive transfer rates). You can also use the length
+0 to omit one or more frames (striping).</p>
+<p>For scheduling you can choose your own start frame or <code class="docutils literal notranslate"><span class="pre">URB_ISO_ASAP</span></code>. As
+explained earlier, if you always keep at least one URB queued and your
+completion keeps (re)submitting a later URB, you’ll get smooth ISO streaming
+(if usb bandwidth utilization allows).</p>
+<p>If you specify your own start frame, make sure it’s several frames in advance
+of the current frame.  You might want this model if you’re synchronizing
+ISO data with some other event stream.</p>
+</div>
+<div class="section" id="how-to-start-interrupt-int-transfers">
+<h2>How to start interrupt (INT) transfers?<a class="headerlink" href="#how-to-start-interrupt-int-transfers" title="Permalink to this headline">¶</a></h2>
+<p>Interrupt transfers, like isochronous transfers, are periodic, and happen
+in intervals that are powers of two (1, 2, 4 etc) units.  Units are frames
+for full and low speed devices, and microframes for high speed ones.
+You can use the <a class="reference internal" href="usb.html#c.usb_fill_int_urb" title="usb_fill_int_urb"><code class="xref c c-func docutils literal notranslate"><span class="pre">usb_fill_int_urb()</span></code></a> macro to fill INT transfer fields.</p>
+<p>The <a class="reference internal" href="usb.html#c.usb_submit_urb" title="usb_submit_urb"><code class="xref c c-func docutils literal notranslate"><span class="pre">usb_submit_urb()</span></code></a> call modifies <code class="docutils literal notranslate"><span class="pre">urb-&gt;interval</span></code> to the implemented
+interval value that is less than or equal to the requested interval value.</p>
+<p>In Linux 2.6, unlike earlier versions, interrupt URBs are not automagically
+restarted when they complete.  They end when the completion handler is
+called, just like other URBs.  If you want an interrupt URB to be restarted,
+your completion handler must resubmit it.
+s</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="power-management.html" class="btn btn-neutral float-right" title="Power Management for USB" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="dma.html" class="btn btn-neutral float-left" title="USB DMA" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright The kernel development community.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

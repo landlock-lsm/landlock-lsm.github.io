@@ -1,0 +1,1376 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Locking &mdash; The Linux Kernel 5.11.0-rc6+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Directory Locking" href="directory-locking.html" />
+    <link rel="prev" title="splice and pipes" href="splice.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.11.0-rc6
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Filesystems in the Linux kernel</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#core-vfs-documentation">Core VFS documentation</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="vfs.html">Overview of the Linux Virtual File System</a></li>
+<li class="toctree-l3"><a class="reference internal" href="path-lookup.html">Pathname lookup</a></li>
+<li class="toctree-l3"><a class="reference internal" href="api-summary.html">Linux Filesystems API summary</a></li>
+<li class="toctree-l3"><a class="reference internal" href="splice.html">splice and pipes</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Locking</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#dentry-operations">dentry_operations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#inode-operations">inode_operations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#xattr-handler-operations">xattr_handler operations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#super-operations">super_operations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#file-system-type">file_system_type</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#address-space-operations">address_space_operations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#file-lock-operations">file_lock_operations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lock-manager-operations">lock_manager_operations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#buffer-head">buffer_head</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#block-device-operations">block_device_operations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#file-operations">file_operations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#dquot-operations">dquot_operations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#vm-operations-struct">vm_operations_struct</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="directory-locking.html">Directory Locking</a></li>
+<li class="toctree-l3"><a class="reference internal" href="devpts.html">The Devpts Filesystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="dnotify.html">Linux Directory Notification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fiemap.html">Fiemap Ioctl</a></li>
+<li class="toctree-l3"><a class="reference internal" href="files.html">File management in the Linux kernel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="locks.html">File Locking Release Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mandatory-locking.html">Mandatory File Locking For The Linux Operating System</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mount_api.html">Filesystem Mount API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="quota.html">Quota subsystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="seq_file.html">The seq_file Interface</a></li>
+<li class="toctree-l3"><a class="reference internal" href="sharedsubtree.html">Shared Subtrees</a></li>
+<li class="toctree-l3"><a class="reference internal" href="automount-support.html">Automount Support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="caching/index.html">Filesystem Caching</a></li>
+<li class="toctree-l3"><a class="reference internal" href="porting.html">Changes since 2.5.0:</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#filesystem-support-layers">Filesystem support layers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#filesystems">Filesystems</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/index.html">Nios II Specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="index.html">Filesystems in the Linux kernel</a> &raquo;</li>
+        
+      <li>Locking</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/filesystems/locking.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="locking">
+<h1>Locking<a class="headerlink" href="#locking" title="Permalink to this headline">¶</a></h1>
+<p>The text below describes the locking rules for VFS-related methods.
+It is (believed to be) up-to-date. <em>Please</em>, if you change anything in
+prototypes or locking protocols - update this file. And update the relevant
+instances in the tree, don’t leave that to maintainers of filesystems/devices/
+etc. At the very least, put the list of dubious cases in the end of this file.
+Don’t turn it into log - maintainers of out-of-the-tree code are supposed to
+be able to use diff(1).</p>
+<p>Thing currently missing here: socket operations. Alexey?</p>
+<div class="section" id="dentry-operations">
+<h2>dentry_operations<a class="headerlink" href="#dentry-operations" title="Permalink to this headline">¶</a></h2>
+<p>prototypes:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int (*d_revalidate)(struct dentry *, unsigned int);
+int (*d_weak_revalidate)(struct dentry *, unsigned int);
+int (*d_hash)(const struct dentry *, struct qstr *);
+int (*d_compare)(const struct dentry *,
+                unsigned int, const char *, const struct qstr *);
+int (*d_delete)(struct dentry *);
+int (*d_init)(struct dentry *);
+void (*d_release)(struct dentry *);
+void (*d_iput)(struct dentry *, struct inode *);
+char *(*d_dname)((struct dentry *dentry, char *buffer, int buflen);
+struct vfsmount *(*d_automount)(struct path *path);
+int (*d_manage)(const struct path *, bool);
+struct dentry *(*d_real)(struct dentry *, const struct inode *);
+</pre></div>
+</div>
+<p>locking rules:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 31%" />
+<col style="width: 19%" />
+<col style="width: 14%" />
+<col style="width: 24%" />
+<col style="width: 14%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>ops</p></th>
+<th class="head"><p>rename_lock</p></th>
+<th class="head"><p>-&gt;d_lock</p></th>
+<th class="head"><p>may block</p></th>
+<th class="head"><p>rcu-walk</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>d_revalidate:</p></td>
+<td><p>no</p></td>
+<td><p>no</p></td>
+<td><p>yes (ref-walk)</p></td>
+<td><p>maybe</p></td>
+</tr>
+<tr class="row-odd"><td><p>d_weak_revalidate:</p></td>
+<td><p>no</p></td>
+<td><p>no</p></td>
+<td><p>yes</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-even"><td><p>d_hash</p></td>
+<td><p>no</p></td>
+<td><p>no</p></td>
+<td><p>no</p></td>
+<td><p>maybe</p></td>
+</tr>
+<tr class="row-odd"><td><p>d_compare:</p></td>
+<td><p>yes</p></td>
+<td><p>no</p></td>
+<td><p>no</p></td>
+<td><p>maybe</p></td>
+</tr>
+<tr class="row-even"><td><p>d_delete:</p></td>
+<td><p>no</p></td>
+<td><p>yes</p></td>
+<td><p>no</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-odd"><td><p>d_init:</p></td>
+<td><p>no</p></td>
+<td><p>no</p></td>
+<td><p>yes</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-even"><td><p>d_release:</p></td>
+<td><p>no</p></td>
+<td><p>no</p></td>
+<td><p>yes</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-odd"><td><p>d_prune:</p></td>
+<td><p>no</p></td>
+<td><p>yes</p></td>
+<td><p>no</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-even"><td><p>d_iput:</p></td>
+<td><p>no</p></td>
+<td><p>no</p></td>
+<td><p>yes</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-odd"><td><p>d_dname:</p></td>
+<td><p>no</p></td>
+<td><p>no</p></td>
+<td><p>no</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-even"><td><p>d_automount:</p></td>
+<td><p>no</p></td>
+<td><p>no</p></td>
+<td><p>yes</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-odd"><td><p>d_manage:</p></td>
+<td><p>no</p></td>
+<td><p>no</p></td>
+<td><p>yes (ref-walk)</p></td>
+<td><p>maybe</p></td>
+</tr>
+<tr class="row-even"><td><p>d_real</p></td>
+<td><p>no</p></td>
+<td><p>no</p></td>
+<td><p>yes</p></td>
+<td><p>no</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="inode-operations">
+<h2>inode_operations<a class="headerlink" href="#inode-operations" title="Permalink to this headline">¶</a></h2>
+<p>prototypes:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int (*create) (struct inode *,struct dentry *,umode_t, bool);
+struct dentry * (*lookup) (struct inode *,struct dentry *, unsigned int);
+int (*link) (struct dentry *,struct inode *,struct dentry *);
+int (*unlink) (struct inode *,struct dentry *);
+int (*symlink) (struct inode *,struct dentry *,const char *);
+int (*mkdir) (struct inode *,struct dentry *,umode_t);
+int (*rmdir) (struct inode *,struct dentry *);
+int (*mknod) (struct inode *,struct dentry *,umode_t,dev_t);
+int (*rename) (struct inode *, struct dentry *,
+                struct inode *, struct dentry *, unsigned int);
+int (*readlink) (struct dentry *, char __user *,int);
+const char *(*get_link) (struct dentry *, struct inode *, struct delayed_call *);
+void (*truncate) (struct inode *);
+int (*permission) (struct inode *, int, unsigned int);
+int (*get_acl)(struct inode *, int);
+int (*setattr) (struct dentry *, struct iattr *);
+int (*getattr) (const struct path *, struct kstat *, u32, unsigned int);
+ssize_t (*listxattr) (struct dentry *, char *, size_t);
+int (*fiemap)(struct inode *, struct fiemap_extent_info *, u64 start, u64 len);
+void (*update_time)(struct inode *, struct timespec *, int);
+int (*atomic_open)(struct inode *, struct dentry *,
+                        struct file *, unsigned open_flag,
+                        umode_t create_mode);
+int (*tmpfile) (struct inode *, struct dentry *, umode_t);
+</pre></div>
+</div>
+<dl class="simple">
+<dt>locking rules:</dt><dd><p>all may block</p>
+</dd>
+</dl>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 19%" />
+<col style="width: 81%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>ops</p></th>
+<th class="head"><p>i_rwsem(inode)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>lookup:</p></td>
+<td><p>shared</p></td>
+</tr>
+<tr class="row-odd"><td><p>create:</p></td>
+<td><p>exclusive</p></td>
+</tr>
+<tr class="row-even"><td><p>link:</p></td>
+<td><p>exclusive (both)</p></td>
+</tr>
+<tr class="row-odd"><td><p>mknod:</p></td>
+<td><p>exclusive</p></td>
+</tr>
+<tr class="row-even"><td><p>symlink:</p></td>
+<td><p>exclusive</p></td>
+</tr>
+<tr class="row-odd"><td><p>mkdir:</p></td>
+<td><p>exclusive</p></td>
+</tr>
+<tr class="row-even"><td><p>unlink:</p></td>
+<td><p>exclusive (both)</p></td>
+</tr>
+<tr class="row-odd"><td><p>rmdir:</p></td>
+<td><p>exclusive (both)(see below)</p></td>
+</tr>
+<tr class="row-even"><td><p>rename:</p></td>
+<td><p>exclusive (all) (see below)</p></td>
+</tr>
+<tr class="row-odd"><td><p>readlink:</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-even"><td><p>get_link:</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-odd"><td><p>setattr:</p></td>
+<td><p>exclusive</p></td>
+</tr>
+<tr class="row-even"><td><p>permission:</p></td>
+<td><p>no (may not block if called in rcu-walk mode)</p></td>
+</tr>
+<tr class="row-odd"><td><p>get_acl:</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-even"><td><p>getattr:</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-odd"><td><p>listxattr:</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-even"><td><p>fiemap:</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-odd"><td><p>update_time:</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-even"><td><p>atomic_open:</p></td>
+<td><p>shared (exclusive if O_CREAT is set in open flags)</p></td>
+</tr>
+<tr class="row-odd"><td><p>tmpfile:</p></td>
+<td><p>no</p></td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<div><p>Additionally, -&gt;rmdir(), -&gt;unlink() and -&gt;rename() have -&gt;i_rwsem
+exclusive on victim.
+cross-directory -&gt;rename() has (per-superblock) -&gt;s_vfs_rename_sem.</p>
+</div></blockquote>
+<p>See <a class="reference internal" href="directory-locking.html"><span class="doc">Directory Locking</span></a> for more detailed discussion
+of the locking scheme for directory operations.</p>
+</div>
+<div class="section" id="xattr-handler-operations">
+<h2>xattr_handler operations<a class="headerlink" href="#xattr-handler-operations" title="Permalink to this headline">¶</a></h2>
+<p>prototypes:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>bool (*list)(struct dentry *dentry);
+int (*get)(const struct xattr_handler *handler, struct dentry *dentry,
+           struct inode *inode, const char *name, void *buffer,
+           size_t size);
+int (*set)(const struct xattr_handler *handler, struct dentry *dentry,
+           struct inode *inode, const char *name, const void *buffer,
+           size_t size, int flags);
+</pre></div>
+</div>
+<dl class="simple">
+<dt>locking rules:</dt><dd><p>all may block</p>
+</dd>
+</dl>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 26%" />
+<col style="width: 74%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>ops</p></th>
+<th class="head"><p>i_rwsem(inode)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>list:</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-odd"><td><p>get:</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-even"><td><p>set:</p></td>
+<td><p>exclusive</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="super-operations">
+<h2>super_operations<a class="headerlink" href="#super-operations" title="Permalink to this headline">¶</a></h2>
+<p>prototypes:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct inode *(*alloc_inode)(struct super_block *sb);
+void (*free_inode)(struct inode *);
+void (*destroy_inode)(struct inode *);
+void (*dirty_inode) (struct inode *, int flags);
+int (*write_inode) (struct inode *, struct writeback_control *wbc);
+int (*drop_inode) (struct inode *);
+void (*evict_inode) (struct inode *);
+void (*put_super) (struct super_block *);
+int (*sync_fs)(struct super_block *sb, int wait);
+int (*freeze_fs) (struct super_block *);
+int (*unfreeze_fs) (struct super_block *);
+int (*statfs) (struct dentry *, struct kstatfs *);
+int (*remount_fs) (struct super_block *, int *, char *);
+void (*umount_begin) (struct super_block *);
+int (*show_options)(struct seq_file *, struct dentry *);
+ssize_t (*quota_read)(struct super_block *, int, char *, size_t, loff_t);
+ssize_t (*quota_write)(struct super_block *, int, const char *, size_t, loff_t);
+int (*bdev_try_to_free_page)(struct super_block*, struct page*, gfp_t);
+</pre></div>
+</div>
+<dl class="simple">
+<dt>locking rules:</dt><dd><p>All may block [not true, see below]</p>
+</dd>
+</dl>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 38%" />
+<col style="width: 21%" />
+<col style="width: 41%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>ops</p></th>
+<th class="head"><p>s_umount</p></th>
+<th class="head"><p>note</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>alloc_inode:</p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>free_inode:</p></td>
+<td></td>
+<td><p>called from RCU callback</p></td>
+</tr>
+<tr class="row-even"><td><p>destroy_inode:</p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>dirty_inode:</p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>write_inode:</p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>drop_inode:</p></td>
+<td></td>
+<td><p>!!!inode-&gt;i_lock!!!</p></td>
+</tr>
+<tr class="row-even"><td><p>evict_inode:</p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>put_super:</p></td>
+<td><p>write</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>sync_fs:</p></td>
+<td><p>read</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>freeze_fs:</p></td>
+<td><p>write</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>unfreeze_fs:</p></td>
+<td><p>write</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>statfs:</p></td>
+<td><p>maybe(read)</p></td>
+<td><p>(see below)</p></td>
+</tr>
+<tr class="row-even"><td><p>remount_fs:</p></td>
+<td><p>write</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>umount_begin:</p></td>
+<td><p>no</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>show_options:</p></td>
+<td><p>no</p></td>
+<td><p>(namespace_sem)</p></td>
+</tr>
+<tr class="row-odd"><td><p>quota_read:</p></td>
+<td><p>no</p></td>
+<td><p>(see below)</p></td>
+</tr>
+<tr class="row-even"><td><p>quota_write:</p></td>
+<td><p>no</p></td>
+<td><p>(see below)</p></td>
+</tr>
+<tr class="row-odd"><td><p>bdev_try_to_free_page:</p></td>
+<td><p>no</p></td>
+<td><p>(see below)</p></td>
+</tr>
+</tbody>
+</table>
+<p>-&gt;statfs() has s_umount (shared) when called by ustat(2) (native or
+compat), but that’s an accident of bad API; s_umount is used to pin
+the superblock down when we only have dev_t given us by userland to
+identify the superblock.  Everything else (statfs(), fstatfs(), etc.)
+doesn’t hold it when calling -&gt;statfs() - superblock is pinned down
+by resolving the pathname passed to syscall.</p>
+<p>-&gt;quota_read() and -&gt;quota_write() functions are both guaranteed to
+be the only ones operating on the quota file by the quota code (via
+dqio_sem) (unless an admin really wants to screw up something and
+writes to quota files with quotas on). For other details about locking
+see also dquot_operations section.</p>
+<p>-&gt;bdev_try_to_free_page is called from the -&gt;releasepage handler of
+the block device inode.  See there for more details.</p>
+</div>
+<div class="section" id="file-system-type">
+<h2>file_system_type<a class="headerlink" href="#file-system-type" title="Permalink to this headline">¶</a></h2>
+<p>prototypes:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct dentry *(*mount) (struct file_system_type *, int,
+               const char *, void *);
+void (*kill_sb) (struct super_block *);
+</pre></div>
+</div>
+<p>locking rules:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 44%" />
+<col style="width: 56%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>ops</p></th>
+<th class="head"><p>may block</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>mount</p></td>
+<td><p>yes</p></td>
+</tr>
+<tr class="row-odd"><td><p>kill_sb</p></td>
+<td><p>yes</p></td>
+</tr>
+</tbody>
+</table>
+<p>-&gt;mount() returns ERR_PTR or the root dentry; its superblock should be locked
+on return.</p>
+<p>-&gt;kill_sb() takes a write-locked superblock, does all shutdown work on it,
+unlocks and drops the reference.</p>
+</div>
+<div class="section" id="address-space-operations">
+<h2>address_space_operations<a class="headerlink" href="#address-space-operations" title="Permalink to this headline">¶</a></h2>
+<p>prototypes:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int (*writepage)(struct page *page, struct writeback_control *wbc);
+int (*readpage)(struct file *, struct page *);
+int (*writepages)(struct address_space *, struct writeback_control *);
+int (*set_page_dirty)(struct page *page);
+void (*readahead)(struct readahead_control *);
+int (*readpages)(struct file *filp, struct address_space *mapping,
+                struct list_head *pages, unsigned nr_pages);
+int (*write_begin)(struct file *, struct address_space *mapping,
+                        loff_t pos, unsigned len, unsigned flags,
+                        struct page **pagep, void **fsdata);
+int (*write_end)(struct file *, struct address_space *mapping,
+                        loff_t pos, unsigned len, unsigned copied,
+                        struct page *page, void *fsdata);
+sector_t (*bmap)(struct address_space *, sector_t);
+void (*invalidatepage) (struct page *, unsigned int, unsigned int);
+int (*releasepage) (struct page *, int);
+void (*freepage)(struct page *);
+int (*direct_IO)(struct kiocb *, struct iov_iter *iter);
+bool (*isolate_page) (struct page *, isolate_mode_t);
+int (*migratepage)(struct address_space *, struct page *, struct page *);
+void (*putback_page) (struct page *);
+int (*launder_page)(struct page *);
+int (*is_partially_uptodate)(struct page *, unsigned long, unsigned long);
+int (*error_remove_page)(struct address_space *, struct page *);
+int (*swap_activate)(struct file *);
+int (*swap_deactivate)(struct file *);
+</pre></div>
+</div>
+<dl class="simple">
+<dt>locking rules:</dt><dd><p>All except set_page_dirty and freepage may block</p>
+</dd>
+</dl>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 40%" />
+<col style="width: 44%" />
+<col style="width: 16%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>ops</p></th>
+<th class="head"><p>PageLocked(page)</p></th>
+<th class="head"><p>i_rwsem</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>writepage:</p></td>
+<td><p>yes, unlocks (see below)</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>readpage:</p></td>
+<td><p>yes, unlocks</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>writepages:</p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>set_page_dirty</p></td>
+<td><p>no</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>readahead:</p></td>
+<td><p>yes, unlocks</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>readpages:</p></td>
+<td><p>no</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>write_begin:</p></td>
+<td><p>locks the page</p></td>
+<td><p>exclusive</p></td>
+</tr>
+<tr class="row-odd"><td><p>write_end:</p></td>
+<td><p>yes, unlocks</p></td>
+<td><p>exclusive</p></td>
+</tr>
+<tr class="row-even"><td><p>bmap:</p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>invalidatepage:</p></td>
+<td><p>yes</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>releasepage:</p></td>
+<td><p>yes</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>freepage:</p></td>
+<td><p>yes</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>direct_IO:</p></td>
+<td></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>isolate_page:</p></td>
+<td><p>yes</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>migratepage:</p></td>
+<td><p>yes (both)</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>putback_page:</p></td>
+<td><p>yes</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>launder_page:</p></td>
+<td><p>yes</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>is_partially_uptodate:</p></td>
+<td><p>yes</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>error_remove_page:</p></td>
+<td><p>yes</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>swap_activate:</p></td>
+<td><p>no</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>swap_deactivate:</p></td>
+<td><p>no</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>-&gt;write_begin(), -&gt;write_end() and -&gt;readpage() may be called from
+the request handler (/dev/loop).</p>
+<p>-&gt;readpage() unlocks the page, either synchronously or via I/O
+completion.</p>
+<p>-&gt;readahead() unlocks the pages that I/O is attempted on like -&gt;readpage().</p>
+<p>-&gt;readpages() populates the pagecache with the passed pages and starts
+I/O against them.  They come unlocked upon I/O completion.</p>
+<p>-&gt;writepage() is used for two purposes: for “memory cleansing” and for
+“sync”.  These are quite different operations and the behaviour may differ
+depending upon the mode.</p>
+<p>If writepage is called for sync (wbc-&gt;sync_mode != WBC_SYNC_NONE) then
+it <em>must</em> start I/O against the page, even if that would involve
+blocking on in-progress I/O.</p>
+<p>If writepage is called for memory cleansing (sync_mode ==
+WBC_SYNC_NONE) then its role is to get as much writeout underway as
+possible.  So writepage should try to avoid blocking against
+currently-in-progress I/O.</p>
+<p>If the filesystem is not called for “sync” and it determines that it
+would need to block against in-progress I/O to be able to start new I/O
+against the page the filesystem should redirty the page with
+redirty_page_for_writepage(), then unlock the page and return zero.
+This may also be done to avoid internal deadlocks, but rarely.</p>
+<p>If the filesystem is called for sync then it must wait on any
+in-progress I/O and then start new I/O.</p>
+<p>The filesystem should unlock the page synchronously, before returning to the
+caller, unless -&gt;writepage() returns special WRITEPAGE_ACTIVATE
+value. WRITEPAGE_ACTIVATE means that page cannot really be written out
+currently, and VM should stop calling -&gt;writepage() on this page for some
+time. VM does this by moving page to the head of the active list, hence the
+name.</p>
+<p>Unless the filesystem is going to redirty_page_for_writepage(), unlock the page
+and return zero, writepage <em>must</em> run set_page_writeback() against the page,
+followed by unlocking it.  Once set_page_writeback() has been run against the
+page, write I/O can be submitted and the write I/O completion handler must run
+<a class="reference internal" href="../core-api/mm-api.html#c.end_page_writeback" title="end_page_writeback"><code class="xref c c-func docutils literal notranslate"><span class="pre">end_page_writeback()</span></code></a> once the I/O is complete.  If no I/O is submitted, the
+filesystem must run <a class="reference internal" href="../core-api/mm-api.html#c.end_page_writeback" title="end_page_writeback"><code class="xref c c-func docutils literal notranslate"><span class="pre">end_page_writeback()</span></code></a> against the page before returning from
+writepage.</p>
+<p>That is: after 2.5.12, pages which are under writeout are <em>not</em> locked.  Note,
+if the filesystem needs the page to be locked during writeout, that is ok, too,
+the page is allowed to be unlocked at any point in time between the calls to
+set_page_writeback() and <a class="reference internal" href="../core-api/mm-api.html#c.end_page_writeback" title="end_page_writeback"><code class="xref c c-func docutils literal notranslate"><span class="pre">end_page_writeback()</span></code></a>.</p>
+<p>Note, failure to run either redirty_page_for_writepage() or the combination of
+set_page_writeback()/<a class="reference internal" href="../core-api/mm-api.html#c.end_page_writeback" title="end_page_writeback"><code class="xref c c-func docutils literal notranslate"><span class="pre">end_page_writeback()</span></code></a> on a page submitted to writepage
+will leave the page itself marked clean but it will be tagged as dirty in the
+radix tree.  This incoherency can lead to all sorts of hard-to-debug problems
+in the filesystem like having dirty inodes at umount and losing written data.</p>
+<p>-&gt;writepages() is used for periodic writeback and for syscall-initiated
+sync operations.  The address_space should start I/O against at least
+<code class="docutils literal notranslate"><span class="pre">*nr_to_write</span></code> pages.  <code class="docutils literal notranslate"><span class="pre">*nr_to_write</span></code> must be decremented for each page
+which is written.  The address_space implementation may write more (or less)
+pages than <code class="docutils literal notranslate"><span class="pre">*nr_to_write</span></code> asks for, but it should try to be reasonably close.
+If nr_to_write is NULL, all dirty pages must be written.</p>
+<p>writepages should _only_ write pages which are present on
+mapping-&gt;io_pages.</p>
+<p>-&gt;set_page_dirty() is called from various places in the kernel
+when the target page is marked as needing writeback.  It may be called
+under spinlock (it cannot block) and is sometimes called with the page
+not locked.</p>
+<p>-&gt;<a class="reference internal" href="api-summary.html#c.bmap" title="bmap"><code class="xref c c-func docutils literal notranslate"><span class="pre">bmap()</span></code></a> is currently used by legacy ioctl() (FIBMAP) provided by some
+filesystems and by the swapper. The latter will eventually go away.  Please,
+keep it that way and don’t breed new callers.</p>
+<p>-&gt;invalidatepage() is called when the filesystem must attempt to drop
+some or all of the buffers from the page when it is being truncated. It
+returns zero on success. If -&gt;invalidatepage is zero, the kernel uses
+<a class="reference internal" href="api-summary.html#c.block_invalidatepage" title="block_invalidatepage"><code class="xref c c-func docutils literal notranslate"><span class="pre">block_invalidatepage()</span></code></a> instead.</p>
+<p>-&gt;releasepage() is called when the kernel is about to try to drop the
+buffers from the page in preparation for freeing it.  It returns zero to
+indicate that the buffers are (or may be) freeable.  If -&gt;releasepage is zero,
+the kernel assumes that the fs has no private interest in the buffers.</p>
+<p>-&gt;freepage() is called when the kernel is done dropping the page
+from the page cache.</p>
+<p>-&gt;launder_page() may be called prior to releasing a page if
+it is still found to be dirty. It returns zero if the page was successfully
+cleaned, or an error value if not. Note that in order to prevent the page
+getting mapped back in and redirtied, it needs to be kept locked
+across the entire operation.</p>
+<p>-&gt;swap_activate will be called with a non-zero argument on
+files backing (non block device backed) swapfiles. A return value
+of zero indicates success, in which case this file can be used for
+backing swapspace. The swapspace operations will be proxied to the
+address space operations.</p>
+<p>-&gt;swap_deactivate() will be called in the sys_swapoff()
+path after -&gt;swap_activate() returned success.</p>
+</div>
+<div class="section" id="file-lock-operations">
+<h2>file_lock_operations<a class="headerlink" href="#file-lock-operations" title="Permalink to this headline">¶</a></h2>
+<p>prototypes:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void (*fl_copy_lock)(struct file_lock *, struct file_lock *);
+void (*fl_release_private)(struct file_lock *);
+</pre></div>
+</div>
+<p>locking rules:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 46%" />
+<col style="width: 32%" />
+<col style="width: 22%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>ops</p></th>
+<th class="head"><p>inode-&gt;i_lock</p></th>
+<th class="head"><p>may block</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>fl_copy_lock:</p></td>
+<td><p>yes</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-odd"><td><p>fl_release_private:</p></td>
+<td><p>maybe</p></td>
+<td><p>maybe[1]_</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="lock-manager-operations">
+<h2>lock_manager_operations<a class="headerlink" href="#lock-manager-operations" title="Permalink to this headline">¶</a></h2>
+<p>prototypes:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void (*lm_notify)(struct file_lock *);  /* unblock callback */
+int (*lm_grant)(struct file_lock *, struct file_lock *, int);
+void (*lm_break)(struct file_lock *); /* break_lease callback */
+int (*lm_change)(struct file_lock **, int);
+bool (*lm_breaker_owns_lease)(struct file_lock *);
+</pre></div>
+</div>
+<p>locking rules:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 36%" />
+<col style="width: 21%" />
+<col style="width: 28%" />
+<col style="width: 15%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>ops</p></th>
+<th class="head"><p>inode-&gt;i_lock</p></th>
+<th class="head"><p>blocked_lock_lock</p></th>
+<th class="head"><p>may block</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>lm_notify:</p></td>
+<td><p>yes</p></td>
+<td><p>yes</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-odd"><td><p>lm_grant:</p></td>
+<td><p>no</p></td>
+<td><p>no</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-even"><td><p>lm_break:</p></td>
+<td><p>yes</p></td>
+<td><p>no</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-odd"><td><p>lm_change</p></td>
+<td><p>yes</p></td>
+<td><p>no</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-even"><td><p>lm_breaker_owns_lease:</p></td>
+<td><p>no</p></td>
+<td><p>no</p></td>
+<td><p>no</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="buffer-head">
+<h2>buffer_head<a class="headerlink" href="#buffer-head" title="Permalink to this headline">¶</a></h2>
+<p>prototypes:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void (*b_end_io)(struct buffer_head *bh, int uptodate);
+</pre></div>
+</div>
+<p>locking rules:</p>
+<p>called from interrupts. In other words, extreme care is needed here.
+bh is locked, but that’s all warranties we have here. Currently only RAID1,
+highmem, fs/buffer.c, and fs/ntfs/aops.c are providing these. Block devices
+call this method upon the IO completion.</p>
+</div>
+<div class="section" id="block-device-operations">
+<h2>block_device_operations<a class="headerlink" href="#block-device-operations" title="Permalink to this headline">¶</a></h2>
+<p>prototypes:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int (*open) (struct block_device *, fmode_t);
+int (*release) (struct gendisk *, fmode_t);
+int (*ioctl) (struct block_device *, fmode_t, unsigned, unsigned long);
+int (*compat_ioctl) (struct block_device *, fmode_t, unsigned, unsigned long);
+int (*direct_access) (struct block_device *, sector_t, void **,
+                        unsigned long *);
+void (*unlock_native_capacity) (struct gendisk *);
+int (*revalidate_disk) (struct gendisk *);
+int (*getgeo)(struct block_device *, struct hd_geometry *);
+void (*swap_slot_free_notify) (struct block_device *, unsigned long);
+</pre></div>
+</div>
+<p>locking rules:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 55%" />
+<col style="width: 45%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>ops</p></th>
+<th class="head"><p>bd_mutex</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>open:</p></td>
+<td><p>yes</p></td>
+</tr>
+<tr class="row-odd"><td><p>release:</p></td>
+<td><p>yes</p></td>
+</tr>
+<tr class="row-even"><td><p>ioctl:</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-odd"><td><p>compat_ioctl:</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-even"><td><p>direct_access:</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-odd"><td><p>unlock_native_capacity:</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-even"><td><p>revalidate_disk:</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-odd"><td><p>getgeo:</p></td>
+<td><p>no</p></td>
+</tr>
+<tr class="row-even"><td><p>swap_slot_free_notify:</p></td>
+<td><p>no      (see below)</p></td>
+</tr>
+</tbody>
+</table>
+<p>swap_slot_free_notify is called with swap_lock and sometimes the page lock
+held.</p>
+</div>
+<div class="section" id="file-operations">
+<h2>file_operations<a class="headerlink" href="#file-operations" title="Permalink to this headline">¶</a></h2>
+<p>prototypes:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>loff_t (*llseek) (struct file *, loff_t, int);
+ssize_t (*read) (struct file *, char __user *, size_t, loff_t *);
+ssize_t (*write) (struct file *, const char __user *, size_t, loff_t *);
+ssize_t (*read_iter) (struct kiocb *, struct iov_iter *);
+ssize_t (*write_iter) (struct kiocb *, struct iov_iter *);
+int (*iterate) (struct file *, struct dir_context *);
+int (*iterate_shared) (struct file *, struct dir_context *);
+__poll_t (*poll) (struct file *, struct poll_table_struct *);
+long (*unlocked_ioctl) (struct file *, unsigned int, unsigned long);
+long (*compat_ioctl) (struct file *, unsigned int, unsigned long);
+int (*mmap) (struct file *, struct vm_area_struct *);
+int (*open) (struct inode *, struct file *);
+int (*flush) (struct file *);
+int (*release) (struct inode *, struct file *);
+int (*fsync) (struct file *, loff_t start, loff_t end, int datasync);
+int (*fasync) (int, struct file *, int);
+int (*lock) (struct file *, int, struct file_lock *);
+ssize_t (*readv) (struct file *, const struct iovec *, unsigned long,
+                loff_t *);
+ssize_t (*writev) (struct file *, const struct iovec *, unsigned long,
+                loff_t *);
+ssize_t (*sendfile) (struct file *, loff_t *, size_t, read_actor_t,
+                void __user *);
+ssize_t (*sendpage) (struct file *, struct page *, int, size_t,
+                loff_t *, int);
+unsigned long (*get_unmapped_area)(struct file *, unsigned long,
+                unsigned long, unsigned long, unsigned long);
+int (*check_flags)(int);
+int (*flock) (struct file *, int, struct file_lock *);
+ssize_t (*splice_write)(struct pipe_inode_info *, struct file *, loff_t *,
+                size_t, unsigned int);
+ssize_t (*splice_read)(struct file *, loff_t *, struct pipe_inode_info *,
+                size_t, unsigned int);
+int (*setlease)(struct file *, long, struct file_lock **, void **);
+long (*fallocate)(struct file *, int, loff_t, loff_t);
+</pre></div>
+</div>
+<dl class="simple">
+<dt>locking rules:</dt><dd><p>All may block.</p>
+</dd>
+</dl>
+<p>-&gt;llseek() locking has moved from llseek to the individual llseek
+implementations.  If your fs is not using generic_file_llseek, you
+need to acquire and release the appropriate locks in your -&gt;llseek().
+For many filesystems, it is probably safe to acquire the inode
+mutex or just to use i_size_read() instead.
+Note: this does not protect the file-&gt;f_pos against concurrent modifications
+since this is something the userspace has to take care about.</p>
+<p>-&gt;iterate() is called with i_rwsem exclusive.</p>
+<p>-&gt;iterate_shared() is called with i_rwsem at least shared.</p>
+<p>-&gt;fasync() is responsible for maintaining the FASYNC bit in filp-&gt;f_flags.
+Most instances call fasync_helper(), which does that maintenance, so it’s
+not normally something one needs to worry about.  Return values &gt; 0 will be
+mapped to zero in the VFS layer.</p>
+<p>-&gt;readdir() and -&gt;ioctl() on directories must be changed. Ideally we would
+move -&gt;readdir() to inode_operations and use a separate method for directory
+-&gt;ioctl() or kill the latter completely. One of the problems is that for
+anything that resembles union-mount we won’t have a struct file for all
+components. And there are other reasons why the current interface is a mess…</p>
+<p>-&gt;read on directories probably must go away - we should just enforce -EISDIR
+in sys_read() and friends.</p>
+<p>-&gt;setlease operations should call <a class="reference internal" href="api-summary.html#c.generic_setlease" title="generic_setlease"><code class="xref c c-func docutils literal notranslate"><span class="pre">generic_setlease()</span></code></a> before or after setting
+the lease within the individual filesystem to record the result of the
+operation</p>
+</div>
+<div class="section" id="dquot-operations">
+<h2>dquot_operations<a class="headerlink" href="#dquot-operations" title="Permalink to this headline">¶</a></h2>
+<p>prototypes:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int (*write_dquot) (struct dquot *);
+int (*acquire_dquot) (struct dquot *);
+int (*release_dquot) (struct dquot *);
+int (*mark_dirty) (struct dquot *);
+int (*write_info) (struct super_block *, int);
+</pre></div>
+</div>
+<p>These operations are intended to be more or less wrapping functions that ensure
+a proper locking wrt the filesystem and call the generic quota operations.</p>
+<p>What filesystem should expect from the generic quota functions:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 27%" />
+<col style="width: 24%" />
+<col style="width: 49%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>ops</p></th>
+<th class="head"><p>FS recursion</p></th>
+<th class="head"><p>Held locks when called</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>write_dquot:</p></td>
+<td><p>yes</p></td>
+<td><p>dqonoff_sem or dqptr_sem</p></td>
+</tr>
+<tr class="row-odd"><td><p>acquire_dquot:</p></td>
+<td><p>yes</p></td>
+<td><p>dqonoff_sem or dqptr_sem</p></td>
+</tr>
+<tr class="row-even"><td><p>release_dquot:</p></td>
+<td><p>yes</p></td>
+<td><p>dqonoff_sem or dqptr_sem</p></td>
+</tr>
+<tr class="row-odd"><td><p>mark_dirty:</p></td>
+<td><p>no</p></td>
+<td><ul class="simple">
+<li></li>
+</ul>
+</td>
+</tr>
+<tr class="row-even"><td><p>write_info:</p></td>
+<td><p>yes</p></td>
+<td><p>dqonoff_sem</p></td>
+</tr>
+</tbody>
+</table>
+<p>FS recursion means calling -&gt;quota_read() and -&gt;quota_write() from superblock
+operations.</p>
+<p>More details about quota locking can be found in fs/dquot.c.</p>
+</div>
+<div class="section" id="vm-operations-struct">
+<h2>vm_operations_struct<a class="headerlink" href="#vm-operations-struct" title="Permalink to this headline">¶</a></h2>
+<p>prototypes:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void (*open)(struct vm_area_struct*);
+void (*close)(struct vm_area_struct*);
+vm_fault_t (*fault)(struct vm_area_struct*, struct vm_fault *);
+vm_fault_t (*page_mkwrite)(struct vm_area_struct *, struct vm_fault *);
+vm_fault_t (*pfn_mkwrite)(struct vm_area_struct *, struct vm_fault *);
+int (*access)(struct vm_area_struct *, unsigned long, void*, int, int);
+</pre></div>
+</div>
+<p>locking rules:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 27%" />
+<col style="width: 18%" />
+<col style="width: 55%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>ops</p></th>
+<th class="head"><p>mmap_lock</p></th>
+<th class="head"><p>PageLocked(page)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>open:</p></td>
+<td><p>yes</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>close:</p></td>
+<td><p>yes</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>fault:</p></td>
+<td><p>yes</p></td>
+<td><p>can return with page locked</p></td>
+</tr>
+<tr class="row-odd"><td><p>map_pages:</p></td>
+<td><p>yes</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>page_mkwrite:</p></td>
+<td><p>yes</p></td>
+<td><p>can return with page locked</p></td>
+</tr>
+<tr class="row-odd"><td><p>pfn_mkwrite:</p></td>
+<td><p>yes</p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p>access:</p></td>
+<td><p>yes</p></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>-&gt;fault() is called when a previously not present pte is about
+to be faulted in. The filesystem must find and return the page associated
+with the passed in “pgoff” in the vm_fault structure. If it is possible that
+the page may be truncated and/or invalidated, then the filesystem must lock
+the page, then ensure it is not already truncated (the page lock will block
+subsequent truncate), and then return with VM_FAULT_LOCKED, and the page
+locked. The VM will unlock the page.</p>
+<p>-&gt;map_pages() is called when VM asks to map easy accessible pages.
+Filesystem should find and map pages associated with offsets from “start_pgoff”
+till “end_pgoff”. -&gt;map_pages() is called with page table locked and must
+not block.  If it’s not possible to reach a page without blocking,
+filesystem should skip it. Filesystem should use do_set_pte() to setup
+page table entry. Pointer to entry associated with the page is passed in
+“pte” field in vm_fault structure. Pointers to entries for other offsets
+should be calculated relative to “pte”.</p>
+<p>-&gt;page_mkwrite() is called when a previously read-only pte is
+about to become writeable. The filesystem again must ensure that there are
+no truncate/invalidate races, and then return with the page locked. If
+the page has been truncated, the filesystem should not look up a new page
+like the -&gt;fault() handler, but simply return with VM_FAULT_NOPAGE, which
+will cause the VM to retry the fault.</p>
+<p>-&gt;pfn_mkwrite() is the same as page_mkwrite but when the pte is
+VM_PFNMAP or VM_MIXEDMAP with a page-less entry. Expected return is
+VM_FAULT_NOPAGE. Or one of the VM_FAULT_ERROR types. The default behavior
+after this call is to make the pte read-write, unless pfn_mkwrite returns
+an error.</p>
+<p>-&gt;access() is called when get_user_pages() fails in
+access_process_vm(), typically used to debug a process through
+/proc/pid/mem or ptrace.  This function is needed only for
+VM_IO | VM_PFNMAP VMAs.</p>
+<hr class="docutils" />
+<blockquote>
+<div><p>Dubious stuff</p>
+</div></blockquote>
+<p>(if you break something or notice that it is broken and do not fix it yourself
+- at least put it here)</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="directory-locking.html" class="btn btn-neutral float-right" title="Directory Locking" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="splice.html" class="btn btn-neutral float-left" title="splice and pipes" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright The kernel development community.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,748 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Red-black Trees (rbtree) in Linux &mdash; The Linux Kernel 5.11.0-rc6+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Generic radix trees/sparse arrays" href="generic-radix-tree.html" />
+    <link rel="prev" title="Circular Buffers" href="circular-buffers.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.11.0-rc6
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Core API Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="index.html#core-utilities">Core utilities</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#data-structures-and-low-level-utilities">Data structures and low-level utilities</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="kobject.html">Everything you never wanted to know about kobjects, ksets, and ktypes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="kref.html">Adding reference counters (krefs) to kernel objects</a></li>
+<li class="toctree-l3"><a class="reference internal" href="assoc_array.html">Generic Associative Array Implementation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xarray.html">XArray</a></li>
+<li class="toctree-l3"><a class="reference internal" href="idr.html">ID Allocation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="circular-buffers.html">Circular Buffers</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Red-black Trees (rbtree) in Linux</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#what-are-red-black-trees-and-what-are-they-for">What are red-black trees, and what are they for?</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#linux-implementation-of-red-black-trees">Linux implementation of red-black trees</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#creating-a-new-rbtree">Creating a new rbtree</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#searching-for-a-value-in-an-rbtree">Searching for a value in an rbtree</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#inserting-data-into-an-rbtree">Inserting data into an rbtree</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#removing-or-replacing-existing-data-in-an-rbtree">Removing or replacing existing data in an rbtree</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#iterating-through-the-elements-stored-in-an-rbtree-in-sort-order">Iterating through the elements stored in an rbtree (in sort order)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#cached-rbtrees">Cached rbtrees</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#support-for-augmented-rbtrees">Support for Augmented rbtrees</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="generic-radix-tree.html">Generic radix trees/sparse arrays</a></li>
+<li class="toctree-l3"><a class="reference internal" href="packing.html">Generic bitfield packing and unpacking functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="bus-virt-phys-mapping.html">How to access I/O mapped memory from within device drivers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="this_cpu_ops.html">this_cpu operations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="timekeeping.html">ktime accessors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="errseq.html">The errseq_t datatype</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#concurrency-primitives">Concurrency primitives</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#low-level-hardware-management">Low-level hardware management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#memory-management">Memory management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#interfaces-for-kernel-debugging">Interfaces for kernel debugging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#everything-else">Everything else</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/index.html">Nios II Specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="index.html">Core API Documentation</a> &raquo;</li>
+        
+      <li>Red-black Trees (rbtree) in Linux</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/core-api/rbtree.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="red-black-trees-rbtree-in-linux">
+<h1>Red-black Trees (rbtree) in Linux<a class="headerlink" href="#red-black-trees-rbtree-in-linux" title="Permalink to this headline">¶</a></h1>
+<dl class="field-list simple">
+<dt class="field-odd">Date</dt>
+<dd class="field-odd"><p>January 18, 2007</p>
+</dd>
+<dt class="field-even">Author</dt>
+<dd class="field-even"><p>Rob Landley &lt;<a class="reference external" href="mailto:rob&#37;&#52;&#48;landley&#46;net">rob<span>&#64;</span>landley<span>&#46;</span>net</a>&gt;</p>
+</dd>
+</dl>
+<div class="section" id="what-are-red-black-trees-and-what-are-they-for">
+<h2>What are red-black trees, and what are they for?<a class="headerlink" href="#what-are-red-black-trees-and-what-are-they-for" title="Permalink to this headline">¶</a></h2>
+<p>Red-black trees are a type of self-balancing binary search tree, used for
+storing sortable key/value data pairs.  This differs from radix trees (which
+are used to efficiently store sparse arrays and thus use long integer indexes
+to insert/access/delete nodes) and hash tables (which are not kept sorted to
+be easily traversed in order, and must be tuned for a specific size and
+hash function where rbtrees scale gracefully storing arbitrary keys).</p>
+<p>Red-black trees are similar to AVL trees, but provide faster real-time bounded
+worst case performance for insertion and deletion (at most two rotations and
+three rotations, respectively, to balance the tree), with slightly slower
+(but still O(log n)) lookup time.</p>
+<p>To quote Linux Weekly News:</p>
+<blockquote>
+<div><p>There are a number of red-black trees in use in the kernel.
+The deadline and CFQ I/O schedulers employ rbtrees to
+track requests; the packet CD/DVD driver does the same.
+The high-resolution timer code uses an rbtree to organize outstanding
+timer requests.  The ext3 filesystem tracks directory entries in a
+red-black tree.  Virtual memory areas (VMAs) are tracked with red-black
+trees, as are epoll file descriptors, cryptographic keys, and network
+packets in the “hierarchical token bucket” scheduler.</p>
+</div></blockquote>
+<p>This document covers use of the Linux rbtree implementation.  For more
+information on the nature and implementation of Red Black Trees,  see:</p>
+<blockquote>
+<div><dl class="simple">
+<dt>Linux Weekly News article on red-black trees</dt><dd><p><a class="reference external" href="https://lwn.net/Articles/184495/">https://lwn.net/Articles/184495/</a></p>
+</dd>
+<dt>Wikipedia entry on red-black trees</dt><dd><p><a class="reference external" href="https://en.wikipedia.org/wiki/Red-black_tree">https://en.wikipedia.org/wiki/Red-black_tree</a></p>
+</dd>
+</dl>
+</div></blockquote>
+</div>
+<div class="section" id="linux-implementation-of-red-black-trees">
+<h2>Linux implementation of red-black trees<a class="headerlink" href="#linux-implementation-of-red-black-trees" title="Permalink to this headline">¶</a></h2>
+<p>Linux’s rbtree implementation lives in the file “lib/rbtree.c”.  To use it,
+“#include &lt;linux/rbtree.h&gt;”.</p>
+<p>The Linux rbtree implementation is optimized for speed, and thus has one
+less layer of indirection (and better cache locality) than more traditional
+tree implementations.  Instead of using pointers to separate rb_node and data
+structures, each instance of struct rb_node is embedded in the data structure
+it organizes.  And instead of using a comparison callback function pointer,
+users are expected to write their own tree search and insert functions
+which call the provided rbtree functions.  Locking is also left up to the
+user of the rbtree code.</p>
+</div>
+<div class="section" id="creating-a-new-rbtree">
+<h2>Creating a new rbtree<a class="headerlink" href="#creating-a-new-rbtree" title="Permalink to this headline">¶</a></h2>
+<p>Data nodes in an rbtree tree are structures containing a struct rb_node member:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct mytype {
+      struct rb_node node;
+      char *keystring;
+};
+</pre></div>
+</div>
+<p>When dealing with a pointer to the embedded struct rb_node, the containing data
+structure may be accessed with the standard <a class="reference internal" href="../driver-api/basics.html#c.container_of" title="container_of"><code class="xref c c-func docutils literal notranslate"><span class="pre">container_of()</span></code></a> macro.  In addition,
+individual members may be accessed directly via rb_entry(node, type, member).</p>
+<p>At the root of each rbtree is an rb_root structure, which is initialized to be
+empty via:</p>
+<blockquote>
+<div><p>struct rb_root mytree = RB_ROOT;</p>
+</div></blockquote>
+</div>
+<div class="section" id="searching-for-a-value-in-an-rbtree">
+<h2>Searching for a value in an rbtree<a class="headerlink" href="#searching-for-a-value-in-an-rbtree" title="Permalink to this headline">¶</a></h2>
+<p>Writing a search function for your tree is fairly straightforward: start at the
+root, compare each value, and follow the left or right branch as necessary.</p>
+<p>Example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct mytype *my_search(struct rb_root *root, char *string)
+{
+      struct rb_node *node = root-&gt;rb_node;
+
+      while (node) {
+              struct mytype *data = container_of(node, struct mytype, node);
+              int result;
+
+              result = strcmp(string, data-&gt;keystring);
+
+              if (result &lt; 0)
+                      node = node-&gt;rb_left;
+              else if (result &gt; 0)
+                      node = node-&gt;rb_right;
+              else
+                      return data;
+      }
+      return NULL;
+}
+</pre></div>
+</div>
+</div>
+<div class="section" id="inserting-data-into-an-rbtree">
+<h2>Inserting data into an rbtree<a class="headerlink" href="#inserting-data-into-an-rbtree" title="Permalink to this headline">¶</a></h2>
+<p>Inserting data in the tree involves first searching for the place to insert the
+new node, then inserting the node and rebalancing (“recoloring”) the tree.</p>
+<p>The search for insertion differs from the previous search by finding the
+location of the pointer on which to graft the new node.  The new node also
+needs a link to its parent node for rebalancing purposes.</p>
+<p>Example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>int my_insert(struct rb_root *root, struct mytype *data)
+{
+      struct rb_node **new = &amp;(root-&gt;rb_node), *parent = NULL;
+
+      /* Figure out where to put new node */
+      while (*new) {
+              struct mytype *this = container_of(*new, struct mytype, node);
+              int result = strcmp(data-&gt;keystring, this-&gt;keystring);
+
+              parent = *new;
+              if (result &lt; 0)
+                      new = &amp;((*new)-&gt;rb_left);
+              else if (result &gt; 0)
+                      new = &amp;((*new)-&gt;rb_right);
+              else
+                      return FALSE;
+      }
+
+      /* Add new node and rebalance tree. */
+      rb_link_node(&amp;data-&gt;node, parent, new);
+      rb_insert_color(&amp;data-&gt;node, root);
+
+      return TRUE;
+}
+</pre></div>
+</div>
+</div>
+<div class="section" id="removing-or-replacing-existing-data-in-an-rbtree">
+<h2>Removing or replacing existing data in an rbtree<a class="headerlink" href="#removing-or-replacing-existing-data-in-an-rbtree" title="Permalink to this headline">¶</a></h2>
+<p>To remove an existing node from a tree, call:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void rb_erase(struct rb_node *victim, struct rb_root *tree);
+</pre></div>
+</div>
+<p>Example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct mytype *data = mysearch(&amp;mytree, &quot;walrus&quot;);
+
+if (data) {
+      rb_erase(&amp;data-&gt;node, &amp;mytree);
+      myfree(data);
+}
+</pre></div>
+</div>
+<p>To replace an existing node in a tree with a new one with the same key, call:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void rb_replace_node(struct rb_node *old, struct rb_node *new,
+                      struct rb_root *tree);
+</pre></div>
+</div>
+<p>Replacing a node this way does not re-sort the tree: If the new node doesn’t
+have the same key as the old node, the rbtree will probably become corrupted.</p>
+</div>
+<div class="section" id="iterating-through-the-elements-stored-in-an-rbtree-in-sort-order">
+<h2>Iterating through the elements stored in an rbtree (in sort order)<a class="headerlink" href="#iterating-through-the-elements-stored-in-an-rbtree-in-sort-order" title="Permalink to this headline">¶</a></h2>
+<p>Four functions are provided for iterating through an rbtree’s contents in
+sorted order.  These work on arbitrary trees, and should not need to be
+modified or wrapped (except for locking purposes):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct rb_node *rb_first(struct rb_root *tree);
+struct rb_node *rb_last(struct rb_root *tree);
+struct rb_node *rb_next(struct rb_node *node);
+struct rb_node *rb_prev(struct rb_node *node);
+</pre></div>
+</div>
+<p>To start iterating, call rb_first() or rb_last() with a pointer to the root
+of the tree, which will return a pointer to the node structure contained in
+the first or last element in the tree.  To continue, fetch the next or previous
+node by calling rb_next() or rb_prev() on the current node.  This will return
+NULL when there are no more nodes left.</p>
+<p>The iterator functions return a pointer to the embedded struct rb_node, from
+which the containing data structure may be accessed with the <a class="reference internal" href="../driver-api/basics.html#c.container_of" title="container_of"><code class="xref c c-func docutils literal notranslate"><span class="pre">container_of()</span></code></a>
+macro, and individual members may be accessed directly via
+rb_entry(node, type, member).</p>
+<p>Example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct rb_node *node;
+for (node = rb_first(&amp;mytree); node; node = rb_next(node))
+      printk(&quot;key=%s\n&quot;, rb_entry(node, struct mytype, node)-&gt;keystring);
+</pre></div>
+</div>
+</div>
+<div class="section" id="cached-rbtrees">
+<h2>Cached rbtrees<a class="headerlink" href="#cached-rbtrees" title="Permalink to this headline">¶</a></h2>
+<p>Computing the leftmost (smallest) node is quite a common task for binary
+search trees, such as for traversals or users relying on a the particular
+order for their own logic. To this end, users can use ‘struct rb_root_cached’
+to optimize O(logN) rb_first() calls to a simple pointer fetch avoiding
+potentially expensive tree iterations. This is done at negligible runtime
+overhead for maintanence; albeit larger memory footprint.</p>
+<p>Similar to the rb_root structure, cached rbtrees are initialized to be
+empty via:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct rb_root_cached mytree = RB_ROOT_CACHED;
+</pre></div>
+</div>
+<p>Cached rbtree is simply a regular rb_root with an extra pointer to cache the
+leftmost node. This allows rb_root_cached to exist wherever rb_root does,
+which permits augmented trees to be supported as well as only a few extra
+interfaces:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct rb_node *rb_first_cached(struct rb_root_cached *tree);
+void rb_insert_color_cached(struct rb_node *, struct rb_root_cached *, bool);
+void rb_erase_cached(struct rb_node *node, struct rb_root_cached *);
+</pre></div>
+</div>
+<p>Both insert and erase calls have their respective counterpart of augmented
+trees:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void rb_insert_augmented_cached(struct rb_node *node, struct rb_root_cached *,
+                                bool, struct rb_augment_callbacks *);
+void rb_erase_augmented_cached(struct rb_node *, struct rb_root_cached *,
+                               struct rb_augment_callbacks *);
+</pre></div>
+</div>
+</div>
+<div class="section" id="support-for-augmented-rbtrees">
+<h2>Support for Augmented rbtrees<a class="headerlink" href="#support-for-augmented-rbtrees" title="Permalink to this headline">¶</a></h2>
+<p>Augmented rbtree is an rbtree with “some” additional data stored in
+each node, where the additional data for node N must be a function of
+the contents of all nodes in the subtree rooted at N. This data can
+be used to augment some new functionality to rbtree. Augmented rbtree
+is an optional feature built on top of basic rbtree infrastructure.
+An rbtree user who wants this feature will have to call the augmentation
+functions with the user provided augmentation callback when inserting
+and erasing nodes.</p>
+<p>C files implementing augmented rbtree manipulation must include
+&lt;linux/rbtree_augmented.h&gt; instead of &lt;linux/rbtree.h&gt;. Note that
+linux/rbtree_augmented.h exposes some rbtree implementations details
+you are not expected to rely on; please stick to the documented APIs
+there and do not include &lt;linux/rbtree_augmented.h&gt; from header files
+either so as to minimize chances of your users accidentally relying on
+such implementation details.</p>
+<p>On insertion, the user must update the augmented information on the path
+leading to the inserted node, then call rb_link_node() as usual and
+rb_augment_inserted() instead of the usual rb_insert_color() call.
+If rb_augment_inserted() rebalances the rbtree, it will callback into
+a user provided function to update the augmented information on the
+affected subtrees.</p>
+<p>When erasing a node, the user must call rb_erase_augmented() instead of
+rb_erase(). rb_erase_augmented() calls back into user provided functions
+to updated the augmented information on affected subtrees.</p>
+<p>In both cases, the callbacks are provided through struct rb_augment_callbacks.
+3 callbacks must be defined:</p>
+<ul class="simple">
+<li><p>A propagation callback, which updates the augmented value for a given
+node and its ancestors, up to a given stop point (or NULL to update
+all the way to the root).</p></li>
+<li><p>A copy callback, which copies the augmented value for a given subtree
+to a newly assigned subtree root.</p></li>
+<li><p>A tree rotation callback, which copies the augmented value for a given
+subtree to a newly assigned subtree root AND recomputes the augmented
+information for the former subtree root.</p></li>
+</ul>
+<p>The compiled code for rb_erase_augmented() may inline the propagation and
+copy callbacks, which results in a large function, so each augmented rbtree
+user should have a single rb_erase_augmented() call site in order to limit
+compiled code size.</p>
+<div class="section" id="sample-usage">
+<h3>Sample usage<a class="headerlink" href="#sample-usage" title="Permalink to this headline">¶</a></h3>
+<p>Interval tree is an example of augmented rb tree. Reference -
+“Introduction to Algorithms” by Cormen, Leiserson, Rivest and Stein.
+More details about interval trees:</p>
+<p>Classical rbtree has a single key and it cannot be directly used to store
+interval ranges like [lo:hi] and do a quick lookup for any overlap with a new
+lo:hi or to find whether there is an exact match for a new lo:hi.</p>
+<p>However, rbtree can be augmented to store such interval ranges in a structured
+way making it possible to do efficient lookup and exact match.</p>
+<p>This “extra information” stored in each node is the maximum hi
+(max_hi) value among all the nodes that are its descendants. This
+information can be maintained at each node just be looking at the node
+and its immediate children. And this will be used in O(log n) lookup
+for lowest match (lowest start address among all possible matches)
+with something like:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct interval_tree_node *
+interval_tree_first_match(struct rb_root *root,
+                          unsigned long start, unsigned long last)
+{
+      struct interval_tree_node *node;
+
+      if (!root-&gt;rb_node)
+              return NULL;
+      node = rb_entry(root-&gt;rb_node, struct interval_tree_node, rb);
+
+      while (true) {
+              if (node-&gt;rb.rb_left) {
+                      struct interval_tree_node *left =
+                              rb_entry(node-&gt;rb.rb_left,
+                                       struct interval_tree_node, rb);
+                      if (left-&gt;__subtree_last &gt;= start) {
+                              /*
+                               * Some nodes in left subtree satisfy Cond2.
+                               * Iterate to find the leftmost such node N.
+                               * If it also satisfies Cond1, that&#39;s the match
+                               * we are looking for. Otherwise, there is no
+                               * matching interval as nodes to the right of N
+                               * can&#39;t satisfy Cond1 either.
+                               */
+                              node = left;
+                              continue;
+                      }
+              }
+              if (node-&gt;start &lt;= last) {              /* Cond1 */
+                      if (node-&gt;last &gt;= start)        /* Cond2 */
+                              return node;    /* node is leftmost match */
+                      if (node-&gt;rb.rb_right) {
+                              node = rb_entry(node-&gt;rb.rb_right,
+                                      struct interval_tree_node, rb);
+                              if (node-&gt;__subtree_last &gt;= start)
+                                      continue;
+                      }
+              }
+              return NULL;    /* No match */
+      }
+}
+</pre></div>
+</div>
+<p>Insertion/removal are defined using the following augmented callbacks:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>static inline unsigned long
+compute_subtree_last(struct interval_tree_node *node)
+{
+      unsigned long max = node-&gt;last, subtree_last;
+      if (node-&gt;rb.rb_left) {
+              subtree_last = rb_entry(node-&gt;rb.rb_left,
+                      struct interval_tree_node, rb)-&gt;__subtree_last;
+              if (max &lt; subtree_last)
+                      max = subtree_last;
+      }
+      if (node-&gt;rb.rb_right) {
+              subtree_last = rb_entry(node-&gt;rb.rb_right,
+                      struct interval_tree_node, rb)-&gt;__subtree_last;
+              if (max &lt; subtree_last)
+                      max = subtree_last;
+      }
+      return max;
+}
+
+static void augment_propagate(struct rb_node *rb, struct rb_node *stop)
+{
+      while (rb != stop) {
+              struct interval_tree_node *node =
+                      rb_entry(rb, struct interval_tree_node, rb);
+              unsigned long subtree_last = compute_subtree_last(node);
+              if (node-&gt;__subtree_last == subtree_last)
+                      break;
+              node-&gt;__subtree_last = subtree_last;
+              rb = rb_parent(&amp;node-&gt;rb);
+      }
+}
+
+static void augment_copy(struct rb_node *rb_old, struct rb_node *rb_new)
+{
+      struct interval_tree_node *old =
+              rb_entry(rb_old, struct interval_tree_node, rb);
+      struct interval_tree_node *new =
+              rb_entry(rb_new, struct interval_tree_node, rb);
+
+      new-&gt;__subtree_last = old-&gt;__subtree_last;
+}
+
+static void augment_rotate(struct rb_node *rb_old, struct rb_node *rb_new)
+{
+      struct interval_tree_node *old =
+              rb_entry(rb_old, struct interval_tree_node, rb);
+      struct interval_tree_node *new =
+              rb_entry(rb_new, struct interval_tree_node, rb);
+
+      new-&gt;__subtree_last = old-&gt;__subtree_last;
+      old-&gt;__subtree_last = compute_subtree_last(old);
+}
+
+static const struct rb_augment_callbacks augment_callbacks = {
+      augment_propagate, augment_copy, augment_rotate
+};
+
+void interval_tree_insert(struct interval_tree_node *node,
+                          struct rb_root *root)
+{
+      struct rb_node **link = &amp;root-&gt;rb_node, *rb_parent = NULL;
+      unsigned long start = node-&gt;start, last = node-&gt;last;
+      struct interval_tree_node *parent;
+
+      while (*link) {
+              rb_parent = *link;
+              parent = rb_entry(rb_parent, struct interval_tree_node, rb);
+              if (parent-&gt;__subtree_last &lt; last)
+                      parent-&gt;__subtree_last = last;
+              if (start &lt; parent-&gt;start)
+                      link = &amp;parent-&gt;rb.rb_left;
+              else
+                      link = &amp;parent-&gt;rb.rb_right;
+      }
+
+      node-&gt;__subtree_last = last;
+      rb_link_node(&amp;node-&gt;rb, rb_parent, link);
+      rb_insert_augmented(&amp;node-&gt;rb, root, &amp;augment_callbacks);
+}
+
+void interval_tree_remove(struct interval_tree_node *node,
+                          struct rb_root *root)
+{
+      rb_erase_augmented(&amp;node-&gt;rb, root, &amp;augment_callbacks);
+}
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="generic-radix-tree.html" class="btn btn-neutral float-right" title="Generic radix trees/sparse arrays" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="circular-buffers.html" class="btn btn-neutral float-left" title="Circular Buffers" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright The kernel development community.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,606 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>ARM Virtual Interrupt Translation Service (ITS) &mdash; The Linux Kernel 5.11.0-rc6+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="ARM Virtual Generic Interrupt Controller v2 (VGIC)" href="arm-vgic.html" />
+    <link rel="prev" title="Devices" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.11.0-rc6
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../index.html">Linux Virtualization Support</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html">KVM</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../api.html">The Definitive KVM (Kernel-based Virtual Machine) API Documentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../amd-memory-encryption.html">Secure Encrypted Virtualization (SEV)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../cpuid.html">KVM CPUID bits</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../halt-polling.html">The KVM halt polling system</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../hypercalls.html">Linux KVM Hypercall</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../locking.html">KVM Lock Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../mmu.html">The x86 kvm shadow mmu</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../msr.html">KVM-specific MSRs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../nested-vmx.html">Nested VMX</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../ppc-pv.html">The PPC KVM paravirtual interface</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../s390-diag.html">The s390 DIAGNOSE call on KVM</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../s390-pv.html">s390 (IBM Z) Ultravisor and Protected VMs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../s390-pv-boot.html">s390 (IBM Z) Boot/IPL of Protected VMs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../timekeeping.html">Timekeeping Virtualization for X86-Based Architectures</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../vcpu-requests.html">KVM VCPU Requests</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../review-checklist.html">Review checklist for kvm patches</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../arm/index.html">ARM</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="index.html">Devices</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">ARM Virtual Interrupt Translation Service (ITS)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="arm-vgic.html">ARM Virtual Generic Interrupt Controller v2 (VGIC)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="arm-vgic-v3.html">ARM Virtual Generic Interrupt Controller v3 and later (VGICv3)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="mpic.html">MPIC interrupt controller</a></li>
+<li class="toctree-l4"><a class="reference internal" href="s390_flic.html">FLIC (floating interrupt controller)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="vcpu.html">Generic vcpu interface</a></li>
+<li class="toctree-l4"><a class="reference internal" href="vfio.html">VFIO virtual device</a></li>
+<li class="toctree-l4"><a class="reference internal" href="vm.html">Generic vm interface</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xics.html">XICS interrupt controller</a></li>
+<li class="toctree-l4"><a class="reference internal" href="xive.html">POWER9 eXternal Interrupt Virtualization Engine (XIVE Gen1)</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../running-nested-guests.html">Running nested guests with KVM</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../uml/user_mode_linux_howto_v2.html">UML HowTo</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../paravirt_ops.html">Paravirt_ops</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../guest-halt-polling.html">Guest halt polling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../ne_overview.html">Nitro Enclaves</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../nios2/index.html">Nios II Specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Linux Virtualization Support</a> &raquo;</li>
+        
+          <li><a href="../index.html">KVM</a> &raquo;</li>
+        
+          <li><a href="index.html">Devices</a> &raquo;</li>
+        
+      <li>ARM Virtual Interrupt Translation Service (ITS)</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../../../_sources/virt/kvm/devices/arm-vgic-its.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="arm-virtual-interrupt-translation-service-its">
+<h1>ARM Virtual Interrupt Translation Service (ITS)<a class="headerlink" href="#arm-virtual-interrupt-translation-service-its" title="Permalink to this headline">¶</a></h1>
+<dl class="simple">
+<dt>Device types supported:</dt><dd><p>KVM_DEV_TYPE_ARM_VGIC_ITS    ARM Interrupt Translation Service Controller</p>
+</dd>
+</dl>
+<p>The ITS allows MSI(-X) interrupts to be injected into guests. This extension is
+optional.  Creating a virtual ITS controller also requires a host GICv3 (see
+arm-vgic-v3.txt), but does not depend on having physical ITS controllers.</p>
+<p>There can be multiple ITS controllers per guest, each of them has to have
+a separate, non-overlapping MMIO region.</p>
+<div class="section" id="groups">
+<h2>Groups<a class="headerlink" href="#groups" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="kvm-dev-arm-vgic-grp-addr">
+<h3>KVM_DEV_ARM_VGIC_GRP_ADDR<a class="headerlink" href="#kvm-dev-arm-vgic-grp-addr" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><dl class="simple">
+<dt>Attributes:</dt><dd><dl class="simple">
+<dt>KVM_VGIC_ITS_ADDR_TYPE (rw, 64-bit)</dt><dd><p>Base address in the guest physical address space of the GICv3 ITS
+control register frame.
+This address needs to be 64K aligned and the region covers 128K.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>Errors:</p>
+<blockquote>
+<div><table class="docutils align-default">
+<colgroup>
+<col style="width: 13%" />
+<col style="width: 88%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>-E2BIG</p></td>
+<td><p>Address outside of addressable IPA range</p></td>
+</tr>
+<tr class="row-even"><td><p>-EINVAL</p></td>
+<td><p>Incorrectly aligned address</p></td>
+</tr>
+<tr class="row-odd"><td><p>-EEXIST</p></td>
+<td><p>Address already configured</p></td>
+</tr>
+<tr class="row-even"><td><p>-EFAULT</p></td>
+<td><p>Invalid user pointer for attr-&gt;addr.</p></td>
+</tr>
+<tr class="row-odd"><td><p>-ENODEV</p></td>
+<td><p>Incorrect attribute or the ITS is not supported.</p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+</div></blockquote>
+</div>
+<div class="section" id="kvm-dev-arm-vgic-grp-ctrl">
+<h3>KVM_DEV_ARM_VGIC_GRP_CTRL<a class="headerlink" href="#kvm-dev-arm-vgic-grp-ctrl" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><dl>
+<dt>Attributes:</dt><dd><dl>
+<dt>KVM_DEV_ARM_VGIC_CTRL_INIT</dt><dd><p>request the initialization of the ITS, no additional parameter in
+kvm_device_attr.addr.</p>
+</dd>
+<dt>KVM_DEV_ARM_ITS_CTRL_RESET</dt><dd><p>reset the ITS, no additional parameter in kvm_device_attr.addr.
+See “ITS Reset State” section.</p>
+</dd>
+<dt>KVM_DEV_ARM_ITS_SAVE_TABLES</dt><dd><p>save the ITS table data into guest RAM, at the location provisioned
+by the guest in corresponding registers/table entries.</p>
+<p>The layout of the tables in guest memory defines an ABI. The entries
+are laid out in little endian format as described in the last paragraph.</p>
+</dd>
+<dt>KVM_DEV_ARM_ITS_RESTORE_TABLES</dt><dd><p>restore the ITS tables from guest RAM to ITS internal structures.</p>
+<p>The GICV3 must be restored before the ITS and all ITS registers but
+the GITS_CTLR must be restored before restoring the ITS tables.</p>
+<p>The GITS_IIDR read-only register must also be restored before
+calling KVM_DEV_ARM_ITS_RESTORE_TABLES as the IIDR revision field
+encodes the ABI revision.</p>
+<p>The expected ordering when restoring the GICv3/ITS is described in section
+“ITS Restore Sequence”.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>Errors:</p>
+<blockquote>
+<div><table class="docutils align-default">
+<colgroup>
+<col style="width: 11%" />
+<col style="width: 89%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>-ENXIO</p></td>
+<td><p>ITS not properly configured as required prior to setting
+this attribute</p></td>
+</tr>
+<tr class="row-even"><td><p>-ENOMEM</p></td>
+<td><p>Memory shortage when allocating ITS internal data</p></td>
+</tr>
+<tr class="row-odd"><td><p>-EINVAL</p></td>
+<td><p>Inconsistent restored data</p></td>
+</tr>
+<tr class="row-even"><td><p>-EFAULT</p></td>
+<td><p>Invalid guest ram access</p></td>
+</tr>
+<tr class="row-odd"><td><p>-EBUSY</p></td>
+<td><p>One or more VCPUS are running</p></td>
+</tr>
+<tr class="row-even"><td><p>-EACCES</p></td>
+<td><p>The virtual ITS is backed by a physical GICv4 ITS, and the
+state is not available</p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+</div></blockquote>
+</div>
+<div class="section" id="kvm-dev-arm-vgic-grp-its-regs">
+<h3>KVM_DEV_ARM_VGIC_GRP_ITS_REGS<a class="headerlink" href="#kvm-dev-arm-vgic-grp-its-regs" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><dl>
+<dt>Attributes:</dt><dd><p>The attr field of kvm_device_attr encodes the offset of the
+ITS register, relative to the ITS control frame base address
+(ITS_base).</p>
+<p>kvm_device_attr.addr points to a __u64 value whatever the width
+of the addressed register (32/64 bits). 64 bit registers can only
+be accessed with full length.</p>
+<p>Writes to read-only registers are ignored by the kernel except for:</p>
+<ul class="simple">
+<li><p>GITS_CREADR. It must be restored otherwise commands in the queue
+will be re-executed after restoring CWRITER. GITS_CREADR must be
+restored before restoring the GITS_CTLR which is likely to enable the
+ITS. Also it must be restored after GITS_CBASER since a write to
+GITS_CBASER resets GITS_CREADR.</p></li>
+<li><p>GITS_IIDR. The Revision field encodes the table layout ABI revision.
+In the future we might implement direct injection of virtual LPIs.
+This will require an upgrade of the table layout and an evolution of
+the ABI. GITS_IIDR must be restored before calling
+KVM_DEV_ARM_ITS_RESTORE_TABLES.</p></li>
+</ul>
+<p>For other registers, getting or setting a register has the same
+effect as reading/writing the register on real hardware.</p>
+</dd>
+</dl>
+<p>Errors:</p>
+<blockquote>
+<div><table class="docutils align-default">
+<colgroup>
+<col style="width: 12%" />
+<col style="width: 88%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>-ENXIO</p></td>
+<td><p>Offset does not correspond to any supported register</p></td>
+</tr>
+<tr class="row-even"><td><p>-EFAULT</p></td>
+<td><p>Invalid user pointer for attr-&gt;addr</p></td>
+</tr>
+<tr class="row-odd"><td><p>-EINVAL</p></td>
+<td><p>Offset is not 64-bit aligned</p></td>
+</tr>
+<tr class="row-even"><td><p>-EBUSY</p></td>
+<td><p>one or more VCPUS are running</p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+</div></blockquote>
+</div>
+<div class="section" id="its-restore-sequence">
+<h3>ITS Restore Sequence:<a class="headerlink" href="#its-restore-sequence" title="Permalink to this headline">¶</a></h3>
+<p>The following ordering must be followed when restoring the GIC and the ITS:</p>
+<ol class="loweralpha">
+<li><p>restore all guest memory and create vcpus</p></li>
+<li><p>restore all redistributors</p></li>
+<li><p>provide the ITS base address
+(KVM_DEV_ARM_VGIC_GRP_ADDR)</p></li>
+<li><p>restore the ITS in the following order:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>Restore GITS_CBASER</p></li>
+<li><p>Restore all other <code class="docutils literal notranslate"><span class="pre">GITS_</span></code> registers, except GITS_CTLR!</p></li>
+<li><p>Load the ITS table data (KVM_DEV_ARM_ITS_RESTORE_TABLES)</p></li>
+<li><p>Restore GITS_CTLR</p></li>
+</ol>
+</div></blockquote>
+</li>
+</ol>
+<p>Then vcpus can be started.</p>
+</div>
+<div class="section" id="its-table-abi-rev0">
+<h3>ITS Table ABI REV0:<a class="headerlink" href="#its-table-abi-rev0" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><p>Revision 0 of the ABI only supports the features of a virtual GICv3, and does
+not support a virtual GICv4 with support for direct injection of virtual
+interrupts for nested hypervisors.</p>
+<p>The device table and ITT are indexed by the DeviceID and EventID,
+respectively. The collection table is not indexed by CollectionID, and the
+entries in the collection are listed in no particular order.
+All entries are 8 bytes.</p>
+<p>Device Table Entry (DTE):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>bits:     | 63| 62 ... 49 | 48 ... 5 | 4 ... 0 |
+values:   | V |   next    | ITT_addr |  Size   |
+</pre></div>
+</div>
+<p>where:</p>
+<ul class="simple">
+<li><p>V indicates whether the entry is valid. If not, other fields
+are not meaningful.</p></li>
+<li><p>next: equals to 0 if this entry is the last one; otherwise it
+corresponds to the DeviceID offset to the next DTE, capped by
+2^14 -1.</p></li>
+<li><p>ITT_addr matches bits [51:8] of the ITT address (256 Byte aligned).</p></li>
+<li><p>Size specifies the supported number of bits for the EventID,
+minus one</p></li>
+</ul>
+<p>Collection Table Entry (CTE):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>bits:     | 63| 62 ..  52  | 51 ... 16 | 15  ...   0 |
+values:   | V |    RES0    |  RDBase   |    ICID     |
+</pre></div>
+</div>
+<p>where:</p>
+<ul class="simple">
+<li><p>V indicates whether the entry is valid. If not, other fields are
+not meaningful.</p></li>
+<li><p>RES0: reserved field with Should-Be-Zero-or-Preserved behavior.</p></li>
+<li><p>RDBase is the PE number (GICR_TYPER.Processor_Number semantic),</p></li>
+<li><p>ICID is the collection ID</p></li>
+</ul>
+<p>Interrupt Translation Entry (ITE):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>bits:     | 63 ... 48 | 47 ... 16 | 15 ... 0 |
+values:   |    next   |   pINTID  |  ICID    |
+</pre></div>
+</div>
+<p>where:</p>
+<ul class="simple">
+<li><p>next: equals to 0 if this entry is the last one; otherwise it corresponds
+to the EventID offset to the next ITE capped by 2^16 -1.</p></li>
+<li><p>pINTID is the physical LPI ID; if zero, it means the entry is not valid
+and other fields are not meaningful.</p></li>
+<li><p>ICID is the collection ID</p></li>
+</ul>
+</div></blockquote>
+</div>
+<div class="section" id="its-reset-state">
+<h3>ITS Reset State:<a class="headerlink" href="#its-reset-state" title="Permalink to this headline">¶</a></h3>
+<p>RESET returns the ITS to the same state that it was when first created and
+initialized. When the RESET command returns, the following things are
+guaranteed:</p>
+<ul class="simple">
+<li><p>The ITS is not enabled and quiescent
+GITS_CTLR.Enabled = 0 .Quiescent=1</p></li>
+<li><p>There is no internally cached state</p></li>
+<li><p>No collection or device table are used
+GITS_BASER&lt;n&gt;.Valid = 0</p></li>
+<li><p>GITS_CBASER = 0, GITS_CREADR = 0, GITS_CWRITER = 0</p></li>
+<li><p>The ABI version is unchanged and remains the one set when the ITS
+device was first created.</p></li>
+</ul>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="arm-vgic.html" class="btn btn-neutral float-right" title="ARM Virtual Generic Interrupt Controller v2 (VGIC)" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="index.html" class="btn btn-neutral float-left" title="Devices" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright The kernel development community.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

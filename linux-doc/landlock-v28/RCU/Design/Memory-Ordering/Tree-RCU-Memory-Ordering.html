@@ -1,0 +1,950 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>A Tour Through TREE_RCU’s Grace-Period Memory Ordering &mdash; The Linux Kernel 5.11.0-rc6+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="A Tour Through TREE_RCU’s Expedited Grace Periods" href="../Expedited-Grace-Periods/Expedited-Grace-Periods.html" />
+    <link rel="prev" title="RCU on Uniprocessor Systems" href="../../UP.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.11.0-rc6
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../core-api/index.html">Core API Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../../core-api/index.html#core-utilities">Core utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core-api/index.html#data-structures-and-low-level-utilities">Data structures and low-level utilities</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../../core-api/index.html#concurrency-primitives">Concurrency primitives</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../../../core-api/refcount-vs-atomic.html">refcount_t API compared to atomic_t</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core-api/irq/index.html">IRQs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core-api/local_ops.html">Semantics and Behavior of Local Atomic Operations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core-api/padata.html">The padata parallel execution mechanism</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html">RCU concepts</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../../arrayRCU.html">Using RCU to Protect Read-Mostly Arrays</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../checklist.html">Review Checklist for RCU Patches</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../lockdep.html">RCU and lockdep checking</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../lockdep-splat.html">Lockdep-RCU Splat</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../rcubarrier.html">RCU and Unloadable Modules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../rcu_dereference.html">PROPER CARE AND FEEDING OF RETURN VALUES FROM rcu_dereference()</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../whatisRCU.html">What is RCU?  –  “Read, Copy, Update”</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../rcu.html">RCU Concepts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../rculist_nulls.html">Using RCU hlist_nulls to protect list and objects</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../rcuref.html">Reference-count design for elements of lists/arrays protected by RCU</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../torture.html">RCU Torture Test Operation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../stallwarn.html">Using RCU’s CPU Stall Detector</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../listRCU.html">Using RCU to Protect Read-Mostly Linked Lists</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../NMI-RCU.html">Using RCU to Protect Dynamic NMI Handlers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../UP.html">RCU on Uniprocessor Systems</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">A Tour Through TREE_RCU’s Grace-Period Memory Ordering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../Expedited-Grace-Periods/Expedited-Grace-Periods.html">A Tour Through TREE_RCU’s Expedited Grace Periods</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../Requirements/Requirements.html">A Tour Through RCU’s Requirements</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../Data-Structures/Data-Structures.html">A Tour Through TREE_RCU’s Data Structures [LWN.net]</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core-api/index.html#low-level-hardware-management">Low-level hardware management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core-api/index.html#memory-management">Memory management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core-api/index.html#interfaces-for-kernel-debugging">Interfaces for kernel debugging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core-api/index.html#everything-else">Everything else</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../nios2/index.html">Nios II Specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../../core-api/index.html">Core API Documentation</a> &raquo;</li>
+        
+          <li><a href="../../index.html">RCU concepts</a> &raquo;</li>
+        
+      <li>A Tour Through TREE_RCU’s Grace-Period Memory Ordering</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../../../_sources/RCU/Design/Memory-Ordering/Tree-RCU-Memory-Ordering.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="a-tour-through-tree-rcu-s-grace-period-memory-ordering">
+<h1>A Tour Through TREE_RCU’s Grace-Period Memory Ordering<a class="headerlink" href="#a-tour-through-tree-rcu-s-grace-period-memory-ordering" title="Permalink to this headline">¶</a></h1>
+<p>August 8, 2017</p>
+<p>This article was contributed by Paul E. McKenney</p>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>This document gives a rough visual overview of how Tree RCU’s
+grace-period memory ordering guarantee is provided.</p>
+</div>
+<div class="section" id="what-is-tree-rcu-s-grace-period-memory-ordering-guarantee">
+<h2>What Is Tree RCU’s Grace Period Memory Ordering Guarantee?<a class="headerlink" href="#what-is-tree-rcu-s-grace-period-memory-ordering-guarantee" title="Permalink to this headline">¶</a></h2>
+<p>RCU grace periods provide extremely strong memory-ordering guarantees
+for non-idle non-offline code.
+Any code that happens after the end of a given RCU grace period is guaranteed
+to see the effects of all accesses prior to the beginning of that grace
+period that are within RCU read-side critical sections.
+Similarly, any code that happens before the beginning of a given RCU grace
+period is guaranteed to see the effects of all accesses following the end
+of that grace period that are within RCU read-side critical sections.</p>
+<p>Note well that RCU-sched read-side critical sections include any region
+of code for which preemption is disabled.
+Given that each individual machine instruction can be thought of as
+an extremely small region of preemption-disabled code, one can think of
+<code class="docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code> as <code class="docutils literal notranslate"><span class="pre">smp_mb()</span></code> on steroids.</p>
+<p>RCU updaters use this guarantee by splitting their updates into
+two phases, one of which is executed before the grace period and
+the other of which is executed after the grace period.
+In the most common use case, phase one removes an element from
+a linked RCU-protected data structure, and phase two frees that element.
+For this to work, any readers that have witnessed state prior to the
+phase-one update (in the common case, removal) must not witness state
+following the phase-two update (in the common case, freeing).</p>
+<p>The RCU implementation provides this guarantee using a network
+of lock-based critical sections, memory barriers, and per-CPU
+processing, as is described in the following sections.</p>
+</div>
+<div class="section" id="tree-rcu-grace-period-memory-ordering-building-blocks">
+<h2>Tree RCU Grace Period Memory Ordering Building Blocks<a class="headerlink" href="#tree-rcu-grace-period-memory-ordering-building-blocks" title="Permalink to this headline">¶</a></h2>
+<p>The workhorse for RCU’s grace-period memory ordering is the
+critical section for the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure’s
+<code class="docutils literal notranslate"><span class="pre">-&gt;lock</span></code>. These critical sections use helper functions for lock
+acquisition, including <code class="docutils literal notranslate"><span class="pre">raw_spin_lock_rcu_node()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">raw_spin_lock_irq_rcu_node()</span></code>, and <code class="docutils literal notranslate"><span class="pre">raw_spin_lock_irqsave_rcu_node()</span></code>.
+Their lock-release counterparts are <code class="docutils literal notranslate"><span class="pre">raw_spin_unlock_rcu_node()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">raw_spin_unlock_irq_rcu_node()</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">raw_spin_unlock_irqrestore_rcu_node()</span></code>, respectively.
+For completeness, a <code class="docutils literal notranslate"><span class="pre">raw_spin_trylock_rcu_node()</span></code> is also provided.
+The key point is that the lock-acquisition functions, including
+<code class="docutils literal notranslate"><span class="pre">raw_spin_trylock_rcu_node()</span></code>, all invoke <code class="docutils literal notranslate"><span class="pre">smp_mb__after_unlock_lock()</span></code>
+immediately after successful acquisition of the lock.</p>
+<p>Therefore, for any given <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure, any access
+happening before one of the above lock-release functions will be seen
+by all CPUs as happening before any access happening after a later
+one of the above lock-acquisition functions.
+Furthermore, any access happening before one of the
+above lock-release function on any given CPU will be seen by all
+CPUs as happening before any access happening after a later one
+of the above lock-acquisition functions executing on that same CPU,
+even if the lock-release and lock-acquisition functions are operating
+on different <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structures.
+Tree RCU uses these two ordering guarantees to form an ordering
+network among all CPUs that were in any way involved in the grace
+period, including any CPUs that came online or went offline during
+the grace period in question.</p>
+<p>The following litmus test exhibits the ordering effects of these
+lock-acquisition and lock-release functions:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span> 1 int x, y, z;
+ 2
+ 3 void task0(void)
+ 4 {
+ 5   raw_spin_lock_rcu_node(rnp);
+ 6   WRITE_ONCE(x, 1);
+ 7   r1 = READ_ONCE(y);
+ 8   raw_spin_unlock_rcu_node(rnp);
+ 9 }
+10
+11 void task1(void)
+12 {
+13   raw_spin_lock_rcu_node(rnp);
+14   WRITE_ONCE(y, 1);
+15   r2 = READ_ONCE(z);
+16   raw_spin_unlock_rcu_node(rnp);
+17 }
+18
+19 void task2(void)
+20 {
+21   WRITE_ONCE(z, 1);
+22   smp_mb();
+23   r3 = READ_ONCE(x);
+24 }
+25
+26 WARN_ON(r1 == 0 &amp;&amp; r2 == 0 &amp;&amp; r3 == 0);
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">WARN_ON()</span></code> is evaluated at “the end of time”,
+after all changes have propagated throughout the system.
+Without the <code class="docutils literal notranslate"><span class="pre">smp_mb__after_unlock_lock()</span></code> provided by the
+acquisition functions, this <code class="docutils literal notranslate"><span class="pre">WARN_ON()</span></code> could trigger, for example
+on PowerPC.
+The <code class="docutils literal notranslate"><span class="pre">smp_mb__after_unlock_lock()</span></code> invocations prevent this
+<code class="docutils literal notranslate"><span class="pre">WARN_ON()</span></code> from triggering.</p>
+<p>This approach must be extended to include idle CPUs, which need
+RCU’s grace-period memory ordering guarantee to extend to any
+RCU read-side critical sections preceding and following the current
+idle sojourn.
+This case is handled by calls to the strongly ordered
+<code class="docutils literal notranslate"><span class="pre">atomic_add_return()</span></code> read-modify-write atomic operation that
+is invoked within <code class="docutils literal notranslate"><span class="pre">rcu_dynticks_eqs_enter()</span></code> at idle-entry
+time and within <code class="docutils literal notranslate"><span class="pre">rcu_dynticks_eqs_exit()</span></code> at idle-exit time.
+The grace-period kthread invokes <code class="docutils literal notranslate"><span class="pre">rcu_dynticks_snap()</span></code> and
+<code class="docutils literal notranslate"><span class="pre">rcu_dynticks_in_eqs_since()</span></code> (both of which invoke
+an <code class="docutils literal notranslate"><span class="pre">atomic_add_return()</span></code> of zero) to detect idle CPUs.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Quick Quiz</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>But what about CPUs that remain offline for the entire grace period?</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Answer</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>Such CPUs will be offline at the beginning of the grace period, so
+the grace period won’t expect quiescent states from them. Races
+between grace-period start and CPU-hotplug operations are mediated
+by the CPU’s leaf <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;lock</span></code> as described
+above.</p></td>
+</tr>
+</tbody>
+</table>
+<p>The approach must be extended to handle one final case, that of waking a
+task blocked in <code class="docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code>. This task might be affinitied to
+a CPU that is not yet aware that the grace period has ended, and thus
+might not yet be subject to the grace period’s memory ordering.
+Therefore, there is an <code class="docutils literal notranslate"><span class="pre">smp_mb()</span></code> after the return from
+<code class="docutils literal notranslate"><span class="pre">wait_for_completion()</span></code> in the <code class="docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code> code path.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Quick Quiz</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>What? Where??? I don’t see any <code class="docutils literal notranslate"><span class="pre">smp_mb()</span></code> after the return from
+<code class="docutils literal notranslate"><span class="pre">wait_for_completion()</span></code>!!!</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Answer</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>That would be because I spotted the need for that <code class="docutils literal notranslate"><span class="pre">smp_mb()</span></code> during
+the creation of this documentation, and it is therefore unlikely to
+hit mainline before v4.14. Kudos to Lance Roy, Will Deacon, Peter
+Zijlstra, and Jonathan Cameron for asking questions that sensitized
+me to the rather elaborate sequence of events that demonstrate the
+need for this memory barrier.</p></td>
+</tr>
+</tbody>
+</table>
+<p>Tree RCU’s grace–period memory-ordering guarantees rely most heavily on
+the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;lock</span></code> field, so much so that it is
+necessary to abbreviate this pattern in the diagrams in the next
+section. For example, consider the <code class="docutils literal notranslate"><span class="pre">rcu_prepare_for_idle()</span></code> function
+shown below, which is one of several functions that enforce ordering of
+newly arrived RCU callbacks against future grace periods:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span> 1 static void rcu_prepare_for_idle(void)
+ 2 {
+ 3   bool needwake;
+ 4   struct rcu_data *rdp;
+ 5   struct rcu_dynticks *rdtp = this_cpu_ptr(&amp;rcu_dynticks);
+ 6   struct rcu_node *rnp;
+ 7   struct rcu_state *rsp;
+ 8   int tne;
+ 9
+10   if (IS_ENABLED(CONFIG_RCU_NOCB_CPU_ALL) ||
+11       rcu_is_nocb_cpu(smp_processor_id()))
+12     return;
+13   tne = READ_ONCE(tick_nohz_active);
+14   if (tne != rdtp-&gt;tick_nohz_enabled_snap) {
+15     if (rcu_cpu_has_callbacks(NULL))
+16       invoke_rcu_core();
+17     rdtp-&gt;tick_nohz_enabled_snap = tne;
+18     return;
+19   }
+20   if (!tne)
+21     return;
+22   if (rdtp-&gt;all_lazy &amp;&amp;
+23       rdtp-&gt;nonlazy_posted != rdtp-&gt;nonlazy_posted_snap) {
+24     rdtp-&gt;all_lazy = false;
+25     rdtp-&gt;nonlazy_posted_snap = rdtp-&gt;nonlazy_posted;
+26     invoke_rcu_core();
+27     return;
+28   }
+29   if (rdtp-&gt;last_accelerate == jiffies)
+30     return;
+31   rdtp-&gt;last_accelerate = jiffies;
+32   for_each_rcu_flavor(rsp) {
+33     rdp = this_cpu_ptr(rsp-&gt;rda);
+34     if (rcu_segcblist_pend_cbs(&amp;rdp-&gt;cblist))
+35       continue;
+36     rnp = rdp-&gt;mynode;
+37     raw_spin_lock_rcu_node(rnp);
+38     needwake = rcu_accelerate_cbs(rsp, rnp, rdp);
+39     raw_spin_unlock_rcu_node(rnp);
+40     if (needwake)
+41       rcu_gp_kthread_wake(rsp);
+42   }
+43 }
+</pre></div>
+</div>
+<p>But the only part of <code class="docutils literal notranslate"><span class="pre">rcu_prepare_for_idle()</span></code> that really matters for
+this discussion are lines 37–39. We will therefore abbreviate this
+function as follows:</p>
+<div class="figure align-default">
+<img alt="../../../_images/rcu_node-lock.svg" src="../../../_images/rcu_node-lock.svg" /></div>
+<p>The box represents the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;lock</span></code> critical
+section, with the double line on top representing the additional
+<code class="docutils literal notranslate"><span class="pre">smp_mb__after_unlock_lock()</span></code>.</p>
+<div class="section" id="tree-rcu-grace-period-memory-ordering-components">
+<h3>Tree RCU Grace Period Memory Ordering Components<a class="headerlink" href="#tree-rcu-grace-period-memory-ordering-components" title="Permalink to this headline">¶</a></h3>
+<p>Tree RCU’s grace-period memory-ordering guarantee is provided by a
+number of RCU components:</p>
+<ol class="arabic simple">
+<li><p><a class="reference internal" href="#callback-registry">Callback Registry</a></p></li>
+<li><p><a class="reference internal" href="#grace-period-initialization">Grace-Period Initialization</a></p></li>
+<li><p><a class="reference internal" href="#self-reported-quiescent-states">Self-Reported Quiescent States</a></p></li>
+<li><p><a class="reference internal" href="#dynamic-tick-interface">Dynamic Tick Interface</a></p></li>
+<li><p><a class="reference internal" href="#cpu-hotplug-interface">CPU-Hotplug Interface</a></p></li>
+<li><p><a class="reference internal" href="#forcing-quiescent-states">Forcing Quiescent States</a></p></li>
+<li><p><a class="reference internal" href="#grace-period-cleanup">Grace-Period Cleanup</a></p></li>
+<li><p><a class="reference internal" href="#callback-invocation">Callback Invocation</a></p></li>
+</ol>
+<p>Each of the following section looks at the corresponding component in
+detail.</p>
+<div class="section" id="callback-registry">
+<h4>Callback Registry<a class="headerlink" href="#callback-registry" title="Permalink to this headline">¶</a></h4>
+<p>If RCU’s grace-period guarantee is to mean anything at all, any access
+that happens before a given invocation of <code class="docutils literal notranslate"><span class="pre">call_rcu()</span></code> must also
+happen before the corresponding grace period. The implementation of this
+portion of RCU’s grace period guarantee is shown in the following
+figure:</p>
+<div class="figure align-default">
+<img alt="../../../_images/TreeRCU-callback-registry.svg" src="../../../_images/TreeRCU-callback-registry.svg" /></div>
+<p>Because <code class="docutils literal notranslate"><span class="pre">call_rcu()</span></code> normally acts only on CPU-local state, it
+provides no ordering guarantees, either for itself or for phase one of
+the update (which again will usually be removal of an element from an
+RCU-protected data structure). It simply enqueues the <code class="docutils literal notranslate"><span class="pre">rcu_head</span></code>
+structure on a per-CPU list, which cannot become associated with a grace
+period until a later call to <code class="docutils literal notranslate"><span class="pre">rcu_accelerate_cbs()</span></code>, as shown in the
+diagram above.</p>
+<p>One set of code paths shown on the left invokes <code class="docutils literal notranslate"><span class="pre">rcu_accelerate_cbs()</span></code>
+via <code class="docutils literal notranslate"><span class="pre">note_gp_changes()</span></code>, either directly from <code class="docutils literal notranslate"><span class="pre">call_rcu()</span></code> (if the
+current CPU is inundated with queued <code class="docutils literal notranslate"><span class="pre">rcu_head</span></code> structures) or more
+likely from an <code class="docutils literal notranslate"><span class="pre">RCU_SOFTIRQ</span></code> handler. Another code path in the middle
+is taken only in kernels built with <code class="docutils literal notranslate"><span class="pre">CONFIG_RCU_FAST_NO_HZ=y</span></code>, which
+invokes <code class="docutils literal notranslate"><span class="pre">rcu_accelerate_cbs()</span></code> via <code class="docutils literal notranslate"><span class="pre">rcu_prepare_for_idle()</span></code>. The
+final code path on the right is taken only in kernels built with
+<code class="docutils literal notranslate"><span class="pre">CONFIG_HOTPLUG_CPU=y</span></code>, which invokes <code class="docutils literal notranslate"><span class="pre">rcu_accelerate_cbs()</span></code> via
+<code class="docutils literal notranslate"><span class="pre">rcu_advance_cbs()</span></code>, <code class="docutils literal notranslate"><span class="pre">rcu_migrate_callbacks</span></code>,
+<code class="docutils literal notranslate"><span class="pre">rcutree_migrate_callbacks()</span></code>, and <code class="docutils literal notranslate"><span class="pre">takedown_cpu()</span></code>, which in turn
+is invoked on a surviving CPU after the outgoing CPU has been completely
+offlined.</p>
+<p>There are a few other code paths within grace-period processing that
+opportunistically invoke <code class="docutils literal notranslate"><span class="pre">rcu_accelerate_cbs()</span></code>. However, either way,
+all of the CPU’s recently queued <code class="docutils literal notranslate"><span class="pre">rcu_head</span></code> structures are associated
+with a future grace-period number under the protection of the CPU’s lead
+<code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;lock</span></code>. In all cases, there is full
+ordering against any prior critical section for that same <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code>
+structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;lock</span></code>, and also full ordering against any of the
+current task’s or CPU’s prior critical sections for any <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code>
+structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;lock</span></code>.</p>
+<p>The next section will show how this ordering ensures that any accesses
+prior to the <code class="docutils literal notranslate"><span class="pre">call_rcu()</span></code> (particularly including phase one of the
+update) happen before the start of the corresponding grace period.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Quick Quiz</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>But what about <code class="docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code>?</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Answer</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>The <code class="docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code> passes <code class="docutils literal notranslate"><span class="pre">call_rcu()</span></code> to <code class="docutils literal notranslate"><span class="pre">wait_rcu_gp()</span></code>,
+which invokes it. So either way, it eventually comes down to
+<code class="docutils literal notranslate"><span class="pre">call_rcu()</span></code>.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="grace-period-initialization">
+<h4>Grace-Period Initialization<a class="headerlink" href="#grace-period-initialization" title="Permalink to this headline">¶</a></h4>
+<p>Grace-period initialization is carried out by the grace-period kernel
+thread, which makes several passes over the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> tree within the
+<code class="docutils literal notranslate"><span class="pre">rcu_gp_init()</span></code> function. This means that showing the full flow of
+ordering through the grace-period computation will require duplicating
+this tree. If you find this confusing, please note that the state of the
+<code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> changes over time, just like Heraclitus’s river. However,
+to keep the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> river tractable, the grace-period kernel
+thread’s traversals are presented in multiple parts, starting in this
+section with the various phases of grace-period initialization.</p>
+<p>The first ordering-related grace-period initialization action is to
+advance the <code class="docutils literal notranslate"><span class="pre">rcu_state</span></code> structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;gp_seq</span></code> grace-period-number
+counter, as shown below:</p>
+<div class="figure align-default">
+<img alt="../../../_images/TreeRCU-gp-init-1.svg" src="../../../_images/TreeRCU-gp-init-1.svg" /></div>
+<p>The actual increment is carried out using <code class="docutils literal notranslate"><span class="pre">smp_store_release()</span></code>, which
+helps reject false-positive RCU CPU stall detection. Note that only the
+root <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure is touched.</p>
+<p>The first pass through the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> tree updates bitmasks based on
+CPUs having come online or gone offline since the start of the previous
+grace period. In the common case where the number of online CPUs for
+this <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure has not transitioned to or from zero, this
+pass will scan only the leaf <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structures. However, if the
+number of online CPUs for a given leaf <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure has
+transitioned from zero, <code class="docutils literal notranslate"><span class="pre">rcu_init_new_rnp()</span></code> will be invoked for the
+first incoming CPU. Similarly, if the number of online CPUs for a given
+leaf <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure has transitioned to zero,
+<code class="docutils literal notranslate"><span class="pre">rcu_cleanup_dead_rnp()</span></code> will be invoked for the last outgoing CPU.
+The diagram below shows the path of ordering if the leftmost
+<code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure onlines its first CPU and if the next
+<code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure has no online CPUs (or, alternatively if the
+leftmost <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure offlines its last CPU and if the next
+<code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure has no online CPUs).</p>
+<div class="figure align-default">
+<img alt="../../../_images/TreeRCU-gp-init-1.svg" src="../../../_images/TreeRCU-gp-init-1.svg" /></div>
+<p>The final <code class="docutils literal notranslate"><span class="pre">rcu_gp_init()</span></code> pass through the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> tree traverses
+breadth-first, setting each <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;gp_seq</span></code> field
+to the newly advanced value from the <code class="docutils literal notranslate"><span class="pre">rcu_state</span></code> structure, as shown
+in the following diagram.</p>
+<div class="figure align-default">
+<img alt="../../../_images/TreeRCU-gp-init-1.svg" src="../../../_images/TreeRCU-gp-init-1.svg" /></div>
+<p>This change will also cause each CPU’s next call to
+<code class="docutils literal notranslate"><span class="pre">__note_gp_changes()</span></code> to notice that a new grace period has started,
+as described in the next section. But because the grace-period kthread
+started the grace period at the root (with the advancing of the
+<code class="docutils literal notranslate"><span class="pre">rcu_state</span></code> structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;gp_seq</span></code> field) before setting each leaf
+<code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;gp_seq</span></code> field, each CPU’s observation of
+the start of the grace period will happen after the actual start of the
+grace period.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Quick Quiz</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>But what about the CPU that started the grace period? Why wouldn’t it
+see the start of the grace period right when it started that grace
+period?</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Answer</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>In some deep philosophical and overly anthromorphized sense, yes, the
+CPU starting the grace period is immediately aware of having done so.
+However, if we instead assume that RCU is not self-aware, then even
+the CPU starting the grace period does not really become aware of the
+start of this grace period until its first call to
+<code class="docutils literal notranslate"><span class="pre">__note_gp_changes()</span></code>. On the other hand, this CPU potentially gets
+early notification because it invokes <code class="docutils literal notranslate"><span class="pre">__note_gp_changes()</span></code> during
+its last <code class="docutils literal notranslate"><span class="pre">rcu_gp_init()</span></code> pass through its leaf <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code>
+structure.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="self-reported-quiescent-states">
+<h4>Self-Reported Quiescent States<a class="headerlink" href="#self-reported-quiescent-states" title="Permalink to this headline">¶</a></h4>
+<p>When all entities that might block the grace period have reported
+quiescent states (or as described in a later section, had quiescent
+states reported on their behalf), the grace period can end. Online
+non-idle CPUs report their own quiescent states, as shown in the
+following diagram:</p>
+<div class="figure align-default">
+<img alt="../../../_images/TreeRCU-qs.svg" src="../../../_images/TreeRCU-qs.svg" /></div>
+<p>This is for the last CPU to report a quiescent state, which signals the
+end of the grace period. Earlier quiescent states would push up the
+<code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> tree only until they encountered an <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure
+that is waiting for additional quiescent states. However, ordering is
+nevertheless preserved because some later quiescent state will acquire
+that <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;lock</span></code>.</p>
+<p>Any number of events can lead up to a CPU invoking <code class="docutils literal notranslate"><span class="pre">note_gp_changes</span></code>
+(or alternatively, directly invoking <code class="docutils literal notranslate"><span class="pre">__note_gp_changes()</span></code>), at which
+point that CPU will notice the start of a new grace period while holding
+its leaf <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> lock. Therefore, all execution shown in this
+diagram happens after the start of the grace period. In addition, this
+CPU will consider any RCU read-side critical section that started before
+the invocation of <code class="docutils literal notranslate"><span class="pre">__note_gp_changes()</span></code> to have started before the
+grace period, and thus a critical section that the grace period must
+wait on.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Quick Quiz</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>But a RCU read-side critical section might have started after the
+beginning of the grace period (the advancing of <code class="docutils literal notranslate"><span class="pre">-&gt;gp_seq</span></code> from
+earlier), so why should the grace period wait on such a critical
+section?</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Answer</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>It is indeed not necessary for the grace period to wait on such a
+critical section. However, it is permissible to wait on it. And it is
+furthermore important to wait on it, as this lazy approach is far
+more scalable than a “big bang” all-at-once grace-period start could
+possibly be.</p></td>
+</tr>
+</tbody>
+</table>
+<p>If the CPU does a context switch, a quiescent state will be noted by
+<code class="docutils literal notranslate"><span class="pre">rcu_note_context_switch()</span></code> on the left. On the other hand, if the CPU
+takes a scheduler-clock interrupt while executing in usermode, a
+quiescent state will be noted by <code class="docutils literal notranslate"><span class="pre">rcu_sched_clock_irq()</span></code> on the right.
+Either way, the passage through a quiescent state will be noted in a
+per-CPU variable.</p>
+<p>The next time an <code class="docutils literal notranslate"><span class="pre">RCU_SOFTIRQ</span></code> handler executes on this CPU (for
+example, after the next scheduler-clock interrupt), <code class="docutils literal notranslate"><span class="pre">rcu_core()</span></code> will
+invoke <code class="docutils literal notranslate"><span class="pre">rcu_check_quiescent_state()</span></code>, which will notice the recorded
+quiescent state, and invoke <code class="docutils literal notranslate"><span class="pre">rcu_report_qs_rdp()</span></code>. If
+<code class="docutils literal notranslate"><span class="pre">rcu_report_qs_rdp()</span></code> verifies that the quiescent state really does
+apply to the current grace period, it invokes <code class="docutils literal notranslate"><span class="pre">rcu_report_rnp()</span></code> which
+traverses up the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> tree as shown at the bottom of the
+diagram, clearing bits from each <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;qsmask</span></code>
+field, and propagating up the tree when the result is zero.</p>
+<p>Note that traversal passes upwards out of a given <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure
+only if the current CPU is reporting the last quiescent state for the
+subtree headed by that <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure. A key point is that if a
+CPU’s traversal stops at a given <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure, then there will
+be a later traversal by another CPU (or perhaps the same one) that
+proceeds upwards from that point, and the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> <code class="docutils literal notranslate"><span class="pre">-&gt;lock</span></code>
+guarantees that the first CPU’s quiescent state happens before the
+remainder of the second CPU’s traversal. Applying this line of thought
+repeatedly shows that all CPUs’ quiescent states happen before the last
+CPU traverses through the root <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure, the “last CPU”
+being the one that clears the last bit in the root <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code>
+structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;qsmask</span></code> field.</p>
+</div>
+<div class="section" id="dynamic-tick-interface">
+<h4>Dynamic Tick Interface<a class="headerlink" href="#dynamic-tick-interface" title="Permalink to this headline">¶</a></h4>
+<p>Due to energy-efficiency considerations, RCU is forbidden from
+disturbing idle CPUs. CPUs are therefore required to notify RCU when
+entering or leaving idle state, which they do via fully ordered
+value-returning atomic operations on a per-CPU variable. The ordering
+effects are as shown below:</p>
+<div class="figure align-default">
+<img alt="../../../_images/TreeRCU-dyntick.svg" src="../../../_images/TreeRCU-dyntick.svg" /></div>
+<p>The RCU grace-period kernel thread samples the per-CPU idleness variable
+while holding the corresponding CPU’s leaf <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure’s
+<code class="docutils literal notranslate"><span class="pre">-&gt;lock</span></code>. This means that any RCU read-side critical sections that
+precede the idle period (the oval near the top of the diagram above)
+will happen before the end of the current grace period. Similarly, the
+beginning of the current grace period will happen before any RCU
+read-side critical sections that follow the idle period (the oval near
+the bottom of the diagram above).</p>
+<p>Plumbing this into the full grace-period execution is described
+<a class="reference internal" href="#forcing-quiescent-states">below</a>.</p>
+</div>
+<div class="section" id="cpu-hotplug-interface">
+<h4>CPU-Hotplug Interface<a class="headerlink" href="#cpu-hotplug-interface" title="Permalink to this headline">¶</a></h4>
+<p>RCU is also forbidden from disturbing offline CPUs, which might well be
+powered off and removed from the system completely. CPUs are therefore
+required to notify RCU of their comings and goings as part of the
+corresponding CPU hotplug operations. The ordering effects are shown
+below:</p>
+<div class="figure align-default">
+<img alt="../../../_images/TreeRCU-hotplug.svg" src="../../../_images/TreeRCU-hotplug.svg" /></div>
+<p>Because CPU hotplug operations are much less frequent than idle
+transitions, they are heavier weight, and thus acquire the CPU’s leaf
+<code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;lock</span></code> and update this structure’s
+<code class="docutils literal notranslate"><span class="pre">-&gt;qsmaskinitnext</span></code>. The RCU grace-period kernel thread samples this
+mask to detect CPUs having gone offline since the beginning of this
+grace period.</p>
+<p>Plumbing this into the full grace-period execution is described
+<a class="reference internal" href="#forcing-quiescent-states">below</a>.</p>
+</div>
+<div class="section" id="forcing-quiescent-states">
+<h4>Forcing Quiescent States<a class="headerlink" href="#forcing-quiescent-states" title="Permalink to this headline">¶</a></h4>
+<p>As noted above, idle and offline CPUs cannot report their own quiescent
+states, and therefore the grace-period kernel thread must do the
+reporting on their behalf. This process is called “forcing quiescent
+states”, it is repeated every few jiffies, and its ordering effects are
+shown below:</p>
+<div class="figure align-default">
+<img alt="../../../_images/TreeRCU-gp-fqs.svg" src="../../../_images/TreeRCU-gp-fqs.svg" /></div>
+<p>Each pass of quiescent state forcing is guaranteed to traverse the leaf
+<code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structures, and if there are no new quiescent states due to
+recently idled and/or offlined CPUs, then only the leaves are traversed.
+However, if there is a newly offlined CPU as illustrated on the left or
+a newly idled CPU as illustrated on the right, the corresponding
+quiescent state will be driven up towards the root. As with
+self-reported quiescent states, the upwards driving stops once it
+reaches an <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure that has quiescent states outstanding
+from other CPUs.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Quick Quiz</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>The leftmost drive to root stopped before it reached the root
+<code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure, which means that there are still CPUs
+subordinate to that structure on which the current grace period is
+waiting. Given that, how is it possible that the rightmost drive to
+root ended the grace period?</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Answer</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>Good analysis! It is in fact impossible in the absence of bugs in
+RCU. But this diagram is complex enough as it is, so simplicity
+overrode accuracy. You can think of it as poetic license, or you can
+think of it as misdirection that is resolved in the
+<a class="reference internal" href="#putting-it-all-together">stitched-together diagram</a>.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="grace-period-cleanup">
+<h4>Grace-Period Cleanup<a class="headerlink" href="#grace-period-cleanup" title="Permalink to this headline">¶</a></h4>
+<p>Grace-period cleanup first scans the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> tree breadth-first
+advancing all the <code class="docutils literal notranslate"><span class="pre">-&gt;gp_seq</span></code> fields, then it advances the
+<code class="docutils literal notranslate"><span class="pre">rcu_state</span></code> structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;gp_seq</span></code> field. The ordering effects are
+shown below:</p>
+<div class="figure align-default">
+<img alt="../../../_images/TreeRCU-gp-cleanup.svg" src="../../../_images/TreeRCU-gp-cleanup.svg" /></div>
+<p>As indicated by the oval at the bottom of the diagram, once grace-period
+cleanup is complete, the next grace period can begin.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Quick Quiz</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>But when precisely does the grace period end?</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Answer</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>There is no useful single point at which the grace period can be said
+to end. The earliest reasonable candidate is as soon as the last CPU
+has reported its quiescent state, but it may be some milliseconds
+before RCU becomes aware of this. The latest reasonable candidate is
+once the <code class="docutils literal notranslate"><span class="pre">rcu_state</span></code> structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;gp_seq</span></code> field has been
+updated, but it is quite possible that some CPUs have already
+completed phase two of their updates by that time. In short, if you
+are going to work with RCU, you need to learn to embrace uncertainty.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="callback-invocation">
+<h4>Callback Invocation<a class="headerlink" href="#callback-invocation" title="Permalink to this headline">¶</a></h4>
+<p>Once a given CPU’s leaf <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;gp_seq</span></code> field has
+been updated, that CPU can begin invoking its RCU callbacks that were
+waiting for this grace period to end. These callbacks are identified by
+<code class="docutils literal notranslate"><span class="pre">rcu_advance_cbs()</span></code>, which is usually invoked by
+<code class="docutils literal notranslate"><span class="pre">__note_gp_changes()</span></code>. As shown in the diagram below, this invocation
+can be triggered by the scheduling-clock interrupt
+(<code class="docutils literal notranslate"><span class="pre">rcu_sched_clock_irq()</span></code> on the left) or by idle entry
+(<code class="docutils literal notranslate"><span class="pre">rcu_cleanup_after_idle()</span></code> on the right, but only for kernels build
+with <code class="docutils literal notranslate"><span class="pre">CONFIG_RCU_FAST_NO_HZ=y</span></code>). Either way, <code class="docutils literal notranslate"><span class="pre">RCU_SOFTIRQ</span></code> is
+raised, which results in <code class="docutils literal notranslate"><span class="pre">rcu_do_batch()</span></code> invoking the callbacks,
+which in turn allows those callbacks to carry out (either directly or
+indirectly via wakeup) the needed phase-two processing for each update.</p>
+<div class="figure align-default">
+<img alt="../../../_images/TreeRCU-callback-invocation.svg" src="../../../_images/TreeRCU-callback-invocation.svg" /></div>
+<p>Please note that callback invocation can also be prompted by any number
+of corner-case code paths, for example, when a CPU notes that it has
+excessive numbers of callbacks queued. In all cases, the CPU acquires
+its leaf <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;lock</span></code> before invoking callbacks,
+which preserves the required ordering against the newly completed grace
+period.</p>
+<p>However, if the callback function communicates to other CPUs, for
+example, doing a wakeup, then it is that function’s responsibility to
+maintain ordering. For example, if the callback function wakes up a task
+that runs on some other CPU, proper ordering must in place in both the
+callback function and the task being awakened. To see why this is
+important, consider the top half of the <a class="reference internal" href="#grace-period-cleanup">grace-period
+cleanup</a> diagram. The callback might be
+running on a CPU corresponding to the leftmost leaf <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code>
+structure, and awaken a task that is to run on a CPU corresponding to
+the rightmost leaf <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure, and the grace-period kernel
+thread might not yet have reached the rightmost leaf. In this case, the
+grace period’s memory ordering might not yet have reached that CPU, so
+again the callback function and the awakened task must supply proper
+ordering.</p>
+</div>
+</div>
+<div class="section" id="putting-it-all-together">
+<h3>Putting It All Together<a class="headerlink" href="#putting-it-all-together" title="Permalink to this headline">¶</a></h3>
+<p>A stitched-together diagram is here:</p>
+<div class="figure align-default">
+<img alt="../../../_images/TreeRCU-gp.svg" src="../../../_images/TreeRCU-gp.svg" /></div>
+</div>
+<div class="section" id="legal-statement">
+<h3>Legal Statement<a class="headerlink" href="#legal-statement" title="Permalink to this headline">¶</a></h3>
+<p>This work represents the view of the author and does not necessarily
+represent the view of IBM.</p>
+<p>Linux is a registered trademark of Linus Torvalds.</p>
+<p>Other company, product, and service names may be trademarks or service
+marks of others.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="../Expedited-Grace-Periods/Expedited-Grace-Periods.html" class="btn btn-neutral float-right" title="A Tour Through TREE_RCU’s Expedited Grace Periods" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="../../UP.html" class="btn btn-neutral float-left" title="RCU on Uniprocessor Systems" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright The kernel development community.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
