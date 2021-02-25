@@ -1,0 +1,650 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>PCI Bus EEH Error Recovery &mdash; The Linux Kernel 5.11.0+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="ELF Note PowerPC Namespace" href="elfnote.html" />
+    <link rel="prev" title="DSCR (Data Stream Control Register)" href="dscr.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.11.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/index.html">Nios II Specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">powerpc</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="booting.html">DeviceTree Booting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bootwrapper.html">The PowerPC boot wrapper</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cpu_families.html">CPU Families</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cpu_features.html">CPU Features</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cxl.html">Coherent Accelerator Interface (CXL)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cxlflash.html">Coherent Accelerator (CXL) Flash</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dawr-power9.html">DAWR issues on POWER9</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dscr.html">DSCR (Data Stream Control Register)</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">PCI Bus EEH Error Recovery</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#overview">Overview:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#causes-of-eeh-errors">Causes of EEH Errors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#detection-and-recovery">Detection and Recovery</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#current-ppc64-linux-eeh-implementation">Current PPC64 Linux EEH Implementation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#device-shutdown-and-user-space-events">Device Shutdown and User-Space Events</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pro-s-and-con-s-of-the-current-design">Pro’s and Con’s of the Current Design</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#conclusions">Conclusions</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="elfnote.html">ELF Note PowerPC Namespace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="firmware-assisted-dump.html">Firmware-Assisted Dump</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hvcs.html">HVCS IBM “Hypervisor Virtual Console Server” Installation Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="imc.html">IMC (In-Memory Collection Counters)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="isa-versions.html">CPU to ISA Version Mapping</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kaslr-booke32.html">KASLR for Freescale BookE32</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mpc52xx.html">Linux 2.6.x on MPC52xx family</a></li>
+<li class="toctree-l2"><a class="reference internal" href="papr_hcalls.html">Hypercall Op-codes (hcalls)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pci_iov_resource_on_powernv.html">PCI Express I/O Virtualization Resource on Powerenv</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pmu-ebb.html">PMU Event Based Branches</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ptrace.html">Ptrace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="qe_firmware.html">Freescale QUICC Engine Firmware Uploading</a></li>
+<li class="toctree-l2"><a class="reference internal" href="syscall64-abi.html">Power Architecture 64-bit Linux system call ABI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="transactional_memory.html">Transactional Memory support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ultravisor.html">Protected Execution Facility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vas-api.html">Virtual Accelerator Switchboard (VAS) userspace API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vcpudispatch_stats.html">VCPU Dispatch Statistics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="features.html">Feature status on powerpc architecture</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="index.html">powerpc</a> &raquo;</li>
+        
+      <li>PCI Bus EEH Error Recovery</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/powerpc/eeh-pci-error-recovery.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="pci-bus-eeh-error-recovery">
+<h1>PCI Bus EEH Error Recovery<a class="headerlink" href="#pci-bus-eeh-error-recovery" title="Permalink to this headline">¶</a></h1>
+<p>Linas Vepstas &lt;<a class="reference external" href="mailto:linas&#37;&#52;&#48;austin&#46;ibm&#46;com">linas<span>&#64;</span>austin<span>&#46;</span>ibm<span>&#46;</span>com</a>&gt;</p>
+<p>12 January 2005</p>
+<div class="section" id="overview">
+<h2>Overview:<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>The IBM POWER-based pSeries and iSeries computers include PCI bus
+controller chips that have extended capabilities for detecting and
+reporting a large variety of PCI bus error conditions.  These features
+go under the name of “EEH”, for “Enhanced Error Handling”.  The EEH
+hardware features allow PCI bus errors to be cleared and a PCI
+card to be “rebooted”, without also having to reboot the operating
+system.</p>
+<p>This is in contrast to traditional PCI error handling, where the
+PCI chip is wired directly to the CPU, and an error would cause
+a CPU machine-check/check-stop condition, halting the CPU entirely.
+Another “traditional” technique is to ignore such errors, which
+can lead to data corruption, both of user data or of kernel data,
+hung/unresponsive adapters, or system crashes/lockups.  Thus,
+the idea behind EEH is that the operating system can become more
+reliable and robust by protecting it from PCI errors, and giving
+the OS the ability to “reboot”/recover individual PCI devices.</p>
+<p>Future systems from other vendors, based on the PCI-E specification,
+may contain similar features.</p>
+</div>
+<div class="section" id="causes-of-eeh-errors">
+<h2>Causes of EEH Errors<a class="headerlink" href="#causes-of-eeh-errors" title="Permalink to this headline">¶</a></h2>
+<p>EEH was originally designed to guard against hardware failure, such
+as PCI cards dying from heat, humidity, dust, vibration and bad
+electrical connections. The vast majority of EEH errors seen in
+“real life” are due to either poorly seated PCI cards, or,
+unfortunately quite commonly, due to device driver bugs, device firmware
+bugs, and sometimes PCI card hardware bugs.</p>
+<p>The most common software bug, is one that causes the device to
+attempt to DMA to a location in system memory that has not been
+reserved for DMA access for that card.  This is a powerful feature,
+as it prevents what; otherwise, would have been silent memory
+corruption caused by the bad DMA.  A number of device driver
+bugs have been found and fixed in this way over the past few
+years.  Other possible causes of EEH errors include data or
+address line parity errors (for example, due to poor electrical
+connectivity due to a poorly seated card), and PCI-X split-completion
+errors (due to software, device firmware, or device PCI hardware bugs).
+The vast majority of “true hardware failures” can be cured by
+physically removing and re-seating the PCI card.</p>
+</div>
+<div class="section" id="detection-and-recovery">
+<h2>Detection and Recovery<a class="headerlink" href="#detection-and-recovery" title="Permalink to this headline">¶</a></h2>
+<p>In the following discussion, a generic overview of how to detect
+and recover from EEH errors will be presented. This is followed
+by an overview of how the current implementation in the Linux
+kernel does it.  The actual implementation is subject to change,
+and some of the finer points are still being debated.  These
+may in turn be swayed if or when other architectures implement
+similar functionality.</p>
+<p>When a PCI Host Bridge (PHB, the bus controller connecting the
+PCI bus to the system CPU electronics complex) detects a PCI error
+condition, it will “isolate” the affected PCI card.  Isolation
+will block all writes (either to the card from the system, or
+from the card to the system), and it will cause all reads to
+return all-ff’s (0xff, 0xffff, 0xffffffff for 8/16/32-bit reads).
+This value was chosen because it is the same value you would
+get if the device was physically unplugged from the slot.
+This includes access to PCI memory, I/O space, and PCI config
+space.  Interrupts; however, will continued to be delivered.</p>
+<p>Detection and recovery are performed with the aid of ppc64
+firmware.  The programming interfaces in the Linux kernel
+into the firmware are referred to as RTAS (Run-Time Abstraction
+Services).  The Linux kernel does not (should not) access
+the EEH function in the PCI chipsets directly, primarily because
+there are a number of different chipsets out there, each with
+different interfaces and quirks. The firmware provides a
+uniform abstraction layer that will work with all pSeries
+and iSeries hardware (and be forwards-compatible).</p>
+<p>If the OS or device driver suspects that a PCI slot has been
+EEH-isolated, there is a firmware call it can make to determine if
+this is the case. If so, then the device driver should put itself
+into a consistent state (given that it won’t be able to complete any
+pending work) and start recovery of the card.  Recovery normally
+would consist of resetting the PCI device (holding the PCI #RST
+line high for two seconds), followed by setting up the device
+config space (the base address registers (BAR’s), latency timer,
+cache line size, interrupt line, and so on).  This is followed by a
+reinitialization of the device driver.  In a worst-case scenario,
+the power to the card can be toggled, at least on hot-plug-capable
+slots.  In principle, layers far above the device driver probably
+do not need to know that the PCI card has been “rebooted” in this
+way; ideally, there should be at most a pause in Ethernet/disk/USB
+I/O while the card is being reset.</p>
+<p>If the card cannot be recovered after three or four resets, the
+kernel/device driver should assume the worst-case scenario, that the
+card has died completely, and report this error to the sysadmin.
+In addition, error messages are reported through RTAS and also through
+syslogd (/var/log/messages) to alert the sysadmin of PCI resets.
+The correct way to deal with failed adapters is to use the standard
+PCI hotplug tools to remove and replace the dead card.</p>
+</div>
+<div class="section" id="current-ppc64-linux-eeh-implementation">
+<h2>Current PPC64 Linux EEH Implementation<a class="headerlink" href="#current-ppc64-linux-eeh-implementation" title="Permalink to this headline">¶</a></h2>
+<p>At this time, a generic EEH recovery mechanism has been implemented,
+so that individual device drivers do not need to be modified to support
+EEH recovery.  This generic mechanism piggy-backs on the PCI hotplug
+infrastructure,  and percolates events up through the userspace/udev
+infrastructure.  Following is a detailed description of how this is
+accomplished.</p>
+<p>EEH must be enabled in the PHB’s very early during the boot process,
+and if a PCI slot is hot-plugged. The former is performed by
+eeh_init() in arch/powerpc/platforms/pseries/eeh.c, and the later by
+drivers/pci/hotplug/pSeries_pci.c calling in to the eeh.c code.
+EEH must be enabled before a PCI scan of the device can proceed.
+Current Power5 hardware will not work unless EEH is enabled;
+although older Power4 can run with it disabled.  Effectively,
+EEH can no longer be turned off.  PCI devices <em>must</em> be
+registered with the EEH code; the EEH code needs to know about
+the I/O address ranges of the PCI device in order to detect an
+error.  Given an arbitrary address, the routine
+pci_get_device_by_addr() will find the pci device associated
+with that address (if any).</p>
+<p>The default arch/powerpc/include/asm/io.h macros readb(), inb(), insb(),
+etc. include a check to see if the i/o read returned all-0xff’s.
+If so, these make a call to eeh_dn_check_failure(), which in turn
+asks the firmware if the all-ff’s value is the sign of a true EEH
+error.  If it is not, processing continues as normal.  The grand
+total number of these false alarms or “false positives” can be
+seen in /proc/ppc64/eeh (subject to change).  Normally, almost
+all of these occur during boot, when the PCI bus is scanned, where
+a large number of 0xff reads are part of the bus scan procedure.</p>
+<p>If a frozen slot is detected, code in
+arch/powerpc/platforms/pseries/eeh.c will print a stack trace to
+syslog (/var/log/messages).  This stack trace has proven to be very
+useful to device-driver authors for finding out at what point the EEH
+error was detected, as the error itself usually occurs slightly
+beforehand.</p>
+<p>Next, it uses the Linux kernel notifier chain/work queue mechanism to
+allow any interested parties to find out about the failure.  Device
+drivers, or other parts of the kernel, can use
+<cite>eeh_register_notifier(struct notifier_block *)</cite> to find out about EEH
+events.  The event will include a pointer to the pci device, the
+device node and some state info.  Receivers of the event can “do as
+they wish”; the default handler will be described further in this
+section.</p>
+<p>To assist in the recovery of the device, eeh.c exports the
+following functions:</p>
+<dl class="simple">
+<dt>rtas_set_slot_reset()</dt><dd><p>assert the  PCI #RST line for 1/8th of a second</p>
+</dd>
+<dt>rtas_configure_bridge()</dt><dd><p>ask firmware to configure any PCI bridges
+located topologically under the pci slot.</p>
+</dd>
+<dt>eeh_save_bars() and eeh_restore_bars():</dt><dd><p>save and restore the PCI
+config-space info for a device and any devices under it.</p>
+</dd>
+</dl>
+<p>A handler for the EEH notifier_block events is implemented in
+drivers/pci/hotplug/pSeries_pci.c, called handle_eeh_events().
+It saves the device BAR’s and then calls rpaphp_unconfig_pci_adapter().
+This last call causes the device driver for the card to be stopped,
+which causes uevents to go out to user space. This triggers
+user-space scripts that might issue commands such as “ifdown eth0”
+for ethernet cards, and so on.  This handler then sleeps for 5 seconds,
+hoping to give the user-space scripts enough time to complete.
+It then resets the PCI card, reconfigures the device BAR’s, and
+any bridges underneath. It then calls rpaphp_enable_pci_slot(),
+which restarts the device driver and triggers more user-space
+events (for example, calling “ifup eth0” for ethernet cards).</p>
+</div>
+<div class="section" id="device-shutdown-and-user-space-events">
+<h2>Device Shutdown and User-Space Events<a class="headerlink" href="#device-shutdown-and-user-space-events" title="Permalink to this headline">¶</a></h2>
+<p>This section documents what happens when a pci slot is unconfigured,
+focusing on how the device driver gets shut down, and on how the
+events get delivered to user-space scripts.</p>
+<p>Following is an example sequence of events that cause a device driver
+close function to be called during the first phase of an EEH reset.
+The following sequence is an example of the pcnet32 device driver:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>rpa_php_unconfig_pci_adapter (struct slot *)  // in rpaphp_pci.c
+{
+  calls
+  pci_remove_bus_device (struct pci_dev *) // in /drivers/pci/remove.c
+  {
+    calls
+    pci_destroy_dev (struct pci_dev *)
+    {
+      calls
+      device_unregister (&amp;dev-&gt;dev) // in /drivers/base/core.c
+      {
+        calls
+        device_del (struct device *)
+        {
+          calls
+          bus_remove_device() // in /drivers/base/bus.c
+          {
+            calls
+            device_release_driver()
+            {
+              calls
+              struct device_driver-&gt;remove() which is just
+              pci_device_remove()  // in /drivers/pci/pci_driver.c
+              {
+                calls
+                struct pci_driver-&gt;remove() which is just
+                pcnet32_remove_one() // in /drivers/net/pcnet32.c
+                {
+                  calls
+                  unregister_netdev() // in /net/core/dev.c
+                  {
+                    calls
+                    dev_close()  // in /net/core/dev.c
+                    {
+                       calls dev-&gt;stop();
+                       which is just pcnet32_close() // in pcnet32.c
+                       {
+                         which does what you wanted
+                         to stop the device
+                       }
+                    }
+                 }
+               which
+               frees pcnet32 device driver memory
+            }
+ }}}}}}
+</pre></div>
+</div>
+<p>in drivers/pci/pci_driver.c,
+struct device_driver-&gt;remove() is just pci_device_remove()
+which calls <a class="reference internal" href="../PCI/pci.html#c.pci_driver" title="pci_driver"><code class="xref c c-struct docutils literal notranslate"><span class="pre">struct</span> <span class="pre">pci_driver</span></code></a>-&gt;remove() which is pcnet32_remove_one()
+which calls <a class="reference internal" href="../networking/kapi.html#c.unregister_netdev" title="unregister_netdev"><code class="xref c c-func docutils literal notranslate"><span class="pre">unregister_netdev()</span></code></a>  (in net/core/dev.c)
+which calls <a class="reference internal" href="../networking/kapi.html#c.dev_close" title="dev_close"><code class="xref c c-func docutils literal notranslate"><span class="pre">dev_close()</span></code></a>  (in net/core/dev.c)
+which calls dev-&gt;<a class="reference internal" href="../networking/ieee802154.html#c.stop" title="stop"><code class="xref c c-func docutils literal notranslate"><span class="pre">stop()</span></code></a> which is pcnet32_close()
+which then does the appropriate shutdown.</p>
+<p>—</p>
+<p>Following is the analogous stack trace for events sent to user-space
+when the pci device is unconfigured:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>rpa_php_unconfig_pci_adapter() {             // in rpaphp_pci.c
+  calls
+  pci_remove_bus_device (struct pci_dev *) { // in /drivers/pci/remove.c
+    calls
+    pci_destroy_dev (struct pci_dev *) {
+      calls
+      device_unregister (&amp;dev-&gt;dev) {        // in /drivers/base/core.c
+        calls
+        device_del(struct device * dev) {    // in /drivers/base/core.c
+          calls
+          kobject_del() {                    //in /libs/kobject.c
+            calls
+            kobject_uevent() {               // in /libs/kobject.c
+              calls
+              kset_uevent() {                // in /lib/kobject.c
+                calls
+                kset-&gt;uevent_ops-&gt;uevent()   // which is really just
+                a call to
+                dev_uevent() {               // in /drivers/base/core.c
+                  calls
+                  dev-&gt;bus-&gt;uevent() which is really just a call to
+                  pci_uevent () {            // in drivers/pci/hotplug.c
+                    which prints device name, etc....
+                 }
+               }
+               then kobject_uevent() sends a netlink uevent to userspace
+               --&gt; userspace uevent
+               (during early boot, nobody listens to netlink events and
+               kobject_uevent() executes uevent_helper[], which runs the
+               event process /sbin/hotplug)
+           }
+         }
+         kobject_del() then calls sysfs_remove_dir(), which would
+         trigger any user-space daemon that was watching /sysfs,
+         and notice the delete event.
+</pre></div>
+</div>
+</div>
+<div class="section" id="pro-s-and-con-s-of-the-current-design">
+<h2>Pro’s and Con’s of the Current Design<a class="headerlink" href="#pro-s-and-con-s-of-the-current-design" title="Permalink to this headline">¶</a></h2>
+<p>There are several issues with the current EEH software recovery design,
+which may be addressed in future revisions.  But first, note that the
+big plus of the current design is that no changes need to be made to
+individual device drivers, so that the current design throws a wide net.
+The biggest negative of the design is that it potentially disturbs
+network daemons and file systems that didn’t need to be disturbed.</p>
+<ul>
+<li><p>A minor complaint is that resetting the network card causes
+user-space back-to-back ifdown/ifup burps that potentially disturb
+network daemons, that didn’t need to even know that the pci
+card was being rebooted.</p></li>
+<li><p>A more serious concern is that the same reset, for SCSI devices,
+causes havoc to mounted file systems.  Scripts cannot post-facto
+unmount a file system without flushing pending buffers, but this
+is impossible, because I/O has already been stopped.  Thus,
+ideally, the reset should happen at or below the block layer,
+so that the file systems are not disturbed.</p>
+<p>Reiserfs does not tolerate errors returned from the block device.
+Ext3fs seems to be tolerant, retrying reads/writes until it does
+succeed. Both have been only lightly tested in this scenario.</p>
+<p>The SCSI-generic subsystem already has built-in code for performing
+SCSI device resets, SCSI bus resets, and SCSI host-bus-adapter
+(HBA) resets.  These are cascaded into a chain of attempted
+resets if a SCSI command fails. These are completely hidden
+from the block layer.  It would be very natural to add an EEH
+reset into this chain of events.</p>
+</li>
+<li><p>If a SCSI error occurs for the root device, all is lost unless
+the sysadmin had the foresight to run /bin, /sbin, /etc, /var
+and so on, out of ramdisk/tmpfs.</p></li>
+</ul>
+</div>
+<div class="section" id="conclusions">
+<h2>Conclusions<a class="headerlink" href="#conclusions" title="Permalink to this headline">¶</a></h2>
+<p>There’s forward progress …</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="elfnote.html" class="btn btn-neutral float-right" title="ELF Note PowerPC Namespace" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="dscr.html" class="btn btn-neutral float-left" title="DSCR (Data Stream Control Register)" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright The kernel development community.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

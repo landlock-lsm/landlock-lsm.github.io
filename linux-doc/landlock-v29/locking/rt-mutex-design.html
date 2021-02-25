@@ -1,0 +1,853 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>RT-mutex implementation design &mdash; The Linux Kernel 5.11.0+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="RT-mutex subsystem with PI support" href="rt-mutex.html" />
+    <link rel="prev" title="Generic Mutex Subsystem" href="mutex-design.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.11.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">locking</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="locktypes.html">Lock types and their rules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lockdep-design.html">Runtime locking correctness validator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lockstat.html">Lock Statistics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="locktorture.html">Kernel Lock Torture Test Operation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mutex-design.html">Generic Mutex Subsystem</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">RT-mutex implementation design</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#unbounded-priority-inversion">Unbounded Priority Inversion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#priority-inheritance-pi">Priority Inheritance (PI)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#terminology">Terminology</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#pi-chain">PI chain</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mutex-waiters-tree">Mutex Waiters Tree</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#task-pi-tree">Task PI Tree</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#depth-of-the-pi-chain">Depth of the PI Chain</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mutex-owner-and-flags">Mutex owner and flags</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#cmpxchg-tricks">cmpxchg Tricks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#priority-adjustments">Priority adjustments</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#high-level-overview-of-the-pi-chain-walk">High level overview of the PI chain walk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#taking-of-a-mutex-the-walk-through">Taking of a mutex (The walk through)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#task-blocks-on-mutex">Task blocks on mutex</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#waking-up-in-the-loop">Waking up in the loop</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#unlocking-the-mutex">Unlocking the Mutex</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#contact">Contact</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#credits">Credits</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#updates">Updates</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="rt-mutex.html">RT-mutex subsystem with PI support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="seqlock.html">Sequence counters and sequential locks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinlocks.html">Locking lessons</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ww-mutex-design.html">Wound/Wait Deadlock-Proof Mutex Design</a></li>
+<li class="toctree-l2"><a class="reference internal" href="preempt-locking.html">Proper Locking Under a Preemptible Kernel: Keeping Kernel Code Preempt-Safe</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pi-futex.html">Lightweight PI-futexes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="futex-requeue-pi.html">Futex Requeue PI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hwspinlock.html">Hardware Spinlock Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="percpu-rw-semaphore.html">Percpu rw semaphores</a></li>
+<li class="toctree-l2"><a class="reference internal" href="robust-futexes.html">A description of what robust futexes are</a></li>
+<li class="toctree-l2"><a class="reference internal" href="robust-futex-ABI.html">The robust futex ABI</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/index.html">Nios II Specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="index.html">locking</a> &raquo;</li>
+        
+      <li>RT-mutex implementation design</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/locking/rt-mutex-design.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="rt-mutex-implementation-design">
+<h1>RT-mutex implementation design<a class="headerlink" href="#rt-mutex-implementation-design" title="Permalink to this headline">¶</a></h1>
+<p>Copyright (c) 2006 Steven Rostedt</p>
+<p>Licensed under the GNU Free Documentation License, Version 1.2</p>
+<p>This document tries to describe the design of the rtmutex.c implementation.
+It doesn’t describe the reasons why rtmutex.c exists. For that please see
+<a class="reference internal" href="rt-mutex.html"><span class="doc">RT-mutex subsystem with PI support</span></a>.  Although this document does explain problems
+that happen without this code, but that is in the concept to understand
+what the code actually is doing.</p>
+<p>The goal of this document is to help others understand the priority
+inheritance (PI) algorithm that is used, as well as reasons for the
+decisions that were made to implement PI in the manner that was done.</p>
+<div class="section" id="unbounded-priority-inversion">
+<h2>Unbounded Priority Inversion<a class="headerlink" href="#unbounded-priority-inversion" title="Permalink to this headline">¶</a></h2>
+<p>Priority inversion is when a lower priority process executes while a higher
+priority process wants to run.  This happens for several reasons, and
+most of the time it can’t be helped.  Anytime a high priority process wants
+to use a resource that a lower priority process has (a mutex for example),
+the high priority process must wait until the lower priority process is done
+with the resource.  This is a priority inversion.  What we want to prevent
+is something called unbounded priority inversion.  That is when the high
+priority process is prevented from running by a lower priority process for
+an undetermined amount of time.</p>
+<p>The classic example of unbounded priority inversion is where you have three
+processes, let’s call them processes A, B, and C, where A is the highest
+priority process, C is the lowest, and B is in between. A tries to grab a lock
+that C owns and must wait and lets C run to release the lock. But in the
+meantime, B executes, and since B is of a higher priority than C, it preempts C,
+but by doing so, it is in fact preempting A which is a higher priority process.
+Now there’s no way of knowing how long A will be sleeping waiting for C
+to release the lock, because for all we know, B is a CPU hog and will
+never give C a chance to release the lock.  This is called unbounded priority
+inversion.</p>
+<p>Here’s a little ASCII art to show the problem:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>   grab lock L1 (owned by C)
+     |
+A ---+
+        C preempted by B
+          |
+C    +----+
+
+B         +--------&gt;
+                B now keeps A from running.
+</pre></div>
+</div>
+</div>
+<div class="section" id="priority-inheritance-pi">
+<h2>Priority Inheritance (PI)<a class="headerlink" href="#priority-inheritance-pi" title="Permalink to this headline">¶</a></h2>
+<p>There are several ways to solve this issue, but other ways are out of scope
+for this document.  Here we only discuss PI.</p>
+<p>PI is where a process inherits the priority of another process if the other
+process blocks on a lock owned by the current process.  To make this easier
+to understand, let’s use the previous example, with processes A, B, and C again.</p>
+<p>This time, when A blocks on the lock owned by C, C would inherit the priority
+of A.  So now if B becomes runnable, it would not preempt C, since C now has
+the high priority of A.  As soon as C releases the lock, it loses its
+inherited priority, and A then can continue with the resource that C had.</p>
+</div>
+<div class="section" id="terminology">
+<h2>Terminology<a class="headerlink" href="#terminology" title="Permalink to this headline">¶</a></h2>
+<p>Here I explain some terminology that is used in this document to help describe
+the design that is used to implement PI.</p>
+<dl>
+<dt>PI chain</dt><dd><ul class="simple">
+<li><p>The PI chain is an ordered series of locks and processes that cause
+processes to inherit priorities from a previous process that is
+blocked on one of its locks.  This is described in more detail
+later in this document.</p></li>
+</ul>
+</dd>
+<dt>mutex</dt><dd><ul class="simple">
+<li><p>In this document, to differentiate from locks that implement
+PI and spin locks that are used in the PI code, from now on
+the PI locks will be called a mutex.</p></li>
+</ul>
+</dd>
+<dt>lock</dt><dd><ul class="simple">
+<li><p>In this document from now on, I will use the term lock when
+referring to spin locks that are used to protect parts of the PI
+algorithm.  These locks disable preemption for UP (when
+CONFIG_PREEMPT is enabled) and on SMP prevents multiple CPUs from
+entering critical sections simultaneously.</p></li>
+</ul>
+</dd>
+<dt>spin lock</dt><dd><ul class="simple">
+<li><p>Same as lock above.</p></li>
+</ul>
+</dd>
+<dt>waiter</dt><dd><ul>
+<li><p>A waiter is a struct that is stored on the stack of a blocked
+process.  Since the scope of the waiter is within the code for
+a process being blocked on the mutex, it is fine to allocate
+the waiter on the process’s stack (local variable).  This
+structure holds a pointer to the task, as well as the mutex that
+the task is blocked on.  It also has rbtree node structures to
+place the task in the waiters rbtree of a mutex as well as the
+pi_waiters rbtree of a mutex owner task (described below).</p>
+<p>waiter is sometimes used in reference to the task that is waiting
+on a mutex. This is the same as waiter-&gt;task.</p>
+</li>
+</ul>
+</dd>
+<dt>waiters</dt><dd><ul class="simple">
+<li><p>A list of processes that are blocked on a mutex.</p></li>
+</ul>
+</dd>
+<dt>top waiter</dt><dd><ul class="simple">
+<li><p>The highest priority process waiting on a specific mutex.</p></li>
+</ul>
+</dd>
+<dt>top pi waiter</dt><dd><ul class="simple">
+<li><p>The highest priority process waiting on one of the mutexes
+that a specific process owns.</p></li>
+</ul>
+</dd>
+<dt>Note:</dt><dd><p>task and process are used interchangeably in this document, mostly to
+differentiate between two processes that are being described together.</p>
+</dd>
+</dl>
+</div>
+<div class="section" id="pi-chain">
+<h2>PI chain<a class="headerlink" href="#pi-chain" title="Permalink to this headline">¶</a></h2>
+<p>The PI chain is a list of processes and mutexes that may cause priority
+inheritance to take place.  Multiple chains may converge, but a chain
+would never diverge, since a process can’t be blocked on more than one
+mutex at a time.</p>
+<p>Example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Process:  A, B, C, D, E
+Mutexes:  L1, L2, L3, L4
+
+A owns: L1
+        B blocked on L1
+        B owns L2
+               C blocked on L2
+               C owns L3
+                      D blocked on L3
+                      D owns L4
+                             E blocked on L4
+</pre></div>
+</div>
+<p>The chain would be:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>E-&gt;L4-&gt;D-&gt;L3-&gt;C-&gt;L2-&gt;B-&gt;L1-&gt;A
+</pre></div>
+</div>
+<p>To show where two chains merge, we could add another process F and
+another mutex L5 where B owns L5 and F is blocked on mutex L5.</p>
+<p>The chain for F would be:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>F-&gt;L5-&gt;B-&gt;L1-&gt;A
+</pre></div>
+</div>
+<p>Since a process may own more than one mutex, but never be blocked on more than
+one, the chains merge.</p>
+<p>Here we show both chains:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>E-&gt;L4-&gt;D-&gt;L3-&gt;C-&gt;L2-+
+                    |
+                    +-&gt;B-&gt;L1-&gt;A
+                    |
+              F-&gt;L5-+
+</pre></div>
+</div>
+<p>For PI to work, the processes at the right end of these chains (or we may
+also call it the Top of the chain) must be equal to or higher in priority
+than the processes to the left or below in the chain.</p>
+<p>Also since a mutex may have more than one process blocked on it, we can
+have multiple chains merge at mutexes.  If we add another process G that is
+blocked on mutex L2:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>G-&gt;L2-&gt;B-&gt;L1-&gt;A
+</pre></div>
+</div>
+<p>And once again, to show how this can grow I will show the merging chains
+again:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>E-&gt;L4-&gt;D-&gt;L3-&gt;C-+
+                +-&gt;L2-+
+                |     |
+              G-+     +-&gt;B-&gt;L1-&gt;A
+                      |
+                F-&gt;L5-+
+</pre></div>
+</div>
+<p>If process G has the highest priority in the chain, then all the tasks up
+the chain (A and B in this example), must have their priorities increased
+to that of G.</p>
+</div>
+<div class="section" id="mutex-waiters-tree">
+<h2>Mutex Waiters Tree<a class="headerlink" href="#mutex-waiters-tree" title="Permalink to this headline">¶</a></h2>
+<p>Every mutex keeps track of all the waiters that are blocked on itself. The
+mutex has a rbtree to store these waiters by priority.  This tree is protected
+by a spin lock that is located in the struct of the mutex. This lock is called
+wait_lock.</p>
+</div>
+<div class="section" id="task-pi-tree">
+<h2>Task PI Tree<a class="headerlink" href="#task-pi-tree" title="Permalink to this headline">¶</a></h2>
+<p>To keep track of the PI chains, each process has its own PI rbtree.  This is
+a tree of all top waiters of the mutexes that are owned by the process.
+Note that this tree only holds the top waiters and not all waiters that are
+blocked on mutexes owned by the process.</p>
+<p>The top of the task’s PI tree is always the highest priority task that
+is waiting on a mutex that is owned by the task.  So if the task has
+inherited a priority, it will always be the priority of the task that is
+at the top of this tree.</p>
+<p>This tree is stored in the task structure of a process as a rbtree called
+pi_waiters.  It is protected by a spin lock also in the task structure,
+called pi_lock.  This lock may also be taken in interrupt context, so when
+locking the pi_lock, interrupts must be disabled.</p>
+</div>
+<div class="section" id="depth-of-the-pi-chain">
+<h2>Depth of the PI Chain<a class="headerlink" href="#depth-of-the-pi-chain" title="Permalink to this headline">¶</a></h2>
+<p>The maximum depth of the PI chain is not dynamic, and could actually be
+defined.  But is very complex to figure it out, since it depends on all
+the nesting of mutexes.  Let’s look at the example where we have 3 mutexes,
+L1, L2, and L3, and four separate functions func1, func2, func3 and func4.
+The following shows a locking order of L1-&gt;L2-&gt;L3, but may not actually
+be directly nested that way:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void func1(void)
+{
+      mutex_lock(L1);
+
+      /* do anything */
+
+      mutex_unlock(L1);
+}
+
+void func2(void)
+{
+      mutex_lock(L1);
+      mutex_lock(L2);
+
+      /* do something */
+
+      mutex_unlock(L2);
+      mutex_unlock(L1);
+}
+
+void func3(void)
+{
+      mutex_lock(L2);
+      mutex_lock(L3);
+
+      /* do something else */
+
+      mutex_unlock(L3);
+      mutex_unlock(L2);
+}
+
+void func4(void)
+{
+      mutex_lock(L3);
+
+      /* do something again */
+
+      mutex_unlock(L3);
+}
+</pre></div>
+</div>
+<p>Now we add 4 processes that run each of these functions separately.
+Processes A, B, C, and D which run functions func1, func2, func3 and func4
+respectively, and such that D runs first and A last.  With D being preempted
+in func4 in the “do something again” area, we have a locking that follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>D owns L3
+       C blocked on L3
+       C owns L2
+              B blocked on L2
+              B owns L1
+                     A blocked on L1
+
+And thus we have the chain A-&gt;L1-&gt;B-&gt;L2-&gt;C-&gt;L3-&gt;D.
+</pre></div>
+</div>
+<p>This gives us a PI depth of 4 (four processes), but looking at any of the
+functions individually, it seems as though they only have at most a locking
+depth of two.  So, although the locking depth is defined at compile time,
+it still is very difficult to find the possibilities of that depth.</p>
+<p>Now since mutexes can be defined by user-land applications, we don’t want a DOS
+type of application that nests large amounts of mutexes to create a large
+PI chain, and have the code holding spin locks while looking at a large
+amount of data.  So to prevent this, the implementation not only implements
+a maximum lock depth, but also only holds at most two different locks at a
+time, as it walks the PI chain.  More about this below.</p>
+</div>
+<div class="section" id="mutex-owner-and-flags">
+<h2>Mutex owner and flags<a class="headerlink" href="#mutex-owner-and-flags" title="Permalink to this headline">¶</a></h2>
+<p>The mutex structure contains a pointer to the owner of the mutex.  If the
+mutex is not owned, this owner is set to NULL.  Since all architectures
+have the task structure on at least a two byte alignment (and if this is
+not true, the rtmutex.c code will be broken!), this allows for the least
+significant bit to be used as a flag.  Bit 0 is used as the “Has Waiters”
+flag. It’s set whenever there are waiters on a mutex.</p>
+<p>See <a class="reference internal" href="rt-mutex.html"><span class="doc">RT-mutex subsystem with PI support</span></a> for further details.</p>
+</div>
+<div class="section" id="cmpxchg-tricks">
+<h2>cmpxchg Tricks<a class="headerlink" href="#cmpxchg-tricks" title="Permalink to this headline">¶</a></h2>
+<p>Some architectures implement an atomic cmpxchg (Compare and Exchange).  This
+is used (when applicable) to keep the fast path of grabbing and releasing
+mutexes short.</p>
+<p>cmpxchg is basically the following function performed atomically:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>unsigned long _cmpxchg(unsigned long *A, unsigned long *B, unsigned long *C)
+{
+      unsigned long T = *A;
+      if (*A == *B) {
+              *A = *C;
+      }
+      return T;
+}
+#define cmpxchg(a,b,c) _cmpxchg(&amp;a,&amp;b,&amp;c)
+</pre></div>
+</div>
+<p>This is really nice to have, since it allows you to only update a variable
+if the variable is what you expect it to be.  You know if it succeeded if
+the return value (the old value of A) is equal to B.</p>
+<p>The macro rt_mutex_cmpxchg is used to try to lock and unlock mutexes. If
+the architecture does not support CMPXCHG, then this macro is simply set
+to fail every time.  But if CMPXCHG is supported, then this will
+help out extremely to keep the fast path short.</p>
+<p>The use of rt_mutex_cmpxchg with the flags in the owner field help optimize
+the system for architectures that support it.  This will also be explained
+later in this document.</p>
+</div>
+<div class="section" id="priority-adjustments">
+<h2>Priority adjustments<a class="headerlink" href="#priority-adjustments" title="Permalink to this headline">¶</a></h2>
+<p>The implementation of the PI code in rtmutex.c has several places that a
+process must adjust its priority.  With the help of the pi_waiters of a
+process this is rather easy to know what needs to be adjusted.</p>
+<p>The functions implementing the task adjustments are rt_mutex_adjust_prio
+and rt_mutex_setprio. rt_mutex_setprio is only used in rt_mutex_adjust_prio.</p>
+<p>rt_mutex_adjust_prio examines the priority of the task, and the highest
+priority process that is waiting any of mutexes owned by the task. Since
+the pi_waiters of a task holds an order by priority of all the top waiters
+of all the mutexes that the task owns, we simply need to compare the top
+pi waiter to its own normal/deadline priority and take the higher one.
+Then rt_mutex_setprio is called to adjust the priority of the task to the
+new priority. Note that rt_mutex_setprio is defined in kernel/sched/core.c
+to implement the actual change in priority.</p>
+<dl class="simple">
+<dt>Note:</dt><dd><p>For the “prio” field in task_struct, the lower the number, the
+higher the priority. A “prio” of 5 is of higher priority than a
+“prio” of 10.</p>
+</dd>
+</dl>
+<p>It is interesting to note that rt_mutex_adjust_prio can either increase
+or decrease the priority of the task.  In the case that a higher priority
+process has just blocked on a mutex owned by the task, rt_mutex_adjust_prio
+would increase/boost the task’s priority.  But if a higher priority task
+were for some reason to leave the mutex (timeout or signal), this same function
+would decrease/unboost the priority of the task.  That is because the pi_waiters
+always contains the highest priority task that is waiting on a mutex owned
+by the task, so we only need to compare the priority of that top pi waiter
+to the normal priority of the given task.</p>
+</div>
+<div class="section" id="high-level-overview-of-the-pi-chain-walk">
+<h2>High level overview of the PI chain walk<a class="headerlink" href="#high-level-overview-of-the-pi-chain-walk" title="Permalink to this headline">¶</a></h2>
+<p>The PI chain walk is implemented by the function rt_mutex_adjust_prio_chain.</p>
+<p>The implementation has gone through several iterations, and has ended up
+with what we believe is the best.  It walks the PI chain by only grabbing
+at most two locks at a time, and is very efficient.</p>
+<p>The rt_mutex_adjust_prio_chain can be used either to boost or lower process
+priorities.</p>
+<p>rt_mutex_adjust_prio_chain is called with a task to be checked for PI
+(de)boosting (the owner of a mutex that a process is blocking on), a flag to
+check for deadlocking, the mutex that the task owns, a pointer to a waiter
+that is the process’s waiter struct that is blocked on the mutex (although this
+parameter may be NULL for deboosting), a pointer to the mutex on which the task
+is blocked, and a top_task as the top waiter of the mutex.</p>
+<p>For this explanation, I will not mention deadlock detection. This explanation
+will try to stay at a high level.</p>
+<p>When this function is called, there are no locks held.  That also means
+that the state of the owner and lock can change when entered into this function.</p>
+<p>Before this function is called, the task has already had rt_mutex_adjust_prio
+performed on it.  This means that the task is set to the priority that it
+should be at, but the rbtree nodes of the task’s waiter have not been updated
+with the new priorities, and this task may not be in the proper locations
+in the pi_waiters and waiters trees that the task is blocked on. This function
+solves all that.</p>
+<p>The main operation of this function is summarized by Thomas Gleixner in
+rtmutex.c. See the ‘Chain walk basics and protection scope’ comment for further
+details.</p>
+</div>
+<div class="section" id="taking-of-a-mutex-the-walk-through">
+<h2>Taking of a mutex (The walk through)<a class="headerlink" href="#taking-of-a-mutex-the-walk-through" title="Permalink to this headline">¶</a></h2>
+<p>OK, now let’s take a look at the detailed walk through of what happens when
+taking a mutex.</p>
+<p>The first thing that is tried is the fast taking of the mutex.  This is
+done when we have CMPXCHG enabled (otherwise the fast taking automatically
+fails).  Only when the owner field of the mutex is NULL can the lock be
+taken with the CMPXCHG and nothing else needs to be done.</p>
+<p>If there is contention on the lock, we go about the slow path
+(rt_mutex_slowlock).</p>
+<p>The slow path function is where the task’s waiter structure is created on
+the stack.  This is because the waiter structure is only needed for the
+scope of this function.  The waiter structure holds the nodes to store
+the task on the waiters tree of the mutex, and if need be, the pi_waiters
+tree of the owner.</p>
+<p>The wait_lock of the mutex is taken since the slow path of unlocking the
+mutex also takes this lock.</p>
+<p>We then call try_to_take_rt_mutex.  This is where the architecture that
+does not implement CMPXCHG would always grab the lock (if there’s no
+contention).</p>
+<p>try_to_take_rt_mutex is used every time the task tries to grab a mutex in the
+slow path.  The first thing that is done here is an atomic setting of
+the “Has Waiters” flag of the mutex’s owner field. By setting this flag
+now, the current owner of the mutex being contended for can’t release the mutex
+without going into the slow unlock path, and it would then need to grab the
+wait_lock, which this code currently holds. So setting the “Has Waiters” flag
+forces the current owner to synchronize with this code.</p>
+<p>The lock is taken if the following are true:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>The lock has no owner</p></li>
+<li><p>The current task is the highest priority against all other
+waiters of the lock</p></li>
+</ol>
+</div></blockquote>
+<p>If the task succeeds to acquire the lock, then the task is set as the
+owner of the lock, and if the lock still has waiters, the top_waiter
+(highest priority task waiting on the lock) is added to this task’s
+pi_waiters tree.</p>
+<p>If the lock is not taken by try_to_take_rt_mutex(), then the
+task_blocks_on_rt_mutex() function is called. This will add the task to
+the lock’s waiter tree and propagate the pi chain of the lock as well
+as the lock’s owner’s pi_waiters tree. This is described in the next
+section.</p>
+</div>
+<div class="section" id="task-blocks-on-mutex">
+<h2>Task blocks on mutex<a class="headerlink" href="#task-blocks-on-mutex" title="Permalink to this headline">¶</a></h2>
+<p>The accounting of a mutex and process is done with the waiter structure of
+the process.  The “task” field is set to the process, and the “lock” field
+to the mutex.  The rbtree node of waiter are initialized to the processes
+current priority.</p>
+<p>Since the wait_lock was taken at the entry of the slow lock, we can safely
+add the waiter to the task waiter tree.  If the current process is the
+highest priority process currently waiting on this mutex, then we remove the
+previous top waiter process (if it exists) from the pi_waiters of the owner,
+and add the current process to that tree.  Since the pi_waiter of the owner
+has changed, we call rt_mutex_adjust_prio on the owner to see if the owner
+should adjust its priority accordingly.</p>
+<p>If the owner is also blocked on a lock, and had its pi_waiters changed
+(or deadlock checking is on), we unlock the wait_lock of the mutex and go ahead
+and run rt_mutex_adjust_prio_chain on the owner, as described earlier.</p>
+<p>Now all locks are released, and if the current process is still blocked on a
+mutex (waiter “task” field is not NULL), then we go to sleep (call schedule).</p>
+</div>
+<div class="section" id="waking-up-in-the-loop">
+<h2>Waking up in the loop<a class="headerlink" href="#waking-up-in-the-loop" title="Permalink to this headline">¶</a></h2>
+<dl class="simple">
+<dt>The task can then wake up for a couple of reasons:</dt><dd><ol class="arabic simple">
+<li><p>The previous lock owner released the lock, and the task now is top_waiter</p></li>
+<li><p>we received a signal or timeout</p></li>
+</ol>
+</dd>
+</dl>
+<p>In both cases, the task will try again to acquire the lock. If it
+does, then it will take itself off the waiters tree and set itself back
+to the TASK_RUNNING state.</p>
+<p>In first case, if the lock was acquired by another task before this task
+could get the lock, then it will go back to sleep and wait to be woken again.</p>
+<p>The second case is only applicable for tasks that are grabbing a mutex
+that can wake up before getting the lock, either due to a signal or
+a timeout (i.e. rt_mutex_timed_futex_lock()). When woken, it will try to
+take the lock again, if it succeeds, then the task will return with the
+lock held, otherwise it will return with -EINTR if the task was woken
+by a signal, or -ETIMEDOUT if it timed out.</p>
+</div>
+<div class="section" id="unlocking-the-mutex">
+<h2>Unlocking the Mutex<a class="headerlink" href="#unlocking-the-mutex" title="Permalink to this headline">¶</a></h2>
+<p>The unlocking of a mutex also has a fast path for those architectures with
+CMPXCHG.  Since the taking of a mutex on contention always sets the
+“Has Waiters” flag of the mutex’s owner, we use this to know if we need to
+take the slow path when unlocking the mutex.  If the mutex doesn’t have any
+waiters, the owner field of the mutex would equal the current process and
+the mutex can be unlocked by just replacing the owner field with NULL.</p>
+<p>If the owner field has the “Has Waiters” bit set (or CMPXCHG is not available),
+the slow unlock path is taken.</p>
+<p>The first thing done in the slow unlock path is to take the wait_lock of the
+mutex.  This synchronizes the locking and unlocking of the mutex.</p>
+<p>A check is made to see if the mutex has waiters or not.  On architectures that
+do not have CMPXCHG, this is the location that the owner of the mutex will
+determine if a waiter needs to be awoken or not.  On architectures that
+do have CMPXCHG, that check is done in the fast path, but it is still needed
+in the slow path too.  If a waiter of a mutex woke up because of a signal
+or timeout between the time the owner failed the fast path CMPXCHG check and
+the grabbing of the wait_lock, the mutex may not have any waiters, thus the
+owner still needs to make this check. If there are no waiters then the mutex
+owner field is set to NULL, the wait_lock is released and nothing more is
+needed.</p>
+<p>If there are waiters, then we need to wake one up.</p>
+<p>On the wake up code, the pi_lock of the current owner is taken.  The top
+waiter of the lock is found and removed from the waiters tree of the mutex
+as well as the pi_waiters tree of the current owner. The “Has Waiters” bit is
+marked to prevent lower priority tasks from stealing the lock.</p>
+<p>Finally we unlock the pi_lock of the pending owner and wake it up.</p>
+</div>
+<div class="section" id="contact">
+<h2>Contact<a class="headerlink" href="#contact" title="Permalink to this headline">¶</a></h2>
+<p>For updates on this document, please email Steven Rostedt &lt;<a class="reference external" href="mailto:rostedt&#37;&#52;&#48;goodmis&#46;org">rostedt<span>&#64;</span>goodmis<span>&#46;</span>org</a>&gt;</p>
+</div>
+<div class="section" id="credits">
+<h2>Credits<a class="headerlink" href="#credits" title="Permalink to this headline">¶</a></h2>
+<p>Author:  Steven Rostedt &lt;<a class="reference external" href="mailto:rostedt&#37;&#52;&#48;goodmis&#46;org">rostedt<span>&#64;</span>goodmis<span>&#46;</span>org</a>&gt;</p>
+<p>Updated: Alex Shi &lt;<a class="reference external" href="mailto:alex&#46;shi&#37;&#52;&#48;linaro&#46;org">alex<span>&#46;</span>shi<span>&#64;</span>linaro<span>&#46;</span>org</a>&gt; - 7/6/2017</p>
+<dl class="simple">
+<dt>Original Reviewers:</dt><dd><p>Ingo Molnar, Thomas Gleixner, Thomas Duetsch, and
+Randy Dunlap</p>
+</dd>
+</dl>
+<p>Update (7/6/2017) Reviewers: Steven Rostedt and Sebastian Siewior</p>
+</div>
+<div class="section" id="updates">
+<h2>Updates<a class="headerlink" href="#updates" title="Permalink to this headline">¶</a></h2>
+<p>This document was originally written for 2.6.17-rc3-mm1
+was updated on 4.12</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="rt-mutex.html" class="btn btn-neutral float-right" title="RT-mutex subsystem with PI support" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="mutex-design.html" class="btn btn-neutral float-left" title="Generic Mutex Subsystem" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright The kernel development community.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

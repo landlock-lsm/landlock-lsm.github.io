@@ -1,0 +1,712 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Linux and the Device Tree &mdash; The Linux Kernel 5.11.0+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Writing DeviceTree Bindings in json-schema" href="writing-schema.html" />
+    <link rel="prev" title="Open Firmware and Device Tree" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.11.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Open Firmware and Device Tree</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Linux and the Device Tree</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#history">1. History</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#data-model">2. Data Model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#high-level-view">2.1 High Level View</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#platform-identification">2.2 Platform Identification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#runtime-configuration">2.3 Runtime configuration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#device-population">2.4 Device population</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#appendix-a-amba-devices">Appendix A: AMBA devices</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="writing-schema.html">Writing DeviceTree Bindings in json-schema</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changesets.html">DT Changesets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dynamic-resolution-notes.html">Device Tree Dynamic Resolver Notes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="of_unittest.html">Open Firmware Device Tree Unittest</a></li>
+<li class="toctree-l2"><a class="reference internal" href="overlay-notes.html">Device Tree Overlay Notes</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bindings/index.html">Device Tree</a></li>
+</ul>
+</li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/index.html">Nios II Specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="index.html">Open Firmware and Device Tree</a> &raquo;</li>
+        
+      <li>Linux and the Device Tree</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/devicetree/usage-model.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="linux-and-the-device-tree">
+<h1>Linux and the Device Tree<a class="headerlink" href="#linux-and-the-device-tree" title="Permalink to this headline">¶</a></h1>
+<p>The Linux usage model for device tree data</p>
+<dl class="field-list simple">
+<dt class="field-odd">Author</dt>
+<dd class="field-odd"><p>Grant Likely &lt;<a class="reference external" href="mailto:grant&#46;likely&#37;&#52;&#48;secretlab&#46;ca">grant<span>&#46;</span>likely<span>&#64;</span>secretlab<span>&#46;</span>ca</a>&gt;</p>
+</dd>
+</dl>
+<p>This article describes how Linux uses the device tree.  An overview of
+the device tree data format can be found on the device tree usage page
+at devicetree.org<a class="footnote-reference brackets" href="#id2" id="id1">1</a>.</p>
+<dl class="footnote brackets">
+<dt class="label" id="id2"><span class="brackets">1</span><span class="fn-backref">(<a href="#id1">1</a>,<a href="#id3">2</a>)</span></dt>
+<dd><p><a class="reference external" href="https://elinux.org/Device_Tree_Usage">https://elinux.org/Device_Tree_Usage</a></p>
+</dd>
+</dl>
+<p>The “Open Firmware Device Tree”, or simply Device Tree (DT), is a data
+structure and language for describing hardware.  More specifically, it
+is a description of hardware that is readable by an operating system
+so that the operating system doesn’t need to hard code details of the
+machine.</p>
+<p>Structurally, the DT is a tree, or acyclic graph with named nodes, and
+nodes may have an arbitrary number of named properties encapsulating
+arbitrary data.  A mechanism also exists to create arbitrary
+links from one node to another outside of the natural tree structure.</p>
+<p>Conceptually, a common set of usage conventions, called ‘bindings’,
+is defined for how data should appear in the tree to describe typical
+hardware characteristics including data busses, interrupt lines, GPIO
+connections, and peripheral devices.</p>
+<p>As much as possible, hardware is described using existing bindings to
+maximize use of existing support code, but since property and node
+names are simply text strings, it is easy to extend existing bindings
+or create new ones by defining new nodes and properties.  Be wary,
+however, of creating a new binding without first doing some homework
+about what already exists.  There are currently two different,
+incompatible, bindings for i2c busses that came about because the new
+binding was created without first investigating how i2c devices were
+already being enumerated in existing systems.</p>
+<div class="section" id="history">
+<h2>1. History<a class="headerlink" href="#history" title="Permalink to this headline">¶</a></h2>
+<p>The DT was originally created by Open Firmware as part of the
+communication method for passing data from Open Firmware to a client
+program (like to an operating system).  An operating system used the
+Device Tree to discover the topology of the hardware at runtime, and
+thereby support a majority of available hardware without hard coded
+information (assuming drivers were available for all devices).</p>
+<p>Since Open Firmware is commonly used on PowerPC and SPARC platforms,
+the Linux support for those architectures has for a long time used the
+Device Tree.</p>
+<p>In 2005, when PowerPC Linux began a major cleanup and to merge 32-bit
+and 64-bit support, the decision was made to require DT support on all
+powerpc platforms, regardless of whether or not they used Open
+Firmware.  To do this, a DT representation called the Flattened Device
+Tree (FDT) was created which could be passed to the kernel as a binary
+blob without requiring a real Open Firmware implementation.  U-Boot,
+kexec, and other bootloaders were modified to support both passing a
+Device Tree Binary (dtb) and to modify a dtb at boot time.  DT was
+also added to the PowerPC boot wrapper (<code class="docutils literal notranslate"><span class="pre">arch/powerpc/boot/*</span></code>) so that
+a dtb could be wrapped up with the kernel image to support booting
+existing non-DT aware firmware.</p>
+<p>Some time later, FDT infrastructure was generalized to be usable by
+all architectures.  At the time of this writing, 6 mainlined
+architectures (arm, microblaze, mips, powerpc, sparc, and x86) and 1
+out of mainline (nios) have some level of DT support.</p>
+</div>
+<div class="section" id="data-model">
+<h2>2. Data Model<a class="headerlink" href="#data-model" title="Permalink to this headline">¶</a></h2>
+<p>If you haven’t already read the Device Tree Usage<a class="footnote-reference brackets" href="#id2" id="id3">1</a> page,
+then go read it now.  It’s okay, I’ll wait….</p>
+</div>
+<div class="section" id="high-level-view">
+<h2>2.1 High Level View<a class="headerlink" href="#high-level-view" title="Permalink to this headline">¶</a></h2>
+<p>The most important thing to understand is that the DT is simply a data
+structure that describes the hardware.  There is nothing magical about
+it, and it doesn’t magically make all hardware configuration problems
+go away.  What it does do is provide a language for decoupling the
+hardware configuration from the board and device driver support in the
+Linux kernel (or any other operating system for that matter).  Using
+it allows board and device support to become data driven; to make
+setup decisions based on data passed into the kernel instead of on
+per-machine hard coded selections.</p>
+<p>Ideally, data driven platform setup should result in less code
+duplication and make it easier to support a wide range of hardware
+with a single kernel image.</p>
+<p>Linux uses DT data for three major purposes:</p>
+<ol class="arabic simple">
+<li><p>platform identification,</p></li>
+<li><p>runtime configuration, and</p></li>
+<li><p>device population.</p></li>
+</ol>
+</div>
+<div class="section" id="platform-identification">
+<h2>2.2 Platform Identification<a class="headerlink" href="#platform-identification" title="Permalink to this headline">¶</a></h2>
+<p>First and foremost, the kernel will use data in the DT to identify the
+specific machine.  In a perfect world, the specific platform shouldn’t
+matter to the kernel because all platform details would be described
+perfectly by the device tree in a consistent and reliable manner.
+Hardware is not perfect though, and so the kernel must identify the
+machine during early boot so that it has the opportunity to run
+machine-specific fixups.</p>
+<p>In the majority of cases, the machine identity is irrelevant, and the
+kernel will instead select setup code based on the machine’s core
+CPU or SoC.  On ARM for example, setup_arch() in
+arch/arm/kernel/setup.c will call setup_machine_fdt() in
+arch/arm/kernel/devtree.c which searches through the machine_desc
+table and selects the machine_desc which best matches the device tree
+data.  It determines the best match by looking at the ‘compatible’
+property in the root device tree node, and comparing it with the
+dt_compat list in struct machine_desc (which is defined in
+arch/arm/include/asm/mach/arch.h if you’re curious).</p>
+<p>The ‘compatible’ property contains a sorted list of strings starting
+with the exact name of the machine, followed by an optional list of
+boards it is compatible with sorted from most compatible to least.  For
+example, the root compatible properties for the TI BeagleBoard and its
+successor, the BeagleBoard xM board might look like, respectively:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>compatible = &quot;ti,omap3-beagleboard&quot;, &quot;ti,omap3450&quot;, &quot;ti,omap3&quot;;
+compatible = &quot;ti,omap3-beagleboard-xm&quot;, &quot;ti,omap3450&quot;, &quot;ti,omap3&quot;;
+</pre></div>
+</div>
+<p>Where “ti,omap3-beagleboard-xm” specifies the exact model, it also
+claims that it compatible with the OMAP 3450 SoC, and the omap3 family
+of SoCs in general.  You’ll notice that the list is sorted from most
+specific (exact board) to least specific (SoC family).</p>
+<p>Astute readers might point out that the Beagle xM could also claim
+compatibility with the original Beagle board.  However, one should be
+cautioned about doing so at the board level since there is typically a
+high level of change from one board to another, even within the same
+product line, and it is hard to nail down exactly what is meant when one
+board claims to be compatible with another.  For the top level, it is
+better to err on the side of caution and not claim one board is
+compatible with another.  The notable exception would be when one
+board is a carrier for another, such as a CPU module attached to a
+carrier board.</p>
+<p>One more note on compatible values.  Any string used in a compatible
+property must be documented as to what it indicates.  Add
+documentation for compatible strings in Documentation/devicetree/bindings.</p>
+<p>Again on ARM, for each machine_desc, the kernel looks to see if
+any of the dt_compat list entries appear in the compatible property.
+If one does, then that machine_desc is a candidate for driving the
+machine.  After searching the entire table of machine_descs,
+setup_machine_fdt() returns the ‘most compatible’ machine_desc based
+on which entry in the compatible property each machine_desc matches
+against.  If no matching machine_desc is found, then it returns NULL.</p>
+<p>The reasoning behind this scheme is the observation that in the majority
+of cases, a single machine_desc can support a large number of boards
+if they all use the same SoC, or same family of SoCs.  However,
+invariably there will be some exceptions where a specific board will
+require special setup code that is not useful in the generic case.
+Special cases could be handled by explicitly checking for the
+troublesome board(s) in generic setup code, but doing so very quickly
+becomes ugly and/or unmaintainable if it is more than just a couple of
+cases.</p>
+<p>Instead, the compatible list allows a generic machine_desc to provide
+support for a wide common set of boards by specifying “less
+compatible” values in the dt_compat list.  In the example above,
+generic board support can claim compatibility with “ti,omap3” or
+“ti,omap3450”.  If a bug was discovered on the original beagleboard
+that required special workaround code during early boot, then a new
+machine_desc could be added which implements the workarounds and only
+matches on “ti,omap3-beagleboard”.</p>
+<p>PowerPC uses a slightly different scheme where it calls the .probe()
+hook from each machine_desc, and the first one returning TRUE is used.
+However, this approach does not take into account the priority of the
+compatible list, and probably should be avoided for new architecture
+support.</p>
+</div>
+<div class="section" id="runtime-configuration">
+<h2>2.3 Runtime configuration<a class="headerlink" href="#runtime-configuration" title="Permalink to this headline">¶</a></h2>
+<p>In most cases, a DT will be the sole method of communicating data from
+firmware to the kernel, so also gets used to pass in runtime and
+configuration data like the kernel parameters string and the location
+of an initrd image.</p>
+<p>Most of this data is contained in the /chosen node, and when booting
+Linux it will look something like this:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>chosen {
+        bootargs = &quot;console=ttyS0,115200 loglevel=8&quot;;
+        initrd-start = &lt;0xc8000000&gt;;
+        initrd-end = &lt;0xc8200000&gt;;
+};
+</pre></div>
+</div>
+<p>The bootargs property contains the kernel arguments, and the initrd-*
+properties define the address and size of an initrd blob.  Note that
+initrd-end is the first address after the initrd image, so this doesn’t
+match the usual semantic of struct resource.  The chosen node may also
+optionally contain an arbitrary number of additional properties for
+platform-specific configuration data.</p>
+<p>During early boot, the architecture setup code calls of_scan_flat_dt()
+several times with different helper callbacks to parse device tree
+data before paging is setup.  The of_scan_flat_dt() code scans through
+the device tree and uses the helpers to extract information required
+during early boot.  Typically the early_init_dt_scan_chosen() helper
+is used to parse the chosen node including kernel parameters,
+early_init_dt_scan_root() to initialize the DT address space model,
+and early_init_dt_scan_memory() to determine the size and
+location of usable RAM.</p>
+<p>On ARM, the function setup_machine_fdt() is responsible for early
+scanning of the device tree after selecting the correct machine_desc
+that supports the board.</p>
+</div>
+<div class="section" id="device-population">
+<h2>2.4 Device population<a class="headerlink" href="#device-population" title="Permalink to this headline">¶</a></h2>
+<p>After the board has been identified, and after the early configuration data
+has been parsed, then kernel initialization can proceed in the normal
+way.  At some point in this process, unflatten_device_tree() is called
+to convert the data into a more efficient runtime representation.
+This is also when machine-specific setup hooks will get called, like
+the machine_desc .init_early(), .init_irq() and .init_machine() hooks
+on ARM.  The remainder of this section uses examples from the ARM
+implementation, but all architectures will do pretty much the same
+thing when using a DT.</p>
+<p>As can be guessed by the names, .init_early() is used for any machine-
+specific setup that needs to be executed early in the boot process,
+and .init_irq() is used to set up interrupt handling.  Using a DT
+doesn’t materially change the behaviour of either of these functions.
+If a DT is provided, then both .init_early() and .init_irq() are able
+to call any of the DT query functions (of_* in include/linux/of*.h) to
+get additional data about the platform.</p>
+<p>The most interesting hook in the DT context is .init_machine() which
+is primarily responsible for populating the Linux device model with
+data about the platform.  Historically this has been implemented on
+embedded platforms by defining a set of static clock structures,
+platform_devices, and other data in the board support .c file, and
+registering it en-masse in .init_machine().  When DT is used, then
+instead of hard coding static devices for each platform, the list of
+devices can be obtained by parsing the DT, and allocating device
+structures dynamically.</p>
+<p>The simplest case is when .init_machine() is only responsible for
+registering a block of platform_devices.  A platform_device is a concept
+used by Linux for memory or I/O mapped devices which cannot be detected
+by hardware, and for ‘composite’ or ‘virtual’ devices (more on those
+later).  While there is no ‘platform device’ terminology for the DT,
+platform devices roughly correspond to device nodes at the root of the
+tree and children of simple memory mapped bus nodes.</p>
+<p>About now is a good time to lay out an example.  Here is part of the
+device tree for the NVIDIA Tegra board:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>/{
+      compatible = &quot;nvidia,harmony&quot;, &quot;nvidia,tegra20&quot;;
+      #address-cells = &lt;1&gt;;
+      #size-cells = &lt;1&gt;;
+      interrupt-parent = &lt;&amp;intc&gt;;
+
+      chosen { };
+      aliases { };
+
+      memory {
+              device_type = &quot;memory&quot;;
+              reg = &lt;0x00000000 0x40000000&gt;;
+      };
+
+      soc {
+              compatible = &quot;nvidia,tegra20-soc&quot;, &quot;simple-bus&quot;;
+              #address-cells = &lt;1&gt;;
+              #size-cells = &lt;1&gt;;
+              ranges;
+
+              intc: interrupt-controller@50041000 {
+                      compatible = &quot;nvidia,tegra20-gic&quot;;
+                      interrupt-controller;
+                      #interrupt-cells = &lt;1&gt;;
+                      reg = &lt;0x50041000 0x1000&gt;, &lt; 0x50040100 0x0100 &gt;;
+              };
+
+              serial@70006300 {
+                      compatible = &quot;nvidia,tegra20-uart&quot;;
+                      reg = &lt;0x70006300 0x100&gt;;
+                      interrupts = &lt;122&gt;;
+              };
+
+              i2s1: i2s@70002800 {
+                      compatible = &quot;nvidia,tegra20-i2s&quot;;
+                      reg = &lt;0x70002800 0x100&gt;;
+                      interrupts = &lt;77&gt;;
+                      codec = &lt;&amp;wm8903&gt;;
+              };
+
+              i2c@7000c000 {
+                      compatible = &quot;nvidia,tegra20-i2c&quot;;
+                      #address-cells = &lt;1&gt;;
+                      #size-cells = &lt;0&gt;;
+                      reg = &lt;0x7000c000 0x100&gt;;
+                      interrupts = &lt;70&gt;;
+
+                      wm8903: codec@1a {
+                              compatible = &quot;wlf,wm8903&quot;;
+                              reg = &lt;0x1a&gt;;
+                              interrupts = &lt;347&gt;;
+                      };
+              };
+      };
+
+      sound {
+              compatible = &quot;nvidia,harmony-sound&quot;;
+              i2s-controller = &lt;&amp;i2s1&gt;;
+              i2s-codec = &lt;&amp;wm8903&gt;;
+      };
+};
+</pre></div>
+</div>
+<p>At .init_machine() time, Tegra board support code will need to look at
+this DT and decide which nodes to create platform_devices for.
+However, looking at the tree, it is not immediately obvious what kind
+of device each node represents, or even if a node represents a device
+at all.  The /chosen, /aliases, and /memory nodes are informational
+nodes that don’t describe devices (although arguably memory could be
+considered a device).  The children of the /soc node are memory mapped
+devices, but the <a class="reference external" href="mailto:codec&#37;&#52;&#48;1a">codec<span>&#64;</span>1a</a> is an i2c device, and the sound node
+represents not a device, but rather how other devices are connected
+together to create the audio subsystem.  I know what each device is
+because I’m familiar with the board design, but how does the kernel
+know what to do with each node?</p>
+<p>The trick is that the kernel starts at the root of the tree and looks
+for nodes that have a ‘compatible’ property.  First, it is generally
+assumed that any node with a ‘compatible’ property represents a device
+of some kind, and second, it can be assumed that any node at the root
+of the tree is either directly attached to the processor bus, or is a
+miscellaneous system device that cannot be described any other way.
+For each of these nodes, Linux allocates and registers a
+platform_device, which in turn may get bound to a platform_driver.</p>
+<p>Why is using a platform_device for these nodes a safe assumption?
+Well, for the way that Linux models devices, just about all bus_types
+assume that its devices are children of a bus controller.  For
+example, each i2c_client is a child of an i2c_master.  Each spi_device
+is a child of an SPI bus.  Similarly for USB, PCI, MDIO, etc.  The
+same hierarchy is also found in the DT, where I2C device nodes only
+ever appear as children of an I2C bus node.  Ditto for SPI, MDIO, USB,
+etc.  The only devices which do not require a specific type of parent
+device are platform_devices (and amba_devices, but more on that
+later), which will happily live at the base of the Linux /sys/devices
+tree.  Therefore, if a DT node is at the root of the tree, then it
+really probably is best registered as a platform_device.</p>
+<p>Linux board support code calls of_platform_populate(NULL, NULL, NULL, NULL)
+to kick off discovery of devices at the root of the tree.  The
+parameters are all NULL because when starting from the root of the
+tree, there is no need to provide a starting node (the first NULL), a
+parent <a class="reference internal" href="../driver-api/infrastructure.html#c.device" title="device"><code class="xref c c-struct docutils literal notranslate"><span class="pre">struct</span> <span class="pre">device</span></code></a> (the last NULL), and we’re not using a match
+table (yet).  For a board that only needs to register devices,
+.init_machine() can be completely empty except for the
+of_platform_populate() call.</p>
+<p>In the Tegra example, this accounts for the /soc and /sound nodes, but
+what about the children of the SoC node?  Shouldn’t they be registered
+as platform devices too?  For Linux DT support, the generic behaviour
+is for child devices to be registered by the parent’s device driver at
+driver .probe() time.  So, an i2c bus device driver will register a
+i2c_client for each child node, an SPI bus driver will register
+its spi_device children, and similarly for other bus_types.
+According to that model, a driver could be written that binds to the
+SoC node and simply registers platform_devices for each of its
+children.  The board support code would allocate and register an SoC
+device, a (theoretical) SoC device driver could bind to the SoC device,
+and register platform_devices for /soc/interrupt-controller, /soc/serial,
+/soc/i2s, and /soc/i2c in its .probe() hook.  Easy, right?</p>
+<p>Actually, it turns out that registering children of some
+platform_devices as more platform_devices is a common pattern, and the
+device tree support code reflects that and makes the above example
+simpler.  The second argument to of_platform_populate() is an
+of_device_id table, and any node that matches an entry in that table
+will also get its child nodes registered.  In the Tegra case, the code
+can look something like this:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>static void __init harmony_init_machine(void)
+{
+      /* ... */
+      of_platform_populate(NULL, of_default_bus_match_table, NULL, NULL);
+}
+</pre></div>
+</div>
+<p>“simple-bus” is defined in the Devicetree Specification as a property
+meaning a simple memory mapped bus, so the of_platform_populate() code
+could be written to just assume simple-bus compatible nodes will
+always be traversed.  However, we pass it in as an argument so that
+board support code can always override the default behaviour.</p>
+<p>[Need to add discussion of adding i2c/spi/etc child devices]</p>
+</div>
+<div class="section" id="appendix-a-amba-devices">
+<h2>Appendix A: AMBA devices<a class="headerlink" href="#appendix-a-amba-devices" title="Permalink to this headline">¶</a></h2>
+<p>ARM Primecells are a certain kind of device attached to the ARM AMBA
+bus which include some support for hardware detection and power
+management.  In Linux, struct amba_device and the amba_bus_type is
+used to represent Primecell devices.  However, the fiddly bit is that
+not all devices on an AMBA bus are Primecells, and for Linux it is
+typical for both amba_device and platform_device instances to be
+siblings of the same bus segment.</p>
+<p>When using the DT, this creates problems for of_platform_populate()
+because it must decide whether to register each node as either a
+platform_device or an amba_device.  This unfortunately complicates the
+device creation model a little bit, but the solution turns out not to
+be too invasive.  If a node is compatible with “arm,amba-primecell”, then
+of_platform_populate() will register it as an amba_device instead of a
+platform_device.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="writing-schema.html" class="btn btn-neutral float-right" title="Writing DeviceTree Bindings in json-schema" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="index.html" class="btn btn-neutral float-left" title="Open Firmware and Device Tree" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright The kernel development community.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

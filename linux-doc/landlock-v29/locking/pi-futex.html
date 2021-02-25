@@ -1,0 +1,438 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Lightweight PI-futexes &mdash; The Linux Kernel 5.11.0+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Futex Requeue PI" href="futex-requeue-pi.html" />
+    <link rel="prev" title="Proper Locking Under a Preemptible Kernel: Keeping Kernel Code Preempt-Safe" href="preempt-locking.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.11.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">locking</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="locktypes.html">Lock types and their rules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lockdep-design.html">Runtime locking correctness validator</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lockstat.html">Lock Statistics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="locktorture.html">Kernel Lock Torture Test Operation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mutex-design.html">Generic Mutex Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rt-mutex-design.html">RT-mutex implementation design</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rt-mutex.html">RT-mutex subsystem with PI support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="seqlock.html">Sequence counters and sequential locks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spinlocks.html">Locking lessons</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ww-mutex-design.html">Wound/Wait Deadlock-Proof Mutex Design</a></li>
+<li class="toctree-l2"><a class="reference internal" href="preempt-locking.html">Proper Locking Under a Preemptible Kernel: Keeping Kernel Code Preempt-Safe</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Lightweight PI-futexes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#priority-inheritance-why">Priority Inheritance - why?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-longer-reply">The longer reply</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#implementation">Implementation</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="futex-requeue-pi.html">Futex Requeue PI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hwspinlock.html">Hardware Spinlock Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="percpu-rw-semaphore.html">Percpu rw semaphores</a></li>
+<li class="toctree-l2"><a class="reference internal" href="robust-futexes.html">A description of what robust futexes are</a></li>
+<li class="toctree-l2"><a class="reference internal" href="robust-futex-ABI.html">The robust futex ABI</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/index.html">Nios II Specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="index.html">locking</a> &raquo;</li>
+        
+      <li>Lightweight PI-futexes</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/locking/pi-futex.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="lightweight-pi-futexes">
+<h1>Lightweight PI-futexes<a class="headerlink" href="#lightweight-pi-futexes" title="Permalink to this headline">¶</a></h1>
+<p>We are calling them lightweight for 3 reasons:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>in the user-space fastpath a PI-enabled futex involves no kernel work
+(or any other PI complexity) at all. No registration, no extra kernel
+calls - just pure fast atomic ops in userspace.</p></li>
+<li><p>even in the slowpath, the system call and scheduling pattern is very
+similar to normal futexes.</p></li>
+<li><p>the in-kernel PI implementation is streamlined around the mutex
+abstraction, with strict rules that keep the implementation
+relatively simple: only a single owner may own a lock (i.e. no
+read-write lock support), only the owner may unlock a lock, no
+recursive locking, etc.</p></li>
+</ul>
+</div></blockquote>
+<div class="section" id="priority-inheritance-why">
+<h2>Priority Inheritance - why?<a class="headerlink" href="#priority-inheritance-why" title="Permalink to this headline">¶</a></h2>
+<p>The short reply: user-space PI helps achieving/improving determinism for
+user-space applications. In the best-case, it can help achieve
+determinism and well-bound latencies. Even in the worst-case, PI will
+improve the statistical distribution of locking related application
+delays.</p>
+</div>
+<div class="section" id="the-longer-reply">
+<h2>The longer reply<a class="headerlink" href="#the-longer-reply" title="Permalink to this headline">¶</a></h2>
+<p>Firstly, sharing locks between multiple tasks is a common programming
+technique that often cannot be replaced with lockless algorithms. As we
+can see it in the kernel [which is a quite complex program in itself],
+lockless structures are rather the exception than the norm - the current
+ratio of lockless vs. locky code for shared data structures is somewhere
+between 1:10 and 1:100. Lockless is hard, and the complexity of lockless
+algorithms often endangers to ability to do robust reviews of said code.
+I.e. critical RT apps often choose lock structures to protect critical
+data structures, instead of lockless algorithms. Furthermore, there are
+cases (like shared hardware, or other resource limits) where lockless
+access is mathematically impossible.</p>
+<p>Media players (such as Jack) are an example of reasonable application
+design with multiple tasks (with multiple priority levels) sharing
+short-held locks: for example, a highprio audio playback thread is
+combined with medium-prio construct-audio-data threads and low-prio
+display-colory-stuff threads. Add video and decoding to the mix and
+we’ve got even more priority levels.</p>
+<p>So once we accept that synchronization objects (locks) are an
+unavoidable fact of life, and once we accept that multi-task userspace
+apps have a very fair expectation of being able to use locks, we’ve got
+to think about how to offer the option of a deterministic locking
+implementation to user-space.</p>
+<p>Most of the technical counter-arguments against doing priority
+inheritance only apply to kernel-space locks. But user-space locks are
+different, there we cannot disable interrupts or make the task
+non-preemptible in a critical section, so the ‘use spinlocks’ argument
+does not apply (user-space spinlocks have the same priority inversion
+problems as other user-space locking constructs). Fact is, pretty much
+the only technique that currently enables good determinism for userspace
+locks (such as futex-based pthread mutexes) is priority inheritance:</p>
+<p>Currently (without PI), if a high-prio and a low-prio task shares a lock
+[this is a quite common scenario for most non-trivial RT applications],
+even if all critical sections are coded carefully to be deterministic
+(i.e. all critical sections are short in duration and only execute a
+limited number of instructions), the kernel cannot guarantee any
+deterministic execution of the high-prio task: any medium-priority task
+could preempt the low-prio task while it holds the shared lock and
+executes the critical section, and could delay it indefinitely.</p>
+</div>
+<div class="section" id="implementation">
+<h2>Implementation<a class="headerlink" href="#implementation" title="Permalink to this headline">¶</a></h2>
+<p>As mentioned before, the userspace fastpath of PI-enabled pthread
+mutexes involves no kernel work at all - they behave quite similarly to
+normal futex-based locks: a 0 value means unlocked, and a value==TID
+means locked. (This is the same method as used by list-based robust
+futexes.) Userspace uses atomic ops to lock/unlock these mutexes without
+entering the kernel.</p>
+<p>To handle the slowpath, we have added two new futex ops:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>FUTEX_LOCK_PI</p></li>
+<li><p>FUTEX_UNLOCK_PI</p></li>
+</ul>
+</div></blockquote>
+<p>If the lock-acquire fastpath fails, [i.e. an atomic transition from 0 to
+TID fails], then FUTEX_LOCK_PI is called. The kernel does all the
+remaining work: if there is no futex-queue attached to the futex address
+yet then the code looks up the task that owns the futex [it has put its
+own TID into the futex value], and attaches a ‘PI state’ structure to
+the futex-queue. The pi_state includes an rt-mutex, which is a PI-aware,
+kernel-based synchronization object. The ‘other’ task is made the owner
+of the rt-mutex, and the FUTEX_WAITERS bit is atomically set in the
+futex value. Then this task tries to lock the rt-mutex, on which it
+blocks. Once it returns, it has the mutex acquired, and it sets the
+futex value to its own TID and returns. Userspace has no other work to
+perform - it now owns the lock, and futex value contains
+FUTEX_WAITERS|TID.</p>
+<p>If the unlock side fastpath succeeds, [i.e. userspace manages to do a
+TID -&gt; 0 atomic transition of the futex value], then no kernel work is
+triggered.</p>
+<p>If the unlock fastpath fails (because the FUTEX_WAITERS bit is set),
+then FUTEX_UNLOCK_PI is called, and the kernel unlocks the futex on the
+behalf of userspace - and it also unlocks the attached
+pi_state-&gt;rt_mutex and thus wakes up any potential waiters.</p>
+<p>Note that under this approach, contrary to previous PI-futex approaches,
+there is no prior ‘registration’ of a PI-futex. [which is not quite
+possible anyway, due to existing ABI properties of pthread mutexes.]</p>
+<p>Also, under this scheme, ‘robustness’ and ‘PI’ are two orthogonal
+properties of futexes, and all four combinations are possible: futex,
+robust-futex, PI-futex, robust+PI-futex.</p>
+<p>More details about priority inheritance can be found in
+<a class="reference internal" href="rt-mutex.html"><span class="doc">RT-mutex subsystem with PI support</span></a>.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="futex-requeue-pi.html" class="btn btn-neutral float-right" title="Futex Requeue PI" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="preempt-locking.html" class="btn btn-neutral float-left" title="Proper Locking Under a Preemptible Kernel: Keeping Kernel Code Preempt-Safe" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright The kernel development community.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

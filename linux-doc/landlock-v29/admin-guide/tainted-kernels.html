@@ -1,0 +1,634 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Tainted kernels &mdash; The Linux Kernel 5.11.0+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Ramoops oops/panic logger" href="ramoops.html" />
+    <link rel="prev" title="Bisecting a bug" href="bug-bisect.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.11.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">The Linux kernel user’s and administrator’s guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="README.html">Linux kernel release 5.x &lt;http://kernel.org/&gt;</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel-parameters.html">The kernel’s command-line parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="devices.html">Linux allocated devices (4.x+ version)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sysctl/index.html">Documentation for /proc/sys</a></li>
+<li class="toctree-l2"><a class="reference internal" href="abi.html">Linux ABI description</a></li>
+<li class="toctree-l2"><a class="reference internal" href="features.html">Feature status on all architectures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hw-vuln/index.html">Hardware vulnerabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reporting-issues.html">Reporting issues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reporting-bugs.html">Reporting bugs (obsolete)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="security-bugs.html">Security bugs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bug-hunting.html">Bug hunting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bug-bisect.html">Bisecting a bug</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Tainted kernels</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#tainted-flag-in-bugs-oops-or-panics-messages">Tainted flag in bugs, oops or panics messages</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#decoding-tainted-state-at-runtime">Decoding tainted state at runtime</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#table-for-decoding-tainted-state">Table for decoding tainted state</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#more-detailed-explanation-for-tainting">More detailed explanation for tainting</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="ramoops.html">Ramoops oops/panic logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dynamic-debug-howto.html">Dynamic debug</a></li>
+<li class="toctree-l2"><a class="reference internal" href="init.html">Explaining the “No working init found.” boot hang message</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kdump/index.html">Documentation for Kdump - The kexec-based Crash Dumping Solution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="perf/index.html">Performance monitor support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pstore-blk.html">pstore block oops/panic logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sysfs-rules.html">Rules on how to access information in sysfs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="acpi/index.html">ACPI Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="aoe/index.html">ATA over Ethernet (AoE)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="auxdisplay/index.html">Auxiliary Display Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bcache.html">A block layer cache (bcache)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="binderfs.html">The Android binderfs Filesystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="binfmt-misc.html">Kernel Support for miscellaneous Binary Formats (binfmt_misc)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="blockdev/index.html">The Linux RapidIO Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="bootconfig.html">Boot Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="braille-console.html">Linux Braille Console</a></li>
+<li class="toctree-l2"><a class="reference internal" href="btmrvl.html">btmrvl driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cgroup-v1/index.html">Control Groups version 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cgroup-v2.html">Control Group v2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cifs/index.html">CIFS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="clearing-warn-once.html">Clearing WARN_ONCE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cpu-load.html">CPU load</a></li>
+<li class="toctree-l2"><a class="reference internal" href="cputopology.html">How CPU topology info is exported via sysfs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="dell_rbu.html">Dell Remote BIOS Update driver (dell_rbu)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="device-mapper/index.html">Device Mapper</a></li>
+<li class="toctree-l2"><a class="reference internal" href="edid.html">EDID</a></li>
+<li class="toctree-l2"><a class="reference internal" href="efi-stub.html">The EFI Boot Stub</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ext4.html">ext4 General Information</a></li>
+<li class="toctree-l2"><a class="reference internal" href="nfs/index.html">NFS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="gpio/index.html">gpio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="highuid.html">Notes on the change from 16-bit UIDs to 32-bit UIDs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="hw_random.html">Linux support for random number generator in i8xx chipsets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="initrd.html">Using the initial RAM disk (initrd)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="iostats.html">I/O statistics fields</a></li>
+<li class="toctree-l2"><a class="reference internal" href="java.html">Java(tm) Binary Kernel Support for Linux v1.03</a></li>
+<li class="toctree-l2"><a class="reference internal" href="jfs.html">IBM’s Journaled File System (JFS) for Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="kernel-per-CPU-kthreads.html">Reducing OS jitter due to per-cpu kthreads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="laptops/index.html">Laptop Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lcd-panel-cgram.html">Parallel port LCD/Keypad Panel support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ldm.html">LDM - Logical Disk Manager (Dynamic Disks)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lockup-watchdogs.html">Softlockup detector and hardlockup detector (aka nmi_watchdog)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="LSM/index.html">Linux Security Module Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="md.html">RAID arrays</a></li>
+<li class="toctree-l2"><a class="reference internal" href="media/index.html">Media subsystem admin and user guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mm/index.html">Memory Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="module-signing.html">Kernel module signing facility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="mono.html">Mono(tm) Binary Kernel Support for Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="namespaces/index.html">Namespaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="numastat.html">Numa policy hit/miss statistics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="parport.html">Parport</a></li>
+<li class="toctree-l2"><a class="reference internal" href="perf-security.html">Perf events and tool security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pm/index.html">Power Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="pnp.html">Linux Plug and Play Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rapidio.html">RapidIO Subsystem Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ras.html">Reliability, Availability and Serviceability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="rtc.html">Real Time Clock (RTC) Drivers for Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="serial-console.html">Linux Serial Console</a></li>
+<li class="toctree-l2"><a class="reference internal" href="svga.html">Video Mode Selection Support 2.13</a></li>
+<li class="toctree-l2"><a class="reference internal" href="syscall-user-dispatch.html">Syscall User Dispatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="sysrq.html">Linux Magic System Request Key Hacks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="thunderbolt.html">USB4 and Thunderbolt</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ufs.html">Using UFS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="unicode.html">Unicode support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vga-softcursor.html">Software cursor for VGA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="video-output.html">Video Output Switcher Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="xfs.html">The SGI XFS Filesystem</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/index.html">Nios II Specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="index.html">The Linux kernel user’s and administrator’s guide</a> &raquo;</li>
+        
+      <li>Tainted kernels</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/admin-guide/tainted-kernels.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="tainted-kernels">
+<h1>Tainted kernels<a class="headerlink" href="#tainted-kernels" title="Permalink to this headline">¶</a></h1>
+<p>The kernel will mark itself as ‘tainted’ when something occurs that might be
+relevant later when investigating problems. Don’t worry too much about this,
+most of the time it’s not a problem to run a tainted kernel; the information is
+mainly of interest once someone wants to investigate some problem, as its real
+cause might be the event that got the kernel tainted. That’s why bug reports
+from tainted kernels will often be ignored by developers, hence try to reproduce
+problems with an untainted kernel.</p>
+<p>Note the kernel will remain tainted even after you undo what caused the taint
+(i.e. unload a proprietary kernel module), to indicate the kernel remains not
+trustworthy. That’s also why the kernel will print the tainted state when it
+notices an internal problem (a ‘kernel bug’), a recoverable error
+(‘kernel oops’) or a non-recoverable error (‘kernel panic’) and writes debug
+information about this to the logs <code class="docutils literal notranslate"><span class="pre">dmesg</span></code> outputs. It’s also possible to
+check the tainted state at runtime through a file in <code class="docutils literal notranslate"><span class="pre">/proc/</span></code>.</p>
+<div class="section" id="tainted-flag-in-bugs-oops-or-panics-messages">
+<h2>Tainted flag in bugs, oops or panics messages<a class="headerlink" href="#tainted-flag-in-bugs-oops-or-panics-messages" title="Permalink to this headline">¶</a></h2>
+<p>You find the tainted state near the top in a line starting with ‘CPU:’; if or
+why the kernel was tainted is shown after the Process ID (‘PID:’) and a shortened
+name of the command (‘Comm:’) that triggered the event:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>BUG: unable to handle kernel NULL pointer dereference at 0000000000000000
+Oops: 0002 [#1] SMP PTI
+CPU: 0 PID: 4424 Comm: insmod Tainted: P        W  O      4.20.0-0.rc6.fc30 #1
+Hardware name: Red Hat KVM, BIOS 0.5.1 01/01/2011
+RIP: 0010:my_oops_init+0x13/0x1000 [kpanic]
+[...]
+</pre></div>
+</div>
+<p>You’ll find a ‘Not tainted: ‘ there if the kernel was not tainted at the
+time of the event; if it was, then it will print ‘Tainted: ‘ and characters
+either letters or blanks. In above example it looks like this:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Tainted: P        W  O
+</pre></div>
+</div>
+<p>The meaning of those characters is explained in the table below. In this case
+the kernel got tainted earlier because a proprietary Module (<code class="docutils literal notranslate"><span class="pre">P</span></code>) was loaded,
+a warning occurred (<code class="docutils literal notranslate"><span class="pre">W</span></code>), and an externally-built module was loaded (<code class="docutils literal notranslate"><span class="pre">O</span></code>).
+To decode other letters use the table below.</p>
+</div>
+<div class="section" id="decoding-tainted-state-at-runtime">
+<h2>Decoding tainted state at runtime<a class="headerlink" href="#decoding-tainted-state-at-runtime" title="Permalink to this headline">¶</a></h2>
+<p>At runtime, you can query the tainted state by reading
+<code class="docutils literal notranslate"><span class="pre">cat</span> <span class="pre">/proc/sys/kernel/tainted</span></code>. If that returns <code class="docutils literal notranslate"><span class="pre">0</span></code>, the kernel is not
+tainted; any other number indicates the reasons why it is. The easiest way to
+decode that number is the script <code class="docutils literal notranslate"><span class="pre">tools/debugging/kernel-chktaint</span></code>, which your
+distribution might ship as part of a package called <code class="docutils literal notranslate"><span class="pre">linux-tools</span></code> or
+<code class="docutils literal notranslate"><span class="pre">kernel-tools</span></code>; if it doesn’t you can download the script from
+<a class="reference external" href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/plain/tools/debugging/kernel-chktaint">git.kernel.org</a>
+and execute it with <code class="docutils literal notranslate"><span class="pre">sh</span> <span class="pre">kernel-chktaint</span></code>, which would print something like
+this on the machine that had the statements in the logs that were quoted earlier:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Kernel is Tainted for following reasons:
+ * Proprietary module was loaded (#0)
+ * Kernel issued warning (#9)
+ * Externally-built (&#39;out-of-tree&#39;) module was loaded  (#12)
+See Documentation/admin-guide/tainted-kernels.rst in the Linux kernel or
+ https://www.kernel.org/doc/html/latest/admin-guide/tainted-kernels.html for
+ a more details explanation of the various taint flags.
+Raw taint value as int/string: 4609/&#39;P        W  O     &#39;
+</pre></div>
+</div>
+<p>You can try to decode the number yourself. That’s easy if there was only one
+reason that got your kernel tainted, as in this case you can find the number
+with the table below. If there were multiple reasons you need to decode the
+number, as it is a bitfield, where each bit indicates the absence or presence of
+a particular type of taint. It’s best to leave that to the aforementioned
+script, but if you need something quick you can use this shell command to check
+which bits are set:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ for i in $(seq 18); do echo $(($i-1)) $(($(cat /proc/sys/kernel/tainted)&gt;&gt;($i-1)&amp;1));done
+</pre></div>
+</div>
+</div>
+<div class="section" id="table-for-decoding-tainted-state">
+<h2>Table for decoding tainted state<a class="headerlink" href="#table-for-decoding-tainted-state" title="Permalink to this headline">¶</a></h2>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 4%" />
+<col style="width: 4%" />
+<col style="width: 9%" />
+<col style="width: 82%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Bit</p></th>
+<th class="head"><p>Log</p></th>
+<th class="head"><p>Number</p></th>
+<th class="head"><p>Reason that got the kernel tainted</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>G/P</p></td>
+<td><p>1</p></td>
+<td><p>proprietary module was loaded</p></td>
+</tr>
+<tr class="row-odd"><td><p>1</p></td>
+<td><p>_/F</p></td>
+<td><p>2</p></td>
+<td><p>module was force loaded</p></td>
+</tr>
+<tr class="row-even"><td><p>2</p></td>
+<td><p>_/S</p></td>
+<td><p>4</p></td>
+<td><p>kernel running on an out of specification system</p></td>
+</tr>
+<tr class="row-odd"><td><p>3</p></td>
+<td><p>_/R</p></td>
+<td><p>8</p></td>
+<td><p>module was force unloaded</p></td>
+</tr>
+<tr class="row-even"><td><p>4</p></td>
+<td><p>_/M</p></td>
+<td><p>16</p></td>
+<td><p>processor reported a Machine Check Exception (MCE)</p></td>
+</tr>
+<tr class="row-odd"><td><p>5</p></td>
+<td><p>_/B</p></td>
+<td><p>32</p></td>
+<td><p>bad page referenced or some unexpected page flags</p></td>
+</tr>
+<tr class="row-even"><td><p>6</p></td>
+<td><p>_/U</p></td>
+<td><p>64</p></td>
+<td><p>taint requested by userspace application</p></td>
+</tr>
+<tr class="row-odd"><td><p>7</p></td>
+<td><p>_/D</p></td>
+<td><p>128</p></td>
+<td><p>kernel died recently, i.e. there was an OOPS or BUG</p></td>
+</tr>
+<tr class="row-even"><td><p>8</p></td>
+<td><p>_/A</p></td>
+<td><p>256</p></td>
+<td><p>ACPI table overridden by user</p></td>
+</tr>
+<tr class="row-odd"><td><p>9</p></td>
+<td><p>_/W</p></td>
+<td><p>512</p></td>
+<td><p>kernel issued warning</p></td>
+</tr>
+<tr class="row-even"><td><p>10</p></td>
+<td><p>_/C</p></td>
+<td><p>1024</p></td>
+<td><p>staging driver was loaded</p></td>
+</tr>
+<tr class="row-odd"><td><p>11</p></td>
+<td><p>_/I</p></td>
+<td><p>2048</p></td>
+<td><p>workaround for bug in platform firmware applied</p></td>
+</tr>
+<tr class="row-even"><td><p>12</p></td>
+<td><p>_/O</p></td>
+<td><p>4096</p></td>
+<td><p>externally-built (“out-of-tree”) module was loaded</p></td>
+</tr>
+<tr class="row-odd"><td><p>13</p></td>
+<td><p>_/E</p></td>
+<td><p>8192</p></td>
+<td><p>unsigned module was loaded</p></td>
+</tr>
+<tr class="row-even"><td><p>14</p></td>
+<td><p>_/L</p></td>
+<td><p>16384</p></td>
+<td><p>soft lockup occurred</p></td>
+</tr>
+<tr class="row-odd"><td><p>15</p></td>
+<td><p>_/K</p></td>
+<td><p>32768</p></td>
+<td><p>kernel has been live patched</p></td>
+</tr>
+<tr class="row-even"><td><p>16</p></td>
+<td><p>_/X</p></td>
+<td><p>65536</p></td>
+<td><p>auxiliary taint, defined for and used by distros</p></td>
+</tr>
+<tr class="row-odd"><td><p>17</p></td>
+<td><p>_/T</p></td>
+<td><p>131072</p></td>
+<td><p>kernel was built with the struct randomization plugin</p></td>
+</tr>
+</tbody>
+</table>
+<p>Note: The character <code class="docutils literal notranslate"><span class="pre">_</span></code> is representing a blank in this table to make reading
+easier.</p>
+</div>
+<div class="section" id="more-detailed-explanation-for-tainting">
+<h2>More detailed explanation for tainting<a class="headerlink" href="#more-detailed-explanation-for-tainting" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div><ol class="arabic simple" start="0">
+<li><p><code class="docutils literal notranslate"><span class="pre">G</span></code> if all modules loaded have a GPL or compatible license, <code class="docutils literal notranslate"><span class="pre">P</span></code> if
+any proprietary module has been loaded.  Modules without a
+MODULE_LICENSE or with a MODULE_LICENSE that is not recognised by
+insmod as GPL compatible are assumed to be proprietary.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">F</span></code> if any module was force loaded by <code class="docutils literal notranslate"><span class="pre">insmod</span> <span class="pre">-f</span></code>, <code class="docutils literal notranslate"><span class="pre">'</span> <span class="pre">'</span></code> if all
+modules were loaded normally.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">S</span></code> if the kernel is running on a processor or system that is out of
+specification: hardware has been put into an unsupported configuration,
+therefore proper execution cannot be guaranteed.
+Kernel will be tainted if, for example:</p>
+<ul class="simple">
+<li><p>on x86: PAE is forced through forcepae on intel CPUs (such as Pentium M)
+which do not report PAE but may have a functional implementation, an SMP
+kernel is running on non officially capable SMP Athlon CPUs, MSRs are
+being poked at from userspace.</p></li>
+<li><p>on arm: kernel running on certain CPUs (such as Keystone 2) without
+having certain kernel features enabled.</p></li>
+<li><p>on arm64: there are mismatched hardware features between CPUs, the
+bootloader has booted CPUs in different modes.</p></li>
+<li><p>certain drivers are being used on non supported architectures (such as
+scsi/snic on something else than x86_64, scsi/ips on non
+x86/x86_64/itanium, have broken firmware settings for the
+irqchip/irq-gic on arm64 …).</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">R</span></code> if a module was force unloaded by <code class="docutils literal notranslate"><span class="pre">rmmod</span> <span class="pre">-f</span></code>, <code class="docutils literal notranslate"><span class="pre">'</span> <span class="pre">'</span></code> if all
+modules were unloaded normally.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">M</span></code> if any processor has reported a Machine Check Exception,
+<code class="docutils literal notranslate"><span class="pre">'</span> <span class="pre">'</span></code> if no Machine Check Exceptions have occurred.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">B</span></code> If a page-release function has found a bad page reference or some
+unexpected page flags. This indicates a hardware problem or a kernel bug;
+there should be other information in the log indicating why this tainting
+occurred.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">U</span></code> if a user or user application specifically requested that the
+Tainted flag be set, <code class="docutils literal notranslate"><span class="pre">'</span> <span class="pre">'</span></code> otherwise.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">D</span></code> if the kernel has died recently, i.e. there was an OOPS or BUG.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">A</span></code> if an ACPI table has been overridden.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">W</span></code> if a warning has previously been issued by the kernel.
+(Though some warnings may set more specific taint flags.)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">C</span></code> if a staging driver has been loaded.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">I</span></code> if the kernel is working around a severe bug in the platform
+firmware (BIOS or similar).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">O</span></code> if an externally-built (“out-of-tree”) module has been loaded.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">E</span></code> if an unsigned module has been loaded in a kernel supporting
+module signature.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">L</span></code> if a soft lockup has previously occurred on the system.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">K</span></code> if the kernel has been live patched.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">X</span></code> Auxiliary taint, defined for and used by Linux distributors.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">T</span></code> Kernel was build with the randstruct plugin, which can intentionally
+produce extremely unusual kernel structure layouts (even performance
+pathological ones), which is important to know when debugging. Set at
+build time.</p></li>
+</ol>
+</div></blockquote>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="ramoops.html" class="btn btn-neutral float-right" title="Ramoops oops/panic logger" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="bug-bisect.html" class="btn btn-neutral float-left" title="Bisecting a bug" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright The kernel development community.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

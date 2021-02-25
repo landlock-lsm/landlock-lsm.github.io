@@ -1,0 +1,1175 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>General Filesystem Caching &mdash; The Linux Kernel 5.11.0+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="In-Kernel Cache Object Representation and Management" href="object.html" />
+    <link rel="prev" title="Filesystem Caching" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.11.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">Filesystems in the Linux kernel</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../index.html#core-vfs-documentation">Core VFS documentation</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../vfs.html">Overview of the Linux Virtual File System</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../path-lookup.html">Pathname lookup</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../api-summary.html">Linux Filesystems API summary</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../splice.html">splice and pipes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../locking.html">Locking</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../directory-locking.html">Directory Locking</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../devpts.html">The Devpts Filesystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dnotify.html">Linux Directory Notification</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../fiemap.html">Fiemap Ioctl</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../files.html">File management in the Linux kernel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../locks.html">File Locking Release Notes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../mandatory-locking.html">Mandatory File Locking For The Linux Operating System</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../mount_api.html">Filesystem Mount API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../quota.html">Quota subsystem</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../seq_file.html">The seq_file Interface</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../sharedsubtree.html">Shared Subtrees</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../automount-support.html">Automount Support</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="index.html">Filesystem Caching</a><ul class="current">
+<li class="toctree-l4 current"><a class="current reference internal" href="#">General Filesystem Caching</a></li>
+<li class="toctree-l4"><a class="reference internal" href="object.html">In-Kernel Cache Object Representation and Management</a></li>
+<li class="toctree-l4"><a class="reference internal" href="backend-api.html">FS-Cache Cache backend API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="cachefiles.html">CacheFiles: CACHE ON ALREADY MOUNTED FILESYSTEM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="netfs-api.html">FS-Cache Network Filesystem API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="operations.html">Asynchronous Operations Handling</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="../porting.html">Changes since 2.5.0:</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#filesystem-support-layers">Filesystem support layers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../index.html#filesystems">Filesystems</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../nios2/index.html">Nios II Specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">Filesystems in the Linux kernel</a> &raquo;</li>
+        
+          <li><a href="index.html">Filesystem Caching</a> &raquo;</li>
+        
+      <li>General Filesystem Caching</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../../_sources/filesystems/caching/fscache.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="general-filesystem-caching">
+<h1>General Filesystem Caching<a class="headerlink" href="#general-filesystem-caching" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>This facility is a general purpose cache for network filesystems, though it
+could be used for caching other things such as ISO9660 filesystems too.</p>
+<p>FS-Cache mediates between cache backends (such as CacheFS) and network
+filesystems:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>+---------+
+|         |                        +--------------+
+|   NFS   |--+                     |              |
+|         |  |                 +--&gt;|   CacheFS    |
++---------+  |   +----------+  |   |  /dev/hda5   |
+             |   |          |  |   +--------------+
++---------+  +--&gt;|          |  |
+|         |      |          |--+
+|   AFS   |-----&gt;| FS-Cache |
+|         |      |          |--+
++---------+  +--&gt;|          |  |
+             |   |          |  |   +--------------+
++---------+  |   +----------+  |   |              |
+|         |  |                 +--&gt;|  CacheFiles  |
+|  ISOFS  |--+                     |  /var/cache  |
+|         |                        +--------------+
++---------+
+</pre></div>
+</div>
+<p>Or to look at it another way, FS-Cache is a module that provides a caching
+facility to a network filesystem such that the cache is transparent to the
+user:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>+---------+
+|         |
+| Server  |
+|         |
++---------+
+     |                  NETWORK
+~~~~~|~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     |
+     |           +----------+
+     V           |          |
++---------+      |          |
+|         |      |          |
+|   NFS   |-----&gt;| FS-Cache |
+|         |      |          |--+
++---------+      |          |  |   +--------------+   +--------------+
+     |           |          |  |   |              |   |              |
+     V           +----------+  +--&gt;|  CacheFiles  |--&gt;|  Ext3        |
++---------+                        |  /var/cache  |   |  /dev/sda6   |
+|         |                        +--------------+   +--------------+
+|   VFS   |                                ^                     ^
+|         |                                |                     |
++---------+                                +--------------+      |
+     |                  KERNEL SPACE                      |      |
+~~~~~|~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~|~~~~~~|~~~~
+     |                  USER SPACE                        |      |
+     V                                                    |      |
++---------+                                           +--------------+
+|         |                                           |              |
+| Process |                                           | cachefilesd  |
+|         |                                           |              |
++---------+                                           +--------------+
+</pre></div>
+</div>
+<p>FS-Cache does not follow the idea of completely loading every netfs file
+opened in its entirety into a cache before permitting it to be accessed and
+then serving the pages out of that cache rather than the netfs inode because:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>It must be practical to operate without a cache.</p></li>
+<li><p>The size of any accessible file must not be limited to the size of the
+cache.</p></li>
+<li><p>The combined size of all opened files (this includes mapped libraries)
+must not be limited to the size of the cache.</p></li>
+<li><p>The user should not be forced to download an entire file just to do a
+one-off access of a small portion of it (such as might be done with the
+“file” program).</p></li>
+</ol>
+</div></blockquote>
+<p>It instead serves the cache out in PAGE_SIZE chunks as and when requested by
+the netfs(‘s) using it.</p>
+<p>FS-Cache provides the following facilities:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li><p>More than one cache can be used at once.  Caches can be selected
+explicitly by use of tags.</p></li>
+<li><p>Caches can be added / removed at any time.</p></li>
+<li><p>The netfs is provided with an interface that allows either party to
+withdraw caching facilities from a file (required for (2)).</p></li>
+<li><p>The interface to the netfs returns as few errors as possible, preferring
+rather to let the netfs remain oblivious.</p></li>
+<li><p>Cookies are used to represent indices, files and other objects to the
+netfs.  The simplest cookie is just a NULL pointer - indicating nothing
+cached there.</p></li>
+<li><p>The netfs is allowed to propose - dynamically - any index hierarchy it
+desires, though it must be aware that the index search function is
+recursive, stack space is limited, and indices can only be children of
+indices.</p></li>
+<li><p>Data I/O is done direct to and from the netfs’s pages.  The netfs
+indicates that page A is at index B of the data-file represented by cookie
+C, and that it should be read or written.  The cache backend may or may
+not start I/O on that page, but if it does, a netfs callback will be
+invoked to indicate completion.  The I/O may be either synchronous or
+asynchronous.</p></li>
+<li><p>Cookies can be “retired” upon release.  At this point FS-Cache will mark
+them as obsolete and the index hierarchy rooted at that point will get
+recycled.</p></li>
+<li><p>The netfs provides a “match” function for index searches.  In addition to
+saying whether a match was made or not, this can also specify that an
+entry should be updated or deleted.</p></li>
+</ol>
+</div></blockquote>
+<ol class="arabic simple" start="10">
+<li><p>As much as possible is done asynchronously.</p></li>
+</ol>
+<p>FS-Cache maintains a virtual indexing tree in which all indices, files, objects
+and pages are kept.  Bits of this tree may actually reside in one or more
+caches:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>                                           FSDEF
+                                             |
+                        +------------------------------------+
+                        |                                    |
+                       NFS                                  AFS
+                        |                                    |
+           +--------------------------+                +-----------+
+           |                          |                |           |
+        homedir                     mirror          afs.org   redhat.com
+           |                          |                            |
+     +------------+           +---------------+              +----------+
+     |            |           |               |              |          |
+   00001        00002       00007           00125        vol00001   vol00002
+     |            |           |               |                         |
+ +---+---+     +-----+      +---+      +------+------+            +-----+----+
+ |   |   |     |     |      |   |      |      |      |            |     |    |
+PG0 PG1 PG2   PG0  XATTR   PG0 PG1   DIRENT DIRENT DIRENT        R/W   R/O  Bak
+                     |                                            |
+                    PG0                                       +-------+
+                                                              |       |
+                                                            00001   00003
+                                                              |
+                                                          +---+---+
+                                                          |   |   |
+                                                         PG0 PG1 PG2
+</pre></div>
+</div>
+<p>In the example above, you can see two netfs’s being backed: NFS and AFS.  These
+have different index hierarchies:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>The NFS primary index contains per-server indices.  Each server index is
+indexed by NFS file handles to get data file objects.  Each data file
+objects can have an array of pages, but may also have further child
+objects, such as extended attributes and directory entries.  Extended
+attribute objects themselves have page-array contents.</p></li>
+<li><p>The AFS primary index contains per-cell indices.  Each cell index contains
+per-logical-volume indices.  Each of volume index contains up to three
+indices for the read-write, read-only and backup mirrors of those volumes.
+Each of these contains vnode data file objects, each of which contains an
+array of pages.</p></li>
+</ul>
+</div></blockquote>
+<p>The very top index is the FS-Cache master index in which individual netfs’s
+have entries.</p>
+<p>Any index object may reside in more than one cache, provided it only has index
+children.  Any index with non-index object children will be assumed to only
+reside in one cache.</p>
+<p>The netfs API to FS-Cache can be found in:</p>
+<blockquote>
+<div><p><a class="reference internal" href="netfs-api.html"><span class="doc">FS-Cache Network Filesystem API</span></a></p>
+</div></blockquote>
+<p>The cache backend API to FS-Cache can be found in:</p>
+<blockquote>
+<div><p><a class="reference internal" href="backend-api.html"><span class="doc">FS-Cache Cache backend API</span></a></p>
+</div></blockquote>
+<p>A description of the internal representations and object state machine can be
+found in:</p>
+<blockquote>
+<div><p><a class="reference internal" href="object.html"><span class="doc">In-Kernel Cache Object Representation and Management</span></a></p>
+</div></blockquote>
+</div>
+<div class="section" id="statistical-information">
+<h2>Statistical Information<a class="headerlink" href="#statistical-information" title="Permalink to this headline">¶</a></h2>
+<p>If FS-Cache is compiled with the following options enabled:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>CONFIG_FSCACHE_STATS=y
+CONFIG_FSCACHE_HISTOGRAM=y
+</pre></div>
+</div>
+<p>then it will gather certain statistics and display them through a number of
+proc files.</p>
+<div class="section" id="proc-fs-fscache-stats">
+<h3>/proc/fs/fscache/stats<a class="headerlink" href="#proc-fs-fscache-stats" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><p>This shows counts of a number of events that can happen in FS-Cache:</p>
+</div></blockquote>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 18%" />
+<col style="width: 9%" />
+<col style="width: 72%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>CLASS</p></th>
+<th class="head"><p>EVENT</p></th>
+<th class="head"><p>MEANING</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td rowspan="3"><p>Cookies</p></td>
+<td><p>idx=N</p></td>
+<td><p>Number of index cookies allocated</p></td>
+</tr>
+<tr class="row-odd"><td><p>dat=N</p></td>
+<td><p>Number of data storage cookies allocated</p></td>
+</tr>
+<tr class="row-even"><td><p>spc=N</p></td>
+<td><p>Number of special cookies allocated</p></td>
+</tr>
+<tr class="row-odd"><td rowspan="4"><p>Objects</p></td>
+<td><p>alc=N</p></td>
+<td><p>Number of objects allocated</p></td>
+</tr>
+<tr class="row-even"><td><p>nal=N</p></td>
+<td><p>Number of object allocation failures</p></td>
+</tr>
+<tr class="row-odd"><td><p>avl=N</p></td>
+<td><p>Number of objects that reached the available state</p></td>
+</tr>
+<tr class="row-even"><td><p>ded=N</p></td>
+<td><p>Number of objects that reached the dead state</p></td>
+</tr>
+<tr class="row-odd"><td rowspan="4"><p>ChkAux</p></td>
+<td><p>non=N</p></td>
+<td><p>Number of objects that didn’t have a coherency check</p></td>
+</tr>
+<tr class="row-even"><td><p>ok=N</p></td>
+<td><p>Number of objects that passed a coherency check</p></td>
+</tr>
+<tr class="row-odd"><td><p>upd=N</p></td>
+<td><p>Number of objects that needed a coherency data update</p></td>
+</tr>
+<tr class="row-even"><td><p>obs=N</p></td>
+<td><p>Number of objects that were declared obsolete</p></td>
+</tr>
+<tr class="row-odd"><td><p>Pages</p></td>
+<td><p>mrk=N
+unc=N</p></td>
+<td><p>Number of pages marked as being cached
+Number of uncache page requests seen</p></td>
+</tr>
+<tr class="row-even"><td rowspan="6"><p>Acquire</p></td>
+<td><p>n=N</p></td>
+<td><p>Number of acquire cookie requests seen</p></td>
+</tr>
+<tr class="row-odd"><td><p>nul=N</p></td>
+<td><p>Number of acq reqs given a NULL parent</p></td>
+</tr>
+<tr class="row-even"><td><p>noc=N</p></td>
+<td><p>Number of acq reqs rejected due to no cache available</p></td>
+</tr>
+<tr class="row-odd"><td><p>ok=N</p></td>
+<td><p>Number of acq reqs succeeded</p></td>
+</tr>
+<tr class="row-even"><td><p>nbf=N</p></td>
+<td><p>Number of acq reqs rejected due to error</p></td>
+</tr>
+<tr class="row-odd"><td><p>oom=N</p></td>
+<td><p>Number of acq reqs failed on ENOMEM</p></td>
+</tr>
+<tr class="row-even"><td rowspan="5"><p>Lookups</p></td>
+<td><p>n=N</p></td>
+<td><p>Number of lookup calls made on cache backends</p></td>
+</tr>
+<tr class="row-odd"><td><p>neg=N</p></td>
+<td><p>Number of negative lookups made</p></td>
+</tr>
+<tr class="row-even"><td><p>pos=N</p></td>
+<td><p>Number of positive lookups made</p></td>
+</tr>
+<tr class="row-odd"><td><p>crt=N</p></td>
+<td><p>Number of objects created by lookup</p></td>
+</tr>
+<tr class="row-even"><td><p>tmo=N</p></td>
+<td><p>Number of lookups timed out and requeued</p></td>
+</tr>
+<tr class="row-odd"><td rowspan="3"><p>Updates</p></td>
+<td><p>n=N</p></td>
+<td><p>Number of update cookie requests seen</p></td>
+</tr>
+<tr class="row-even"><td><p>nul=N</p></td>
+<td><p>Number of upd reqs given a NULL parent</p></td>
+</tr>
+<tr class="row-odd"><td><p>run=N</p></td>
+<td><p>Number of upd reqs granted CPU time</p></td>
+</tr>
+<tr class="row-even"><td rowspan="3"><p>Relinqs</p></td>
+<td><p>n=N</p></td>
+<td><p>Number of relinquish cookie requests seen</p></td>
+</tr>
+<tr class="row-odd"><td><p>nul=N</p></td>
+<td><p>Number of rlq reqs given a NULL parent</p></td>
+</tr>
+<tr class="row-even"><td><p>wcr=N</p></td>
+<td><p>Number of rlq reqs waited on completion of creation</p></td>
+</tr>
+<tr class="row-odd"><td rowspan="5"><p>AttrChg</p></td>
+<td><p>n=N</p></td>
+<td><p>Number of attribute changed requests seen</p></td>
+</tr>
+<tr class="row-even"><td><p>ok=N</p></td>
+<td><p>Number of attr changed requests queued</p></td>
+</tr>
+<tr class="row-odd"><td><p>nbf=N</p></td>
+<td><p>Number of attr changed rejected -ENOBUFS</p></td>
+</tr>
+<tr class="row-even"><td><p>oom=N</p></td>
+<td><p>Number of attr changed failed -ENOMEM</p></td>
+</tr>
+<tr class="row-odd"><td><p>run=N</p></td>
+<td><p>Number of attr changed ops given CPU time</p></td>
+</tr>
+<tr class="row-even"><td rowspan="8"><p>Allocs</p></td>
+<td><p>n=N</p></td>
+<td><p>Number of allocation requests seen</p></td>
+</tr>
+<tr class="row-odd"><td><p>ok=N</p></td>
+<td><p>Number of successful alloc reqs</p></td>
+</tr>
+<tr class="row-even"><td><p>wt=N</p></td>
+<td><p>Number of alloc reqs that waited on lookup completion</p></td>
+</tr>
+<tr class="row-odd"><td><p>nbf=N</p></td>
+<td><p>Number of alloc reqs rejected -ENOBUFS</p></td>
+</tr>
+<tr class="row-even"><td><p>int=N</p></td>
+<td><p>Number of alloc reqs aborted -ERESTARTSYS</p></td>
+</tr>
+<tr class="row-odd"><td><p>ops=N</p></td>
+<td><p>Number of alloc reqs submitted</p></td>
+</tr>
+<tr class="row-even"><td><p>owt=N</p></td>
+<td><p>Number of alloc reqs waited for CPU time</p></td>
+</tr>
+<tr class="row-odd"><td><p>abt=N</p></td>
+<td><p>Number of alloc reqs aborted due to object death</p></td>
+</tr>
+<tr class="row-even"><td rowspan="10"><p>Retrvls</p></td>
+<td><p>n=N</p></td>
+<td><p>Number of retrieval (read) requests seen</p></td>
+</tr>
+<tr class="row-odd"><td><p>ok=N</p></td>
+<td><p>Number of successful retr reqs</p></td>
+</tr>
+<tr class="row-even"><td><p>wt=N</p></td>
+<td><p>Number of retr reqs that waited on lookup completion</p></td>
+</tr>
+<tr class="row-odd"><td><p>nod=N</p></td>
+<td><p>Number of retr reqs returned -ENODATA</p></td>
+</tr>
+<tr class="row-even"><td><p>nbf=N</p></td>
+<td><p>Number of retr reqs rejected -ENOBUFS</p></td>
+</tr>
+<tr class="row-odd"><td><p>int=N</p></td>
+<td><p>Number of retr reqs aborted -ERESTARTSYS</p></td>
+</tr>
+<tr class="row-even"><td><p>oom=N</p></td>
+<td><p>Number of retr reqs failed -ENOMEM</p></td>
+</tr>
+<tr class="row-odd"><td><p>ops=N</p></td>
+<td><p>Number of retr reqs submitted</p></td>
+</tr>
+<tr class="row-even"><td><p>owt=N</p></td>
+<td><p>Number of retr reqs waited for CPU time</p></td>
+</tr>
+<tr class="row-odd"><td><p>abt=N</p></td>
+<td><p>Number of retr reqs aborted due to object death</p></td>
+</tr>
+<tr class="row-even"><td rowspan="10"><p>Stores</p></td>
+<td><p>n=N</p></td>
+<td><p>Number of storage (write) requests seen</p></td>
+</tr>
+<tr class="row-odd"><td><p>ok=N</p></td>
+<td><p>Number of successful store reqs</p></td>
+</tr>
+<tr class="row-even"><td><p>agn=N</p></td>
+<td><p>Number of store reqs on a page already pending storage</p></td>
+</tr>
+<tr class="row-odd"><td><p>nbf=N</p></td>
+<td><p>Number of store reqs rejected -ENOBUFS</p></td>
+</tr>
+<tr class="row-even"><td><p>oom=N</p></td>
+<td><p>Number of store reqs failed -ENOMEM</p></td>
+</tr>
+<tr class="row-odd"><td><p>ops=N</p></td>
+<td><p>Number of store reqs submitted</p></td>
+</tr>
+<tr class="row-even"><td><p>run=N</p></td>
+<td><p>Number of store reqs granted CPU time</p></td>
+</tr>
+<tr class="row-odd"><td><p>pgs=N</p></td>
+<td><p>Number of pages given store req processing time</p></td>
+</tr>
+<tr class="row-even"><td><p>rxd=N</p></td>
+<td><p>Number of store reqs deleted from tracking tree</p></td>
+</tr>
+<tr class="row-odd"><td><p>olm=N</p></td>
+<td><p>Number of store reqs over store limit</p></td>
+</tr>
+<tr class="row-even"><td rowspan="4"><p>VmScan</p></td>
+<td><p>nos=N</p></td>
+<td><p>Number of release reqs against pages with no
+pending store</p></td>
+</tr>
+<tr class="row-odd"><td><p>gon=N</p></td>
+<td><p>Number of release reqs against pages stored by
+time lock granted</p></td>
+</tr>
+<tr class="row-even"><td><p>bsy=N</p></td>
+<td><p>Number of release reqs ignored due to in-progress store</p></td>
+</tr>
+<tr class="row-odd"><td><p>can=N</p></td>
+<td><p>Number of page stores cancelled due to release req</p></td>
+</tr>
+<tr class="row-even"><td rowspan="9"><p>Ops</p></td>
+<td><p>pend=N</p></td>
+<td><p>Number of times async ops added to pending queues</p></td>
+</tr>
+<tr class="row-odd"><td><p>run=N</p></td>
+<td><p>Number of times async ops given CPU time</p></td>
+</tr>
+<tr class="row-even"><td><p>enq=N</p></td>
+<td><p>Number of times async ops queued for processing</p></td>
+</tr>
+<tr class="row-odd"><td><p>can=N</p></td>
+<td><p>Number of async ops cancelled</p></td>
+</tr>
+<tr class="row-even"><td><p>rej=N</p></td>
+<td><p>Number of async ops rejected due to object
+lookup/create failure</p></td>
+</tr>
+<tr class="row-odd"><td><p>ini=N</p></td>
+<td><p>Number of async ops initialised</p></td>
+</tr>
+<tr class="row-even"><td><p>dfr=N</p></td>
+<td><p>Number of async ops queued for deferred release</p></td>
+</tr>
+<tr class="row-odd"><td><p>rel=N</p></td>
+<td><p>Number of async ops released
+(should equal ini=N when idle)</p></td>
+</tr>
+<tr class="row-even"><td><p>gc=N</p></td>
+<td><p>Number of deferred-release async ops garbage collected</p></td>
+</tr>
+<tr class="row-odd"><td rowspan="16"><p>CacheOp</p></td>
+<td><p>alo=N</p></td>
+<td><p>Number of in-progress alloc_object() cache ops</p></td>
+</tr>
+<tr class="row-even"><td><p>luo=N</p></td>
+<td><p>Number of in-progress lookup_object() cache ops</p></td>
+</tr>
+<tr class="row-odd"><td><p>luc=N</p></td>
+<td><p>Number of in-progress lookup_complete() cache ops</p></td>
+</tr>
+<tr class="row-even"><td><p>gro=N</p></td>
+<td><p>Number of in-progress grab_object() cache ops</p></td>
+</tr>
+<tr class="row-odd"><td><p>upo=N</p></td>
+<td><p>Number of in-progress update_object() cache ops</p></td>
+</tr>
+<tr class="row-even"><td><p>dro=N</p></td>
+<td><p>Number of in-progress drop_object() cache ops</p></td>
+</tr>
+<tr class="row-odd"><td><p>pto=N</p></td>
+<td><p>Number of in-progress put_object() cache ops</p></td>
+</tr>
+<tr class="row-even"><td><p>syn=N</p></td>
+<td><p>Number of in-progress sync_cache() cache ops</p></td>
+</tr>
+<tr class="row-odd"><td><p>atc=N</p></td>
+<td><p>Number of in-progress attr_changed() cache ops</p></td>
+</tr>
+<tr class="row-even"><td><p>rap=N</p></td>
+<td><p>Number of in-progress read_or_alloc_page() cache ops</p></td>
+</tr>
+<tr class="row-odd"><td><p>ras=N</p></td>
+<td><p>Number of in-progress read_or_alloc_pages() cache ops</p></td>
+</tr>
+<tr class="row-even"><td><p>alp=N</p></td>
+<td><p>Number of in-progress allocate_page() cache ops</p></td>
+</tr>
+<tr class="row-odd"><td><p>als=N</p></td>
+<td><p>Number of in-progress allocate_pages() cache ops</p></td>
+</tr>
+<tr class="row-even"><td><p>wrp=N</p></td>
+<td><p>Number of in-progress write_page() cache ops</p></td>
+</tr>
+<tr class="row-odd"><td><p>ucp=N</p></td>
+<td><p>Number of in-progress uncache_page() cache ops</p></td>
+</tr>
+<tr class="row-even"><td><p>dsp=N</p></td>
+<td><p>Number of in-progress dissociate_pages() cache ops</p></td>
+</tr>
+<tr class="row-odd"><td rowspan="4"><p>CacheEv</p></td>
+<td><p>nsp=N</p></td>
+<td><p>Number of object lookups/creations rejected due to
+lack of space</p></td>
+</tr>
+<tr class="row-even"><td><p>stl=N</p></td>
+<td><p>Number of stale objects deleted</p></td>
+</tr>
+<tr class="row-odd"><td><p>rtr=N</p></td>
+<td><p>Number of objects retired when relinquished</p></td>
+</tr>
+<tr class="row-even"><td><p>cul=N</p></td>
+<td><p>Number of objects culled</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="proc-fs-fscache-histogram">
+<h3>/proc/fs/fscache/histogram<a class="headerlink" href="#proc-fs-fscache-histogram" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><div class="highlight-none notranslate"><div class="highlight"><pre><span></span>cat /proc/fs/fscache/histogram
+JIFS  SECS  OBJ INST  OP RUNS   OBJ RUNS  RETRV DLY RETRIEVLS
+===== ===== ========= ========= ========= ========= =========
+</pre></div>
+</div>
+<p>This shows the breakdown of the number of times each amount of time
+between 0 jiffies and HZ-1 jiffies a variety of tasks took to run.  The
+columns are as follows:</p>
+<blockquote>
+<div><table class="docutils align-default">
+<colgroup>
+<col style="width: 14%" />
+<col style="width: 86%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>COLUMN</p></th>
+<th class="head"><p>TIME MEASUREMENT</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>OBJ INST</p></td>
+<td><p>Length of time to instantiate an object</p></td>
+</tr>
+<tr class="row-odd"><td><p>OP RUNS</p></td>
+<td><p>Length of time a call to process an operation took</p></td>
+</tr>
+<tr class="row-even"><td><p>OBJ RUNS</p></td>
+<td><p>Length of time a call to process an object event took</p></td>
+</tr>
+<tr class="row-odd"><td><p>RETRV DLY</p></td>
+<td><p>Time between an requesting a read and lookup completing</p></td>
+</tr>
+<tr class="row-even"><td><p>RETRIEVLS</p></td>
+<td><p>Time between beginning and end of a retrieval</p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>Each row shows the number of events that took a particular range of times.
+Each step is 1 jiffy in size.  The JIFS column indicates the particular
+jiffy range covered, and the SECS field the equivalent number of seconds.</p>
+</div></blockquote>
+</div>
+</div>
+<div class="section" id="object-list">
+<h2>Object List<a class="headerlink" href="#object-list" title="Permalink to this headline">¶</a></h2>
+<p>If CONFIG_FSCACHE_OBJECT_LIST is enabled, the FS-Cache facility will maintain a
+list of all the objects currently allocated and allow them to be viewed
+through:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>/proc/fs/fscache/objects
+</pre></div>
+</div>
+<p>This will look something like:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>[root@andromeda ~]# head /proc/fs/fscache/objects
+OBJECT   PARENT   STAT CHLDN OPS OOP IPR EX READS EM EV F S | NETFS_COOKIE_DEF TY FL NETFS_DATA       OBJECT_KEY, AUX_DATA
+======== ======== ==== ===== === === === == ===== == == = = | ================ == == ================ ================
+   17e4b        2 ACTV     0   0   0   0  0     0 7b  4 0 0 | NFS.fh           DT  0 ffff88001dd82820 010006017edcf8bbc93b43298fdfbe71e50b57b13a172c0117f38472, e567634700000000000000000000000063f2404a000000000000000000000000c9030000000000000000000063f2404a
+   1693a        2 ACTV     0   0   0   0  0     0 7b  4 0 0 | NFS.fh           DT  0 ffff88002db23380 010006017edcf8bbc93b43298fdfbe71e50b57b1e0162c01a2df0ea6, 420ebc4a000000000000000000000000420ebc4a0000000000000000000000000e1801000000000000000000420ebc4a
+</pre></div>
+</div>
+<p>where the first set of columns before the ‘|’ describe the object:</p>
+<blockquote>
+<div><table class="docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>COLUMN</p></th>
+<th class="head"><p>DESCRIPTION</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>OBJECT</p></td>
+<td><p>Object debugging ID (appears as OBJ%x in some debug messages)</p></td>
+</tr>
+<tr class="row-odd"><td><p>PARENT</p></td>
+<td><p>Debugging ID of parent object</p></td>
+</tr>
+<tr class="row-even"><td><p>STAT</p></td>
+<td><p>Object state</p></td>
+</tr>
+<tr class="row-odd"><td><p>CHLDN</p></td>
+<td><p>Number of child objects of this object</p></td>
+</tr>
+<tr class="row-even"><td><p>OPS</p></td>
+<td><p>Number of outstanding operations on this object</p></td>
+</tr>
+<tr class="row-odd"><td><p>OOP</p></td>
+<td><p>Number of outstanding child object management operations</p></td>
+</tr>
+<tr class="row-even"><td><p>IPR</p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p>EX</p></td>
+<td><p>Number of outstanding exclusive operations</p></td>
+</tr>
+<tr class="row-even"><td><p>READS</p></td>
+<td><p>Number of outstanding read operations</p></td>
+</tr>
+<tr class="row-odd"><td><p>EM</p></td>
+<td><p>Object’s event mask</p></td>
+</tr>
+<tr class="row-even"><td><p>EV</p></td>
+<td><p>Events raised on this object</p></td>
+</tr>
+<tr class="row-odd"><td><p>F</p></td>
+<td><p>Object flags</p></td>
+</tr>
+<tr class="row-even"><td><p>S</p></td>
+<td><p>Object work item busy state mask (1:pending 2:running)</p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>and the second set of columns describe the object’s cookie, if present:</p>
+<blockquote>
+<div><table class="docutils align-default">
+<colgroup>
+<col style="width: 23%" />
+<col style="width: 77%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>COLUMN</p></th>
+<th class="head"><p>DESCRIPTION</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>NETFS_COOKIE_DEF</p></td>
+<td><p>Name of netfs cookie definition</p></td>
+</tr>
+<tr class="row-odd"><td><p>TY</p></td>
+<td><p>Cookie type (IX - index, DT - data, hex - special)</p></td>
+</tr>
+<tr class="row-even"><td><p>FL</p></td>
+<td><p>Cookie flags</p></td>
+</tr>
+<tr class="row-odd"><td><p>NETFS_DATA</p></td>
+<td><p>Netfs private data stored in the cookie</p></td>
+</tr>
+<tr class="row-even"><td><p>OBJECT_KEY</p></td>
+<td><p>Object key } 1 column, with separating comma</p></td>
+</tr>
+<tr class="row-odd"><td><p>AUX_DATA</p></td>
+<td><p>Object aux data } presence may be configured</p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>The data shown may be filtered by attaching the a key to an appropriate keyring
+before viewing the file.  Something like:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>keyctl add user fscache:objlist &lt;restrictions&gt; @s
+</pre></div>
+</div>
+<p>where &lt;restrictions&gt; are a selection of the following letters:</p>
+<blockquote>
+<div><table class="docutils align-default">
+<colgroup>
+<col style="width: 3%" />
+<col style="width: 97%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>K</p></td>
+<td><p>Show hexdump of object key (don’t show if not given)</p></td>
+</tr>
+<tr class="row-even"><td><p>A</p></td>
+<td><p>Show hexdump of object aux data (don’t show if not given)</p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>and the following paired letters:</p>
+<blockquote>
+<div><table class="docutils align-default">
+<colgroup>
+<col style="width: 3%" />
+<col style="width: 97%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>C</p></td>
+<td><p>Show objects that have a cookie</p></td>
+</tr>
+<tr class="row-even"><td><p>c</p></td>
+<td><p>Show objects that don’t have a cookie</p></td>
+</tr>
+<tr class="row-odd"><td><p>B</p></td>
+<td><p>Show objects that are busy</p></td>
+</tr>
+<tr class="row-even"><td><p>b</p></td>
+<td><p>Show objects that aren’t busy</p></td>
+</tr>
+<tr class="row-odd"><td><p>W</p></td>
+<td><p>Show objects that have pending writes</p></td>
+</tr>
+<tr class="row-even"><td><p>w</p></td>
+<td><p>Show objects that don’t have pending writes</p></td>
+</tr>
+<tr class="row-odd"><td><p>R</p></td>
+<td><p>Show objects that have outstanding reads</p></td>
+</tr>
+<tr class="row-even"><td><p>r</p></td>
+<td><p>Show objects that don’t have outstanding reads</p></td>
+</tr>
+<tr class="row-odd"><td><p>S</p></td>
+<td><p>Show objects that have work queued</p></td>
+</tr>
+<tr class="row-even"><td><p>s</p></td>
+<td><p>Show objects that don’t have work queued</p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>If neither side of a letter pair is given, then both are implied.  For example:</p>
+<blockquote>
+<div><p>keyctl add user fscache:objlist KB &#64;s</p>
+</div></blockquote>
+<p>shows objects that are busy, and lists their object keys, but does not dump
+their auxiliary data.  It also implies “CcWwRrSs”, but as ‘B’ is given, ‘b’ is
+not implied.</p>
+<p>By default all objects and all fields will be shown.</p>
+</div>
+<div class="section" id="debugging">
+<h2>Debugging<a class="headerlink" href="#debugging" title="Permalink to this headline">¶</a></h2>
+<p>If CONFIG_FSCACHE_DEBUG is enabled, the FS-Cache facility can have runtime
+debugging enabled by adjusting the value in:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>/sys/module/fscache/parameters/debug
+</pre></div>
+</div>
+<p>This is a bitmask of debugging streams to enable:</p>
+<blockquote>
+<div><table class="docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 10%" />
+<col style="width: 46%" />
+<col style="width: 34%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>BIT</p></th>
+<th class="head"><p>VALUE</p></th>
+<th class="head"><p>STREAM</p></th>
+<th class="head"><p>POINT</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>1</p></td>
+<td><p>Cache management</p></td>
+<td><p>Function entry trace</p></td>
+</tr>
+<tr class="row-odd"><td><p>1</p></td>
+<td><p>2</p></td>
+<td></td>
+<td><p>Function exit trace</p></td>
+</tr>
+<tr class="row-even"><td><p>2</p></td>
+<td><p>4</p></td>
+<td></td>
+<td><p>General</p></td>
+</tr>
+<tr class="row-odd"><td><p>3</p></td>
+<td><p>8</p></td>
+<td><p>Cookie management</p></td>
+<td><p>Function entry trace</p></td>
+</tr>
+<tr class="row-even"><td><p>4</p></td>
+<td><p>16</p></td>
+<td></td>
+<td><p>Function exit trace</p></td>
+</tr>
+<tr class="row-odd"><td><p>5</p></td>
+<td><p>32</p></td>
+<td></td>
+<td><p>General</p></td>
+</tr>
+<tr class="row-even"><td><p>6</p></td>
+<td><p>64</p></td>
+<td><p>Page handling</p></td>
+<td><p>Function entry trace</p></td>
+</tr>
+<tr class="row-odd"><td><p>7</p></td>
+<td><p>128</p></td>
+<td></td>
+<td><p>Function exit trace</p></td>
+</tr>
+<tr class="row-even"><td><p>8</p></td>
+<td><p>256</p></td>
+<td></td>
+<td><p>General</p></td>
+</tr>
+<tr class="row-odd"><td><p>9</p></td>
+<td><p>512</p></td>
+<td><p>Operation management</p></td>
+<td><p>Function entry trace</p></td>
+</tr>
+<tr class="row-even"><td><p>10</p></td>
+<td><p>1024</p></td>
+<td></td>
+<td><p>Function exit trace</p></td>
+</tr>
+<tr class="row-odd"><td><p>11</p></td>
+<td><p>2048</p></td>
+<td></td>
+<td><p>General</p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>The appropriate set of values should be OR’d together and the result written to
+the control file.  For example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>echo $((1|8|64)) &gt;/sys/module/fscache/parameters/debug
+</pre></div>
+</div>
+<p>will turn on all function entry debugging.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="object.html" class="btn btn-neutral float-right" title="In-Kernel Cache Object Representation and Management" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="index.html" class="btn btn-neutral float-left" title="Filesystem Caching" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright The kernel development community.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

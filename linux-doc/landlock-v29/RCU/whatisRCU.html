@@ -1,0 +1,1390 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>What is RCU? – “Read, Copy, Update” &mdash; The Linux Kernel 5.11.0+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="RCU Concepts" href="rcu.html" />
+    <link rel="prev" title="PROPER CARE AND FEEDING OF RETURN VALUES FROM rcu_dereference()" href="rcu_dereference.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.11.0
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../core-api/index.html#core-utilities">Core utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-api/index.html#data-structures-and-low-level-utilities">Data structures and low-level utilities</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../core-api/index.html#concurrency-primitives">Concurrency primitives</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../core-api/refcount-vs-atomic.html">refcount_t API compared to atomic_t</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../core-api/irq/index.html">IRQs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../core-api/local_ops.html">Semantics and Behavior of Local Atomic Operations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../core-api/padata.html">The padata parallel execution mechanism</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="index.html">RCU concepts</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="arrayRCU.html">Using RCU to Protect Read-Mostly Arrays</a></li>
+<li class="toctree-l4"><a class="reference internal" href="checklist.html">Review Checklist for RCU Patches</a></li>
+<li class="toctree-l4"><a class="reference internal" href="lockdep.html">RCU and lockdep checking</a></li>
+<li class="toctree-l4"><a class="reference internal" href="lockdep-splat.html">Lockdep-RCU Splat</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rcubarrier.html">RCU and Unloadable Modules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rcu_dereference.html">PROPER CARE AND FEEDING OF RETURN VALUES FROM rcu_dereference()</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">What is RCU?  –  “Read, Copy, Update”</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rcu.html">RCU Concepts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rculist_nulls.html">Using RCU hlist_nulls to protect list and objects</a></li>
+<li class="toctree-l4"><a class="reference internal" href="rcuref.html">Reference-count design for elements of lists/arrays protected by RCU</a></li>
+<li class="toctree-l4"><a class="reference internal" href="torture.html">RCU Torture Test Operation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="stallwarn.html">Using RCU’s CPU Stall Detector</a></li>
+<li class="toctree-l4"><a class="reference internal" href="listRCU.html">Using RCU to Protect Read-Mostly Linked Lists</a></li>
+<li class="toctree-l4"><a class="reference internal" href="NMI-RCU.html">Using RCU to Protect Dynamic NMI Handlers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="UP.html">RCU on Uniprocessor Systems</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Design/Memory-Ordering/Tree-RCU-Memory-Ordering.html">A Tour Through TREE_RCU’s Grace-Period Memory Ordering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Design/Expedited-Grace-Periods/Expedited-Grace-Periods.html">A Tour Through TREE_RCU’s Expedited Grace Periods</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Design/Requirements/Requirements.html">A Tour Through RCU’s Requirements</a></li>
+<li class="toctree-l4"><a class="reference internal" href="Design/Data-Structures/Data-Structures.html">A Tour Through TREE_RCU’s Data Structures [LWN.net]</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../core-api/index.html#low-level-hardware-management">Low-level hardware management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-api/index.html#memory-management">Memory management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-api/index.html#interfaces-for-kernel-debugging">Interfaces for kernel debugging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../core-api/index.html#everything-else">Everything else</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/index.html">Nios II Specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/ext4/index.html">ext4 Data Structures and Algorithms</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../core-api/index.html">Core API Documentation</a> &raquo;</li>
+        
+          <li><a href="index.html">RCU concepts</a> &raquo;</li>
+        
+      <li>What is RCU?  –  “Read, Copy, Update”</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/RCU/whatisRCU.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="what-is-rcu-read-copy-update">
+<span id="whatisrcu-doc"></span><h1>What is RCU?  –  “Read, Copy, Update”<a class="headerlink" href="#what-is-rcu-read-copy-update" title="Permalink to this headline">¶</a></h1>
+<p>Please note that the “What is RCU?” LWN series is an excellent place
+to start learning about RCU:</p>
+<div class="line-block">
+<div class="line">1.    What is RCU, Fundamentally?  <a class="reference external" href="http://lwn.net/Articles/262464/">http://lwn.net/Articles/262464/</a></div>
+<div class="line">2.    What is RCU? Part 2: Usage   <a class="reference external" href="http://lwn.net/Articles/263130/">http://lwn.net/Articles/263130/</a></div>
+<div class="line">3.    RCU part 3: the RCU API      <a class="reference external" href="http://lwn.net/Articles/264090/">http://lwn.net/Articles/264090/</a></div>
+<div class="line">4.    The RCU API, 2010 Edition    <a class="reference external" href="http://lwn.net/Articles/418853/">http://lwn.net/Articles/418853/</a></div>
+<div class="line-block">
+<div class="line">2010 Big API Table           <a class="reference external" href="http://lwn.net/Articles/419086/">http://lwn.net/Articles/419086/</a></div>
+</div>
+<div class="line">5.    The RCU API, 2014 Edition    <a class="reference external" href="http://lwn.net/Articles/609904/">http://lwn.net/Articles/609904/</a></div>
+<div class="line-block">
+<div class="line">2014 Big API Table           <a class="reference external" href="http://lwn.net/Articles/609973/">http://lwn.net/Articles/609973/</a></div>
+</div>
+</div>
+<p>What is RCU?</p>
+<p>RCU is a synchronization mechanism that was added to the Linux kernel
+during the 2.5 development effort that is optimized for read-mostly
+situations.  Although RCU is actually quite simple once you understand it,
+getting there can sometimes be a challenge.  Part of the problem is that
+most of the past descriptions of RCU have been written with the mistaken
+assumption that there is “one true way” to describe RCU.  Instead,
+the experience has been that different people must take different paths
+to arrive at an understanding of RCU.  This document provides several
+different paths, as follows:</p>
+<p><a class="reference internal" href="#whatisrcu"><span class="std std-ref">1.        RCU OVERVIEW</span></a></p>
+<p><a class="reference internal" href="#id1"><span class="std std-ref">2.        WHAT IS RCU’S CORE API?</span></a></p>
+<p><a class="reference internal" href="#id6"><span class="std std-ref">3.        WHAT ARE SOME EXAMPLE USES OF CORE RCU API?</span></a></p>
+<p><a class="reference internal" href="#id7"><span class="std std-ref">4.        WHAT IF MY UPDATING THREAD CANNOT BLOCK?</span></a></p>
+<p><a class="reference internal" href="#id8"><span class="std std-ref">5.        WHAT ARE SOME SIMPLE IMPLEMENTATIONS OF RCU?</span></a></p>
+<p><a class="reference internal" href="#id9"><span class="std std-ref">6.        ANALOGY WITH READER-WRITER LOCKING</span></a></p>
+<p><a class="reference internal" href="#id10"><span class="std std-ref">7.        FULL LIST OF RCU APIs</span></a></p>
+<p><a class="reference internal" href="#id11"><span class="std std-ref">8.        ANSWERS TO QUICK QUIZZES</span></a></p>
+<p>People who prefer starting with a conceptual overview should focus on
+Section 1, though most readers will profit by reading this section at
+some point.  People who prefer to start with an API that they can then
+experiment with should focus on Section 2.  People who prefer to start
+with example uses should focus on Sections 3 and 4.  People who need to
+understand the RCU implementation should focus on Section 5, then dive
+into the kernel source code.  People who reason best by analogy should
+focus on Section 6.  Section 7 serves as an index to the docbook API
+documentation, and Section 8 is the traditional answer key.</p>
+<p>So, start with the section that makes the most sense to you and your
+preferred method of learning.  If you need to know everything about
+everything, feel free to read the whole thing – but if you are really
+that type of person, you have perused the source code and will therefore
+never need this document anyway.  ;-)</p>
+<div class="section" id="rcu-overview">
+<span id="whatisrcu"></span><h2>1.  RCU OVERVIEW<a class="headerlink" href="#rcu-overview" title="Permalink to this headline">¶</a></h2>
+<p>The basic idea behind RCU is to split updates into “removal” and
+“reclamation” phases.  The removal phase removes references to data items
+within a data structure (possibly by replacing them with references to
+new versions of these data items), and can run concurrently with readers.
+The reason that it is safe to run the removal phase concurrently with
+readers is the semantics of modern CPUs guarantee that readers will see
+either the old or the new version of the data structure rather than a
+partially updated reference.  The reclamation phase does the work of reclaiming
+(e.g., freeing) the data items removed from the data structure during the
+removal phase.  Because reclaiming data items can disrupt any readers
+concurrently referencing those data items, the reclamation phase must
+not start until readers no longer hold references to those data items.</p>
+<p>Splitting the update into removal and reclamation phases permits the
+updater to perform the removal phase immediately, and to defer the
+reclamation phase until all readers active during the removal phase have
+completed, either by blocking until they finish or by registering a
+callback that is invoked after they finish.  Only readers that are active
+during the removal phase need be considered, because any reader starting
+after the removal phase will be unable to gain a reference to the removed
+data items, and therefore cannot be disrupted by the reclamation phase.</p>
+<p>So the typical RCU update sequence goes something like the following:</p>
+<ol class="loweralpha simple">
+<li><p>Remove pointers to a data structure, so that subsequent
+readers cannot gain a reference to it.</p></li>
+<li><p>Wait for all previous readers to complete their RCU read-side
+critical sections.</p></li>
+<li><p>At this point, there cannot be any readers who hold references
+to the data structure, so it now may safely be reclaimed
+(e.g., <a class="reference internal" href="../core-api/mm-api.html#c.kfree" title="kfree"><code class="xref c c-func docutils literal notranslate"><span class="pre">kfree()</span></code></a>d).</p></li>
+</ol>
+<p>Step (b) above is the key idea underlying RCU’s deferred destruction.
+The ability to wait until all readers are done allows RCU readers to
+use much lighter-weight synchronization, in some cases, absolutely no
+synchronization at all.  In contrast, in more conventional lock-based
+schemes, readers must use heavy-weight synchronization in order to
+prevent an updater from deleting the data structure out from under them.
+This is because lock-based updaters typically update data items in place,
+and must therefore exclude readers.  In contrast, RCU-based updaters
+typically take advantage of the fact that writes to single aligned
+pointers are atomic on modern CPUs, allowing atomic insertion, removal,
+and replacement of data items in a linked structure without disrupting
+readers.  Concurrent RCU readers can then continue accessing the old
+versions, and can dispense with the atomic operations, memory barriers,
+and communications cache misses that are so expensive on present-day
+SMP computer systems, even in absence of lock contention.</p>
+<p>In the three-step procedure shown above, the updater is performing both
+the removal and the reclamation step, but it is often helpful for an
+entirely different thread to do the reclamation, as is in fact the case
+in the Linux kernel’s directory-entry cache (dcache).  Even if the same
+thread performs both the update step (step (a) above) and the reclamation
+step (step (c) above), it is often helpful to think of them separately.
+For example, RCU readers and updaters need not communicate at all,
+but RCU provides implicit low-overhead communication between readers
+and reclaimers, namely, in step (b) above.</p>
+<p>So how the heck can a reclaimer tell when a reader is done, given
+that readers are not doing any sort of synchronization operations???
+Read on to learn about how RCU’s API makes this easy.</p>
+</div>
+<div class="section" id="what-is-rcu-s-core-api">
+<span id="id1"></span><h2>2.  WHAT IS RCU’S CORE API?<a class="headerlink" href="#what-is-rcu-s-core-api" title="Permalink to this headline">¶</a></h2>
+<p>The core RCU API is quite small:</p>
+<ol class="loweralpha simple">
+<li><p><a class="reference internal" href="../core-api/kernel-api.html#c.rcu_read_lock" title="rcu_read_lock"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_read_lock()</span></code></a></p></li>
+<li><p><a class="reference internal" href="../core-api/kernel-api.html#c.rcu_read_unlock" title="rcu_read_unlock"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_read_unlock()</span></code></a></p></li>
+<li><p><a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a> / <a class="reference internal" href="../core-api/kernel-api.html#c.call_rcu" title="call_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">call_rcu()</span></code></a></p></li>
+<li><p><a class="reference internal" href="../core-api/kernel-api.html#c.rcu_assign_pointer" title="rcu_assign_pointer"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_assign_pointer()</span></code></a></p></li>
+<li><p><a class="reference internal" href="../core-api/kernel-api.html#c.rcu_dereference" title="rcu_dereference"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_dereference()</span></code></a></p></li>
+</ol>
+<p>There are many other members of the RCU API, but the rest can be
+expressed in terms of these five, though most implementations instead
+express <a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a> in terms of the <a class="reference internal" href="../core-api/kernel-api.html#c.call_rcu" title="call_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">call_rcu()</span></code></a> callback API.</p>
+<p>The five core RCU APIs are described below, the other 18 will be enumerated
+later.  See the kernel docbook documentation for more info, or look directly
+at the function header comments.</p>
+<div class="section" id="rcu-read-lock">
+<h3>rcu_read_lock()<a class="headerlink" href="#rcu-read-lock" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><p>void rcu_read_lock(void);</p>
+<p>Used by a reader to inform the reclaimer that the reader is
+entering an RCU read-side critical section.  It is illegal
+to block while in an RCU read-side critical section, though
+kernels built with CONFIG_PREEMPT_RCU can preempt RCU
+read-side critical sections.  Any RCU-protected data structure
+accessed during an RCU read-side critical section is guaranteed to
+remain unreclaimed for the full duration of that critical section.
+Reference counts may be used in conjunction with RCU to maintain
+longer-term references to data structures.</p>
+</div></blockquote>
+</div>
+<div class="section" id="rcu-read-unlock">
+<h3>rcu_read_unlock()<a class="headerlink" href="#rcu-read-unlock" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><p>void rcu_read_unlock(void);</p>
+<p>Used by a reader to inform the reclaimer that the reader is
+exiting an RCU read-side critical section.  Note that RCU
+read-side critical sections may be nested and/or overlapping.</p>
+</div></blockquote>
+</div>
+<div class="section" id="synchronize-rcu">
+<h3>synchronize_rcu()<a class="headerlink" href="#synchronize-rcu" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><p>void synchronize_rcu(void);</p>
+<p>Marks the end of updater code and the beginning of reclaimer
+code.  It does this by blocking until all pre-existing RCU
+read-side critical sections on all CPUs have completed.
+Note that <a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a> will <strong>not</strong> necessarily wait for
+any subsequent RCU read-side critical sections to complete.
+For example, consider the following sequence of events:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>        CPU 0                  CPU 1                 CPU 2
+    ----------------- ------------------------- ---------------
+1.  rcu_read_lock()
+2.                    enters synchronize_rcu()
+3.                                               rcu_read_lock()
+4.  rcu_read_unlock()
+5.                     exits synchronize_rcu()
+6.                                              rcu_read_unlock()
+</pre></div>
+</div>
+<p>To reiterate, <a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a> waits only for ongoing RCU
+read-side critical sections to complete, not necessarily for
+any that begin after <a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a> is invoked.</p>
+<p>Of course, <a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a> does not necessarily return
+<strong>immediately</strong> after the last pre-existing RCU read-side critical
+section completes.  For one thing, there might well be scheduling
+delays.  For another thing, many RCU implementations process
+requests in batches in order to improve efficiencies, which can
+further delay <a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a>.</p>
+<p>Since <a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a> is the API that must figure out when
+readers are done, its implementation is key to RCU.  For RCU
+to be useful in all but the most read-intensive situations,
+<a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a>’s overhead must also be quite small.</p>
+<p>The <a class="reference internal" href="../core-api/kernel-api.html#c.call_rcu" title="call_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">call_rcu()</span></code></a> API is a callback form of <a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a>,
+and is described in more detail in a later section.  Instead of
+blocking, it registers a function and argument which are invoked
+after all ongoing RCU read-side critical sections have completed.
+This callback variant is particularly useful in situations where
+it is illegal to block or where update-side performance is
+critically important.</p>
+<p>However, the <a class="reference internal" href="../core-api/kernel-api.html#c.call_rcu" title="call_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">call_rcu()</span></code></a> API should not be used lightly, as use
+of the <a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a> API generally results in simpler code.
+In addition, the <a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a> API has the nice property
+of automatically limiting update rate should grace periods
+be delayed.  This property results in system resilience in face
+of denial-of-service attacks.  Code using <a class="reference internal" href="../core-api/kernel-api.html#c.call_rcu" title="call_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">call_rcu()</span></code></a> should limit
+update rate in order to gain this same sort of resilience.  See
+checklist.txt for some approaches to limiting the update rate.</p>
+</div></blockquote>
+</div>
+<div class="section" id="rcu-assign-pointer">
+<h3>rcu_assign_pointer()<a class="headerlink" href="#rcu-assign-pointer" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><p>void rcu_assign_pointer(p, typeof(p) v);</p>
+<p>Yes, <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_assign_pointer" title="rcu_assign_pointer"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_assign_pointer()</span></code></a> <strong>is</strong> implemented as a macro, though it
+would be cool to be able to declare a function in this manner.
+(Compiler experts will no doubt disagree.)</p>
+<p>The updater uses this function to assign a new value to an
+RCU-protected pointer, in order to safely communicate the change
+in value from the updater to the reader.  This macro does not
+evaluate to an rvalue, but it does execute any memory-barrier
+instructions required for a given CPU architecture.</p>
+<p>Perhaps just as important, it serves to document (1) which
+pointers are protected by RCU and (2) the point at which a
+given structure becomes accessible to other CPUs.  That said,
+<a class="reference internal" href="../core-api/kernel-api.html#c.rcu_assign_pointer" title="rcu_assign_pointer"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_assign_pointer()</span></code></a> is most frequently used indirectly, via
+the _rcu list-manipulation primitives such as <a class="reference internal" href="../core-api/kernel-api.html#c.list_add_rcu" title="list_add_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">list_add_rcu()</span></code></a>.</p>
+</div></blockquote>
+</div>
+<div class="section" id="rcu-dereference">
+<h3>rcu_dereference()<a class="headerlink" href="#rcu-dereference" title="Permalink to this headline">¶</a></h3>
+<blockquote>
+<div><p>typeof(p) rcu_dereference(p);</p>
+<p>Like <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_assign_pointer" title="rcu_assign_pointer"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_assign_pointer()</span></code></a>, <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_dereference" title="rcu_dereference"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_dereference()</span></code></a> must be implemented
+as a macro.</p>
+<p>The reader uses <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_dereference" title="rcu_dereference"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_dereference()</span></code></a> to fetch an RCU-protected
+pointer, which returns a value that may then be safely
+dereferenced.  Note that <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_dereference" title="rcu_dereference"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_dereference()</span></code></a> does not actually
+dereference the pointer, instead, it protects the pointer for
+later dereferencing.  It also executes any needed memory-barrier
+instructions for a given CPU architecture.  Currently, only Alpha
+needs memory barriers within <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_dereference" title="rcu_dereference"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_dereference()</span></code></a> – on other CPUs,
+it compiles to nothing, not even a compiler directive.</p>
+<p>Common coding practice uses <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_dereference" title="rcu_dereference"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_dereference()</span></code></a> to copy an
+RCU-protected pointer to a local variable, then dereferences
+this local variable, for example as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>p = rcu_dereference(head.next);
+return p-&gt;data;
+</pre></div>
+</div>
+<p>However, in this case, one could just as easily combine these
+into one statement:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>return rcu_dereference(head.next)-&gt;data;
+</pre></div>
+</div>
+<p>If you are going to be fetching multiple fields from the
+RCU-protected structure, using the local variable is of
+course preferred.  Repeated <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_dereference" title="rcu_dereference"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_dereference()</span></code></a> calls look
+ugly, do not guarantee that the same pointer will be returned
+if an update happened while in the critical section, and incur
+unnecessary overhead on Alpha CPUs.</p>
+<p>Note that the value returned by <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_dereference" title="rcu_dereference"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_dereference()</span></code></a> is valid
+only within the enclosing RCU read-side critical section <a class="footnote-reference brackets" href="#id4" id="id2">1</a>.
+For example, the following is <strong>not</strong> legal:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>rcu_read_lock();
+p = rcu_dereference(head.next);
+rcu_read_unlock();
+x = p-&gt;address; /* BUG!!! */
+rcu_read_lock();
+y = p-&gt;data;    /* BUG!!! */
+rcu_read_unlock();
+</pre></div>
+</div>
+<p>Holding a reference from one RCU read-side critical section
+to another is just as illegal as holding a reference from
+one lock-based critical section to another!  Similarly,
+using a reference outside of the critical section in which
+it was acquired is just as illegal as doing so with normal
+locking.</p>
+<p>As with <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_assign_pointer" title="rcu_assign_pointer"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_assign_pointer()</span></code></a>, an important function of
+<a class="reference internal" href="../core-api/kernel-api.html#c.rcu_dereference" title="rcu_dereference"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_dereference()</span></code></a> is to document which pointers are protected by
+RCU, in particular, flagging a pointer that is subject to changing
+at any time, including immediately after the <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_dereference" title="rcu_dereference"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_dereference()</span></code></a>.
+And, again like <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_assign_pointer" title="rcu_assign_pointer"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_assign_pointer()</span></code></a>, <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_dereference" title="rcu_dereference"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_dereference()</span></code></a> is
+typically used indirectly, via the _rcu list-manipulation
+primitives, such as <a class="reference internal" href="../core-api/kernel-api.html#c.list_for_each_entry_rcu" title="list_for_each_entry_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">list_for_each_entry_rcu()</span></code></a> <a class="footnote-reference brackets" href="#id5" id="id3">2</a>.</p>
+</div></blockquote>
+<dl class="footnote brackets">
+<dt class="label" id="id4"><span class="brackets"><a class="fn-backref" href="#id2">1</a></span></dt>
+<dd><p>The variant <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_dereference_protected" title="rcu_dereference_protected"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_dereference_protected()</span></code></a> can be used outside
+of an RCU read-side critical section as long as the usage is
+protected by locks acquired by the update-side code.  This variant
+avoids the lockdep warning that would happen when using (for
+example) <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_dereference" title="rcu_dereference"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_dereference()</span></code></a> without <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_read_lock" title="rcu_read_lock"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_read_lock()</span></code></a> protection.
+Using <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_dereference_protected" title="rcu_dereference_protected"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_dereference_protected()</span></code></a> also has the advantage
+of permitting compiler optimizations that <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_dereference" title="rcu_dereference"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_dereference()</span></code></a>
+must prohibit.  The <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_dereference_protected" title="rcu_dereference_protected"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_dereference_protected()</span></code></a> variant takes
+a lockdep expression to indicate which locks must be acquired
+by the caller. If the indicated protection is not provided,
+a lockdep splat is emitted.  See <a class="reference internal" href="Design/Requirements/Requirements.html"><span class="doc">A Tour Through RCU’s Requirements</span></a>
+and the API’s code comments for more details and example usage.</p>
+</dd>
+<dt class="label" id="id5"><span class="brackets"><a class="fn-backref" href="#id3">2</a></span></dt>
+<dd><p>If the <a class="reference internal" href="../core-api/kernel-api.html#c.list_for_each_entry_rcu" title="list_for_each_entry_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">list_for_each_entry_rcu()</span></code></a> instance might be used by
+update-side code as well as by RCU readers, then an additional
+lockdep expression can be added to its list of arguments.
+For example, given an additional “lock_is_held(&amp;mylock)” argument,
+the RCU lockdep code would complain only if this instance was
+invoked outside of an RCU read-side critical section and without
+the protection of mylock.</p>
+</dd>
+</dl>
+<p>The following diagram shows how each API communicates among the
+reader, updater, and reclaimer.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>rcu_assign_pointer()
+                        +--------+
++----------------------&gt;| reader |---------+
+|                       +--------+         |
+|                           |              |
+|                           |              | Protect:
+|                           |              | rcu_read_lock()
+|                           |              | rcu_read_unlock()
+|        rcu_dereference()  |              |
++---------+                 |              |
+| updater |&lt;----------------+              |
++---------+                                V
+|                                    +-----------+
++-----------------------------------&gt;| reclaimer |
+                                     +-----------+
+  Defer:
+  synchronize_rcu() &amp; call_rcu()
+</pre></div>
+</div>
+<p>The RCU infrastructure observes the time sequence of <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_read_lock" title="rcu_read_lock"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_read_lock()</span></code></a>,
+<a class="reference internal" href="../core-api/kernel-api.html#c.rcu_read_unlock" title="rcu_read_unlock"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_read_unlock()</span></code></a>, <a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a>, and <a class="reference internal" href="../core-api/kernel-api.html#c.call_rcu" title="call_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">call_rcu()</span></code></a> invocations in
+order to determine when (1) <a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a> invocations may return
+to their callers and (2) <a class="reference internal" href="../core-api/kernel-api.html#c.call_rcu" title="call_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">call_rcu()</span></code></a> callbacks may be invoked.  Efficient
+implementations of the RCU infrastructure make heavy use of batching in
+order to amortize their overhead over many uses of the corresponding APIs.</p>
+<p>There are at least three flavors of RCU usage in the Linux kernel. The diagram
+above shows the most common one. On the updater side, the <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_assign_pointer" title="rcu_assign_pointer"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_assign_pointer()</span></code></a>,
+<a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a> and <a class="reference internal" href="../core-api/kernel-api.html#c.call_rcu" title="call_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">call_rcu()</span></code></a> primitives used are the same for all three
+flavors. However for protection (on the reader side), the primitives used vary
+depending on the flavor:</p>
+<ol class="loweralpha simple">
+<li><p><a class="reference internal" href="../core-api/kernel-api.html#c.rcu_read_lock" title="rcu_read_lock"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_read_lock()</span></code></a> / <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_read_unlock" title="rcu_read_unlock"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_read_unlock()</span></code></a>
+<a class="reference internal" href="../core-api/kernel-api.html#c.rcu_dereference" title="rcu_dereference"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_dereference()</span></code></a></p></li>
+<li><p><a class="reference internal" href="../core-api/kernel-api.html#c.rcu_read_lock_bh" title="rcu_read_lock_bh"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_read_lock_bh()</span></code></a> / <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_read_unlock_bh" title="rcu_read_unlock_bh"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_read_unlock_bh()</span></code></a>
+local_bh_disable() / local_bh_enable()
+<a class="reference internal" href="../core-api/kernel-api.html#c.rcu_dereference_bh" title="rcu_dereference_bh"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_dereference_bh()</span></code></a></p></li>
+<li><p><a class="reference internal" href="../core-api/kernel-api.html#c.rcu_read_lock_sched" title="rcu_read_lock_sched"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_read_lock_sched()</span></code></a> / <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_read_unlock_sched" title="rcu_read_unlock_sched"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_read_unlock_sched()</span></code></a>
+preempt_disable() / preempt_enable()
+local_irq_save() / local_irq_restore()
+hardirq enter / hardirq exit
+NMI enter / NMI exit
+<a class="reference internal" href="../core-api/kernel-api.html#c.rcu_dereference_sched" title="rcu_dereference_sched"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_dereference_sched()</span></code></a></p></li>
+</ol>
+<p>These three flavors are used as follows:</p>
+<ol class="loweralpha simple">
+<li><p>RCU applied to normal data structures.</p></li>
+<li><p>RCU applied to networking data structures that may be subjected
+to remote denial-of-service attacks.</p></li>
+<li><p>RCU applied to scheduler and interrupt/NMI-handler tasks.</p></li>
+</ol>
+<p>Again, most uses will be of (a).  The (b) and (c) cases are important
+for specialized uses, but are relatively uncommon.</p>
+</div>
+</div>
+<div class="section" id="what-are-some-example-uses-of-core-rcu-api">
+<span id="id6"></span><h2>3.  WHAT ARE SOME EXAMPLE USES OF CORE RCU API?<a class="headerlink" href="#what-are-some-example-uses-of-core-rcu-api" title="Permalink to this headline">¶</a></h2>
+<p>This section shows a simple use of the core RCU API to protect a
+global pointer to a dynamically allocated structure.  More-typical
+uses of RCU may be found in <a class="reference internal" href="listRCU.html#list-rcu-doc"><span class="std std-ref">listRCU.rst</span></a>,
+<a class="reference internal" href="arrayRCU.html#array-rcu-doc"><span class="std std-ref">arrayRCU.rst</span></a>, and <a class="reference internal" href="NMI-RCU.html#nmi-rcu-doc"><span class="std std-ref">NMI-RCU.rst</span></a>.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct foo {
+        int a;
+        char b;
+        long c;
+};
+DEFINE_SPINLOCK(foo_mutex);
+
+struct foo __rcu *gbl_foo;
+
+/*
+ * Create a new struct foo that is the same as the one currently
+ * pointed to by gbl_foo, except that field &quot;a&quot; is replaced
+ * with &quot;new_a&quot;.  Points gbl_foo to the new structure, and
+ * frees up the old structure after a grace period.
+ *
+ * Uses rcu_assign_pointer() to ensure that concurrent readers
+ * see the initialized version of the new structure.
+ *
+ * Uses synchronize_rcu() to ensure that any readers that might
+ * have references to the old structure complete before freeing
+ * the old structure.
+ */
+void foo_update_a(int new_a)
+{
+        struct foo *new_fp;
+        struct foo *old_fp;
+
+        new_fp = kmalloc(sizeof(*new_fp), GFP_KERNEL);
+        spin_lock(&amp;foo_mutex);
+        old_fp = rcu_dereference_protected(gbl_foo, lockdep_is_held(&amp;foo_mutex));
+        *new_fp = *old_fp;
+        new_fp-&gt;a = new_a;
+        rcu_assign_pointer(gbl_foo, new_fp);
+        spin_unlock(&amp;foo_mutex);
+        synchronize_rcu();
+        kfree(old_fp);
+}
+
+/*
+ * Return the value of field &quot;a&quot; of the current gbl_foo
+ * structure.  Use rcu_read_lock() and rcu_read_unlock()
+ * to ensure that the structure does not get deleted out
+ * from under us, and use rcu_dereference() to ensure that
+ * we see the initialized version of the structure (important
+ * for DEC Alpha and for people reading the code).
+ */
+int foo_get_a(void)
+{
+        int retval;
+
+        rcu_read_lock();
+        retval = rcu_dereference(gbl_foo)-&gt;a;
+        rcu_read_unlock();
+        return retval;
+}
+</pre></div>
+</div>
+<p>So, to sum up:</p>
+<ul class="simple">
+<li><p>Use <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_read_lock" title="rcu_read_lock"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_read_lock()</span></code></a> and <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_read_unlock" title="rcu_read_unlock"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_read_unlock()</span></code></a> to guard RCU
+read-side critical sections.</p></li>
+<li><p>Within an RCU read-side critical section, use <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_dereference" title="rcu_dereference"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_dereference()</span></code></a>
+to dereference RCU-protected pointers.</p></li>
+<li><p>Use some solid scheme (such as locks or semaphores) to
+keep concurrent updates from interfering with each other.</p></li>
+<li><p>Use <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_assign_pointer" title="rcu_assign_pointer"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_assign_pointer()</span></code></a> to update an RCU-protected pointer.
+This primitive protects concurrent readers from the updater,
+<strong>not</strong> concurrent updates from each other!  You therefore still
+need to use locking (or something similar) to keep concurrent
+<a class="reference internal" href="../core-api/kernel-api.html#c.rcu_assign_pointer" title="rcu_assign_pointer"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_assign_pointer()</span></code></a> primitives from interfering with each other.</p></li>
+<li><p>Use <a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a> <strong>after</strong> removing a data element from an
+RCU-protected data structure, but <strong>before</strong> reclaiming/freeing
+the data element, in order to wait for the completion of all
+RCU read-side critical sections that might be referencing that
+data item.</p></li>
+</ul>
+<p>See checklist.txt for additional rules to follow when using RCU.
+And again, more-typical uses of RCU may be found in <a class="reference internal" href="listRCU.html#list-rcu-doc"><span class="std std-ref">listRCU.rst</span></a>, <a class="reference internal" href="arrayRCU.html#array-rcu-doc"><span class="std std-ref">arrayRCU.rst</span></a>, and <a class="reference internal" href="NMI-RCU.html#nmi-rcu-doc"><span class="std std-ref">NMI-RCU.rst</span></a>.</p>
+</div>
+<div class="section" id="what-if-my-updating-thread-cannot-block">
+<span id="id7"></span><h2>4.  WHAT IF MY UPDATING THREAD CANNOT BLOCK?<a class="headerlink" href="#what-if-my-updating-thread-cannot-block" title="Permalink to this headline">¶</a></h2>
+<p>In the example above, foo_update_a() blocks until a grace period elapses.
+This is quite simple, but in some cases one cannot afford to wait so
+long – there might be other high-priority work to be done.</p>
+<p>In such cases, one uses <a class="reference internal" href="../core-api/kernel-api.html#c.call_rcu" title="call_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">call_rcu()</span></code></a> rather than <a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a>.
+The <a class="reference internal" href="../core-api/kernel-api.html#c.call_rcu" title="call_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">call_rcu()</span></code></a> API is as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void call_rcu(struct rcu_head *head, rcu_callback_t func);
+</pre></div>
+</div>
+<p>This function invokes func(head) after a grace period has elapsed.
+This invocation might happen from either softirq or process context,
+so the function is not permitted to block.  The foo struct needs to
+have an rcu_head structure added, perhaps as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct foo {
+        int a;
+        char b;
+        long c;
+        struct rcu_head rcu;
+};
+</pre></div>
+</div>
+<p>The foo_update_a() function might then be written as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>/*
+ * Create a new struct foo that is the same as the one currently
+ * pointed to by gbl_foo, except that field &quot;a&quot; is replaced
+ * with &quot;new_a&quot;.  Points gbl_foo to the new structure, and
+ * frees up the old structure after a grace period.
+ *
+ * Uses rcu_assign_pointer() to ensure that concurrent readers
+ * see the initialized version of the new structure.
+ *
+ * Uses call_rcu() to ensure that any readers that might have
+ * references to the old structure complete before freeing the
+ * old structure.
+ */
+void foo_update_a(int new_a)
+{
+        struct foo *new_fp;
+        struct foo *old_fp;
+
+        new_fp = kmalloc(sizeof(*new_fp), GFP_KERNEL);
+        spin_lock(&amp;foo_mutex);
+        old_fp = rcu_dereference_protected(gbl_foo, lockdep_is_held(&amp;foo_mutex));
+        *new_fp = *old_fp;
+        new_fp-&gt;a = new_a;
+        rcu_assign_pointer(gbl_foo, new_fp);
+        spin_unlock(&amp;foo_mutex);
+        call_rcu(&amp;old_fp-&gt;rcu, foo_reclaim);
+}
+</pre></div>
+</div>
+<p>The foo_reclaim() function might appear as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void foo_reclaim(struct rcu_head *rp)
+{
+        struct foo *fp = container_of(rp, struct foo, rcu);
+
+        foo_cleanup(fp-&gt;a);
+
+        kfree(fp);
+}
+</pre></div>
+</div>
+<p>The <a class="reference internal" href="../driver-api/basics.html#c.container_of" title="container_of"><code class="xref c c-func docutils literal notranslate"><span class="pre">container_of()</span></code></a> primitive is a macro that, given a pointer into a
+struct, the type of the struct, and the pointed-to field within the
+struct, returns a pointer to the beginning of the struct.</p>
+<p>The use of <a class="reference internal" href="../core-api/kernel-api.html#c.call_rcu" title="call_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">call_rcu()</span></code></a> permits the caller of foo_update_a() to
+immediately regain control, without needing to worry further about the
+old version of the newly updated element.  It also clearly shows the
+RCU distinction between updater, namely foo_update_a(), and reclaimer,
+namely foo_reclaim().</p>
+<p>The summary of advice is the same as for the previous section, except
+that we are now using <a class="reference internal" href="../core-api/kernel-api.html#c.call_rcu" title="call_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">call_rcu()</span></code></a> rather than <a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a>:</p>
+<ul class="simple">
+<li><p>Use <a class="reference internal" href="../core-api/kernel-api.html#c.call_rcu" title="call_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">call_rcu()</span></code></a> <strong>after</strong> removing a data element from an
+RCU-protected data structure in order to register a callback
+function that will be invoked after the completion of all RCU
+read-side critical sections that might be referencing that
+data item.</p></li>
+</ul>
+<p>If the callback for <a class="reference internal" href="../core-api/kernel-api.html#c.call_rcu" title="call_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">call_rcu()</span></code></a> is not doing anything more than calling
+<a class="reference internal" href="../core-api/mm-api.html#c.kfree" title="kfree"><code class="xref c c-func docutils literal notranslate"><span class="pre">kfree()</span></code></a> on the structure, you can use <a class="reference internal" href="../core-api/kernel-api.html#c.kfree_rcu" title="kfree_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">kfree_rcu()</span></code></a> instead of <a class="reference internal" href="../core-api/kernel-api.html#c.call_rcu" title="call_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">call_rcu()</span></code></a>
+to avoid having to write your own callback:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>kfree_rcu(old_fp, rcu);
+</pre></div>
+</div>
+<p>Again, see checklist.txt for additional rules governing the use of RCU.</p>
+</div>
+<div class="section" id="what-are-some-simple-implementations-of-rcu">
+<span id="id8"></span><h2>5.  WHAT ARE SOME SIMPLE IMPLEMENTATIONS OF RCU?<a class="headerlink" href="#what-are-some-simple-implementations-of-rcu" title="Permalink to this headline">¶</a></h2>
+<p>One of the nice things about RCU is that it has extremely simple “toy”
+implementations that are a good first step towards understanding the
+production-quality implementations in the Linux kernel.  This section
+presents two such “toy” implementations of RCU, one that is implemented
+in terms of familiar locking primitives, and another that more closely
+resembles “classic” RCU.  Both are way too simple for real-world use,
+lacking both functionality and performance.  However, they are useful
+in getting a feel for how RCU works.  See kernel/rcu/update.c for a
+production-quality implementation, and see:</p>
+<blockquote>
+<div><p><a class="reference external" href="http://www.rdrop.com/users/paulmck/RCU">http://www.rdrop.com/users/paulmck/RCU</a></p>
+</div></blockquote>
+<p>for papers describing the Linux kernel RCU implementation.  The OLS’01
+and OLS’02 papers are a good introduction, and the dissertation provides
+more details on the current implementation as of early 2004.</p>
+<div class="section" id="a-toy-implementation-1-locking">
+<h3>5A.  “TOY” IMPLEMENTATION #1: LOCKING<a class="headerlink" href="#a-toy-implementation-1-locking" title="Permalink to this headline">¶</a></h3>
+<p>This section presents a “toy” RCU implementation that is based on
+familiar locking primitives.  Its overhead makes it a non-starter for
+real-life use, as does its lack of scalability.  It is also unsuitable
+for realtime use, since it allows scheduling latency to “bleed” from
+one read-side critical section to another.  It also assumes recursive
+reader-writer locks:  If you try this with non-recursive locks, and
+you allow nested <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_read_lock" title="rcu_read_lock"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_read_lock()</span></code></a> calls, you can deadlock.</p>
+<p>However, it is probably the easiest implementation to relate to, so is
+a good starting point.</p>
+<p>It is extremely simple:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>static DEFINE_RWLOCK(rcu_gp_mutex);
+
+void rcu_read_lock(void)
+{
+        read_lock(&amp;rcu_gp_mutex);
+}
+
+void rcu_read_unlock(void)
+{
+        read_unlock(&amp;rcu_gp_mutex);
+}
+
+void synchronize_rcu(void)
+{
+        write_lock(&amp;rcu_gp_mutex);
+        smp_mb__after_spinlock();
+        write_unlock(&amp;rcu_gp_mutex);
+}
+</pre></div>
+</div>
+<p>[You can ignore <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_assign_pointer" title="rcu_assign_pointer"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_assign_pointer()</span></code></a> and <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_dereference" title="rcu_dereference"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_dereference()</span></code></a> without missing
+much.  But here are simplified versions anyway.  And whatever you do,
+don’t forget about them when submitting patches making use of RCU!]:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>#define rcu_assign_pointer(p, v) \
+({ \
+        smp_store_release(&amp;(p), (v)); \
+})
+
+#define rcu_dereference(p) \
+({ \
+        typeof(p) _________p1 = READ_ONCE(p); \
+        (_________p1); \
+})
+</pre></div>
+</div>
+<p>The <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_read_lock" title="rcu_read_lock"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_read_lock()</span></code></a> and <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_read_unlock" title="rcu_read_unlock"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_read_unlock()</span></code></a> primitive read-acquire
+and release a global reader-writer lock.  The <a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a>
+primitive write-acquires this same lock, then releases it.  This means
+that once <a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a> exits, all RCU read-side critical sections
+that were in progress before <a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a> was called are guaranteed
+to have completed – there is no way that <a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a> would have
+been able to write-acquire the lock otherwise.  The smp_mb__after_spinlock()
+promotes <a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a> to a full memory barrier in compliance with
+the “Memory-Barrier Guarantees” listed in:</p>
+<blockquote>
+<div><p><a class="reference internal" href="Design/Requirements/Requirements.html"><span class="doc">A Tour Through RCU’s Requirements</span></a></p>
+</div></blockquote>
+<p>It is possible to nest <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_read_lock" title="rcu_read_lock"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_read_lock()</span></code></a>, since reader-writer locks may
+be recursively acquired.  Note also that <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_read_lock" title="rcu_read_lock"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_read_lock()</span></code></a> is immune
+from deadlock (an important property of RCU).  The reason for this is
+that the only thing that can block <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_read_lock" title="rcu_read_lock"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_read_lock()</span></code></a> is a <a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a>.
+But <a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a> does not acquire any locks while holding rcu_gp_mutex,
+so there can be no deadlock cycle.</p>
+<dl class="simple" id="quiz-1">
+<dt>Quick Quiz #1:</dt><dd><p>Why is this argument naive?  How could a deadlock
+occur when using this algorithm in a real-world Linux
+kernel?  How could this deadlock be avoided?</p>
+</dd>
+</dl>
+<p><a class="reference internal" href="#id11"><span class="std std-ref">Answers to Quick Quiz</span></a></p>
+</div>
+<div class="section" id="b-toy-example-2-classic-rcu">
+<h3>5B.  “TOY” EXAMPLE #2: CLASSIC RCU<a class="headerlink" href="#b-toy-example-2-classic-rcu" title="Permalink to this headline">¶</a></h3>
+<p>This section presents a “toy” RCU implementation that is based on
+“classic RCU”.  It is also short on performance (but only for updates) and
+on features such as hotplug CPU and the ability to run in CONFIG_PREEMPTION
+kernels.  The definitions of <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_dereference" title="rcu_dereference"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_dereference()</span></code></a> and <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_assign_pointer" title="rcu_assign_pointer"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_assign_pointer()</span></code></a>
+are the same as those shown in the preceding section, so they are omitted.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>void rcu_read_lock(void) { }
+
+void rcu_read_unlock(void) { }
+
+void synchronize_rcu(void)
+{
+        int cpu;
+
+        for_each_possible_cpu(cpu)
+                run_on(cpu);
+}
+</pre></div>
+</div>
+<p>Note that <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_read_lock" title="rcu_read_lock"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_read_lock()</span></code></a> and <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_read_unlock" title="rcu_read_unlock"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_read_unlock()</span></code></a> do absolutely nothing.
+This is the great strength of classic RCU in a non-preemptive kernel:
+read-side overhead is precisely zero, at least on non-Alpha CPUs.
+And there is absolutely no way that <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_read_lock" title="rcu_read_lock"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_read_lock()</span></code></a> can possibly
+participate in a deadlock cycle!</p>
+<p>The implementation of <a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a> simply schedules itself on each
+CPU in turn.  The run_on() primitive can be implemented straightforwardly
+in terms of the sched_setaffinity() primitive.  Of course, a somewhat less
+“toy” implementation would restore the affinity upon completion rather
+than just leaving all tasks running on the last CPU, but when I said
+“toy”, I meant <strong>toy</strong>!</p>
+<p>So how the heck is this supposed to work???</p>
+<p>Remember that it is illegal to block while in an RCU read-side critical
+section.  Therefore, if a given CPU executes a context switch, we know
+that it must have completed all preceding RCU read-side critical sections.
+Once <strong>all</strong> CPUs have executed a context switch, then <strong>all</strong> preceding
+RCU read-side critical sections will have completed.</p>
+<p>So, suppose that we remove a data item from its structure and then invoke
+<a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a>.  Once <a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a> returns, we are guaranteed
+that there are no RCU read-side critical sections holding a reference
+to that data item, so we can safely reclaim it.</p>
+<dl class="simple" id="quiz-2">
+<dt>Quick Quiz #2:</dt><dd><p>Give an example where Classic RCU’s read-side
+overhead is <strong>negative</strong>.</p>
+</dd>
+</dl>
+<p><a class="reference internal" href="#id11"><span class="std std-ref">Answers to Quick Quiz</span></a></p>
+<dl class="simple" id="quiz-3">
+<dt>Quick Quiz #3:</dt><dd><p>If it is illegal to block in an RCU read-side
+critical section, what the heck do you do in
+CONFIG_PREEMPT_RT, where normal spinlocks can block???</p>
+</dd>
+</dl>
+<p><a class="reference internal" href="#id11"><span class="std std-ref">Answers to Quick Quiz</span></a></p>
+</div>
+</div>
+<div class="section" id="analogy-with-reader-writer-locking">
+<span id="id9"></span><h2>6.  ANALOGY WITH READER-WRITER LOCKING<a class="headerlink" href="#analogy-with-reader-writer-locking" title="Permalink to this headline">¶</a></h2>
+<p>Although RCU can be used in many different ways, a very common use of
+RCU is analogous to reader-writer locking.  The following unified
+diff shows how closely related RCU and reader-writer locking can be.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>@@ -5,5 +5,5 @@ struct el {
+        int data;
+        /* Other data fields */
+ };
+-rwlock_t listmutex;
++spinlock_t listmutex;
+ struct el head;
+
+@@ -13,15 +14,15 @@
+        struct list_head *lp;
+        struct el *p;
+
+-       read_lock(&amp;listmutex);
+-       list_for_each_entry(p, head, lp) {
++       rcu_read_lock();
++       list_for_each_entry_rcu(p, head, lp) {
+                if (p-&gt;key == key) {
+                        *result = p-&gt;data;
+-                       read_unlock(&amp;listmutex);
++                       rcu_read_unlock();
+                        return 1;
+                }
+        }
+-       read_unlock(&amp;listmutex);
++       rcu_read_unlock();
+        return 0;
+ }
+
+@@ -29,15 +30,16 @@
+ {
+        struct el *p;
+
+-       write_lock(&amp;listmutex);
++       spin_lock(&amp;listmutex);
+        list_for_each_entry(p, head, lp) {
+                if (p-&gt;key == key) {
+-                       list_del(&amp;p-&gt;list);
+-                       write_unlock(&amp;listmutex);
++                       list_del_rcu(&amp;p-&gt;list);
++                       spin_unlock(&amp;listmutex);
++                       synchronize_rcu();
+                        kfree(p);
+                        return 1;
+                }
+        }
+-       write_unlock(&amp;listmutex);
++       spin_unlock(&amp;listmutex);
+        return 0;
+ }
+</pre></div>
+</div>
+<p>Or, for those who prefer a side-by-side listing:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>1 struct el {                          1 struct el {
+2   struct list_head list;             2   struct list_head list;
+3   long key;                          3   long key;
+4   spinlock_t mutex;                  4   spinlock_t mutex;
+5   int data;                          5   int data;
+6   /* Other data fields */            6   /* Other data fields */
+7 };                                   7 };
+8 rwlock_t listmutex;                  8 spinlock_t listmutex;
+9 struct el head;                      9 struct el head;
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span> 1 int search(long key, int *result)    1 int search(long key, int *result)
+ 2 {                                    2 {
+ 3   struct list_head *lp;              3   struct list_head *lp;
+ 4   struct el *p;                      4   struct el *p;
+ 5                                      5
+ 6   read_lock(&amp;listmutex);             6   rcu_read_lock();
+ 7   list_for_each_entry(p, head, lp) { 7   list_for_each_entry_rcu(p, head, lp) {
+ 8     if (p-&gt;key == key) {             8     if (p-&gt;key == key) {
+ 9       *result = p-&gt;data;             9       *result = p-&gt;data;
+10       read_unlock(&amp;listmutex);      10       rcu_read_unlock();
+11       return 1;                     11       return 1;
+12     }                               12     }
+13   }                                 13   }
+14   read_unlock(&amp;listmutex);          14   rcu_read_unlock();
+15   return 0;                         15   return 0;
+16 }                                   16 }
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span> 1 int delete(long key)                 1 int delete(long key)
+ 2 {                                    2 {
+ 3   struct el *p;                      3   struct el *p;
+ 4                                      4
+ 5   write_lock(&amp;listmutex);            5   spin_lock(&amp;listmutex);
+ 6   list_for_each_entry(p, head, lp) { 6   list_for_each_entry(p, head, lp) {
+ 7     if (p-&gt;key == key) {             7     if (p-&gt;key == key) {
+ 8       list_del(&amp;p-&gt;list);            8       list_del_rcu(&amp;p-&gt;list);
+ 9       write_unlock(&amp;listmutex);      9       spin_unlock(&amp;listmutex);
+                                       10       synchronize_rcu();
+10       kfree(p);                     11       kfree(p);
+11       return 1;                     12       return 1;
+12     }                               13     }
+13   }                                 14   }
+14   write_unlock(&amp;listmutex);         15   spin_unlock(&amp;listmutex);
+15   return 0;                         16   return 0;
+16 }                                   17 }
+</pre></div>
+</div>
+<p>Either way, the differences are quite small.  Read-side locking moves
+to <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_read_lock" title="rcu_read_lock"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_read_lock()</span></code></a> and rcu_read_unlock, update-side locking moves from
+a reader-writer lock to a simple spinlock, and a <a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a>
+precedes the <a class="reference internal" href="../core-api/mm-api.html#c.kfree" title="kfree"><code class="xref c c-func docutils literal notranslate"><span class="pre">kfree()</span></code></a>.</p>
+<p>However, there is one potential catch: the read-side and update-side
+critical sections can now run concurrently.  In many cases, this will
+not be a problem, but it is necessary to check carefully regardless.
+For example, if multiple independent list updates must be seen as
+a single atomic update, converting to RCU will require special care.</p>
+<p>Also, the presence of <a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a> means that the RCU version of
+delete() can now block.  If this is a problem, there is a callback-based
+mechanism that never blocks, namely <a class="reference internal" href="../core-api/kernel-api.html#c.call_rcu" title="call_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">call_rcu()</span></code></a> or <a class="reference internal" href="../core-api/kernel-api.html#c.kfree_rcu" title="kfree_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">kfree_rcu()</span></code></a>, that can
+be used in place of <a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a>.</p>
+</div>
+<div class="section" id="full-list-of-rcu-apis">
+<span id="id10"></span><h2>7.  FULL LIST OF RCU APIs<a class="headerlink" href="#full-list-of-rcu-apis" title="Permalink to this headline">¶</a></h2>
+<p>The RCU APIs are documented in docbook-format header comments in the
+Linux-kernel source code, but it helps to have a full list of the
+APIs, since there does not appear to be a way to categorize them
+in docbook.  Here is the list, by category.</p>
+<p>RCU list traversal:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>list_entry_rcu
+list_entry_lockless
+list_first_entry_rcu
+list_next_rcu
+list_for_each_entry_rcu
+list_for_each_entry_continue_rcu
+list_for_each_entry_from_rcu
+list_first_or_null_rcu
+list_next_or_null_rcu
+hlist_first_rcu
+hlist_next_rcu
+hlist_pprev_rcu
+hlist_for_each_entry_rcu
+hlist_for_each_entry_rcu_bh
+hlist_for_each_entry_from_rcu
+hlist_for_each_entry_continue_rcu
+hlist_for_each_entry_continue_rcu_bh
+hlist_nulls_first_rcu
+hlist_nulls_for_each_entry_rcu
+hlist_bl_first_rcu
+hlist_bl_for_each_entry_rcu
+</pre></div>
+</div>
+<p>RCU pointer/list update:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>rcu_assign_pointer
+list_add_rcu
+list_add_tail_rcu
+list_del_rcu
+list_replace_rcu
+hlist_add_behind_rcu
+hlist_add_before_rcu
+hlist_add_head_rcu
+hlist_add_tail_rcu
+hlist_del_rcu
+hlist_del_init_rcu
+hlist_replace_rcu
+list_splice_init_rcu
+list_splice_tail_init_rcu
+hlist_nulls_del_init_rcu
+hlist_nulls_del_rcu
+hlist_nulls_add_head_rcu
+hlist_bl_add_head_rcu
+hlist_bl_del_init_rcu
+hlist_bl_del_rcu
+hlist_bl_set_first_rcu
+</pre></div>
+</div>
+<p>RCU:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Critical sections       Grace period            Barrier
+
+rcu_read_lock           synchronize_net         rcu_barrier
+rcu_read_unlock         synchronize_rcu
+rcu_dereference         synchronize_rcu_expedited
+rcu_read_lock_held      call_rcu
+rcu_dereference_check   kfree_rcu
+rcu_dereference_protected
+</pre></div>
+</div>
+<p>bh:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Critical sections       Grace period            Barrier
+
+rcu_read_lock_bh        call_rcu                rcu_barrier
+rcu_read_unlock_bh      synchronize_rcu
+[local_bh_disable]      synchronize_rcu_expedited
+[and friends]
+rcu_dereference_bh
+rcu_dereference_bh_check
+rcu_dereference_bh_protected
+rcu_read_lock_bh_held
+</pre></div>
+</div>
+<p>sched:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Critical sections       Grace period            Barrier
+
+rcu_read_lock_sched     call_rcu                rcu_barrier
+rcu_read_unlock_sched   synchronize_rcu
+[preempt_disable]       synchronize_rcu_expedited
+[and friends]
+rcu_read_lock_sched_notrace
+rcu_read_unlock_sched_notrace
+rcu_dereference_sched
+rcu_dereference_sched_check
+rcu_dereference_sched_protected
+rcu_read_lock_sched_held
+</pre></div>
+</div>
+<p>SRCU:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>Critical sections       Grace period            Barrier
+
+srcu_read_lock          call_srcu               srcu_barrier
+srcu_read_unlock        synchronize_srcu
+srcu_dereference        synchronize_srcu_expedited
+srcu_dereference_check
+srcu_read_lock_held
+</pre></div>
+</div>
+<p>SRCU: Initialization/cleanup:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>DEFINE_SRCU
+DEFINE_STATIC_SRCU
+init_srcu_struct
+cleanup_srcu_struct
+</pre></div>
+</div>
+<p>All: lockdep-checked RCU-protected pointer access:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>rcu_access_pointer
+rcu_dereference_raw
+RCU_LOCKDEP_WARN
+rcu_sleep_check
+RCU_NONIDLE
+</pre></div>
+</div>
+<p>See the comment headers in the source code (or the docbook generated
+from them) for more information.</p>
+<p>However, given that there are no fewer than four families of RCU APIs
+in the Linux kernel, how do you choose which one to use?  The following
+list can be helpful:</p>
+<ol class="loweralpha simple">
+<li><p>Will readers need to block?  If so, you need SRCU.</p></li>
+<li><p>What about the -rt patchset?  If readers would need to block
+in an non-rt kernel, you need SRCU.  If readers would block
+in a -rt kernel, but not in a non-rt kernel, SRCU is not
+necessary.  (The -rt patchset turns spinlocks into sleeplocks,
+hence this distinction.)</p></li>
+<li><p>Do you need to treat NMI handlers, hardirq handlers,
+and code segments with preemption disabled (whether
+via preempt_disable(), local_irq_save(), local_bh_disable(),
+or some other mechanism) as if they were explicit RCU readers?
+If so, RCU-sched is the only choice that will work for you.</p></li>
+<li><p>Do you need RCU grace periods to complete even in the face
+of softirq monopolization of one or more of the CPUs?  For
+example, is your code subject to network-based denial-of-service
+attacks?  If so, you should disable softirq across your readers,
+for example, by using <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_read_lock_bh" title="rcu_read_lock_bh"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_read_lock_bh()</span></code></a>.</p></li>
+<li><p>Is your workload too update-intensive for normal use of
+RCU, but inappropriate for other synchronization mechanisms?
+If so, consider SLAB_TYPESAFE_BY_RCU (which was originally
+named SLAB_DESTROY_BY_RCU).  But please be careful!</p></li>
+<li><p>Do you need read-side critical sections that are respected
+even though they are in the middle of the idle loop, during
+user-mode execution, or on an offlined CPU?  If so, SRCU is the
+only choice that will work for you.</p></li>
+<li><p>Otherwise, use RCU.</p></li>
+</ol>
+<p>Of course, this all assumes that you have determined that RCU is in fact
+the right tool for your job.</p>
+</div>
+<div class="section" id="answers-to-quick-quizzes">
+<span id="id11"></span><h2>8.  ANSWERS TO QUICK QUIZZES<a class="headerlink" href="#answers-to-quick-quizzes" title="Permalink to this headline">¶</a></h2>
+<dl>
+<dt>Quick Quiz #1:</dt><dd><p>Why is this argument naive?  How could a deadlock
+occur when using this algorithm in a real-world Linux
+kernel?  [Referring to the lock-based “toy” RCU
+algorithm.]</p>
+</dd>
+<dt>Answer:</dt><dd><p>Consider the following sequence of events:</p>
+<ol class="arabic simple">
+<li><p>CPU 0 acquires some unrelated lock, call it
+“problematic_lock”, disabling irq via
+spin_lock_irqsave().</p></li>
+<li><p>CPU 1 enters <a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a>, write-acquiring
+rcu_gp_mutex.</p></li>
+<li><p>CPU 0 enters <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_read_lock" title="rcu_read_lock"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_read_lock()</span></code></a>, but must wait
+because CPU 1 holds rcu_gp_mutex.</p></li>
+<li><p>CPU 1 is interrupted, and the irq handler
+attempts to acquire problematic_lock.</p></li>
+</ol>
+<p>The system is now deadlocked.</p>
+<p>One way to avoid this deadlock is to use an approach like
+that of CONFIG_PREEMPT_RT, where all normal spinlocks
+become blocking locks, and all irq handlers execute in
+the context of special tasks.  In this case, in step 4
+above, the irq handler would block, allowing CPU 1 to
+release rcu_gp_mutex, avoiding the deadlock.</p>
+<p>Even in the absence of deadlock, this RCU implementation
+allows latency to “bleed” from readers to other
+readers through <a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a>.  To see this,
+consider task A in an RCU read-side critical section
+(thus read-holding rcu_gp_mutex), task B blocked
+attempting to write-acquire rcu_gp_mutex, and
+task C blocked in <a class="reference internal" href="../core-api/kernel-api.html#c.rcu_read_lock" title="rcu_read_lock"><code class="xref c c-func docutils literal notranslate"><span class="pre">rcu_read_lock()</span></code></a> attempting to
+read_acquire rcu_gp_mutex.  Task A’s RCU read-side
+latency is holding up task C, albeit indirectly via
+task B.</p>
+<p>Realtime RCU implementations therefore use a counter-based
+approach where tasks in RCU read-side critical sections
+cannot be blocked by tasks executing <a class="reference internal" href="../core-api/kernel-api.html#c.synchronize_rcu" title="synchronize_rcu"><code class="xref c c-func docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code></a>.</p>
+</dd>
+</dl>
+<p><a class="reference internal" href="#quiz-1"><span class="std std-ref">Back to Quick Quiz #1</span></a></p>
+<dl>
+<dt>Quick Quiz #2:</dt><dd><p>Give an example where Classic RCU’s read-side
+overhead is <strong>negative</strong>.</p>
+</dd>
+<dt>Answer:</dt><dd><p>Imagine a single-CPU system with a non-CONFIG_PREEMPTION
+kernel where a routing table is used by process-context
+code, but can be updated by irq-context code (for example,
+by an “ICMP REDIRECT” packet).  The usual way of handling
+this would be to have the process-context code disable
+interrupts while searching the routing table.  Use of
+RCU allows such interrupt-disabling to be dispensed with.
+Thus, without RCU, you pay the cost of disabling interrupts,
+and with RCU you don’t.</p>
+<p>One can argue that the overhead of RCU in this
+case is negative with respect to the single-CPU
+interrupt-disabling approach.  Others might argue that
+the overhead of RCU is merely zero, and that replacing
+the positive overhead of the interrupt-disabling scheme
+with the zero-overhead RCU scheme does not constitute
+negative overhead.</p>
+<p>In real life, of course, things are more complex.  But
+even the theoretical possibility of negative overhead for
+a synchronization primitive is a bit unexpected.  ;-)</p>
+</dd>
+</dl>
+<p><a class="reference internal" href="#quiz-2"><span class="std std-ref">Back to Quick Quiz #2</span></a></p>
+<dl>
+<dt>Quick Quiz #3:</dt><dd><p>If it is illegal to block in an RCU read-side
+critical section, what the heck do you do in
+CONFIG_PREEMPT_RT, where normal spinlocks can block???</p>
+</dd>
+<dt>Answer:</dt><dd><p>Just as CONFIG_PREEMPT_RT permits preemption of spinlock
+critical sections, it permits preemption of RCU
+read-side critical sections.  It also permits
+spinlocks blocking while in RCU read-side critical
+sections.</p>
+<p>Why the apparent inconsistency?  Because it is
+possible to use priority boosting to keep the RCU
+grace periods short if need be (for example, if running
+short of memory).  In contrast, if blocking waiting
+for (say) network reception, there is no way to know
+what should be boosted.  Especially given that the
+process we need to boost might well be a human being
+who just went out for a pizza or something.  And although
+a computer-operated cattle prod might arouse serious
+interest, it might also provoke serious objections.
+Besides, how does the computer know what pizza parlor
+the human being went to???</p>
+</dd>
+</dl>
+<p><a class="reference internal" href="#quiz-3"><span class="std std-ref">Back to Quick Quiz #3</span></a></p>
+<p>ACKNOWLEDGEMENTS</p>
+<p>My thanks to the people who helped make this human-readable, including
+Jon Walpole, Josh Triplett, Serge Hallyn, Suzanne Wood, and Alan Stern.</p>
+<p>For more information, see <a class="reference external" href="http://www.rdrop.com/users/paulmck/RCU">http://www.rdrop.com/users/paulmck/RCU</a>.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="rcu.html" class="btn btn-neutral float-right" title="RCU Concepts" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="rcu_dereference.html" class="btn btn-neutral float-left" title="PROPER CARE AND FEEDING OF RETURN VALUES FROM rcu_dereference()" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright The kernel development community.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
