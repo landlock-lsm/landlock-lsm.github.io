@@ -1,0 +1,543 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>PXA2xx SPI on SSP driver HOWTO &mdash; The Linux Kernel 5.12.0-rc3+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="spi_lm70llp : LM70-LLP parport-to-SPI adapter" href="spi-lm70llp.html" />
+    <link rel="prev" title="spi_butterfly - parport-to-butterfly adapter driver" href="butterfly.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.12.0-rc3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Serial Peripheral Interface (SPI)</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="spi-summary.html">Overview of Linux kernel SPI support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spidev.html">SPI userspace API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="butterfly.html">spi_butterfly - parport-to-butterfly adapter driver</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">PXA2xx SPI on SSP driver HOWTO</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#declaring-pxa2xx-master-controllers">Declaring PXA2xx Master Controllers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#nssp-master-sample">NSSP MASTER SAMPLE</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#declaring-slave-devices">Declaring Slave Devices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#nssp-slave-sample">NSSP SLAVE SAMPLE</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dma-and-pio-i-o-support">DMA and PIO I/O Support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#thanks-to">THANKS TO</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="spi-lm70llp.html">spi_lm70llp :  LM70-LLP parport-to-SPI adapter</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spi-sc18is602.html">Kernel driver spi-sc18is602</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/index.html">Nios II Specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="index.html">Serial Peripheral Interface (SPI)</a> &raquo;</li>
+        
+      <li>PXA2xx SPI on SSP driver HOWTO</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/spi/pxa2xx.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="pxa2xx-spi-on-ssp-driver-howto">
+<h1>PXA2xx SPI on SSP driver HOWTO<a class="headerlink" href="#pxa2xx-spi-on-ssp-driver-howto" title="Permalink to this headline">¶</a></h1>
+<p>This a mini howto on the pxa2xx_spi driver.  The driver turns a PXA2xx
+synchronous serial port into a SPI master controller
+(see <a class="reference internal" href="spi-summary.html"><span class="doc">Overview of Linux kernel SPI support</span></a>). The driver has the following features</p>
+<ul class="simple">
+<li><p>Support for any PXA2xx SSP</p></li>
+<li><p>SSP PIO and SSP DMA data transfers.</p></li>
+<li><p>External and Internal (SSPFRM) chip selects.</p></li>
+<li><p>Per slave device (chip) configuration.</p></li>
+<li><p>Full suspend, freeze, resume support.</p></li>
+</ul>
+<p>The driver is built around a “spi_message” fifo serviced by workqueue and a
+tasklet. The workqueue, “pump_messages”, drives message fifo and the tasklet
+(pump_transfer) is responsible for queuing SPI transactions and setting up and
+launching the dma/interrupt driven transfers.</p>
+<div class="section" id="declaring-pxa2xx-master-controllers">
+<h2>Declaring PXA2xx Master Controllers<a class="headerlink" href="#declaring-pxa2xx-master-controllers" title="Permalink to this headline">¶</a></h2>
+<p>Typically a SPI master is defined in the arch/…/mach-<em>/board-</em>.c as a
+“platform device”.  The master configuration is passed to the driver via a table
+found in include/linux/spi/pxa2xx_spi.h:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct pxa2xx_spi_controller {
+      u16 num_chipselect;
+      u8 enable_dma;
+};
+</pre></div>
+</div>
+<p>The “pxa2xx_spi_controller.num_chipselect” field is used to determine the number of
+slave device (chips) attached to this SPI master.</p>
+<p>The “pxa2xx_spi_controller.enable_dma” field informs the driver that SSP DMA should
+be used.  This caused the driver to acquire two DMA channels: rx_channel and
+tx_channel.  The rx_channel has a higher DMA service priority the tx_channel.
+See the “PXA2xx Developer Manual” section “DMA Controller”.</p>
+</div>
+<div class="section" id="nssp-master-sample">
+<h2>NSSP MASTER SAMPLE<a class="headerlink" href="#nssp-master-sample" title="Permalink to this headline">¶</a></h2>
+<p>Below is a sample configuration using the PXA255 NSSP:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>static struct resource pxa_spi_nssp_resources[] = {
+      [0] = {
+              .start  = __PREG(SSCR0_P(2)), /* Start address of NSSP */
+              .end    = __PREG(SSCR0_P(2)) + 0x2c, /* Range of registers */
+              .flags  = IORESOURCE_MEM,
+      },
+      [1] = {
+              .start  = IRQ_NSSP, /* NSSP IRQ */
+              .end    = IRQ_NSSP,
+              .flags  = IORESOURCE_IRQ,
+      },
+};
+
+static struct pxa2xx_spi_controller pxa_nssp_master_info = {
+      .num_chipselect = 1, /* Matches the number of chips attached to NSSP */
+      .enable_dma = 1, /* Enables NSSP DMA */
+};
+
+static struct platform_device pxa_spi_nssp = {
+      .name = &quot;pxa2xx-spi&quot;, /* MUST BE THIS VALUE, so device match driver */
+      .id = 2, /* Bus number, MUST MATCH SSP number 1..n */
+      .resource = pxa_spi_nssp_resources,
+      .num_resources = ARRAY_SIZE(pxa_spi_nssp_resources),
+      .dev = {
+              .platform_data = &amp;pxa_nssp_master_info, /* Passed to driver */
+      },
+};
+
+static struct platform_device *devices[] __initdata = {
+      &amp;pxa_spi_nssp,
+};
+
+static void __init board_init(void)
+{
+      (void)platform_add_device(devices, ARRAY_SIZE(devices));
+}
+</pre></div>
+</div>
+</div>
+<div class="section" id="declaring-slave-devices">
+<h2>Declaring Slave Devices<a class="headerlink" href="#declaring-slave-devices" title="Permalink to this headline">¶</a></h2>
+<p>Typically each SPI slave (chip) is defined in the arch/…/mach-<em>/board-</em>.c
+using the “spi_board_info” structure found in “linux/spi/spi.h”. See
+“<a class="reference internal" href="spi-summary.html"><span class="doc">Overview of Linux kernel SPI support</span></a>” for additional information.</p>
+<p>Each slave device attached to the PXA must provide slave specific configuration
+information via the structure “pxa2xx_spi_chip” found in
+“include/linux/spi/pxa2xx_spi.h”.  The pxa2xx_spi master controller driver
+will uses the configuration whenever the driver communicates with the slave
+device. All fields are optional.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>struct pxa2xx_spi_chip {
+      u8 tx_threshold;
+      u8 rx_threshold;
+      u8 dma_burst_size;
+      u32 timeout;
+      u8 enable_loopback;
+      void (*cs_control)(u32 command);
+};
+</pre></div>
+</div>
+<p>The “pxa2xx_spi_chip.tx_threshold” and “pxa2xx_spi_chip.rx_threshold” fields are
+used to configure the SSP hardware fifo.  These fields are critical to the
+performance of pxa2xx_spi driver and misconfiguration will result in rx
+fifo overruns (especially in PIO mode transfers). Good default values are:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>.tx_threshold = 8,
+.rx_threshold = 8,
+</pre></div>
+</div>
+<p>The range is 1 to 16 where zero indicates “use default”.</p>
+<p>The “pxa2xx_spi_chip.dma_burst_size” field is used to configure PXA2xx DMA
+engine and is related the “spi_device.bits_per_word” field.  Read and understand
+the PXA2xx “Developer Manual” sections on the DMA controller and SSP Controllers
+to determine the correct value. An SSP configured for byte-wide transfers would
+use a value of 8. The driver will determine a reasonable default if
+dma_burst_size == 0.</p>
+<p>The “pxa2xx_spi_chip.timeout” fields is used to efficiently handle
+trailing bytes in the SSP receiver fifo.  The correct value for this field is
+dependent on the SPI bus speed (“spi_board_info.max_speed_hz”) and the specific
+slave device.  Please note that the PXA2xx SSP 1 does not support trailing byte
+timeouts and must busy-wait any trailing bytes.</p>
+<p>The “pxa2xx_spi_chip.enable_loopback” field is used to place the SSP porting
+into internal loopback mode.  In this mode the SSP controller internally
+connects the SSPTX pin to the SSPRX pin.  This is useful for initial setup
+testing.</p>
+<p>The “pxa2xx_spi_chip.cs_control” field is used to point to a board specific
+function for asserting/deasserting a slave device chip select.  If the field is
+NULL, the pxa2xx_spi master controller driver assumes that the SSP port is
+configured to use SSPFRM instead.</p>
+<p>NOTE: the SPI driver cannot control the chip select if SSPFRM is used, so the
+chipselect is dropped after each spi_transfer.  Most devices need chip select
+asserted around the complete message.  Use SSPFRM as a GPIO (through cs_control)
+to accommodate these chips.</p>
+</div>
+<div class="section" id="nssp-slave-sample">
+<h2>NSSP SLAVE SAMPLE<a class="headerlink" href="#nssp-slave-sample" title="Permalink to this headline">¶</a></h2>
+<p>The pxa2xx_spi_chip structure is passed to the pxa2xx_spi driver in the
+“spi_board_info.controller_data” field. Below is a sample configuration using
+the PXA255 NSSP.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>/* Chip Select control for the CS8415A SPI slave device */
+static void cs8415a_cs_control(u32 command)
+{
+      if (command &amp; PXA2XX_CS_ASSERT)
+              GPCR(2) = GPIO_bit(2);
+      else
+              GPSR(2) = GPIO_bit(2);
+}
+
+/* Chip Select control for the CS8405A SPI slave device */
+static void cs8405a_cs_control(u32 command)
+{
+      if (command &amp; PXA2XX_CS_ASSERT)
+              GPCR(3) = GPIO_bit(3);
+      else
+              GPSR(3) = GPIO_bit(3);
+}
+
+static struct pxa2xx_spi_chip cs8415a_chip_info = {
+      .tx_threshold = 8, /* SSP hardward FIFO threshold */
+      .rx_threshold = 8, /* SSP hardward FIFO threshold */
+      .dma_burst_size = 8, /* Byte wide transfers used so 8 byte bursts */
+      .timeout = 235, /* See Intel documentation */
+      .cs_control = cs8415a_cs_control, /* Use external chip select */
+};
+
+static struct pxa2xx_spi_chip cs8405a_chip_info = {
+      .tx_threshold = 8, /* SSP hardward FIFO threshold */
+      .rx_threshold = 8, /* SSP hardward FIFO threshold */
+      .dma_burst_size = 8, /* Byte wide transfers used so 8 byte bursts */
+      .timeout = 235, /* See Intel documentation */
+      .cs_control = cs8405a_cs_control, /* Use external chip select */
+};
+
+static struct spi_board_info streetracer_spi_board_info[] __initdata = {
+      {
+              .modalias = &quot;cs8415a&quot;, /* Name of spi_driver for this device */
+              .max_speed_hz = 3686400, /* Run SSP as fast a possbile */
+              .bus_num = 2, /* Framework bus number */
+              .chip_select = 0, /* Framework chip select */
+              .platform_data = NULL; /* No spi_driver specific config */
+              .controller_data = &amp;cs8415a_chip_info, /* Master chip config */
+              .irq = STREETRACER_APCI_IRQ, /* Slave device interrupt */
+      },
+      {
+              .modalias = &quot;cs8405a&quot;, /* Name of spi_driver for this device */
+              .max_speed_hz = 3686400, /* Run SSP as fast a possbile */
+              .bus_num = 2, /* Framework bus number */
+              .chip_select = 1, /* Framework chip select */
+              .controller_data = &amp;cs8405a_chip_info, /* Master chip config */
+              .irq = STREETRACER_APCI_IRQ, /* Slave device interrupt */
+      },
+};
+
+static void __init streetracer_init(void)
+{
+      spi_register_board_info(streetracer_spi_board_info,
+                              ARRAY_SIZE(streetracer_spi_board_info));
+}
+</pre></div>
+</div>
+</div>
+<div class="section" id="dma-and-pio-i-o-support">
+<h2>DMA and PIO I/O Support<a class="headerlink" href="#dma-and-pio-i-o-support" title="Permalink to this headline">¶</a></h2>
+<p>The pxa2xx_spi driver supports both DMA and interrupt driven PIO message
+transfers.  The driver defaults to PIO mode and DMA transfers must be enabled
+by setting the “enable_dma” flag in the “pxa2xx_spi_controller” structure.  The DMA
+mode supports both coherent and stream based DMA mappings.</p>
+<p>The following logic is used to determine the type of I/O to be used on
+a per “spi_transfer” basis:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>if !enable_dma then
+      always use PIO transfers
+
+if spi_message.len &gt; 8191 then
+      print &quot;rate limited&quot; warning
+      use PIO transfers
+
+if spi_message.is_dma_mapped and rx_dma_buf != 0 and tx_dma_buf != 0 then
+      use coherent DMA mode
+
+if rx_buf and tx_buf are aligned on 8 byte boundary then
+      use streaming DMA mode
+
+otherwise
+      use PIO transfer
+</pre></div>
+</div>
+</div>
+<div class="section" id="thanks-to">
+<h2>THANKS TO<a class="headerlink" href="#thanks-to" title="Permalink to this headline">¶</a></h2>
+<p>David Brownell and others for mentoring the development of this driver.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="spi-lm70llp.html" class="btn btn-neutral float-right" title="spi_lm70llp : LM70-LLP parport-to-SPI adapter" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="butterfly.html" class="btn btn-neutral float-left" title="spi_butterfly - parport-to-butterfly adapter driver" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright The kernel development community.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
