@@ -26,6 +26,18 @@ __ https://github.com/landlock-lsm/linux/blob/landlock-v29/tools/testing/selftes
 __ linux-doc/landlock-v29/userspace-api/landlock.html
 
 
+External links
+==============
+
+Twitter__ -- GitHub__
+
+__ https://twitter.com/l0kod
+__ https://github.com/landlock-lsm
+
+
+Archives
+========
+
 Summary 2019 -- Landlock: a new kind of Linux Security Module leveraging eBPF
 -----------------------------------------------------------------------------
 
@@ -110,12 +122,3 @@ __ https://lkml.org/lkml/2017/8/20/192
 __ https://github.com/landlock-lsm/linux/commits/landlock-v7
 __ https://github.com/landlock-lsm/linux/blob/landlock-v7/samples/bpf/landlock1_kern.c
 __ linux-doc/landlock-v7/security/landlock/index.html
-
-
-External links
-==============
-
-Twitter__ -- GitHub__
-
-__ https://twitter.com/l0kod
-__ https://github.com/landlock-lsm
