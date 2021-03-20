@@ -17,6 +17,11 @@ any process, including unprivileged ones, to securely restrict themselves.
 [PATCH v30] -- Landlock LSM
 ---------------------------
 
+Landlock is now in Linux `next-20210319`__
+
+__ https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/security/landlock?h=next-20210319&id=f00397ee41c79b6155b9b44abd0055b2c0621349
+
+
 `LKML`__ -- `code`__ -- `sandbox manager example`__ -- `tests`__ -- `documentation`__
 
 __ https://lore.kernel.org/lkml/20210316204252.427806-1-mic@digikod.net/
