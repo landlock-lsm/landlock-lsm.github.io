@@ -1,0 +1,27 @@
+digraph encoder_state_machine {
+    node [shape = doublecircle, label="Encoding"] Encoding;
+
+    node [shape = circle, label="Initialization"] Initialization;
+    node [shape = circle, label="Stopped"] Stopped;
+    node [shape = circle, label="Drain"] Drain;
+    node [shape = circle, label="Reset"] Reset;
+
+    node [shape = point]; qi
+    qi -> Initialization [ label = "open()" ];
+
+    Initialization -> Encoding [ label = "Both queues streaming" ];
+
+    Encoding -> Drain [ label = "V4L2_ENC_CMD_STOP" ];
+    Encoding -> Reset [ label = "VIDIOC_STREAMOFF(CAPTURE)" ];
+    Encoding -> Stopped [ label = "VIDIOC_STREAMOFF(OUTPUT)" ];
+    Encoding -> Encoding;
+
+    Drain -> Stopped [ label = "All CAPTURE\nbuffers dequeued\nor\nVIDIOC_STREAMOFF(OUTPUT)" ];
+    Drain -> Reset [ label = "VIDIOC_STREAMOFF(CAPTURE)" ];
+
+    Reset -> Encoding [ label = "VIDIOC_STREAMON(CAPTURE)" ];
+    Reset -> Initialization [ label = "VIDIOC_REQBUFS(OUTPUT, 0)" ];
+
+    Stopped -> Encoding [ label = "V4L2_ENC_CMD_START\nor\nVIDIOC_STREAMON(OUTPUT)" ];
+    Stopped -> Reset [ label = "VIDIOC_STREAMOFF(CAPTURE)" ];
+}

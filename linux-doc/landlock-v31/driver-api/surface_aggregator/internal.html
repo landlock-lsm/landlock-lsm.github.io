@@ -1,0 +1,881 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Core Driver Internals &mdash; The Linux Kernel 5.12.0-rc3+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Internal API Documentation" href="internal-api.html" />
+    <link rel="prev" title="Surface Serial Hub Protocol" href="ssh.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.12.0-rc3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">The Linux driver implementer’s API guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../driver-model/index.html">Driver Model</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../basics.html">Driver Basics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../infrastructure.html">Device drivers infrastructure</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ioctl.html">ioctl based interfaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../early-userspace/index.html">Early Userspace</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pm/index.html">CPU and Device Power Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../clk.html">The Common Clk Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../device-io.html">Bus-Independent Device Accesses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dma-buf.html">Buffer Sharing and Synchronization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../device_link.html">Device links</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../component.html">Component Helper for Aggregate Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../message-based.html">Message-based devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../infiniband.html">InfiniBand and Remote DMA (RDMA) Interfaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../frame-buffer.html">Frame Buffer Library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../regulator.html">Voltage and current regulator API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reset.html">Reset controller API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../input.html">Input Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../usb/index.html">Linux USB API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../firewire.html">Firewire (IEEE 1394) driver Interface Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pci/index.html">The Linux PCI driver implementer’s API guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cxl/index.html">Compute Express Link</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../spi.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../i2c.html">I<sup>2</sup>C and SMBus Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ipmb.html">IPMB Driver for a Satellite MC</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ipmi.html">The Linux IPMI Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../i3c/index.html">I3C subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../interconnect.html">Generic System Interconnect Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../devfreq.html">Device Frequency Scaling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../hsi.html">High Speed Synchronous Serial Interface (HSI)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../edac.html">Error Detection And Correction (EDAC) Devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../scsi.html">SCSI Interfaces Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../libata.html">libATA Developer’s Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../target.html">target and iSCSI Interfaces Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mailbox.html">The Common Mailbox Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mtdnand.html">MTD NAND Driver Programming Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../miscellaneous.html">Parallel Port Devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../miscellaneous.html#x50-uart-driver">16x50 UART Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../miscellaneous.html#pulse-width-modulation-pwm">Pulse-Width Modulation (PWM)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mei/index.html">Intel(R) Management Engine Interface (Intel(R) MEI)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mtd/index.html">Memory Technology Device (MTD)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mmc/index.html">MMC/SD/SDIO card support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../nvdimm/index.html">Non-Volatile Memory Device (NVDIMM)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../w1.html">W1: Dallas’ 1-wire bus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../rapidio/index.html">The Linux RapidIO Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../s390-drivers.html">Writing s390 channel device drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../vme.html">VME Device Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../80211/index.html">Linux 802.11 Driver Developer’s Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../uio-howto.html">The Userspace I/O HOWTO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../firmware/index.html">Linux Firmware API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pinctl.html">PINCTRL (PIN CONTROL) subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../gpio/index.html">General Purpose Input/Output (GPIO)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../md/index.html">RAID</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../media/index.html">Media subsystem kernel internal API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../misc_devices.html">Miscellaneous Devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../nfc/index.html">Near Field Communication</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dmaengine/index.html">DMAEngine documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../slimbus.html">Linux kernel SLIMbus support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../soundwire/index.html">SoundWire Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../thermal/index.html">Thermal</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../fpga/index.html">FPGA Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../acpi/index.html">ACPI Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../auxiliary_bus.html">Auxiliary Bus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../backlight/lp855x-driver.html">Kernel driver lp855x</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../connector.html">Kernel Connector</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../console.html">Console Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dcdbas.html">Dell Systems Management Base Driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../eisa.html">EISA bus support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../isa.html">ISA Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../isapnp.html">ISA Plug &amp; Play support by Jaroslav Kysela &lt;perex&#64;suse.cz&gt;</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../io-mapping.html">The io_mapping functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../io_ordering.html">Ordering I/O writes to memory-mapped addresses</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../generic-counter.html">Generic Counter Interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../lightnvm-pblk.html">pblk: Physical Block Device Target</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../memory-devices/index.html">Memory Controller drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../men-chameleon-bus.html">MEN Chameleon Bus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ntb.html">NTB Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../nvmem.html">NVMEM Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../parport-lowlevel.html">PARPORT interface documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pps.html">PPS - Pulse Per Second</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ptp.html">PTP hardware clock infrastructure for Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../phy/index.html">Generic PHY Framework</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pwm.html">Pulse Width Modulation (PWM) interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pldmfw/index.html">PLDM Firmware Flash Update Library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pldmfw/index.html#overview-of-the-pldmfw-library">Overview of the <code class="docutils literal notranslate"><span class="pre">pldmfw</span></code> library</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../rfkill.html">rfkill - RF kill switch support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../serial/index.html">Support for Serial devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sm501.html">SM501 Driver</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">Surface System Aggregator Module (SSAM)</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="overview.html">Overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="client.html">Writing Client Drivers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="clients/index.html">Client Driver Documentation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ssh.html">Surface Serial Hub Protocol</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Core Driver Internals</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="internal-api.html">Internal API Documentation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#packet-transport-layer">Packet Transport Layer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#request-transport-layer">Request Transport Layer</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#controller-layer">Controller Layer</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../switchtec.html">Linux Switchtec Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sync_file.html">Sync File API Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../vfio-mediated-device.html">VFIO Mediated devices</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../vfio.html">VFIO - “Virtual Function I/O” </a></li>
+<li class="toctree-l2"><a class="reference internal" href="../xilinx/index.html">Xilinx FPGA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../xillybus.html">Xillybus driver for generic FPGA interface</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../zorro.html">Writing Device Drivers for Zorro Devices</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../nios2/index.html">Nios II Specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">The Linux driver implementer’s API guide</a> &raquo;</li>
+        
+          <li><a href="index.html">Surface System Aggregator Module (SSAM)</a> &raquo;</li>
+        
+      <li>Core Driver Internals</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../../_sources/driver-api/surface_aggregator/internal.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="core-driver-internals">
+<h1>Core Driver Internals<a class="headerlink" href="#core-driver-internals" title="Permalink to this headline">¶</a></h1>
+<p>Architectural overview of the Surface System Aggregator Module (SSAM) core
+and Surface Serial Hub (SSH) driver. For the API documentation, refer to:</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="internal-api.html">Internal API Documentation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="internal-api.html#packet-transport-layer">Packet Transport Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="internal-api.html#request-transport-layer">Request Transport Layer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="internal-api.html#controller">Controller</a></li>
+<li class="toctree-l2"><a class="reference internal" href="internal-api.html#client-device-bus">Client Device Bus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="internal-api.html#core">Core</a></li>
+<li class="toctree-l2"><a class="reference internal" href="internal-api.html#trace-helpers">Trace Helpers</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>The SSAM core implementation is structured in layers, somewhat following the
+SSH protocol structure:</p>
+<p>Lower-level packet transport is implemented in the <em>packet transport layer
+(PTL)</em>, directly building on top of the serial device (serdev)
+infrastructure of the kernel. As the name indicates, this layer deals with
+the packet transport logic and handles things like packet validation, packet
+acknowledgment (ACKing), packet (retransmission) timeouts, and relaying
+packet payloads to higher-level layers.</p>
+<p>Above this sits the <em>request transport layer (RTL)</em>. This layer is centered
+around command-type packet payloads, i.e. requests (sent from host to EC),
+responses of the EC to those requests, and events (sent from EC to host).
+It, specifically, distinguishes events from request responses, matches
+responses to their corresponding requests, and implements request timeouts.</p>
+<p>The <em>controller</em> layer is building on top of this and essentially decides
+how request responses and, especially, events are dealt with. It provides an
+event notifier system, handles event activation/deactivation, provides a
+workqueue for event and asynchronous request completion, and also manages
+the message counters required for building command messages (<code class="docutils literal notranslate"><span class="pre">SEQ</span></code>,
+<code class="docutils literal notranslate"><span class="pre">RQID</span></code>). This layer basically provides a fundamental interface to the SAM
+EC for use in other kernel drivers.</p>
+<p>While the controller layer already provides an interface for other kernel
+drivers, the client <em>bus</em> extends this interface to provide support for
+native SSAM devices, i.e. devices that are not defined in ACPI and not
+implemented as platform devices, via <a class="reference internal" href="client-api.html#c.ssam_device" title="ssam_device"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">ssam_device</span></code></a> and <a class="reference internal" href="client-api.html#c.ssam_device_driver" title="ssam_device_driver"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">ssam_device_driver</span></code></a>
+simplify management of client devices and client drivers.</p>
+<p>Refer to <a class="reference internal" href="client.html"><span class="doc">Writing Client Drivers</span></a> for documentation regarding the client device/driver
+API and interface options for other kernel drivers. It is recommended to
+familiarize oneself with that chapter and the <a class="reference internal" href="ssh.html"><span class="doc">Surface Serial Hub Protocol</span></a> before continuing
+with the architectural overview below.</p>
+</div>
+<div class="section" id="packet-transport-layer">
+<h2>Packet Transport Layer<a class="headerlink" href="#packet-transport-layer" title="Permalink to this headline">¶</a></h2>
+<p>The packet transport layer is represented via <a class="reference internal" href="internal-api.html#c.ssh_ptl" title="ssh_ptl"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">ssh_ptl</span></code></a> and is structured
+around the following key concepts:</p>
+<div class="section" id="packets">
+<h3>Packets<a class="headerlink" href="#packets" title="Permalink to this headline">¶</a></h3>
+<p>Packets are the fundamental transmission unit of the SSH protocol. They are
+managed by the packet transport layer, which is essentially the lowest layer
+of the driver and is built upon by other components of the SSAM core.
+Packets to be transmitted by the SSAM core are represented via <a class="reference internal" href="client-api.html#c.ssh_packet" title="ssh_packet"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">ssh_packet</span></code></a>
+(in contrast, packets received by the core do not have any specific
+structure and are managed entirely via the raw <a class="reference internal" href="client-api.html#c.ssh_frame" title="ssh_frame"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">ssh_frame</span></code></a>).</p>
+<p>This structure contains the required fields to manage the packet inside the
+transport layer, as well as a reference to the buffer containing the data to
+be transmitted (i.e. the message wrapped in <a class="reference internal" href="client-api.html#c.ssh_frame" title="ssh_frame"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">ssh_frame</span></code></a>). Most notably, it
+contains an internal reference count, which is used for managing its
+lifetime (accessible via <a class="reference internal" href="client-api.html#c.ssh_packet_get" title="ssh_packet_get"><code class="xref c c-func docutils literal notranslate"><span class="pre">ssh_packet_get()</span></code></a> and <a class="reference internal" href="client-api.html#c.ssh_packet_put" title="ssh_packet_put"><code class="xref c c-func docutils literal notranslate"><span class="pre">ssh_packet_put()</span></code></a>). When this
+counter reaches zero, the <code class="docutils literal notranslate"><span class="pre">release()</span></code> callback provided to the packet via
+its <a class="reference internal" href="client-api.html#c.ssh_packet_ops" title="ssh_packet_ops"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">ssh_packet_ops</span></code></a> reference is executed, which may then deallocate the
+packet or its enclosing structure (e.g. <a class="reference internal" href="client-api.html#c.ssh_request" title="ssh_request"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">ssh_request</span></code></a>).</p>
+<p>In addition to the <code class="docutils literal notranslate"><span class="pre">release</span></code> callback, the <a class="reference internal" href="client-api.html#c.ssh_packet_ops" title="ssh_packet_ops"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">ssh_packet_ops</span></code></a> reference also
+provides a <code class="docutils literal notranslate"><span class="pre">complete()</span></code> callback, which is run once the packet has been
+completed and provides the status of this completion, i.e. zero on success
+or a negative errno value in case of an error. Once the packet has been
+submitted to the packet transport layer, the <code class="docutils literal notranslate"><span class="pre">complete()</span></code> callback is
+always guaranteed to be executed before the <code class="docutils literal notranslate"><span class="pre">release()</span></code> callback, i.e. the
+packet will always be completed, either successfully, with an error, or due
+to cancellation, before it will be released.</p>
+<p>The state of a packet is managed via its <code class="docutils literal notranslate"><span class="pre">state</span></code> flags
+(<code class="xref c c-type docutils literal notranslate"><span class="pre">enum</span> <span class="pre">ssh_packet_flags</span></code>), which also contains the packet type. In particular,
+the following bits are noteworthy:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">SSH_PACKET_SF_LOCKED_BIT</span></code>: This bit is set when completion, either
+through error or success, is imminent. It indicates that no further
+references of the packet should be taken and any existing references
+should be dropped as soon as possible. The process setting this bit is
+responsible for removing any references to this packet from the packet
+queue and pending set.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SSH_PACKET_SF_COMPLETED_BIT</span></code>: This bit is set by the process running the
+<code class="docutils literal notranslate"><span class="pre">complete()</span></code> callback and is used to ensure that this callback only runs
+once.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SSH_PACKET_SF_QUEUED_BIT</span></code>: This bit is set when the packet is queued on
+the packet queue and cleared when it is dequeued.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SSH_PACKET_SF_PENDING_BIT</span></code>: This bit is set when the packet is added to
+the pending set and cleared when it is removed from it.</p></li>
+</ul>
+</div>
+<div class="section" id="packet-queue">
+<h3>Packet Queue<a class="headerlink" href="#packet-queue" title="Permalink to this headline">¶</a></h3>
+<p>The packet queue is the first of the two fundamental collections in the
+packet transport layer. It is a priority queue, with priority of the
+respective packets based on the packet type (major) and number of tries
+(minor). See <a class="reference internal" href="client-api.html#c.SSH_PACKET_PRIORITY" title="SSH_PACKET_PRIORITY"><code class="xref c c-func docutils literal notranslate"><span class="pre">SSH_PACKET_PRIORITY()</span></code></a> for more details on the priority value.</p>
+<p>All packets to be transmitted by the transport layer must be submitted to
+this queue via <a class="reference internal" href="internal-api.html#c.ssh_ptl_submit" title="ssh_ptl_submit"><code class="xref c c-func docutils literal notranslate"><span class="pre">ssh_ptl_submit()</span></code></a>. Note that this includes control packets
+sent by the transport layer itself. Internally, data packets can be
+re-submitted to this queue due to timeouts or NAK packets sent by the EC.</p>
+</div>
+<div class="section" id="pending-set">
+<h3>Pending Set<a class="headerlink" href="#pending-set" title="Permalink to this headline">¶</a></h3>
+<p>The pending set is the second of the two fundamental collections in the
+packet transport layer. It stores references to packets that have already
+been transmitted, but wait for acknowledgment (e.g. the corresponding ACK
+packet) by the EC.</p>
+<p>Note that a packet may both be pending and queued if it has been
+re-submitted due to a packet acknowledgment timeout or NAK. On such a
+re-submission, packets are not removed from the pending set.</p>
+</div>
+<div class="section" id="transmitter-thread">
+<h3>Transmitter Thread<a class="headerlink" href="#transmitter-thread" title="Permalink to this headline">¶</a></h3>
+<p>The transmitter thread is responsible for most of the actual work regarding
+packet transmission. In each iteration, it (waits for and) checks if the
+next packet on the queue (if any) can be transmitted and, if so, removes it
+from the queue and increments its counter for the number of transmission
+attempts, i.e. tries. If the packet is sequenced, i.e. requires an ACK by
+the EC, the packet is added to the pending set. Next, the packet’s data is
+submitted to the serdev subsystem. In case of an error or timeout during
+this submission, the packet is completed by the transmitter thread with the
+status value of the callback set accordingly. In case the packet is
+unsequenced, i.e. does not require an ACK by the EC, the packet is completed
+with success on the transmitter thread.</p>
+<p>Transmission of sequenced packets is limited by the number of concurrently
+pending packets, i.e. a limit on how many packets may be waiting for an ACK
+from the EC in parallel. This limit is currently set to one (see <a class="reference internal" href="ssh.html"><span class="doc">Surface Serial Hub Protocol</span></a>
+for the reasoning behind this). Control packets (i.e. ACK and NAK) can
+always be transmitted.</p>
+</div>
+<div class="section" id="receiver-thread">
+<h3>Receiver Thread<a class="headerlink" href="#receiver-thread" title="Permalink to this headline">¶</a></h3>
+<p>Any data received from the EC is put into a FIFO buffer for further
+processing. This processing happens on the receiver thread. The receiver
+thread parses and validates the received message into its <a class="reference internal" href="client-api.html#c.ssh_frame" title="ssh_frame"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">ssh_frame</span></code></a> and
+corresponding payload. It prepares and submits the necessary ACK (and on
+validation error or invalid data NAK) packets for the received messages.</p>
+<p>This thread also handles further processing, such as matching ACK messages
+to the corresponding pending packet (via sequence ID) and completing it, as
+well as initiating re-submission of all currently pending packets on
+receival of a NAK message (re-submission in case of a NAK is similar to
+re-submission due to timeout, see below for more details on that). Note that
+the successful completion of a sequenced packet will always run on the
+receiver thread (whereas any failure-indicating completion will run on the
+process where the failure occurred).</p>
+<p>Any payload data is forwarded via a callback to the next upper layer, i.e.
+the request transport layer.</p>
+</div>
+<div class="section" id="timeout-reaper">
+<h3>Timeout Reaper<a class="headerlink" href="#timeout-reaper" title="Permalink to this headline">¶</a></h3>
+<p>The packet acknowledgment timeout is a per-packet timeout for sequenced
+packets, started when the respective packet begins (re-)transmission (i.e.
+this timeout is armed once per transmission attempt on the transmitter
+thread). It is used to trigger re-submission or, when the number of tries
+has been exceeded, cancellation of the packet in question.</p>
+<p>This timeout is handled via a dedicated reaper task, which is essentially a
+work item (re-)scheduled to run when the next packet is set to time out. The
+work item then checks the set of pending packets for any packets that have
+exceeded the timeout and, if there are any remaining packets, re-schedules
+itself to the next appropriate point in time.</p>
+<p>If a timeout has been detected by the reaper, the packet will either be
+re-submitted if it still has some remaining tries left, or completed with
+<code class="docutils literal notranslate"><span class="pre">-ETIMEDOUT</span></code> as status if not. Note that re-submission, in this case and
+triggered by receival of a NAK, means that the packet is added to the queue
+with a now incremented number of tries, yielding a higher priority. The
+timeout for the packet will be disabled until the next transmission attempt
+and the packet remains on the pending set.</p>
+<p>Note that due to transmission and packet acknowledgment timeouts, the packet
+transport layer is always guaranteed to make progress, if only through
+timing out packets, and will never fully block.</p>
+</div>
+<div class="section" id="concurrency-and-locking">
+<h3>Concurrency and Locking<a class="headerlink" href="#concurrency-and-locking" title="Permalink to this headline">¶</a></h3>
+<p>There are two main locks in the packet transport layer: One guarding access
+to the packet queue and one guarding access to the pending set. These
+collections may only be accessed and modified under the respective lock. If
+access to both collections is needed, the pending lock must be acquired
+before the queue lock to avoid deadlocks.</p>
+<p>In addition to guarding the collections, after initial packet submission
+certain packet fields may only be accessed under one of the locks.
+Specifically, the packet priority must only be accessed while holding the
+queue lock and the packet timestamp must only be accessed while holding the
+pending lock.</p>
+<p>Other parts of the packet transport layer are guarded independently. State
+flags are managed by atomic bit operations and, if necessary, memory
+barriers. Modifications to the timeout reaper work item and expiration date
+are guarded by their own lock.</p>
+<p>The reference of the packet to the packet transport layer (<code class="docutils literal notranslate"><span class="pre">ptl</span></code>) is
+somewhat special. It is either set when the upper layer request is submitted
+or, if there is none, when the packet is first submitted. After it is set,
+it will not change its value. Functions that may run concurrently with
+submission, i.e. cancellation, can not rely on the <code class="docutils literal notranslate"><span class="pre">ptl</span></code> reference to be
+set. Access to it in these functions is guarded by <code class="docutils literal notranslate"><span class="pre">READ_ONCE()</span></code>, whereas
+setting <code class="docutils literal notranslate"><span class="pre">ptl</span></code> is equally guarded with <code class="docutils literal notranslate"><span class="pre">WRITE_ONCE()</span></code> for symmetry.</p>
+<p>Some packet fields may be read outside of the respective locks guarding
+them, specifically priority and state for tracing. In those cases, proper
+access is ensured by employing <code class="docutils literal notranslate"><span class="pre">WRITE_ONCE()</span></code> and <code class="docutils literal notranslate"><span class="pre">READ_ONCE()</span></code>. Such
+read-only access is only allowed when stale values are not critical.</p>
+<p>With respect to the interface for higher layers, packet submission
+(<a class="reference internal" href="internal-api.html#c.ssh_ptl_submit" title="ssh_ptl_submit"><code class="xref c c-func docutils literal notranslate"><span class="pre">ssh_ptl_submit()</span></code></a>), packet cancellation (<a class="reference internal" href="internal-api.html#c.ssh_ptl_cancel" title="ssh_ptl_cancel"><code class="xref c c-func docutils literal notranslate"><span class="pre">ssh_ptl_cancel()</span></code></a>), data receival
+(<a class="reference internal" href="internal-api.html#c.ssh_ptl_rx_rcvbuf" title="ssh_ptl_rx_rcvbuf"><code class="xref c c-func docutils literal notranslate"><span class="pre">ssh_ptl_rx_rcvbuf()</span></code></a>), and layer shutdown (<a class="reference internal" href="internal-api.html#c.ssh_ptl_shutdown" title="ssh_ptl_shutdown"><code class="xref c c-func docutils literal notranslate"><span class="pre">ssh_ptl_shutdown()</span></code></a>) may always be
+executed concurrently with respect to each other. Note that packet
+submission may not run concurrently with itself for the same packet.
+Equally, shutdown and data receival may also not run concurrently with
+themselves (but may run concurrently with each other).</p>
+</div>
+</div>
+<div class="section" id="request-transport-layer">
+<h2>Request Transport Layer<a class="headerlink" href="#request-transport-layer" title="Permalink to this headline">¶</a></h2>
+<p>The request transport layer is represented via <a class="reference internal" href="internal-api.html#c.ssh_rtl" title="ssh_rtl"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">ssh_rtl</span></code></a> and builds on top
+of the packet transport layer. It deals with requests, i.e. SSH packets sent
+by the host containing a <a class="reference internal" href="client-api.html#c.ssh_command" title="ssh_command"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">ssh_command</span></code></a> as frame payload. This layer
+separates responses to requests from events, which are also sent by the EC
+via a <a class="reference internal" href="client-api.html#c.ssh_command" title="ssh_command"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">ssh_command</span></code></a> payload. While responses are handled in this layer,
+events are relayed to the next upper layer, i.e. the controller layer, via
+the corresponding callback. The request transport layer is structured around
+the following key concepts:</p>
+<div class="section" id="request">
+<h3>Request<a class="headerlink" href="#request" title="Permalink to this headline">¶</a></h3>
+<p>Requests are packets with a command-type payload, sent from host to EC to
+query data from or trigger an action on it (or both simultaneously). They
+are represented by <a class="reference internal" href="client-api.html#c.ssh_request" title="ssh_request"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">ssh_request</span></code></a>, wrapping the underlying <a class="reference internal" href="client-api.html#c.ssh_packet" title="ssh_packet"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">ssh_packet</span></code></a>
+storing its message data (i.e. SSH frame with command payload). Note that
+all top-level representations, e.g. <a class="reference internal" href="client-api.html#c.ssam_request_sync" title="ssam_request_sync"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">ssam_request_sync</span></code></a> are built upon this
+struct.</p>
+<p>As <a class="reference internal" href="client-api.html#c.ssh_request" title="ssh_request"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">ssh_request</span></code></a> extends <a class="reference internal" href="client-api.html#c.ssh_packet" title="ssh_packet"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">ssh_packet</span></code></a>, its lifetime is also managed by the
+reference counter inside the packet struct (which can be accessed via
+<a class="reference internal" href="client-api.html#c.ssh_request_get" title="ssh_request_get"><code class="xref c c-func docutils literal notranslate"><span class="pre">ssh_request_get()</span></code></a> and <a class="reference internal" href="client-api.html#c.ssh_request_put" title="ssh_request_put"><code class="xref c c-func docutils literal notranslate"><span class="pre">ssh_request_put()</span></code></a>). Once the counter reaches zero, the
+<code class="docutils literal notranslate"><span class="pre">release()</span></code> callback of the <a class="reference internal" href="client-api.html#c.ssh_request_ops" title="ssh_request_ops"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">ssh_request_ops</span></code></a> reference of the request is
+called.</p>
+<p>Requests can have an optional response that is equally sent via a SSH
+message with command-type payload (from EC to host). The party constructing
+the request must know if a response is expected and mark this in the request
+flags provided to <a class="reference internal" href="internal-api.html#c.ssh_request_init" title="ssh_request_init"><code class="xref c c-func docutils literal notranslate"><span class="pre">ssh_request_init()</span></code></a>, so that the request transport layer
+can wait for this response.</p>
+<p>Similar to <a class="reference internal" href="client-api.html#c.ssh_packet" title="ssh_packet"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">ssh_packet</span></code></a>, <a class="reference internal" href="client-api.html#c.ssh_request" title="ssh_request"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">ssh_request</span></code></a> also has a <code class="docutils literal notranslate"><span class="pre">complete()</span></code> callback
+provided via its request ops reference and is guaranteed to be completed
+before it is released once it has been submitted to the request transport
+layer via <a class="reference internal" href="internal-api.html#c.ssh_rtl_submit" title="ssh_rtl_submit"><code class="xref c c-func docutils literal notranslate"><span class="pre">ssh_rtl_submit()</span></code></a>. For a request without a response, successful
+completion will occur once the underlying packet has been successfully
+transmitted by the packet transport layer (i.e. from within the packet
+completion callback). For a request with response, successful completion
+will occur once the response has been received and matched to the request
+via its request ID (which happens on the packet layer’s data-received
+callback running on the receiver thread). If the request is completed with
+an error, the status value will be set to the corresponding (negative) errno
+value.</p>
+<p>The state of a request is again managed via its <code class="docutils literal notranslate"><span class="pre">state</span></code> flags
+(<code class="xref c c-type docutils literal notranslate"><span class="pre">enum</span> <span class="pre">ssh_request_flags</span></code>), which also encode the request type. In particular,
+the following bits are noteworthy:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">SSH_REQUEST_SF_LOCKED_BIT</span></code>: This bit is set when completion, either
+through error or success, is imminent. It indicates that no further
+references of the request should be taken and any existing references
+should be dropped as soon as possible. The process setting this bit is
+responsible for removing any references to this request from the request
+queue and pending set.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SSH_REQUEST_SF_COMPLETED_BIT</span></code>: This bit is set by the process running the
+<code class="docutils literal notranslate"><span class="pre">complete()</span></code> callback and is used to ensure that this callback only runs
+once.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SSH_REQUEST_SF_QUEUED_BIT</span></code>: This bit is set when the request is queued on
+the request queue and cleared when it is dequeued.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SSH_REQUEST_SF_PENDING_BIT</span></code>: This bit is set when the request is added to
+the pending set and cleared when it is removed from it.</p></li>
+</ul>
+</div>
+<div class="section" id="request-queue">
+<h3>Request Queue<a class="headerlink" href="#request-queue" title="Permalink to this headline">¶</a></h3>
+<p>The request queue is the first of the two fundamental collections in the
+request transport layer. In contrast to the packet queue of the packet
+transport layer, it is not a priority queue and the simple first come first
+serve principle applies.</p>
+<p>All requests to be transmitted by the request transport layer must be
+submitted to this queue via <a class="reference internal" href="internal-api.html#c.ssh_rtl_submit" title="ssh_rtl_submit"><code class="xref c c-func docutils literal notranslate"><span class="pre">ssh_rtl_submit()</span></code></a>. Once submitted, requests may
+not be re-submitted, and will not be re-submitted automatically on timeout.
+Instead, the request is completed with a timeout error. If desired, the
+caller can create and submit a new request for another try, but it must not
+submit the same request again.</p>
+</div>
+<div class="section" id="id1">
+<h3>Pending Set<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p>The pending set is the second of the two fundamental collections in the
+request transport layer. This collection stores references to all pending
+requests, i.e. requests awaiting a response from the EC (similar to what the
+pending set of the packet transport layer does for packets).</p>
+</div>
+<div class="section" id="transmitter-task">
+<h3>Transmitter Task<a class="headerlink" href="#transmitter-task" title="Permalink to this headline">¶</a></h3>
+<p>The transmitter task is scheduled when a new request is available for
+transmission. It checks if the next request on the request queue can be
+transmitted and, if so, submits its underlying packet to the packet
+transport layer. This check ensures that only a limited number of
+requests can be pending, i.e. waiting for a response, at the same time. If
+the request requires a response, the request is added to the pending set
+before its packet is submitted.</p>
+</div>
+<div class="section" id="packet-completion-callback">
+<h3>Packet Completion Callback<a class="headerlink" href="#packet-completion-callback" title="Permalink to this headline">¶</a></h3>
+<p>The packet completion callback is executed once the underlying packet of a
+request has been completed. In case of an error completion, the
+corresponding request is completed with the error value provided in this
+callback.</p>
+<p>On successful packet completion, further processing depends on the request.
+If the request expects a response, it is marked as transmitted and the
+request timeout is started. If the request does not expect a response, it is
+completed with success.</p>
+</div>
+<div class="section" id="data-received-callback">
+<h3>Data-Received Callback<a class="headerlink" href="#data-received-callback" title="Permalink to this headline">¶</a></h3>
+<p>The data received callback notifies the request transport layer of data
+being received by the underlying packet transport layer via a data-type
+frame. In general, this is expected to be a command-type payload.</p>
+<p>If the request ID of the command is one of the request IDs reserved for
+events (one to <code class="docutils literal notranslate"><span class="pre">SSH_NUM_EVENTS</span></code>, inclusively), it is forwarded to the
+event callback registered in the request transport layer. If the request ID
+indicates a response to a request, the respective request is looked up in
+the pending set and, if found and marked as transmitted, completed with
+success.</p>
+</div>
+<div class="section" id="id2">
+<h3>Timeout Reaper<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h3>
+<p>The request-response-timeout is a per-request timeout for requests expecting
+a response. It is used to ensure that a request does not wait indefinitely
+on a response from the EC and is started after the underlying packet has
+been successfully completed.</p>
+<p>This timeout is, similar to the packet acknowledgment timeout on the packet
+transport layer, handled via a dedicated reaper task. This task is
+essentially a work-item (re-)scheduled to run when the next request is set
+to time out. The work item then scans the set of pending requests for any
+requests that have timed out and completes them with <code class="docutils literal notranslate"><span class="pre">-ETIMEDOUT</span></code> as
+status. Requests will not be re-submitted automatically. Instead, the issuer
+of the request must construct and submit a new request, if so desired.</p>
+<p>Note that this timeout, in combination with packet transmission and
+acknowledgment timeouts, guarantees that the request layer will always make
+progress, even if only through timing out packets, and never fully block.</p>
+</div>
+<div class="section" id="id3">
+<h3>Concurrency and Locking<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p>Similar to the packet transport layer, there are two main locks in the
+request transport layer: One guarding access to the request queue and one
+guarding access to the pending set. These collections may only be accessed
+and modified under the respective lock.</p>
+<p>Other parts of the request transport layer are guarded independently. State
+flags are (again) managed by atomic bit operations and, if necessary, memory
+barriers. Modifications to the timeout reaper work item and expiration date
+are guarded by their own lock.</p>
+<p>Some request fields may be read outside of the respective locks guarding
+them, specifically the state for tracing. In those cases, proper access is
+ensured by employing <code class="docutils literal notranslate"><span class="pre">WRITE_ONCE()</span></code> and <code class="docutils literal notranslate"><span class="pre">READ_ONCE()</span></code>. Such read-only
+access is only allowed when stale values are not critical.</p>
+<p>With respect to the interface for higher layers, request submission
+(<a class="reference internal" href="internal-api.html#c.ssh_rtl_submit" title="ssh_rtl_submit"><code class="xref c c-func docutils literal notranslate"><span class="pre">ssh_rtl_submit()</span></code></a>), request cancellation (<a class="reference internal" href="internal-api.html#c.ssh_rtl_cancel" title="ssh_rtl_cancel"><code class="xref c c-func docutils literal notranslate"><span class="pre">ssh_rtl_cancel()</span></code></a>), and layer
+shutdown (<a class="reference internal" href="internal-api.html#c.ssh_rtl_shutdown" title="ssh_rtl_shutdown"><code class="xref c c-func docutils literal notranslate"><span class="pre">ssh_rtl_shutdown()</span></code></a>) may always be executed concurrently with
+respect to each other. Note that request submission may not run concurrently
+with itself for the same request (and also may only be called once per
+request). Equally, shutdown may also not run concurrently with itself.</p>
+</div>
+</div>
+<div class="section" id="controller-layer">
+<h2>Controller Layer<a class="headerlink" href="#controller-layer" title="Permalink to this headline">¶</a></h2>
+<p>The controller layer extends on the request transport layer to provide an
+easy-to-use interface for client drivers. It is represented by
+<a class="reference internal" href="internal-api.html#c.ssam_controller" title="ssam_controller"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">ssam_controller</span></code></a> and the SSH driver. While the lower level transport layers
+take care of transmitting and handling packets and requests, the controller
+layer takes on more of a management role. Specifically, it handles device
+initialization, power management, and event handling, including event
+delivery and registration via the (event) completion system (<a class="reference internal" href="internal-api.html#c.ssam_cplt" title="ssam_cplt"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">ssam_cplt</span></code></a>).</p>
+<div class="section" id="event-registration">
+<h3>Event Registration<a class="headerlink" href="#event-registration" title="Permalink to this headline">¶</a></h3>
+<p>In general, an event (or rather a class of events) has to be explicitly
+requested by the host before the EC will send it (HID input events seem to
+be the exception). This is done via an event-enable request (similarly,
+events should be disabled via an event-disable request once no longer
+desired).</p>
+<p>The specific request used to enable (or disable) an event is given via an
+event registry, i.e. the governing authority of this event (so to speak),
+represented by <a class="reference internal" href="client-api.html#c.ssam_event_registry" title="ssam_event_registry"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">ssam_event_registry</span></code></a>. As parameters to this request, the
+target category and, depending on the event registry, instance ID of the
+event to be enabled must be provided. This (optional) instance ID must be
+zero if the registry does not use it. Together, target category and instance
+ID form the event ID, represented by <a class="reference internal" href="client-api.html#c.ssam_event_id" title="ssam_event_id"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">ssam_event_id</span></code></a>. In short, both, event
+registry and event ID, are required to uniquely identify a respective class
+of events.</p>
+<p>Note that a further <em>request ID</em> parameter must be provided for the
+enable-event request. This parameter does not influence the class of events
+being enabled, but instead is set as the request ID (RQID) on each event of
+this class sent by the EC. It is used to identify events (as a limited
+number of request IDs is reserved for use in events only, specifically one
+to <code class="docutils literal notranslate"><span class="pre">SSH_NUM_EVENTS</span></code> inclusively) and also map events to their specific
+class. Currently, the controller always sets this parameter to the target
+category specified in <a class="reference internal" href="client-api.html#c.ssam_event_id" title="ssam_event_id"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">ssam_event_id</span></code></a>.</p>
+<p>As multiple client drivers may rely on the same (or overlapping) classes of
+events and enable/disable calls are strictly binary (i.e. on/off), the
+controller has to manage access to these events. It does so via reference
+counting, storing the counter inside an RB-tree based mapping with event
+registry and ID as key (there is no known list of valid event registry and
+event ID combinations). See <a class="reference internal" href="internal-api.html#c.ssam_nf" title="ssam_nf"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">ssam_nf</span></code></a>, <a class="reference internal" href="internal-api.html#c.ssam_nf_refcount_inc" title="ssam_nf_refcount_inc"><code class="xref c c-func docutils literal notranslate"><span class="pre">ssam_nf_refcount_inc()</span></code></a>, and
+<a class="reference internal" href="internal-api.html#c.ssam_nf_refcount_dec" title="ssam_nf_refcount_dec"><code class="xref c c-func docutils literal notranslate"><span class="pre">ssam_nf_refcount_dec()</span></code></a> for details.</p>
+<p>This management is done together with notifier registration (described in
+the next section) via the top-level <a class="reference internal" href="client-api.html#c.ssam_notifier_register" title="ssam_notifier_register"><code class="xref c c-func docutils literal notranslate"><span class="pre">ssam_notifier_register()</span></code></a> and
+<a class="reference internal" href="client-api.html#c.ssam_notifier_unregister" title="ssam_notifier_unregister"><code class="xref c c-func docutils literal notranslate"><span class="pre">ssam_notifier_unregister()</span></code></a> functions.</p>
+</div>
+<div class="section" id="event-delivery">
+<h3>Event Delivery<a class="headerlink" href="#event-delivery" title="Permalink to this headline">¶</a></h3>
+<p>To receive events, a client driver has to register an event notifier via
+<a class="reference internal" href="client-api.html#c.ssam_notifier_register" title="ssam_notifier_register"><code class="xref c c-func docutils literal notranslate"><span class="pre">ssam_notifier_register()</span></code></a>. This increments the reference counter for that
+specific class of events (as detailed in the previous section), enables the
+class on the EC (if it has not been enabled already), and installs the
+provided notifier callback.</p>
+<p>Notifier callbacks are stored in lists, with one (RCU) list per target
+category (provided via the event ID; NB: there is a fixed known number of
+target categories). There is no known association from the combination of
+event registry and event ID to the command data (target ID, target category,
+command ID, and instance ID) that can be provided by an event class, apart
+from target category and instance ID given via the event ID.</p>
+<p>Note that due to the way notifiers are (or rather have to be) stored, client
+drivers may receive events that they have not requested and need to account
+for them. Specifically, they will, by default, receive all events from the
+same target category. To simplify dealing with this, filtering of events by
+target ID (provided via the event registry) and instance ID (provided via
+the event ID) can be requested when registering a notifier. This filtering
+is applied when iterating over the notifiers at the time they are executed.</p>
+<p>All notifier callbacks are executed on a dedicated workqueue, the so-called
+completion workqueue. After an event has been received via the callback
+installed in the request layer (running on the receiver thread of the packet
+transport layer), it will be put on its respective event queue
+(<a class="reference internal" href="internal-api.html#c.ssam_event_queue" title="ssam_event_queue"><code class="xref c c-type docutils literal notranslate"><span class="pre">struct</span> <span class="pre">ssam_event_queue</span></code></a>). From this event queue the completion work item of that
+queue (running on the completion workqueue) will pick up the event and
+execute the notifier callback. This is done to avoid blocking on the
+receiver thread.</p>
+<p>There is one event queue per combination of target ID and target category.
+This is done to ensure that notifier callbacks are executed in sequence for
+events of the same target ID and target category. Callbacks can be executed
+in parallel for events with a different combination of target ID and target
+category.</p>
+</div>
+<div class="section" id="id4">
+<h3>Concurrency and Locking<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<p>Most of the concurrency related safety guarantees of the controller are
+provided by the lower-level request transport layer. In addition to this,
+event (un-)registration is guarded by its own lock.</p>
+<p>Access to the controller state is guarded by the state lock. This lock is a
+read/write semaphore. The reader part can be used to ensure that the state
+does not change while functions depending on the state to stay the same
+(e.g. <a class="reference internal" href="client-api.html#c.ssam_notifier_register" title="ssam_notifier_register"><code class="xref c c-func docutils literal notranslate"><span class="pre">ssam_notifier_register()</span></code></a>, <a class="reference internal" href="client-api.html#c.ssam_notifier_unregister" title="ssam_notifier_unregister"><code class="xref c c-func docutils literal notranslate"><span class="pre">ssam_notifier_unregister()</span></code></a>,
+<a class="reference internal" href="client-api.html#c.ssam_request_sync_submit" title="ssam_request_sync_submit"><code class="xref c c-func docutils literal notranslate"><span class="pre">ssam_request_sync_submit()</span></code></a>, and derivatives) are executed and this guarantee
+is not already provided otherwise (e.g. through <a class="reference internal" href="client-api.html#c.ssam_client_bind" title="ssam_client_bind"><code class="xref c c-func docutils literal notranslate"><span class="pre">ssam_client_bind()</span></code></a> or
+<a class="reference internal" href="client-api.html#c.ssam_client_link" title="ssam_client_link"><code class="xref c c-func docutils literal notranslate"><span class="pre">ssam_client_link()</span></code></a>). The writer part guards any transitions that will change
+the state, i.e. initialization, destruction, suspension, and resumption.</p>
+<p>The controller state may be accessed (read-only) outside the state lock for
+smoke-testing against invalid API usage (e.g. in <a class="reference internal" href="client-api.html#c.ssam_request_sync_submit" title="ssam_request_sync_submit"><code class="xref c c-func docutils literal notranslate"><span class="pre">ssam_request_sync_submit()</span></code></a>).
+Note that such checks are not supposed to (and will not) protect against all
+invalid usages, but rather aim to help catch them. In those cases, proper
+variable access is ensured by employing <code class="docutils literal notranslate"><span class="pre">WRITE_ONCE()</span></code> and <code class="docutils literal notranslate"><span class="pre">READ_ONCE()</span></code>.</p>
+<p>Assuming any preconditions on the state not changing have been satisfied,
+all non-initialization and non-shutdown functions may run concurrently with
+each other. This includes <a class="reference internal" href="client-api.html#c.ssam_notifier_register" title="ssam_notifier_register"><code class="xref c c-func docutils literal notranslate"><span class="pre">ssam_notifier_register()</span></code></a>, <a class="reference internal" href="client-api.html#c.ssam_notifier_unregister" title="ssam_notifier_unregister"><code class="xref c c-func docutils literal notranslate"><span class="pre">ssam_notifier_unregister()</span></code></a>,
+<a class="reference internal" href="client-api.html#c.ssam_request_sync_submit" title="ssam_request_sync_submit"><code class="xref c c-func docutils literal notranslate"><span class="pre">ssam_request_sync_submit()</span></code></a>, as well as all functions building on top of those.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="internal-api.html" class="btn btn-neutral float-right" title="Internal API Documentation" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="ssh.html" class="btn btn-neutral float-left" title="Surface Serial Hub Protocol" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright The kernel development community.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
