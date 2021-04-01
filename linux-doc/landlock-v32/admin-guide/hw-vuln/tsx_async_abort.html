@@ -1,0 +1,728 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>TAA - TSX Asynchronous Abort &mdash; The Linux Kernel 5.12.0-rc3+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="iTLB multihit" href="multihit.html" />
+    <link rel="prev" title="MDS - Microarchitectural Data Sampling" href="mds.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.12.0-rc3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">The Linux kernel user’s and administrator’s guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../README.html">Linux kernel release 5.x &lt;http://kernel.org/&gt;</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../kernel-parameters.html">The kernel’s command-line parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../devices.html">Linux allocated devices (4.x+ version)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sysctl/index.html">Documentation for /proc/sys</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../abi.html">Linux ABI description</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features.html">Feature status on all architectures</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">Hardware vulnerabilities</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="spectre.html">Spectre Side Channels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="l1tf.html">L1TF - L1 Terminal Fault</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mds.html">MDS - Microarchitectural Data Sampling</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">TAA - TSX Asynchronous Abort</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#affected-processors">Affected processors</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#related-cves">Related CVEs</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#problem">Problem</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#attack-scenarios">Attack scenarios</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#taa-system-information">TAA system information</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#mitigation-mechanism">Mitigation mechanism</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#mitigation-control-on-the-kernel-command-line">Mitigation control on the kernel command line</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#mitigation-selection-guide">Mitigation selection guide</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#default-mitigations">Default mitigations</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="multihit.html">iTLB multihit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="special-register-buffer-data-sampling.html">SRBDS - Special Register Buffer Data Sampling</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../reporting-issues.html">Reporting issues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reporting-bugs.html">Reporting bugs (obsolete)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../security-bugs.html">Security bugs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../bug-hunting.html">Bug hunting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../bug-bisect.html">Bisecting a bug</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tainted-kernels.html">Tainted kernels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ramoops.html">Ramoops oops/panic logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dynamic-debug-howto.html">Dynamic debug</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../init.html">Explaining the “No working init found.” boot hang message</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../kdump/index.html">Documentation for Kdump - The kexec-based Crash Dumping Solution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../perf/index.html">Performance monitor support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pstore-blk.html">pstore block oops/panic logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sysfs-rules.html">Rules on how to access information in sysfs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../acpi/index.html">ACPI Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../aoe/index.html">ATA over Ethernet (AoE)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../auxdisplay/index.html">Auxiliary Display Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../bcache.html">A block layer cache (bcache)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../binderfs.html">The Android binderfs Filesystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../binfmt-misc.html">Kernel Support for miscellaneous Binary Formats (binfmt_misc)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../blockdev/index.html">The Linux RapidIO Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../bootconfig.html">Boot Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../braille-console.html">Linux Braille Console</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../btmrvl.html">btmrvl driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cgroup-v1/index.html">Control Groups version 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cgroup-v2.html">Control Group v2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cifs/index.html">CIFS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../clearing-warn-once.html">Clearing WARN_ONCE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cpu-load.html">CPU load</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cputopology.html">How CPU topology info is exported via sysfs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dell_rbu.html">Dell Remote BIOS Update driver (dell_rbu)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../device-mapper/index.html">Device Mapper</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../edid.html">EDID</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../efi-stub.html">The EFI Boot Stub</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ext4.html">ext4 General Information</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../nfs/index.html">NFS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../gpio/index.html">gpio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../highuid.html">Notes on the change from 16-bit UIDs to 32-bit UIDs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../hw_random.html">Linux support for random number generator in i8xx chipsets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../initrd.html">Using the initial RAM disk (initrd)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../iostats.html">I/O statistics fields</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../java.html">Java(tm) Binary Kernel Support for Linux v1.03</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../jfs.html">IBM’s Journaled File System (JFS) for Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../kernel-per-CPU-kthreads.html">Reducing OS jitter due to per-cpu kthreads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../laptops/index.html">Laptop Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../lcd-panel-cgram.html">Parallel port LCD/Keypad Panel support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ldm.html">LDM - Logical Disk Manager (Dynamic Disks)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../lockup-watchdogs.html">Softlockup detector and hardlockup detector (aka nmi_watchdog)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../LSM/index.html">Linux Security Module Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../md.html">RAID arrays</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../media/index.html">Media subsystem admin and user guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mm/index.html">Memory Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../module-signing.html">Kernel module signing facility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mono.html">Mono(tm) Binary Kernel Support for Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../namespaces/index.html">Namespaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../numastat.html">Numa policy hit/miss statistics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../parport.html">Parport</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../perf-security.html">Perf events and tool security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pm/index.html">Power Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pnp.html">Linux Plug and Play Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../rapidio.html">RapidIO Subsystem Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ras.html">Reliability, Availability and Serviceability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../rtc.html">Real Time Clock (RTC) Drivers for Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../serial-console.html">Linux Serial Console</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../svga.html">Video Mode Selection Support 2.13</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../syscall-user-dispatch.html">Syscall User Dispatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sysrq.html">Linux Magic System Request Key Hacks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../thunderbolt.html">USB4 and Thunderbolt</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ufs.html">Using UFS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../unicode.html">Unicode support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../vga-softcursor.html">Software cursor for VGA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../video-output.html">Video Output Switcher Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../xfs.html">The SGI XFS Filesystem</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../nios2/index.html">Nios II Specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">The Linux kernel user’s and administrator’s guide</a> &raquo;</li>
+        
+          <li><a href="index.html">Hardware vulnerabilities</a> &raquo;</li>
+        
+      <li>TAA - TSX Asynchronous Abort</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../../_sources/admin-guide/hw-vuln/tsx_async_abort.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="taa-tsx-asynchronous-abort">
+<h1>TAA - TSX Asynchronous Abort<a class="headerlink" href="#taa-tsx-asynchronous-abort" title="Permalink to this headline">¶</a></h1>
+<p>TAA is a hardware vulnerability that allows unprivileged speculative access to
+data which is available in various CPU internal buffers by using asynchronous
+aborts within an Intel TSX transactional region.</p>
+<div class="section" id="affected-processors">
+<h2>Affected processors<a class="headerlink" href="#affected-processors" title="Permalink to this headline">¶</a></h2>
+<p>This vulnerability only affects Intel processors that support Intel
+Transactional Synchronization Extensions (TSX) when the TAA_NO bit (bit 8)
+is 0 in the IA32_ARCH_CAPABILITIES MSR.  On processors where the MDS_NO bit
+(bit 5) is 0 in the IA32_ARCH_CAPABILITIES MSR, the existing MDS mitigations
+also mitigate against TAA.</p>
+<p>Whether a processor is affected or not can be read out from the TAA
+vulnerability file in sysfs. See <a class="reference internal" href="#tsx-async-abort-sys-info"><span class="std std-ref">TAA system information</span></a>.</p>
+</div>
+<div class="section" id="related-cves">
+<h2>Related CVEs<a class="headerlink" href="#related-cves" title="Permalink to this headline">¶</a></h2>
+<p>The following CVE entry is related to this TAA issue:</p>
+<blockquote>
+<div><table class="docutils align-default">
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 7%" />
+<col style="width: 73%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>CVE-2019-11135</p></td>
+<td><p>TAA</p></td>
+<td><p>TSX Asynchronous Abort (TAA) condition on some
+microprocessors utilizing speculative execution may
+allow an authenticated user to potentially enable
+information disclosure via a side channel with
+local access.</p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+</div>
+<div class="section" id="problem">
+<h2>Problem<a class="headerlink" href="#problem" title="Permalink to this headline">¶</a></h2>
+<p>When performing store, load or L1 refill operations, processors write
+data into temporary microarchitectural structures (buffers). The data in
+those buffers can be forwarded to load operations as an optimization.</p>
+<p>Intel TSX is an extension to the x86 instruction set architecture that adds
+hardware transactional memory support to improve performance of multi-threaded
+software. TSX lets the processor expose and exploit concurrency hidden in an
+application due to dynamically avoiding unnecessary synchronization.</p>
+<p>TSX supports atomic memory transactions that are either committed (success) or
+aborted. During an abort, operations that happened within the transactional region
+are rolled back. An asynchronous abort takes place, among other options, when a
+different thread accesses a cache line that is also used within the transactional
+region when that access might lead to a data race.</p>
+<p>Immediately after an uncompleted asynchronous abort, certain speculatively
+executed loads may read data from those internal buffers and pass it to dependent
+operations. This can be then used to infer the value via a cache side channel
+attack.</p>
+<p>Because the buffers are potentially shared between Hyper-Threads cross
+Hyper-Thread attacks are possible.</p>
+<p>The victim of a malicious actor does not need to make use of TSX. Only the
+attacker needs to begin a TSX transaction and raise an asynchronous abort
+which in turn potentially leaks data stored in the buffers.</p>
+<p>More detailed technical information is available in the TAA specific x86
+architecture section: <a class="reference internal" href="../../x86/tsx_async_abort.html#tsx-async-abort"><span class="std std-ref"><a class="reference internal" href="../../x86/tsx_async_abort.html"><span class="doc">TSX Async Abort (TAA) mitigation</span></a></span></a>.</p>
+</div>
+<div class="section" id="attack-scenarios">
+<h2>Attack scenarios<a class="headerlink" href="#attack-scenarios" title="Permalink to this headline">¶</a></h2>
+<p>Attacks against the TAA vulnerability can be implemented from unprivileged
+applications running on hosts or guests.</p>
+<p>As for MDS, the attacker has no control over the memory addresses that can
+be leaked. Only the victim is responsible for bringing data to the CPU. As
+a result, the malicious actor has to sample as much data as possible and
+then postprocess it to try to infer any useful information from it.</p>
+<p>A potential attacker only has read access to the data. Also, there is no direct
+privilege escalation by using this technique.</p>
+</div>
+<div class="section" id="taa-system-information">
+<span id="tsx-async-abort-sys-info"></span><h2>TAA system information<a class="headerlink" href="#taa-system-information" title="Permalink to this headline">¶</a></h2>
+<p>The Linux kernel provides a sysfs interface to enumerate the current TAA status
+of mitigated systems. The relevant sysfs file is:</p>
+<p>/sys/devices/system/cpu/vulnerabilities/tsx_async_abort</p>
+<p>The possible values in this file are:</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>‘Vulnerable’</p></td>
+<td><p>The CPU is affected by this vulnerability and the microcode and kernel mitigation are not applied.</p></td>
+</tr>
+<tr class="row-even"><td><p>‘Vulnerable: Clear CPU buffers attempted, no microcode’</p></td>
+<td><p>The system tries to clear the buffers but the microcode might not support the operation.</p></td>
+</tr>
+<tr class="row-odd"><td><p>‘Mitigation: Clear CPU buffers’</p></td>
+<td><p>The microcode has been updated to clear the buffers. TSX is still enabled.</p></td>
+</tr>
+<tr class="row-even"><td><p>‘Mitigation: TSX disabled’</p></td>
+<td><p>TSX is disabled.</p></td>
+</tr>
+<tr class="row-odd"><td><p>‘Not affected’</p></td>
+<td><p>The CPU is not affected by this issue.</p></td>
+</tr>
+</tbody>
+</table>
+<div class="section" id="best-effort-mitigation-mode">
+<span id="ucode-needed"></span><h3>Best effort mitigation mode<a class="headerlink" href="#best-effort-mitigation-mode" title="Permalink to this headline">¶</a></h3>
+<p>If the processor is vulnerable, but the availability of the microcode-based
+mitigation mechanism is not advertised via CPUID the kernel selects a best
+effort mitigation mode.  This mode invokes the mitigation instructions
+without a guarantee that they clear the CPU buffers.</p>
+<p>This is done to address virtualization scenarios where the host has the
+microcode update applied, but the hypervisor is not yet updated to expose the
+CPUID to the guest. If the host has updated microcode the protection takes
+effect; otherwise a few CPU cycles are wasted pointlessly.</p>
+<p>The state in the tsx_async_abort sysfs file reflects this situation
+accordingly.</p>
+</div>
+</div>
+<div class="section" id="mitigation-mechanism">
+<h2>Mitigation mechanism<a class="headerlink" href="#mitigation-mechanism" title="Permalink to this headline">¶</a></h2>
+<p>The kernel detects the affected CPUs and the presence of the microcode which is
+required. If a CPU is affected and the microcode is available, then the kernel
+enables the mitigation by default.</p>
+<p>The mitigation can be controlled at boot time via a kernel command line option.
+See <a class="reference internal" href="#taa-mitigation-control-command-line"><span class="std std-ref">Mitigation control on the kernel command line</span></a>.</p>
+<div class="section" id="virtualization-mitigation">
+<h3>Virtualization mitigation<a class="headerlink" href="#virtualization-mitigation" title="Permalink to this headline">¶</a></h3>
+<p>Affected systems where the host has TAA microcode and TAA is mitigated by
+having disabled TSX previously, are not vulnerable regardless of the status
+of the VMs.</p>
+<p>In all other cases, if the host either does not have the TAA microcode or
+the kernel is not mitigated, the system might be vulnerable.</p>
+</div>
+</div>
+<div class="section" id="mitigation-control-on-the-kernel-command-line">
+<span id="taa-mitigation-control-command-line"></span><h2>Mitigation control on the kernel command line<a class="headerlink" href="#mitigation-control-on-the-kernel-command-line" title="Permalink to this headline">¶</a></h2>
+<p>The kernel command line allows to control the TAA mitigations at boot time with
+the option “tsx_async_abort=”. The valid arguments for this option are:</p>
+<blockquote>
+<div><table class="docutils align-default">
+<colgroup>
+<col style="width: 16%" />
+<col style="width: 84%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>off</p></td>
+<td><p>This option disables the TAA mitigation on affected platforms.
+If the system has TSX enabled (see next parameter) and the CPU
+is affected, the system is vulnerable.</p></td>
+</tr>
+<tr class="row-even"><td><p>full</p></td>
+<td><p>TAA mitigation is enabled. If TSX is enabled, on an affected
+system it will clear CPU buffers on ring transitions. On
+systems which are MDS-affected and deploy MDS mitigation,
+TAA is also mitigated. Specifying this option on those
+systems will have no effect.</p></td>
+</tr>
+<tr class="row-odd"><td><p>full,nosmt</p></td>
+<td><p>The same as tsx_async_abort=full, with SMT disabled on
+vulnerable CPUs that have TSX enabled. This is the complete
+mitigation. When TSX is disabled, SMT is not disabled because
+CPU is not vulnerable to cross-thread TAA attacks.</p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>Not specifying this option is equivalent to “tsx_async_abort=full”. For
+processors that are affected by both TAA and MDS, specifying just
+“tsx_async_abort=off” without an accompanying “mds=off” will have no
+effect as the same mitigation is used for both vulnerabilities.</p>
+<p>The kernel command line also allows to control the TSX feature using the
+parameter “tsx=” on CPUs which support TSX control. MSR_IA32_TSX_CTRL is used
+to control the TSX feature and the enumeration of the TSX feature bits (RTM
+and HLE) in CPUID.</p>
+<p>The valid options are:</p>
+<blockquote>
+<div><table class="docutils align-default">
+<colgroup>
+<col style="width: 15%" />
+<col style="width: 85%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>off</p></td>
+<td><p>Disables TSX on the system.</p>
+<p>Note that this option takes effect only on newer CPUs which are
+not vulnerable to MDS, i.e., have MSR_IA32_ARCH_CAPABILITIES.MDS_NO=1
+and which get the new IA32_TSX_CTRL MSR through a microcode
+update. This new MSR allows for the reliable deactivation of
+the TSX functionality.</p>
+</td>
+</tr>
+<tr class="row-even"><td><p>on</p></td>
+<td><p>Enables TSX.</p>
+<p>Although there are mitigations for all known security
+vulnerabilities, TSX has been known to be an accelerator for
+several previous speculation-related CVEs, and so there may be
+unknown security risks associated with leaving it enabled.</p>
+</td>
+</tr>
+<tr class="row-odd"><td><p>auto</p></td>
+<td><p>Disables TSX if X86_BUG_TAA is present, otherwise enables TSX
+on the system.</p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>Not specifying this option is equivalent to “tsx=off”.</p>
+<p>The following combinations of the “tsx_async_abort” and “tsx” are possible. For
+affected platforms tsx=auto is equivalent to tsx=off and the result will be:</p>
+<blockquote>
+<div><table class="docutils align-default">
+<colgroup>
+<col style="width: 12%" />
+<col style="width: 34%" />
+<col style="width: 54%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p>tsx=on</p></td>
+<td><p>tsx_async_abort=full</p></td>
+<td><p>The system will use VERW to clear CPU
+buffers. Cross-thread attacks are still
+possible on SMT machines.</p></td>
+</tr>
+<tr class="row-even"><td><p>tsx=on</p></td>
+<td><p>tsx_async_abort=full,nosmt</p></td>
+<td><p>As above, cross-thread attacks on SMT
+mitigated.</p></td>
+</tr>
+<tr class="row-odd"><td><p>tsx=on</p></td>
+<td><p>tsx_async_abort=off</p></td>
+<td><p>The system is vulnerable.</p></td>
+</tr>
+<tr class="row-even"><td><p>tsx=off</p></td>
+<td><p>tsx_async_abort=full</p></td>
+<td><p>TSX might be disabled if microcode
+provides a TSX control MSR. If so,
+system is not vulnerable.</p></td>
+</tr>
+<tr class="row-odd"><td><p>tsx=off</p></td>
+<td><p>tsx_async_abort=full,nosmt</p></td>
+<td><p>Ditto</p></td>
+</tr>
+<tr class="row-even"><td><p>tsx=off</p></td>
+<td><p>tsx_async_abort=off</p></td>
+<td><p>ditto</p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+<p>For unaffected platforms “tsx=on” and “tsx_async_abort=full” does not clear CPU
+buffers.  For platforms without TSX control (MSR_IA32_ARCH_CAPABILITIES.MDS_NO=0)
+“tsx” command line argument has no effect.</p>
+<p>For the affected platforms below table indicates the mitigation status for the
+combinations of CPUID bit MD_CLEAR and IA32_ARCH_CAPABILITIES MSR bits MDS_NO
+and TSX_CTRL_MSR.</p>
+<blockquote>
+<div><table class="docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 13%" />
+<col style="width: 19%" />
+<col style="width: 58%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>MDS_NO</p></th>
+<th class="head"><p>MD_CLEAR</p></th>
+<th class="head"><p>TSX_CTRL_MSR</p></th>
+<th class="head"><p>Status</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>0</p></td>
+<td><p>0</p></td>
+<td><p>0</p></td>
+<td><p>Vulnerable (needs microcode)</p></td>
+</tr>
+<tr class="row-odd"><td><p>0</p></td>
+<td><p>1</p></td>
+<td><p>0</p></td>
+<td><p>MDS and TAA mitigated via VERW</p></td>
+</tr>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>1</p></td>
+<td><p>0</p></td>
+<td><p>MDS fixed, TAA vulnerable if TSX enabled
+because MD_CLEAR has no meaning and
+VERW is not guaranteed to clear buffers</p></td>
+</tr>
+<tr class="row-odd"><td><p>1</p></td>
+<td><p>X</p></td>
+<td><p>1</p></td>
+<td><p>MDS fixed, TAA can be mitigated by
+VERW or TSX_CTRL_MSR</p></td>
+</tr>
+</tbody>
+</table>
+</div></blockquote>
+</div>
+<div class="section" id="mitigation-selection-guide">
+<h2>Mitigation selection guide<a class="headerlink" href="#mitigation-selection-guide" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="trusted-userspace-and-guests">
+<h3>1. Trusted userspace and guests<a class="headerlink" href="#trusted-userspace-and-guests" title="Permalink to this headline">¶</a></h3>
+<p>If all user space applications are from a trusted source and do not execute
+untrusted code which is supplied externally, then the mitigation can be
+disabled. The same applies to virtualized environments with trusted guests.</p>
+</div>
+<div class="section" id="untrusted-userspace-and-guests">
+<h3>2. Untrusted userspace and guests<a class="headerlink" href="#untrusted-userspace-and-guests" title="Permalink to this headline">¶</a></h3>
+<p>If there are untrusted applications or guests on the system, enabling TSX
+might allow a malicious actor to leak data from the host or from other
+processes running on the same physical core.</p>
+<p>If the microcode is available and the TSX is disabled on the host, attacks
+are prevented in a virtualized environment as well, even if the VMs do not
+explicitly enable the mitigation.</p>
+</div>
+</div>
+<div class="section" id="default-mitigations">
+<span id="taa-default-mitigations"></span><h2>Default mitigations<a class="headerlink" href="#default-mitigations" title="Permalink to this headline">¶</a></h2>
+<p>The kernel’s default action for vulnerable processors is:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Deploy TSX disable mitigation (tsx_async_abort=full tsx=off).</p></li>
+</ul>
+</div></blockquote>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="multihit.html" class="btn btn-neutral float-right" title="iTLB multihit" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="mds.html" class="btn btn-neutral float-left" title="MDS - Microarchitectural Data Sampling" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright The kernel development community.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
