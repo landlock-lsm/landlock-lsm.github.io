@@ -1,0 +1,1651 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - landlock.info - include/linux/pgtable.h</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">include/linux</a> - pgtable.h<span style="font-size: 80%;"> (source / <a href="pgtable.h.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">landlock.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">74</td>
+            <td class="headerCovTableEntry">101</td>
+            <td class="headerCovTableEntryLo">73.3 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2021-04-07 12:34:12</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">5</td>
+            <td class="headerCovTableEntry">5</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : /* SPDX-License-Identifier: GPL-2.0 */</a>
+<a name="2"><span class="lineNum">       2 </span>            : #ifndef _LINUX_PGTABLE_H</a>
+<a name="3"><span class="lineNum">       3 </span>            : #define _LINUX_PGTABLE_H</a>
+<a name="4"><span class="lineNum">       4 </span>            : </a>
+<a name="5"><span class="lineNum">       5 </span>            : #include &lt;linux/pfn.h&gt;</a>
+<a name="6"><span class="lineNum">       6 </span>            : #include &lt;asm/pgtable.h&gt;</a>
+<a name="7"><span class="lineNum">       7 </span>            : </a>
+<a name="8"><span class="lineNum">       8 </span>            : #ifndef __ASSEMBLY__</a>
+<a name="9"><span class="lineNum">       9 </span>            : #ifdef CONFIG_MMU</a>
+<a name="10"><span class="lineNum">      10 </span>            : </a>
+<a name="11"><span class="lineNum">      11 </span>            : #include &lt;linux/mm_types.h&gt;</a>
+<a name="12"><span class="lineNum">      12 </span>            : #include &lt;linux/bug.h&gt;</a>
+<a name="13"><span class="lineNum">      13 </span>            : #include &lt;linux/errno.h&gt;</a>
+<a name="14"><span class="lineNum">      14 </span>            : #include &lt;asm-generic/pgtable_uffd.h&gt;</a>
+<a name="15"><span class="lineNum">      15 </span>            : </a>
+<a name="16"><span class="lineNum">      16 </span>            : #if 5 - defined(__PAGETABLE_P4D_FOLDED) - defined(__PAGETABLE_PUD_FOLDED) - \</a>
+<a name="17"><span class="lineNum">      17 </span>            :         defined(__PAGETABLE_PMD_FOLDED) != CONFIG_PGTABLE_LEVELS</a>
+<a name="18"><span class="lineNum">      18 </span>            : #error CONFIG_PGTABLE_LEVELS is not consistent with __PAGETABLE_{P4D,PUD,PMD}_FOLDED</a>
+<a name="19"><span class="lineNum">      19 </span>            : #endif</a>
+<a name="20"><span class="lineNum">      20 </span>            : </a>
+<a name="21"><span class="lineNum">      21 </span>            : /*</a>
+<a name="22"><span class="lineNum">      22 </span>            :  * On almost all architectures and configurations, 0 can be used as the</a>
+<a name="23"><span class="lineNum">      23 </span>            :  * upper ceiling to free_pgtables(): on many architectures it has the same</a>
+<a name="24"><span class="lineNum">      24 </span>            :  * effect as using TASK_SIZE.  However, there is one configuration which</a>
+<a name="25"><span class="lineNum">      25 </span>            :  * must impose a more careful limit, to avoid freeing kernel pgtables.</a>
+<a name="26"><span class="lineNum">      26 </span>            :  */</a>
+<a name="27"><span class="lineNum">      27 </span>            : #ifndef USER_PGTABLES_CEILING</a>
+<a name="28"><span class="lineNum">      28 </span>            : #define USER_PGTABLES_CEILING   0UL</a>
+<a name="29"><span class="lineNum">      29 </span>            : #endif</a>
+<a name="30"><span class="lineNum">      30 </span>            : </a>
+<a name="31"><span class="lineNum">      31 </span>            : /*</a>
+<a name="32"><span class="lineNum">      32 </span>            :  * A page table page can be thought of an array like this: pXd_t[PTRS_PER_PxD]</a>
+<a name="33"><span class="lineNum">      33 </span>            :  *</a>
+<a name="34"><span class="lineNum">      34 </span>            :  * The pXx_index() functions return the index of the entry in the page</a>
+<a name="35"><span class="lineNum">      35 </span>            :  * table page which would control the given virtual address</a>
+<a name="36"><span class="lineNum">      36 </span>            :  *</a>
+<a name="37"><span class="lineNum">      37 </span>            :  * As these functions may be used by the same code for different levels of</a>
+<a name="38"><span class="lineNum">      38 </span>            :  * the page table folding, they are always available, regardless of</a>
+<a name="39"><span class="lineNum">      39 </span>            :  * CONFIG_PGTABLE_LEVELS value. For the folded levels they simply return 0</a>
+<a name="40"><span class="lineNum">      40 </span>            :  * because in such cases PTRS_PER_PxD equals 1.</a>
+<a name="41"><span class="lineNum">      41 </span>            :  */</a>
+<a name="42"><span class="lineNum">      42 </span>            : </a>
+<a name="43"><span class="lineNum">      43 </span><span class="lineCov">     551805 : static inline unsigned long pte_index(unsigned long address)</span></a>
+<a name="44"><span class="lineNum">      44 </span>            : {</a>
+<a name="45"><span class="lineNum">      45 </span><span class="lineCov">     551608 :         return (address &gt;&gt; PAGE_SHIFT) &amp; (PTRS_PER_PTE - 1);</span></a>
+<a name="46"><span class="lineNum">      46 </span>            : }</a>
+<a name="47"><span class="lineNum">      47 </span>            : </a>
+<a name="48"><span class="lineNum">      48 </span>            : #ifndef pmd_index</a>
+<a name="49"><span class="lineNum">      49 </span><span class="lineCov">     422394 : static inline unsigned long pmd_index(unsigned long address)</span></a>
+<a name="50"><span class="lineNum">      50 </span>            : {</a>
+<a name="51"><span class="lineNum">      51 </span><span class="lineCov">     422193 :         return (address &gt;&gt; PMD_SHIFT) &amp; (PTRS_PER_PMD - 1);</span></a>
+<a name="52"><span class="lineNum">      52 </span>            : }</a>
+<a name="53"><span class="lineNum">      53 </span>            : #define pmd_index pmd_index</a>
+<a name="54"><span class="lineNum">      54 </span>            : #endif</a>
+<a name="55"><span class="lineNum">      55 </span>            : </a>
+<a name="56"><span class="lineNum">      56 </span>            : #ifndef pud_index</a>
+<a name="57"><span class="lineNum">      57 </span><span class="lineCov">     420413 : static inline unsigned long pud_index(unsigned long address)</span></a>
+<a name="58"><span class="lineNum">      58 </span>            : {</a>
+<a name="59"><span class="lineNum">      59 </span><span class="lineCov">     420152 :         return (address &gt;&gt; PUD_SHIFT) &amp; (PTRS_PER_PUD - 1);</span></a>
+<a name="60"><span class="lineNum">      60 </span>            : }</a>
+<a name="61"><span class="lineNum">      61 </span>            : #define pud_index pud_index</a>
+<a name="62"><span class="lineNum">      62 </span>            : #endif</a>
+<a name="63"><span class="lineNum">      63 </span>            : </a>
+<a name="64"><span class="lineNum">      64 </span>            : #ifndef pgd_index</a>
+<a name="65"><span class="lineNum">      65 </span>            : /* Must be a compile-time constant, so implement it as a macro */</a>
+<a name="66"><span class="lineNum">      66 </span>            : #define pgd_index(a)  (((a) &gt;&gt; PGDIR_SHIFT) &amp; (PTRS_PER_PGD - 1))</a>
+<a name="67"><span class="lineNum">      67 </span>            : #endif</a>
+<a name="68"><span class="lineNum">      68 </span>            : </a>
+<a name="69"><span class="lineNum">      69 </span>            : #ifndef pte_offset_kernel</a>
+<a name="70"><span class="lineNum">      70 </span><span class="lineCov">     551661 : static inline pte_t *pte_offset_kernel(pmd_t *pmd, unsigned long address)</span></a>
+<a name="71"><span class="lineNum">      71 </span>            : {</a>
+<a name="72"><span class="lineNum">      72 </span><span class="lineCov">    1093023 :         return (pte_t *)pmd_page_vaddr(*pmd) + pte_index(address);</span></a>
+<a name="73"><span class="lineNum">      73 </span>            : }</a>
+<a name="74"><span class="lineNum">      74 </span>            : #define pte_offset_kernel pte_offset_kernel</a>
+<a name="75"><span class="lineNum">      75 </span>            : #endif</a>
+<a name="76"><span class="lineNum">      76 </span>            : </a>
+<a name="77"><span class="lineNum">      77 </span>            : #if defined(CONFIG_HIGHPTE)</a>
+<a name="78"><span class="lineNum">      78 </span>            : #define pte_offset_map(dir, address)                            \</a>
+<a name="79"><span class="lineNum">      79 </span>            :         ((pte_t *)kmap_atomic(pmd_page(*(dir))) +               \</a>
+<a name="80"><span class="lineNum">      80 </span>            :          pte_index((address)))</a>
+<a name="81"><span class="lineNum">      81 </span>            : #define pte_unmap(pte) kunmap_atomic((pte))</a>
+<a name="82"><span class="lineNum">      82 </span>            : #else</a>
+<a name="83"><span class="lineNum">      83 </span>            : #define pte_offset_map(dir, address)    pte_offset_kernel((dir), (address))</a>
+<a name="84"><span class="lineNum">      84 </span>            : #define pte_unmap(pte) ((void)(pte))    /* NOP */</a>
+<a name="85"><span class="lineNum">      85 </span>            : #endif</a>
+<a name="86"><span class="lineNum">      86 </span>            : </a>
+<a name="87"><span class="lineNum">      87 </span>            : /* Find an entry in the second-level page table.. */</a>
+<a name="88"><span class="lineNum">      88 </span>            : #ifndef pmd_offset</a>
+<a name="89"><span class="lineNum">      89 </span><span class="lineCov">     420593 : static inline pmd_t *pmd_offset(pud_t *pud, unsigned long address)</span></a>
+<a name="90"><span class="lineNum">      90 </span>            : {</a>
+<a name="91"><span class="lineNum">      91 </span><span class="lineCov">     833192 :         return (pmd_t *)pud_page_vaddr(*pud) + pmd_index(address);</span></a>
+<a name="92"><span class="lineNum">      92 </span>            : }</a>
+<a name="93"><span class="lineNum">      93 </span>            : #define pmd_offset pmd_offset</a>
+<a name="94"><span class="lineNum">      94 </span>            : #endif</a>
+<a name="95"><span class="lineNum">      95 </span>            : </a>
+<a name="96"><span class="lineNum">      96 </span>            : #ifndef pud_offset</a>
+<a name="97"><span class="lineNum">      97 </span><span class="lineCov">     417844 : static inline pud_t *pud_offset(p4d_t *p4d, unsigned long address)</span></a>
+<a name="98"><span class="lineNum">      98 </span>            : {</a>
+<a name="99"><span class="lineNum">      99 </span><span class="lineCov">     417648 :         return (pud_t *)p4d_page_vaddr(*p4d) + pud_index(address);</span></a>
+<a name="100"><span class="lineNum">     100 </span>            : }</a>
+<a name="101"><span class="lineNum">     101 </span>            : #define pud_offset pud_offset</a>
+<a name="102"><span class="lineNum">     102 </span>            : #endif</a>
+<a name="103"><span class="lineNum">     103 </span>            : </a>
+<a name="104"><span class="lineNum">     104 </span><span class="lineCov">     387372 : static inline pgd_t *pgd_offset_pgd(pgd_t *pgd, unsigned long address)</span></a>
+<a name="105"><span class="lineNum">     105 </span>            : {</a>
+<a name="106"><span class="lineNum">     106 </span><span class="lineCov">     387372 :         return (pgd + pgd_index(address));</span></a>
+<a name="107"><span class="lineNum">     107 </span>            : };</a>
+<a name="108"><span class="lineNum">     108 </span>            : </a>
+<a name="109"><span class="lineNum">     109 </span>            : /*</a>
+<a name="110"><span class="lineNum">     110 </span>            :  * a shortcut to get a pgd_t in a given mm</a>
+<a name="111"><span class="lineNum">     111 </span>            :  */</a>
+<a name="112"><span class="lineNum">     112 </span>            : #ifndef pgd_offset</a>
+<a name="113"><span class="lineNum">     113 </span>            : #define pgd_offset(mm, address)         pgd_offset_pgd((mm)-&gt;pgd, (address))</a>
+<a name="114"><span class="lineNum">     114 </span>            : #endif</a>
+<a name="115"><span class="lineNum">     115 </span>            : </a>
+<a name="116"><span class="lineNum">     116 </span>            : /*</a>
+<a name="117"><span class="lineNum">     117 </span>            :  * a shortcut which implies the use of the kernel's pgd, instead</a>
+<a name="118"><span class="lineNum">     118 </span>            :  * of a process's</a>
+<a name="119"><span class="lineNum">     119 </span>            :  */</a>
+<a name="120"><span class="lineNum">     120 </span>            : #ifndef pgd_offset_k</a>
+<a name="121"><span class="lineNum">     121 </span>            : #define pgd_offset_k(address)           pgd_offset(&amp;init_mm, (address))</a>
+<a name="122"><span class="lineNum">     122 </span>            : #endif</a>
+<a name="123"><span class="lineNum">     123 </span>            : </a>
+<a name="124"><span class="lineNum">     124 </span>            : /*</a>
+<a name="125"><span class="lineNum">     125 </span>            :  * In many cases it is known that a virtual address is mapped at PMD or PTE</a>
+<a name="126"><span class="lineNum">     126 </span>            :  * level, so instead of traversing all the page table levels, we can get a</a>
+<a name="127"><span class="lineNum">     127 </span>            :  * pointer to the PMD entry in user or kernel page table or translate a virtual</a>
+<a name="128"><span class="lineNum">     128 </span>            :  * address to the pointer in the PTE in the kernel page tables with simple</a>
+<a name="129"><span class="lineNum">     129 </span>            :  * helpers.</a>
+<a name="130"><span class="lineNum">     130 </span>            :  */</a>
+<a name="131"><span class="lineNum">     131 </span>            : static inline pmd_t *pmd_off(struct mm_struct *mm, unsigned long va)</a>
+<a name="132"><span class="lineNum">     132 </span>            : {</a>
+<a name="133"><span class="lineNum">     133 </span>            :         return pmd_offset(pud_offset(p4d_offset(pgd_offset(mm, va), va), va), va);</a>
+<a name="134"><span class="lineNum">     134 </span>            : }</a>
+<a name="135"><span class="lineNum">     135 </span>            : </a>
+<a name="136"><span class="lineNum">     136 </span>            : static inline pmd_t *pmd_off_k(unsigned long va)</a>
+<a name="137"><span class="lineNum">     137 </span>            : {</a>
+<a name="138"><span class="lineNum">     138 </span>            :         return pmd_offset(pud_offset(p4d_offset(pgd_offset_k(va), va), va), va);</a>
+<a name="139"><span class="lineNum">     139 </span>            : }</a>
+<a name="140"><span class="lineNum">     140 </span>            : </a>
+<a name="141"><span class="lineNum">     141 </span>            : static inline pte_t *virt_to_kpte(unsigned long vaddr)</a>
+<a name="142"><span class="lineNum">     142 </span>            : {</a>
+<a name="143"><span class="lineNum">     143 </span>            :         pmd_t *pmd = pmd_off_k(vaddr);</a>
+<a name="144"><span class="lineNum">     144 </span>            : </a>
+<a name="145"><span class="lineNum">     145 </span>            :         return pmd_none(*pmd) ? NULL : pte_offset_kernel(pmd, vaddr);</a>
+<a name="146"><span class="lineNum">     146 </span>            : }</a>
+<a name="147"><span class="lineNum">     147 </span>            : </a>
+<a name="148"><span class="lineNum">     148 </span>            : #ifndef __HAVE_ARCH_PTEP_SET_ACCESS_FLAGS</a>
+<a name="149"><span class="lineNum">     149 </span>            : extern int ptep_set_access_flags(struct vm_area_struct *vma,</a>
+<a name="150"><span class="lineNum">     150 </span>            :                                  unsigned long address, pte_t *ptep,</a>
+<a name="151"><span class="lineNum">     151 </span>            :                                  pte_t entry, int dirty);</a>
+<a name="152"><span class="lineNum">     152 </span>            : #endif</a>
+<a name="153"><span class="lineNum">     153 </span>            : </a>
+<a name="154"><span class="lineNum">     154 </span>            : #ifndef __HAVE_ARCH_PMDP_SET_ACCESS_FLAGS</a>
+<a name="155"><span class="lineNum">     155 </span>            : #ifdef CONFIG_TRANSPARENT_HUGEPAGE</a>
+<a name="156"><span class="lineNum">     156 </span>            : extern int pmdp_set_access_flags(struct vm_area_struct *vma,</a>
+<a name="157"><span class="lineNum">     157 </span>            :                                  unsigned long address, pmd_t *pmdp,</a>
+<a name="158"><span class="lineNum">     158 </span>            :                                  pmd_t entry, int dirty);</a>
+<a name="159"><span class="lineNum">     159 </span>            : extern int pudp_set_access_flags(struct vm_area_struct *vma,</a>
+<a name="160"><span class="lineNum">     160 </span>            :                                  unsigned long address, pud_t *pudp,</a>
+<a name="161"><span class="lineNum">     161 </span>            :                                  pud_t entry, int dirty);</a>
+<a name="162"><span class="lineNum">     162 </span>            : #else</a>
+<a name="163"><span class="lineNum">     163 </span>            : static inline int pmdp_set_access_flags(struct vm_area_struct *vma,</a>
+<a name="164"><span class="lineNum">     164 </span>            :                                         unsigned long address, pmd_t *pmdp,</a>
+<a name="165"><span class="lineNum">     165 </span>            :                                         pmd_t entry, int dirty)</a>
+<a name="166"><span class="lineNum">     166 </span>            : {</a>
+<a name="167"><span class="lineNum">     167 </span>            :         BUILD_BUG();</a>
+<a name="168"><span class="lineNum">     168 </span>            :         return 0;</a>
+<a name="169"><span class="lineNum">     169 </span>            : }</a>
+<a name="170"><span class="lineNum">     170 </span>            : static inline int pudp_set_access_flags(struct vm_area_struct *vma,</a>
+<a name="171"><span class="lineNum">     171 </span>            :                                         unsigned long address, pud_t *pudp,</a>
+<a name="172"><span class="lineNum">     172 </span>            :                                         pud_t entry, int dirty)</a>
+<a name="173"><span class="lineNum">     173 </span>            : {</a>
+<a name="174"><span class="lineNum">     174 </span>            :         BUILD_BUG();</a>
+<a name="175"><span class="lineNum">     175 </span>            :         return 0;</a>
+<a name="176"><span class="lineNum">     176 </span>            : }</a>
+<a name="177"><span class="lineNum">     177 </span>            : #endif /* CONFIG_TRANSPARENT_HUGEPAGE */</a>
+<a name="178"><span class="lineNum">     178 </span>            : #endif</a>
+<a name="179"><span class="lineNum">     179 </span>            : </a>
+<a name="180"><span class="lineNum">     180 </span>            : #ifndef __HAVE_ARCH_PTEP_TEST_AND_CLEAR_YOUNG</a>
+<a name="181"><span class="lineNum">     181 </span>            : static inline int ptep_test_and_clear_young(struct vm_area_struct *vma,</a>
+<a name="182"><span class="lineNum">     182 </span>            :                                             unsigned long address,</a>
+<a name="183"><span class="lineNum">     183 </span>            :                                             pte_t *ptep)</a>
+<a name="184"><span class="lineNum">     184 </span>            : {</a>
+<a name="185"><span class="lineNum">     185 </span>            :         pte_t pte = *ptep;</a>
+<a name="186"><span class="lineNum">     186 </span>            :         int r = 1;</a>
+<a name="187"><span class="lineNum">     187 </span>            :         if (!pte_young(pte))</a>
+<a name="188"><span class="lineNum">     188 </span>            :                 r = 0;</a>
+<a name="189"><span class="lineNum">     189 </span>            :         else</a>
+<a name="190"><span class="lineNum">     190 </span>            :                 set_pte_at(vma-&gt;vm_mm, address, ptep, pte_mkold(pte));</a>
+<a name="191"><span class="lineNum">     191 </span>            :         return r;</a>
+<a name="192"><span class="lineNum">     192 </span>            : }</a>
+<a name="193"><span class="lineNum">     193 </span>            : #endif</a>
+<a name="194"><span class="lineNum">     194 </span>            : </a>
+<a name="195"><span class="lineNum">     195 </span>            : #ifndef __HAVE_ARCH_PMDP_TEST_AND_CLEAR_YOUNG</a>
+<a name="196"><span class="lineNum">     196 </span>            : #ifdef CONFIG_TRANSPARENT_HUGEPAGE</a>
+<a name="197"><span class="lineNum">     197 </span>            : static inline int pmdp_test_and_clear_young(struct vm_area_struct *vma,</a>
+<a name="198"><span class="lineNum">     198 </span>            :                                             unsigned long address,</a>
+<a name="199"><span class="lineNum">     199 </span>            :                                             pmd_t *pmdp)</a>
+<a name="200"><span class="lineNum">     200 </span>            : {</a>
+<a name="201"><span class="lineNum">     201 </span>            :         pmd_t pmd = *pmdp;</a>
+<a name="202"><span class="lineNum">     202 </span>            :         int r = 1;</a>
+<a name="203"><span class="lineNum">     203 </span>            :         if (!pmd_young(pmd))</a>
+<a name="204"><span class="lineNum">     204 </span>            :                 r = 0;</a>
+<a name="205"><span class="lineNum">     205 </span>            :         else</a>
+<a name="206"><span class="lineNum">     206 </span>            :                 set_pmd_at(vma-&gt;vm_mm, address, pmdp, pmd_mkold(pmd));</a>
+<a name="207"><span class="lineNum">     207 </span>            :         return r;</a>
+<a name="208"><span class="lineNum">     208 </span>            : }</a>
+<a name="209"><span class="lineNum">     209 </span>            : #else</a>
+<a name="210"><span class="lineNum">     210 </span>            : static inline int pmdp_test_and_clear_young(struct vm_area_struct *vma,</a>
+<a name="211"><span class="lineNum">     211 </span>            :                                             unsigned long address,</a>
+<a name="212"><span class="lineNum">     212 </span>            :                                             pmd_t *pmdp)</a>
+<a name="213"><span class="lineNum">     213 </span>            : {</a>
+<a name="214"><span class="lineNum">     214 </span>            :         BUILD_BUG();</a>
+<a name="215"><span class="lineNum">     215 </span>            :         return 0;</a>
+<a name="216"><span class="lineNum">     216 </span>            : }</a>
+<a name="217"><span class="lineNum">     217 </span>            : #endif /* CONFIG_TRANSPARENT_HUGEPAGE */</a>
+<a name="218"><span class="lineNum">     218 </span>            : #endif</a>
+<a name="219"><span class="lineNum">     219 </span>            : </a>
+<a name="220"><span class="lineNum">     220 </span>            : #ifndef __HAVE_ARCH_PTEP_CLEAR_YOUNG_FLUSH</a>
+<a name="221"><span class="lineNum">     221 </span>            : int ptep_clear_flush_young(struct vm_area_struct *vma,</a>
+<a name="222"><span class="lineNum">     222 </span>            :                            unsigned long address, pte_t *ptep);</a>
+<a name="223"><span class="lineNum">     223 </span>            : #endif</a>
+<a name="224"><span class="lineNum">     224 </span>            : </a>
+<a name="225"><span class="lineNum">     225 </span>            : #ifndef __HAVE_ARCH_PMDP_CLEAR_YOUNG_FLUSH</a>
+<a name="226"><span class="lineNum">     226 </span>            : #ifdef CONFIG_TRANSPARENT_HUGEPAGE</a>
+<a name="227"><span class="lineNum">     227 </span>            : extern int pmdp_clear_flush_young(struct vm_area_struct *vma,</a>
+<a name="228"><span class="lineNum">     228 </span>            :                                   unsigned long address, pmd_t *pmdp);</a>
+<a name="229"><span class="lineNum">     229 </span>            : #else</a>
+<a name="230"><span class="lineNum">     230 </span>            : /*</a>
+<a name="231"><span class="lineNum">     231 </span>            :  * Despite relevant to THP only, this API is called from generic rmap code</a>
+<a name="232"><span class="lineNum">     232 </span>            :  * under PageTransHuge(), hence needs a dummy implementation for !THP</a>
+<a name="233"><span class="lineNum">     233 </span>            :  */</a>
+<a name="234"><span class="lineNum">     234 </span>            : static inline int pmdp_clear_flush_young(struct vm_area_struct *vma,</a>
+<a name="235"><span class="lineNum">     235 </span>            :                                          unsigned long address, pmd_t *pmdp)</a>
+<a name="236"><span class="lineNum">     236 </span>            : {</a>
+<a name="237"><span class="lineNum">     237 </span>            :         BUILD_BUG();</a>
+<a name="238"><span class="lineNum">     238 </span>            :         return 0;</a>
+<a name="239"><span class="lineNum">     239 </span>            : }</a>
+<a name="240"><span class="lineNum">     240 </span>            : #endif /* CONFIG_TRANSPARENT_HUGEPAGE */</a>
+<a name="241"><span class="lineNum">     241 </span>            : #endif</a>
+<a name="242"><span class="lineNum">     242 </span>            : </a>
+<a name="243"><span class="lineNum">     243 </span>            : #ifndef __HAVE_ARCH_PTEP_GET_AND_CLEAR</a>
+<a name="244"><span class="lineNum">     244 </span>            : static inline pte_t ptep_get_and_clear(struct mm_struct *mm,</a>
+<a name="245"><span class="lineNum">     245 </span>            :                                        unsigned long address,</a>
+<a name="246"><span class="lineNum">     246 </span>            :                                        pte_t *ptep)</a>
+<a name="247"><span class="lineNum">     247 </span>            : {</a>
+<a name="248"><span class="lineNum">     248 </span>            :         pte_t pte = *ptep;</a>
+<a name="249"><span class="lineNum">     249 </span>            :         pte_clear(mm, address, ptep);</a>
+<a name="250"><span class="lineNum">     250 </span>            :         return pte;</a>
+<a name="251"><span class="lineNum">     251 </span>            : }</a>
+<a name="252"><span class="lineNum">     252 </span>            : #endif</a>
+<a name="253"><span class="lineNum">     253 </span>            : </a>
+<a name="254"><span class="lineNum">     254 </span>            : #ifndef __HAVE_ARCH_PTEP_GET</a>
+<a name="255"><span class="lineNum">     255 </span><span class="lineCov">          2 : static inline pte_t ptep_get(pte_t *ptep)</span></a>
+<a name="256"><span class="lineNum">     256 </span>            : {</a>
+<a name="257"><span class="lineNum">     257 </span><span class="lineCov">          2 :         return READ_ONCE(*ptep);</span></a>
+<a name="258"><span class="lineNum">     258 </span>            : }</a>
+<a name="259"><span class="lineNum">     259 </span>            : #endif</a>
+<a name="260"><span class="lineNum">     260 </span>            : </a>
+<a name="261"><span class="lineNum">     261 </span>            : #ifdef CONFIG_GUP_GET_PTE_LOW_HIGH</a>
+<a name="262"><span class="lineNum">     262 </span>            : /*</a>
+<a name="263"><span class="lineNum">     263 </span>            :  * WARNING: only to be used in the get_user_pages_fast() implementation.</a>
+<a name="264"><span class="lineNum">     264 </span>            :  *</a>
+<a name="265"><span class="lineNum">     265 </span>            :  * With get_user_pages_fast(), we walk down the pagetables without taking any</a>
+<a name="266"><span class="lineNum">     266 </span>            :  * locks.  For this we would like to load the pointers atomically, but sometimes</a>
+<a name="267"><span class="lineNum">     267 </span>            :  * that is not possible (e.g. without expensive cmpxchg8b on x86_32 PAE).  What</a>
+<a name="268"><span class="lineNum">     268 </span>            :  * we do have is the guarantee that a PTE will only either go from not present</a>
+<a name="269"><span class="lineNum">     269 </span>            :  * to present, or present to not present or both -- it will not switch to a</a>
+<a name="270"><span class="lineNum">     270 </span>            :  * completely different present page without a TLB flush in between; something</a>
+<a name="271"><span class="lineNum">     271 </span>            :  * that we are blocking by holding interrupts off.</a>
+<a name="272"><span class="lineNum">     272 </span>            :  *</a>
+<a name="273"><span class="lineNum">     273 </span>            :  * Setting ptes from not present to present goes:</a>
+<a name="274"><span class="lineNum">     274 </span>            :  *</a>
+<a name="275"><span class="lineNum">     275 </span>            :  *   ptep-&gt;pte_high = h;</a>
+<a name="276"><span class="lineNum">     276 </span>            :  *   smp_wmb();</a>
+<a name="277"><span class="lineNum">     277 </span>            :  *   ptep-&gt;pte_low = l;</a>
+<a name="278"><span class="lineNum">     278 </span>            :  *</a>
+<a name="279"><span class="lineNum">     279 </span>            :  * And present to not present goes:</a>
+<a name="280"><span class="lineNum">     280 </span>            :  *</a>
+<a name="281"><span class="lineNum">     281 </span>            :  *   ptep-&gt;pte_low = 0;</a>
+<a name="282"><span class="lineNum">     282 </span>            :  *   smp_wmb();</a>
+<a name="283"><span class="lineNum">     283 </span>            :  *   ptep-&gt;pte_high = 0;</a>
+<a name="284"><span class="lineNum">     284 </span>            :  *</a>
+<a name="285"><span class="lineNum">     285 </span>            :  * We must ensure here that the load of pte_low sees 'l' IFF pte_high sees 'h'.</a>
+<a name="286"><span class="lineNum">     286 </span>            :  * We load pte_high *after* loading pte_low, which ensures we don't see an older</a>
+<a name="287"><span class="lineNum">     287 </span>            :  * value of pte_high.  *Then* we recheck pte_low, which ensures that we haven't</a>
+<a name="288"><span class="lineNum">     288 </span>            :  * picked up a changed pte high. We might have gotten rubbish values from</a>
+<a name="289"><span class="lineNum">     289 </span>            :  * pte_low and pte_high, but we are guaranteed that pte_low will not have the</a>
+<a name="290"><span class="lineNum">     290 </span>            :  * present bit set *unless* it is 'l'. Because get_user_pages_fast() only</a>
+<a name="291"><span class="lineNum">     291 </span>            :  * operates on present ptes we're safe.</a>
+<a name="292"><span class="lineNum">     292 </span>            :  */</a>
+<a name="293"><span class="lineNum">     293 </span>            : static inline pte_t ptep_get_lockless(pte_t *ptep)</a>
+<a name="294"><span class="lineNum">     294 </span>            : {</a>
+<a name="295"><span class="lineNum">     295 </span>            :         pte_t pte;</a>
+<a name="296"><span class="lineNum">     296 </span>            : </a>
+<a name="297"><span class="lineNum">     297 </span>            :         do {</a>
+<a name="298"><span class="lineNum">     298 </span>            :                 pte.pte_low = ptep-&gt;pte_low;</a>
+<a name="299"><span class="lineNum">     299 </span>            :                 smp_rmb();</a>
+<a name="300"><span class="lineNum">     300 </span>            :                 pte.pte_high = ptep-&gt;pte_high;</a>
+<a name="301"><span class="lineNum">     301 </span>            :                 smp_rmb();</a>
+<a name="302"><span class="lineNum">     302 </span>            :         } while (unlikely(pte.pte_low != ptep-&gt;pte_low));</a>
+<a name="303"><span class="lineNum">     303 </span>            : </a>
+<a name="304"><span class="lineNum">     304 </span>            :         return pte;</a>
+<a name="305"><span class="lineNum">     305 </span>            : }</a>
+<a name="306"><span class="lineNum">     306 </span>            : #else /* CONFIG_GUP_GET_PTE_LOW_HIGH */</a>
+<a name="307"><span class="lineNum">     307 </span>            : /*</a>
+<a name="308"><span class="lineNum">     308 </span>            :  * We require that the PTE can be read atomically.</a>
+<a name="309"><span class="lineNum">     309 </span>            :  */</a>
+<a name="310"><span class="lineNum">     310 </span><span class="lineCov">          2 : static inline pte_t ptep_get_lockless(pte_t *ptep)</span></a>
+<a name="311"><span class="lineNum">     311 </span>            : {</a>
+<a name="312"><span class="lineNum">     312 </span><span class="lineCov">          2 :         return ptep_get(ptep);</span></a>
+<a name="313"><span class="lineNum">     313 </span>            : }</a>
+<a name="314"><span class="lineNum">     314 </span>            : #endif /* CONFIG_GUP_GET_PTE_LOW_HIGH */</a>
+<a name="315"><span class="lineNum">     315 </span>            : </a>
+<a name="316"><span class="lineNum">     316 </span>            : #ifdef CONFIG_TRANSPARENT_HUGEPAGE</a>
+<a name="317"><span class="lineNum">     317 </span>            : #ifndef __HAVE_ARCH_PMDP_HUGE_GET_AND_CLEAR</a>
+<a name="318"><span class="lineNum">     318 </span>            : static inline pmd_t pmdp_huge_get_and_clear(struct mm_struct *mm,</a>
+<a name="319"><span class="lineNum">     319 </span>            :                                             unsigned long address,</a>
+<a name="320"><span class="lineNum">     320 </span>            :                                             pmd_t *pmdp)</a>
+<a name="321"><span class="lineNum">     321 </span>            : {</a>
+<a name="322"><span class="lineNum">     322 </span>            :         pmd_t pmd = *pmdp;</a>
+<a name="323"><span class="lineNum">     323 </span>            :         pmd_clear(pmdp);</a>
+<a name="324"><span class="lineNum">     324 </span>            :         return pmd;</a>
+<a name="325"><span class="lineNum">     325 </span>            : }</a>
+<a name="326"><span class="lineNum">     326 </span>            : #endif /* __HAVE_ARCH_PMDP_HUGE_GET_AND_CLEAR */</a>
+<a name="327"><span class="lineNum">     327 </span>            : #ifndef __HAVE_ARCH_PUDP_HUGE_GET_AND_CLEAR</a>
+<a name="328"><span class="lineNum">     328 </span>            : static inline pud_t pudp_huge_get_and_clear(struct mm_struct *mm,</a>
+<a name="329"><span class="lineNum">     329 </span>            :                                             unsigned long address,</a>
+<a name="330"><span class="lineNum">     330 </span>            :                                             pud_t *pudp)</a>
+<a name="331"><span class="lineNum">     331 </span>            : {</a>
+<a name="332"><span class="lineNum">     332 </span>            :         pud_t pud = *pudp;</a>
+<a name="333"><span class="lineNum">     333 </span>            : </a>
+<a name="334"><span class="lineNum">     334 </span>            :         pud_clear(pudp);</a>
+<a name="335"><span class="lineNum">     335 </span>            :         return pud;</a>
+<a name="336"><span class="lineNum">     336 </span>            : }</a>
+<a name="337"><span class="lineNum">     337 </span>            : #endif /* __HAVE_ARCH_PUDP_HUGE_GET_AND_CLEAR */</a>
+<a name="338"><span class="lineNum">     338 </span>            : #endif /* CONFIG_TRANSPARENT_HUGEPAGE */</a>
+<a name="339"><span class="lineNum">     339 </span>            : </a>
+<a name="340"><span class="lineNum">     340 </span>            : #ifdef CONFIG_TRANSPARENT_HUGEPAGE</a>
+<a name="341"><span class="lineNum">     341 </span>            : #ifndef __HAVE_ARCH_PMDP_HUGE_GET_AND_CLEAR_FULL</a>
+<a name="342"><span class="lineNum">     342 </span><span class="lineCov">          9 : static inline pmd_t pmdp_huge_get_and_clear_full(struct vm_area_struct *vma,</span></a>
+<a name="343"><span class="lineNum">     343 </span>            :                                             unsigned long address, pmd_t *pmdp,</a>
+<a name="344"><span class="lineNum">     344 </span>            :                                             int full)</a>
+<a name="345"><span class="lineNum">     345 </span>            : {</a>
+<a name="346"><span class="lineNum">     346 </span><span class="lineCov">         18 :         return pmdp_huge_get_and_clear(vma-&gt;vm_mm, address, pmdp);</span></a>
+<a name="347"><span class="lineNum">     347 </span>            : }</a>
+<a name="348"><span class="lineNum">     348 </span>            : #endif</a>
+<a name="349"><span class="lineNum">     349 </span>            : </a>
+<a name="350"><span class="lineNum">     350 </span>            : #ifndef __HAVE_ARCH_PUDP_HUGE_GET_AND_CLEAR_FULL</a>
+<a name="351"><span class="lineNum">     351 </span><span class="lineNoCov">          0 : static inline pud_t pudp_huge_get_and_clear_full(struct mm_struct *mm,</span></a>
+<a name="352"><span class="lineNum">     352 </span>            :                                             unsigned long address, pud_t *pudp,</a>
+<a name="353"><span class="lineNum">     353 </span>            :                                             int full)</a>
+<a name="354"><span class="lineNum">     354 </span>            : {</a>
+<a name="355"><span class="lineNum">     355 </span><span class="lineNoCov">          0 :         return pudp_huge_get_and_clear(mm, address, pudp);</span></a>
+<a name="356"><span class="lineNum">     356 </span>            : }</a>
+<a name="357"><span class="lineNum">     357 </span>            : #endif</a>
+<a name="358"><span class="lineNum">     358 </span>            : #endif /* CONFIG_TRANSPARENT_HUGEPAGE */</a>
+<a name="359"><span class="lineNum">     359 </span>            : </a>
+<a name="360"><span class="lineNum">     360 </span>            : #ifndef __HAVE_ARCH_PTEP_GET_AND_CLEAR_FULL</a>
+<a name="361"><span class="lineNum">     361 </span>            : static inline pte_t ptep_get_and_clear_full(struct mm_struct *mm,</a>
+<a name="362"><span class="lineNum">     362 </span>            :                                             unsigned long address, pte_t *ptep,</a>
+<a name="363"><span class="lineNum">     363 </span>            :                                             int full)</a>
+<a name="364"><span class="lineNum">     364 </span>            : {</a>
+<a name="365"><span class="lineNum">     365 </span>            :         pte_t pte;</a>
+<a name="366"><span class="lineNum">     366 </span>            :         pte = ptep_get_and_clear(mm, address, ptep);</a>
+<a name="367"><span class="lineNum">     367 </span>            :         return pte;</a>
+<a name="368"><span class="lineNum">     368 </span>            : }</a>
+<a name="369"><span class="lineNum">     369 </span>            : #endif</a>
+<a name="370"><span class="lineNum">     370 </span>            : </a>
+<a name="371"><span class="lineNum">     371 </span>            : </a>
+<a name="372"><span class="lineNum">     372 </span>            : /*</a>
+<a name="373"><span class="lineNum">     373 </span>            :  * If two threads concurrently fault at the same page, the thread that</a>
+<a name="374"><span class="lineNum">     374 </span>            :  * won the race updates the PTE and its local TLB/Cache. The other thread</a>
+<a name="375"><span class="lineNum">     375 </span>            :  * gives up, simply does nothing, and continues; on architectures where</a>
+<a name="376"><span class="lineNum">     376 </span>            :  * software can update TLB,  local TLB can be updated here to avoid next page</a>
+<a name="377"><span class="lineNum">     377 </span>            :  * fault. This function updates TLB only, do nothing with cache or others.</a>
+<a name="378"><span class="lineNum">     378 </span>            :  * It is the difference with function update_mmu_cache.</a>
+<a name="379"><span class="lineNum">     379 </span>            :  */</a>
+<a name="380"><span class="lineNum">     380 </span>            : #ifndef __HAVE_ARCH_UPDATE_MMU_TLB</a>
+<a name="381"><span class="lineNum">     381 </span><span class="lineCov">      10583 : static inline void update_mmu_tlb(struct vm_area_struct *vma,</span></a>
+<a name="382"><span class="lineNum">     382 </span>            :                                 unsigned long address, pte_t *ptep)</a>
+<a name="383"><span class="lineNum">     383 </span>            : {</a>
+<a name="384"><span class="lineNum">     384 </span><span class="lineCov">      10583 : }</span></a>
+<a name="385"><span class="lineNum">     385 </span>            : #define __HAVE_ARCH_UPDATE_MMU_TLB</a>
+<a name="386"><span class="lineNum">     386 </span>            : #endif</a>
+<a name="387"><span class="lineNum">     387 </span>            : </a>
+<a name="388"><span class="lineNum">     388 </span>            : /*</a>
+<a name="389"><span class="lineNum">     389 </span>            :  * Some architectures may be able to avoid expensive synchronization</a>
+<a name="390"><span class="lineNum">     390 </span>            :  * primitives when modifications are made to PTE's which are already</a>
+<a name="391"><span class="lineNum">     391 </span>            :  * not present, or in the process of an address space destruction.</a>
+<a name="392"><span class="lineNum">     392 </span>            :  */</a>
+<a name="393"><span class="lineNum">     393 </span>            : #ifndef __HAVE_ARCH_PTE_CLEAR_NOT_PRESENT_FULL</a>
+<a name="394"><span class="lineNum">     394 </span><span class="lineNoCov">          0 : static inline void pte_clear_not_present_full(struct mm_struct *mm,</span></a>
+<a name="395"><span class="lineNum">     395 </span>            :                                               unsigned long address,</a>
+<a name="396"><span class="lineNum">     396 </span>            :                                               pte_t *ptep,</a>
+<a name="397"><span class="lineNum">     397 </span>            :                                               int full)</a>
+<a name="398"><span class="lineNum">     398 </span>            : {</a>
+<a name="399"><span class="lineNum">     399 </span><span class="lineNoCov">          0 :         pte_clear(mm, address, ptep);</span></a>
+<a name="400"><span class="lineNum">     400 </span>            : }</a>
+<a name="401"><span class="lineNum">     401 </span>            : #endif</a>
+<a name="402"><span class="lineNum">     402 </span>            : </a>
+<a name="403"><span class="lineNum">     403 </span>            : #ifndef __HAVE_ARCH_PTEP_CLEAR_FLUSH</a>
+<a name="404"><span class="lineNum">     404 </span>            : extern pte_t ptep_clear_flush(struct vm_area_struct *vma,</a>
+<a name="405"><span class="lineNum">     405 </span>            :                               unsigned long address,</a>
+<a name="406"><span class="lineNum">     406 </span>            :                               pte_t *ptep);</a>
+<a name="407"><span class="lineNum">     407 </span>            : #endif</a>
+<a name="408"><span class="lineNum">     408 </span>            : </a>
+<a name="409"><span class="lineNum">     409 </span>            : #ifndef __HAVE_ARCH_PMDP_HUGE_CLEAR_FLUSH</a>
+<a name="410"><span class="lineNum">     410 </span>            : extern pmd_t pmdp_huge_clear_flush(struct vm_area_struct *vma,</a>
+<a name="411"><span class="lineNum">     411 </span>            :                               unsigned long address,</a>
+<a name="412"><span class="lineNum">     412 </span>            :                               pmd_t *pmdp);</a>
+<a name="413"><span class="lineNum">     413 </span>            : extern pud_t pudp_huge_clear_flush(struct vm_area_struct *vma,</a>
+<a name="414"><span class="lineNum">     414 </span>            :                               unsigned long address,</a>
+<a name="415"><span class="lineNum">     415 </span>            :                               pud_t *pudp);</a>
+<a name="416"><span class="lineNum">     416 </span>            : #endif</a>
+<a name="417"><span class="lineNum">     417 </span>            : </a>
+<a name="418"><span class="lineNum">     418 </span>            : #ifndef __HAVE_ARCH_PTEP_SET_WRPROTECT</a>
+<a name="419"><span class="lineNum">     419 </span>            : struct mm_struct;</a>
+<a name="420"><span class="lineNum">     420 </span>            : static inline void ptep_set_wrprotect(struct mm_struct *mm, unsigned long address, pte_t *ptep)</a>
+<a name="421"><span class="lineNum">     421 </span>            : {</a>
+<a name="422"><span class="lineNum">     422 </span>            :         pte_t old_pte = *ptep;</a>
+<a name="423"><span class="lineNum">     423 </span>            :         set_pte_at(mm, address, ptep, pte_wrprotect(old_pte));</a>
+<a name="424"><span class="lineNum">     424 </span>            : }</a>
+<a name="425"><span class="lineNum">     425 </span>            : #endif</a>
+<a name="426"><span class="lineNum">     426 </span>            : </a>
+<a name="427"><span class="lineNum">     427 </span>            : /*</a>
+<a name="428"><span class="lineNum">     428 </span>            :  * On some architectures hardware does not set page access bit when accessing</a>
+<a name="429"><span class="lineNum">     429 </span>            :  * memory page, it is responsibilty of software setting this bit. It brings</a>
+<a name="430"><span class="lineNum">     430 </span>            :  * out extra page fault penalty to track page access bit. For optimization page</a>
+<a name="431"><span class="lineNum">     431 </span>            :  * access bit can be set during all page fault flow on these arches.</a>
+<a name="432"><span class="lineNum">     432 </span>            :  * To be differentiate with macro pte_mkyoung, this macro is used on platforms</a>
+<a name="433"><span class="lineNum">     433 </span>            :  * where software maintains page access bit.</a>
+<a name="434"><span class="lineNum">     434 </span>            :  */</a>
+<a name="435"><span class="lineNum">     435 </span>            : #ifndef pte_savedwrite</a>
+<a name="436"><span class="lineNum">     436 </span>            : #define pte_savedwrite pte_write</a>
+<a name="437"><span class="lineNum">     437 </span>            : #endif</a>
+<a name="438"><span class="lineNum">     438 </span>            : </a>
+<a name="439"><span class="lineNum">     439 </span>            : #ifndef pte_mk_savedwrite</a>
+<a name="440"><span class="lineNum">     440 </span>            : #define pte_mk_savedwrite pte_mkwrite</a>
+<a name="441"><span class="lineNum">     441 </span>            : #endif</a>
+<a name="442"><span class="lineNum">     442 </span>            : </a>
+<a name="443"><span class="lineNum">     443 </span>            : #ifndef pte_clear_savedwrite</a>
+<a name="444"><span class="lineNum">     444 </span>            : #define pte_clear_savedwrite pte_wrprotect</a>
+<a name="445"><span class="lineNum">     445 </span>            : #endif</a>
+<a name="446"><span class="lineNum">     446 </span>            : </a>
+<a name="447"><span class="lineNum">     447 </span>            : #ifndef pmd_savedwrite</a>
+<a name="448"><span class="lineNum">     448 </span>            : #define pmd_savedwrite pmd_write</a>
+<a name="449"><span class="lineNum">     449 </span>            : #endif</a>
+<a name="450"><span class="lineNum">     450 </span>            : </a>
+<a name="451"><span class="lineNum">     451 </span>            : #ifndef pmd_mk_savedwrite</a>
+<a name="452"><span class="lineNum">     452 </span>            : #define pmd_mk_savedwrite pmd_mkwrite</a>
+<a name="453"><span class="lineNum">     453 </span>            : #endif</a>
+<a name="454"><span class="lineNum">     454 </span>            : </a>
+<a name="455"><span class="lineNum">     455 </span>            : #ifndef pmd_clear_savedwrite</a>
+<a name="456"><span class="lineNum">     456 </span>            : #define pmd_clear_savedwrite pmd_wrprotect</a>
+<a name="457"><span class="lineNum">     457 </span>            : #endif</a>
+<a name="458"><span class="lineNum">     458 </span>            : </a>
+<a name="459"><span class="lineNum">     459 </span>            : #ifndef __HAVE_ARCH_PMDP_SET_WRPROTECT</a>
+<a name="460"><span class="lineNum">     460 </span>            : #ifdef CONFIG_TRANSPARENT_HUGEPAGE</a>
+<a name="461"><span class="lineNum">     461 </span>            : static inline void pmdp_set_wrprotect(struct mm_struct *mm,</a>
+<a name="462"><span class="lineNum">     462 </span>            :                                       unsigned long address, pmd_t *pmdp)</a>
+<a name="463"><span class="lineNum">     463 </span>            : {</a>
+<a name="464"><span class="lineNum">     464 </span>            :         pmd_t old_pmd = *pmdp;</a>
+<a name="465"><span class="lineNum">     465 </span>            :         set_pmd_at(mm, address, pmdp, pmd_wrprotect(old_pmd));</a>
+<a name="466"><span class="lineNum">     466 </span>            : }</a>
+<a name="467"><span class="lineNum">     467 </span>            : #else</a>
+<a name="468"><span class="lineNum">     468 </span>            : static inline void pmdp_set_wrprotect(struct mm_struct *mm,</a>
+<a name="469"><span class="lineNum">     469 </span>            :                                       unsigned long address, pmd_t *pmdp)</a>
+<a name="470"><span class="lineNum">     470 </span>            : {</a>
+<a name="471"><span class="lineNum">     471 </span>            :         BUILD_BUG();</a>
+<a name="472"><span class="lineNum">     472 </span>            : }</a>
+<a name="473"><span class="lineNum">     473 </span>            : #endif /* CONFIG_TRANSPARENT_HUGEPAGE */</a>
+<a name="474"><span class="lineNum">     474 </span>            : #endif</a>
+<a name="475"><span class="lineNum">     475 </span>            : #ifndef __HAVE_ARCH_PUDP_SET_WRPROTECT</a>
+<a name="476"><span class="lineNum">     476 </span>            : #ifdef CONFIG_HAVE_ARCH_TRANSPARENT_HUGEPAGE_PUD</a>
+<a name="477"><span class="lineNum">     477 </span><span class="lineNoCov">          0 : static inline void pudp_set_wrprotect(struct mm_struct *mm,</span></a>
+<a name="478"><span class="lineNum">     478 </span>            :                                       unsigned long address, pud_t *pudp)</a>
+<a name="479"><span class="lineNum">     479 </span>            : {</a>
+<a name="480"><span class="lineNum">     480 </span><span class="lineNoCov">          0 :         pud_t old_pud = *pudp;</span></a>
+<a name="481"><span class="lineNum">     481 </span>            : </a>
+<a name="482"><span class="lineNum">     482 </span><span class="lineNoCov">          0 :         set_pud_at(mm, address, pudp, pud_wrprotect(old_pud));</span></a>
+<a name="483"><span class="lineNum">     483 </span>            : }</a>
+<a name="484"><span class="lineNum">     484 </span>            : #else</a>
+<a name="485"><span class="lineNum">     485 </span>            : static inline void pudp_set_wrprotect(struct mm_struct *mm,</a>
+<a name="486"><span class="lineNum">     486 </span>            :                                       unsigned long address, pud_t *pudp)</a>
+<a name="487"><span class="lineNum">     487 </span>            : {</a>
+<a name="488"><span class="lineNum">     488 </span>            :         BUILD_BUG();</a>
+<a name="489"><span class="lineNum">     489 </span>            : }</a>
+<a name="490"><span class="lineNum">     490 </span>            : #endif /* CONFIG_HAVE_ARCH_TRANSPARENT_HUGEPAGE_PUD */</a>
+<a name="491"><span class="lineNum">     491 </span>            : #endif</a>
+<a name="492"><span class="lineNum">     492 </span>            : </a>
+<a name="493"><span class="lineNum">     493 </span>            : #ifndef pmdp_collapse_flush</a>
+<a name="494"><span class="lineNum">     494 </span>            : #ifdef CONFIG_TRANSPARENT_HUGEPAGE</a>
+<a name="495"><span class="lineNum">     495 </span>            : extern pmd_t pmdp_collapse_flush(struct vm_area_struct *vma,</a>
+<a name="496"><span class="lineNum">     496 </span>            :                                  unsigned long address, pmd_t *pmdp);</a>
+<a name="497"><span class="lineNum">     497 </span>            : #else</a>
+<a name="498"><span class="lineNum">     498 </span>            : static inline pmd_t pmdp_collapse_flush(struct vm_area_struct *vma,</a>
+<a name="499"><span class="lineNum">     499 </span>            :                                         unsigned long address,</a>
+<a name="500"><span class="lineNum">     500 </span>            :                                         pmd_t *pmdp)</a>
+<a name="501"><span class="lineNum">     501 </span>            : {</a>
+<a name="502"><span class="lineNum">     502 </span>            :         BUILD_BUG();</a>
+<a name="503"><span class="lineNum">     503 </span>            :         return *pmdp;</a>
+<a name="504"><span class="lineNum">     504 </span>            : }</a>
+<a name="505"><span class="lineNum">     505 </span>            : #define pmdp_collapse_flush pmdp_collapse_flush</a>
+<a name="506"><span class="lineNum">     506 </span>            : #endif /* CONFIG_TRANSPARENT_HUGEPAGE */</a>
+<a name="507"><span class="lineNum">     507 </span>            : #endif</a>
+<a name="508"><span class="lineNum">     508 </span>            : </a>
+<a name="509"><span class="lineNum">     509 </span>            : #ifndef __HAVE_ARCH_PGTABLE_DEPOSIT</a>
+<a name="510"><span class="lineNum">     510 </span>            : extern void pgtable_trans_huge_deposit(struct mm_struct *mm, pmd_t *pmdp,</a>
+<a name="511"><span class="lineNum">     511 </span>            :                                        pgtable_t pgtable);</a>
+<a name="512"><span class="lineNum">     512 </span>            : #endif</a>
+<a name="513"><span class="lineNum">     513 </span>            : </a>
+<a name="514"><span class="lineNum">     514 </span>            : #ifndef __HAVE_ARCH_PGTABLE_WITHDRAW</a>
+<a name="515"><span class="lineNum">     515 </span>            : extern pgtable_t pgtable_trans_huge_withdraw(struct mm_struct *mm, pmd_t *pmdp);</a>
+<a name="516"><span class="lineNum">     516 </span>            : #endif</a>
+<a name="517"><span class="lineNum">     517 </span>            : </a>
+<a name="518"><span class="lineNum">     518 </span>            : #ifdef CONFIG_TRANSPARENT_HUGEPAGE</a>
+<a name="519"><span class="lineNum">     519 </span>            : /*</a>
+<a name="520"><span class="lineNum">     520 </span>            :  * This is an implementation of pmdp_establish() that is only suitable for an</a>
+<a name="521"><span class="lineNum">     521 </span>            :  * architecture that doesn't have hardware dirty/accessed bits. In this case we</a>
+<a name="522"><span class="lineNum">     522 </span>            :  * can't race with CPU which sets these bits and non-atomic aproach is fine.</a>
+<a name="523"><span class="lineNum">     523 </span>            :  */</a>
+<a name="524"><span class="lineNum">     524 </span>            : static inline pmd_t generic_pmdp_establish(struct vm_area_struct *vma,</a>
+<a name="525"><span class="lineNum">     525 </span>            :                 unsigned long address, pmd_t *pmdp, pmd_t pmd)</a>
+<a name="526"><span class="lineNum">     526 </span>            : {</a>
+<a name="527"><span class="lineNum">     527 </span>            :         pmd_t old_pmd = *pmdp;</a>
+<a name="528"><span class="lineNum">     528 </span>            :         set_pmd_at(vma-&gt;vm_mm, address, pmdp, pmd);</a>
+<a name="529"><span class="lineNum">     529 </span>            :         return old_pmd;</a>
+<a name="530"><span class="lineNum">     530 </span>            : }</a>
+<a name="531"><span class="lineNum">     531 </span>            : #endif</a>
+<a name="532"><span class="lineNum">     532 </span>            : </a>
+<a name="533"><span class="lineNum">     533 </span>            : #ifndef __HAVE_ARCH_PMDP_INVALIDATE</a>
+<a name="534"><span class="lineNum">     534 </span>            : extern pmd_t pmdp_invalidate(struct vm_area_struct *vma, unsigned long address,</a>
+<a name="535"><span class="lineNum">     535 </span>            :                             pmd_t *pmdp);</a>
+<a name="536"><span class="lineNum">     536 </span>            : #endif</a>
+<a name="537"><span class="lineNum">     537 </span>            : </a>
+<a name="538"><span class="lineNum">     538 </span>            : #ifndef __HAVE_ARCH_PTE_SAME</a>
+<a name="539"><span class="lineNum">     539 </span>            : static inline int pte_same(pte_t pte_a, pte_t pte_b)</a>
+<a name="540"><span class="lineNum">     540 </span>            : {</a>
+<a name="541"><span class="lineNum">     541 </span>            :         return pte_val(pte_a) == pte_val(pte_b);</a>
+<a name="542"><span class="lineNum">     542 </span>            : }</a>
+<a name="543"><span class="lineNum">     543 </span>            : #endif</a>
+<a name="544"><span class="lineNum">     544 </span>            : </a>
+<a name="545"><span class="lineNum">     545 </span>            : #ifndef __HAVE_ARCH_PTE_UNUSED</a>
+<a name="546"><span class="lineNum">     546 </span>            : /*</a>
+<a name="547"><span class="lineNum">     547 </span>            :  * Some architectures provide facilities to virtualization guests</a>
+<a name="548"><span class="lineNum">     548 </span>            :  * so that they can flag allocated pages as unused. This allows the</a>
+<a name="549"><span class="lineNum">     549 </span>            :  * host to transparently reclaim unused pages. This function returns</a>
+<a name="550"><span class="lineNum">     550 </span>            :  * whether the pte's page is unused.</a>
+<a name="551"><span class="lineNum">     551 </span>            :  */</a>
+<a name="552"><span class="lineNum">     552 </span><span class="lineNoCov">          0 : static inline int pte_unused(pte_t pte)</span></a>
+<a name="553"><span class="lineNum">     553 </span>            : {</a>
+<a name="554"><span class="lineNum">     554 </span><span class="lineNoCov">          0 :         return 0;</span></a>
+<a name="555"><span class="lineNum">     555 </span>            : }</a>
+<a name="556"><span class="lineNum">     556 </span>            : #endif</a>
+<a name="557"><span class="lineNum">     557 </span>            : </a>
+<a name="558"><span class="lineNum">     558 </span>            : #ifndef pte_access_permitted</a>
+<a name="559"><span class="lineNum">     559 </span>            : #define pte_access_permitted(pte, write) \</a>
+<a name="560"><span class="lineNum">     560 </span>            :         (pte_present(pte) &amp;&amp; (!(write) || pte_write(pte)))</a>
+<a name="561"><span class="lineNum">     561 </span>            : #endif</a>
+<a name="562"><span class="lineNum">     562 </span>            : </a>
+<a name="563"><span class="lineNum">     563 </span>            : #ifndef pmd_access_permitted</a>
+<a name="564"><span class="lineNum">     564 </span>            : #define pmd_access_permitted(pmd, write) \</a>
+<a name="565"><span class="lineNum">     565 </span>            :         (pmd_present(pmd) &amp;&amp; (!(write) || pmd_write(pmd)))</a>
+<a name="566"><span class="lineNum">     566 </span>            : #endif</a>
+<a name="567"><span class="lineNum">     567 </span>            : </a>
+<a name="568"><span class="lineNum">     568 </span>            : #ifndef pud_access_permitted</a>
+<a name="569"><span class="lineNum">     569 </span>            : #define pud_access_permitted(pud, write) \</a>
+<a name="570"><span class="lineNum">     570 </span>            :         (pud_present(pud) &amp;&amp; (!(write) || pud_write(pud)))</a>
+<a name="571"><span class="lineNum">     571 </span>            : #endif</a>
+<a name="572"><span class="lineNum">     572 </span>            : </a>
+<a name="573"><span class="lineNum">     573 </span>            : #ifndef p4d_access_permitted</a>
+<a name="574"><span class="lineNum">     574 </span>            : #define p4d_access_permitted(p4d, write) \</a>
+<a name="575"><span class="lineNum">     575 </span>            :         (p4d_present(p4d) &amp;&amp; (!(write) || p4d_write(p4d)))</a>
+<a name="576"><span class="lineNum">     576 </span>            : #endif</a>
+<a name="577"><span class="lineNum">     577 </span>            : </a>
+<a name="578"><span class="lineNum">     578 </span>            : #ifndef pgd_access_permitted</a>
+<a name="579"><span class="lineNum">     579 </span>            : #define pgd_access_permitted(pgd, write) \</a>
+<a name="580"><span class="lineNum">     580 </span>            :         (pgd_present(pgd) &amp;&amp; (!(write) || pgd_write(pgd)))</a>
+<a name="581"><span class="lineNum">     581 </span>            : #endif</a>
+<a name="582"><span class="lineNum">     582 </span>            : </a>
+<a name="583"><span class="lineNum">     583 </span>            : #ifndef __HAVE_ARCH_PMD_SAME</a>
+<a name="584"><span class="lineNum">     584 </span><span class="lineNoCov">          0 : static inline int pmd_same(pmd_t pmd_a, pmd_t pmd_b)</span></a>
+<a name="585"><span class="lineNum">     585 </span>            : {</a>
+<a name="586"><span class="lineNum">     586 </span><span class="lineNoCov">          0 :         return pmd_val(pmd_a) == pmd_val(pmd_b);</span></a>
+<a name="587"><span class="lineNum">     587 </span>            : }</a>
+<a name="588"><span class="lineNum">     588 </span>            : </a>
+<a name="589"><span class="lineNum">     589 </span><span class="lineNoCov">          0 : static inline int pud_same(pud_t pud_a, pud_t pud_b)</span></a>
+<a name="590"><span class="lineNum">     590 </span>            : {</a>
+<a name="591"><span class="lineNum">     591 </span><span class="lineNoCov">          0 :         return pud_val(pud_a) == pud_val(pud_b);</span></a>
+<a name="592"><span class="lineNum">     592 </span>            : }</a>
+<a name="593"><span class="lineNum">     593 </span>            : #endif</a>
+<a name="594"><span class="lineNum">     594 </span>            : </a>
+<a name="595"><span class="lineNum">     595 </span>            : #ifndef __HAVE_ARCH_P4D_SAME</a>
+<a name="596"><span class="lineNum">     596 </span><span class="lineNoCov">          0 : static inline int p4d_same(p4d_t p4d_a, p4d_t p4d_b)</span></a>
+<a name="597"><span class="lineNum">     597 </span>            : {</a>
+<a name="598"><span class="lineNum">     598 </span><span class="lineNoCov">          0 :         return p4d_val(p4d_a) == p4d_val(p4d_b);</span></a>
+<a name="599"><span class="lineNum">     599 </span>            : }</a>
+<a name="600"><span class="lineNum">     600 </span>            : #endif</a>
+<a name="601"><span class="lineNum">     601 </span>            : </a>
+<a name="602"><span class="lineNum">     602 </span>            : #ifndef __HAVE_ARCH_PGD_SAME</a>
+<a name="603"><span class="lineNum">     603 </span>            : static inline int pgd_same(pgd_t pgd_a, pgd_t pgd_b)</a>
+<a name="604"><span class="lineNum">     604 </span>            : {</a>
+<a name="605"><span class="lineNum">     605 </span>            :         return pgd_val(pgd_a) == pgd_val(pgd_b);</a>
+<a name="606"><span class="lineNum">     606 </span>            : }</a>
+<a name="607"><span class="lineNum">     607 </span>            : #endif</a>
+<a name="608"><span class="lineNum">     608 </span>            : </a>
+<a name="609"><span class="lineNum">     609 </span>            : /*</a>
+<a name="610"><span class="lineNum">     610 </span>            :  * Use set_p*_safe(), and elide TLB flushing, when confident that *no*</a>
+<a name="611"><span class="lineNum">     611 </span>            :  * TLB flush will be required as a result of the &quot;set&quot;. For example, use</a>
+<a name="612"><span class="lineNum">     612 </span>            :  * in scenarios where it is known ahead of time that the routine is</a>
+<a name="613"><span class="lineNum">     613 </span>            :  * setting non-present entries, or re-setting an existing entry to the</a>
+<a name="614"><span class="lineNum">     614 </span>            :  * same value. Otherwise, use the typical &quot;set&quot; helpers and flush the</a>
+<a name="615"><span class="lineNum">     615 </span>            :  * TLB.</a>
+<a name="616"><span class="lineNum">     616 </span>            :  */</a>
+<a name="617"><span class="lineNum">     617 </span>            : #define set_pte_safe(ptep, pte) \</a>
+<a name="618"><span class="lineNum">     618 </span>            : ({ \</a>
+<a name="619"><span class="lineNum">     619 </span>            :         WARN_ON_ONCE(pte_present(*ptep) &amp;&amp; !pte_same(*ptep, pte)); \</a>
+<a name="620"><span class="lineNum">     620 </span>            :         set_pte(ptep, pte); \</a>
+<a name="621"><span class="lineNum">     621 </span>            : })</a>
+<a name="622"><span class="lineNum">     622 </span>            : </a>
+<a name="623"><span class="lineNum">     623 </span>            : #define set_pmd_safe(pmdp, pmd) \</a>
+<a name="624"><span class="lineNum">     624 </span>            : ({ \</a>
+<a name="625"><span class="lineNum">     625 </span>            :         WARN_ON_ONCE(pmd_present(*pmdp) &amp;&amp; !pmd_same(*pmdp, pmd)); \</a>
+<a name="626"><span class="lineNum">     626 </span>            :         set_pmd(pmdp, pmd); \</a>
+<a name="627"><span class="lineNum">     627 </span>            : })</a>
+<a name="628"><span class="lineNum">     628 </span>            : </a>
+<a name="629"><span class="lineNum">     629 </span>            : #define set_pud_safe(pudp, pud) \</a>
+<a name="630"><span class="lineNum">     630 </span>            : ({ \</a>
+<a name="631"><span class="lineNum">     631 </span>            :         WARN_ON_ONCE(pud_present(*pudp) &amp;&amp; !pud_same(*pudp, pud)); \</a>
+<a name="632"><span class="lineNum">     632 </span>            :         set_pud(pudp, pud); \</a>
+<a name="633"><span class="lineNum">     633 </span>            : })</a>
+<a name="634"><span class="lineNum">     634 </span>            : </a>
+<a name="635"><span class="lineNum">     635 </span>            : #define set_p4d_safe(p4dp, p4d) \</a>
+<a name="636"><span class="lineNum">     636 </span>            : ({ \</a>
+<a name="637"><span class="lineNum">     637 </span>            :         WARN_ON_ONCE(p4d_present(*p4dp) &amp;&amp; !p4d_same(*p4dp, p4d)); \</a>
+<a name="638"><span class="lineNum">     638 </span>            :         set_p4d(p4dp, p4d); \</a>
+<a name="639"><span class="lineNum">     639 </span>            : })</a>
+<a name="640"><span class="lineNum">     640 </span>            : </a>
+<a name="641"><span class="lineNum">     641 </span>            : #define set_pgd_safe(pgdp, pgd) \</a>
+<a name="642"><span class="lineNum">     642 </span>            : ({ \</a>
+<a name="643"><span class="lineNum">     643 </span>            :         WARN_ON_ONCE(pgd_present(*pgdp) &amp;&amp; !pgd_same(*pgdp, pgd)); \</a>
+<a name="644"><span class="lineNum">     644 </span>            :         set_pgd(pgdp, pgd); \</a>
+<a name="645"><span class="lineNum">     645 </span>            : })</a>
+<a name="646"><span class="lineNum">     646 </span>            : </a>
+<a name="647"><span class="lineNum">     647 </span>            : #ifndef __HAVE_ARCH_DO_SWAP_PAGE</a>
+<a name="648"><span class="lineNum">     648 </span>            : /*</a>
+<a name="649"><span class="lineNum">     649 </span>            :  * Some architectures support metadata associated with a page. When a</a>
+<a name="650"><span class="lineNum">     650 </span>            :  * page is being swapped out, this metadata must be saved so it can be</a>
+<a name="651"><span class="lineNum">     651 </span>            :  * restored when the page is swapped back in. SPARC M7 and newer</a>
+<a name="652"><span class="lineNum">     652 </span>            :  * processors support an ADI (Application Data Integrity) tag for the</a>
+<a name="653"><span class="lineNum">     653 </span>            :  * page as metadata for the page. arch_do_swap_page() can restore this</a>
+<a name="654"><span class="lineNum">     654 </span>            :  * metadata when a page is swapped back in.</a>
+<a name="655"><span class="lineNum">     655 </span>            :  */</a>
+<a name="656"><span class="lineNum">     656 </span>            : static inline void arch_do_swap_page(struct mm_struct *mm,</a>
+<a name="657"><span class="lineNum">     657 </span>            :                                      struct vm_area_struct *vma,</a>
+<a name="658"><span class="lineNum">     658 </span>            :                                      unsigned long addr,</a>
+<a name="659"><span class="lineNum">     659 </span>            :                                      pte_t pte, pte_t oldpte)</a>
+<a name="660"><span class="lineNum">     660 </span>            : {</a>
+<a name="661"><span class="lineNum">     661 </span>            : </a>
+<a name="662"><span class="lineNum">     662 </span>            : }</a>
+<a name="663"><span class="lineNum">     663 </span>            : #endif</a>
+<a name="664"><span class="lineNum">     664 </span>            : </a>
+<a name="665"><span class="lineNum">     665 </span>            : #ifndef __HAVE_ARCH_UNMAP_ONE</a>
+<a name="666"><span class="lineNum">     666 </span>            : /*</a>
+<a name="667"><span class="lineNum">     667 </span>            :  * Some architectures support metadata associated with a page. When a</a>
+<a name="668"><span class="lineNum">     668 </span>            :  * page is being swapped out, this metadata must be saved so it can be</a>
+<a name="669"><span class="lineNum">     669 </span>            :  * restored when the page is swapped back in. SPARC M7 and newer</a>
+<a name="670"><span class="lineNum">     670 </span>            :  * processors support an ADI (Application Data Integrity) tag for the</a>
+<a name="671"><span class="lineNum">     671 </span>            :  * page as metadata for the page. arch_unmap_one() can save this</a>
+<a name="672"><span class="lineNum">     672 </span>            :  * metadata on a swap-out of a page.</a>
+<a name="673"><span class="lineNum">     673 </span>            :  */</a>
+<a name="674"><span class="lineNum">     674 </span><span class="lineNoCov">          0 : static inline int arch_unmap_one(struct mm_struct *mm,</span></a>
+<a name="675"><span class="lineNum">     675 </span>            :                                   struct vm_area_struct *vma,</a>
+<a name="676"><span class="lineNum">     676 </span>            :                                   unsigned long addr,</a>
+<a name="677"><span class="lineNum">     677 </span>            :                                   pte_t orig_pte)</a>
+<a name="678"><span class="lineNum">     678 </span>            : {</a>
+<a name="679"><span class="lineNum">     679 </span><span class="lineNoCov">          0 :         return 0;</span></a>
+<a name="680"><span class="lineNum">     680 </span>            : }</a>
+<a name="681"><span class="lineNum">     681 </span>            : #endif</a>
+<a name="682"><span class="lineNum">     682 </span>            : </a>
+<a name="683"><span class="lineNum">     683 </span>            : /*</a>
+<a name="684"><span class="lineNum">     684 </span>            :  * Allow architectures to preserve additional metadata associated with</a>
+<a name="685"><span class="lineNum">     685 </span>            :  * swapped-out pages. The corresponding __HAVE_ARCH_SWAP_* macros and function</a>
+<a name="686"><span class="lineNum">     686 </span>            :  * prototypes must be defined in the arch-specific asm/pgtable.h file.</a>
+<a name="687"><span class="lineNum">     687 </span>            :  */</a>
+<a name="688"><span class="lineNum">     688 </span>            : #ifndef __HAVE_ARCH_PREPARE_TO_SWAP</a>
+<a name="689"><span class="lineNum">     689 </span>            : static inline int arch_prepare_to_swap(struct page *page)</a>
+<a name="690"><span class="lineNum">     690 </span>            : {</a>
+<a name="691"><span class="lineNum">     691 </span>            :         return 0;</a>
+<a name="692"><span class="lineNum">     692 </span>            : }</a>
+<a name="693"><span class="lineNum">     693 </span>            : #endif</a>
+<a name="694"><span class="lineNum">     694 </span>            : </a>
+<a name="695"><span class="lineNum">     695 </span>            : #ifndef __HAVE_ARCH_SWAP_INVALIDATE</a>
+<a name="696"><span class="lineNum">     696 </span>            : static inline void arch_swap_invalidate_page(int type, pgoff_t offset)</a>
+<a name="697"><span class="lineNum">     697 </span>            : {</a>
+<a name="698"><span class="lineNum">     698 </span>            : }</a>
+<a name="699"><span class="lineNum">     699 </span>            : </a>
+<a name="700"><span class="lineNum">     700 </span>            : static inline void arch_swap_invalidate_area(int type)</a>
+<a name="701"><span class="lineNum">     701 </span>            : {</a>
+<a name="702"><span class="lineNum">     702 </span>            : }</a>
+<a name="703"><span class="lineNum">     703 </span>            : #endif</a>
+<a name="704"><span class="lineNum">     704 </span>            : </a>
+<a name="705"><span class="lineNum">     705 </span>            : #ifndef __HAVE_ARCH_SWAP_RESTORE</a>
+<a name="706"><span class="lineNum">     706 </span>            : static inline void arch_swap_restore(swp_entry_t entry, struct page *page)</a>
+<a name="707"><span class="lineNum">     707 </span>            : {</a>
+<a name="708"><span class="lineNum">     708 </span>            : }</a>
+<a name="709"><span class="lineNum">     709 </span>            : #endif</a>
+<a name="710"><span class="lineNum">     710 </span>            : </a>
+<a name="711"><span class="lineNum">     711 </span>            : #ifndef __HAVE_ARCH_PGD_OFFSET_GATE</a>
+<a name="712"><span class="lineNum">     712 </span>            : #define pgd_offset_gate(mm, addr)       pgd_offset(mm, addr)</a>
+<a name="713"><span class="lineNum">     713 </span>            : #endif</a>
+<a name="714"><span class="lineNum">     714 </span>            : </a>
+<a name="715"><span class="lineNum">     715 </span>            : #ifndef __HAVE_ARCH_MOVE_PTE</a>
+<a name="716"><span class="lineNum">     716 </span>            : #define move_pte(pte, prot, old_addr, new_addr) (pte)</a>
+<a name="717"><span class="lineNum">     717 </span>            : #endif</a>
+<a name="718"><span class="lineNum">     718 </span>            : </a>
+<a name="719"><span class="lineNum">     719 </span>            : #ifndef pte_accessible</a>
+<a name="720"><span class="lineNum">     720 </span>            : # define pte_accessible(mm, pte)        ((void)(pte), 1)</a>
+<a name="721"><span class="lineNum">     721 </span>            : #endif</a>
+<a name="722"><span class="lineNum">     722 </span>            : </a>
+<a name="723"><span class="lineNum">     723 </span>            : #ifndef flush_tlb_fix_spurious_fault</a>
+<a name="724"><span class="lineNum">     724 </span>            : #define flush_tlb_fix_spurious_fault(vma, address) flush_tlb_page(vma, address)</a>
+<a name="725"><span class="lineNum">     725 </span>            : #endif</a>
+<a name="726"><span class="lineNum">     726 </span>            : </a>
+<a name="727"><span class="lineNum">     727 </span>            : /*</a>
+<a name="728"><span class="lineNum">     728 </span>            :  * When walking page tables, get the address of the next boundary,</a>
+<a name="729"><span class="lineNum">     729 </span>            :  * or the end address of the range if that comes earlier.  Although no</a>
+<a name="730"><span class="lineNum">     730 </span>            :  * vma end wraps to 0, rounded up __boundary may wrap to 0 throughout.</a>
+<a name="731"><span class="lineNum">     731 </span>            :  */</a>
+<a name="732"><span class="lineNum">     732 </span>            : </a>
+<a name="733"><span class="lineNum">     733 </span>            : #define pgd_addr_end(addr, end)                                         \</a>
+<a name="734"><span class="lineNum">     734 </span>            : ({      unsigned long __boundary = ((addr) + PGDIR_SIZE) &amp; PGDIR_MASK;      \</a>
+<a name="735"><span class="lineNum">     735 </span>            :         (__boundary - 1 &lt; (end) - 1)? __boundary: (end);             \</a>
+<a name="736"><span class="lineNum">     736 </span>            : })</a>
+<a name="737"><span class="lineNum">     737 </span>            : </a>
+<a name="738"><span class="lineNum">     738 </span>            : #ifndef p4d_addr_end</a>
+<a name="739"><span class="lineNum">     739 </span>            : #define p4d_addr_end(addr, end)                                         \</a>
+<a name="740"><span class="lineNum">     740 </span>            : ({      unsigned long __boundary = ((addr) + P4D_SIZE) &amp; P4D_MASK;  \</a>
+<a name="741"><span class="lineNum">     741 </span>            :         (__boundary - 1 &lt; (end) - 1)? __boundary: (end);             \</a>
+<a name="742"><span class="lineNum">     742 </span>            : })</a>
+<a name="743"><span class="lineNum">     743 </span>            : #endif</a>
+<a name="744"><span class="lineNum">     744 </span>            : </a>
+<a name="745"><span class="lineNum">     745 </span>            : #ifndef pud_addr_end</a>
+<a name="746"><span class="lineNum">     746 </span>            : #define pud_addr_end(addr, end)                                         \</a>
+<a name="747"><span class="lineNum">     747 </span>            : ({      unsigned long __boundary = ((addr) + PUD_SIZE) &amp; PUD_MASK;  \</a>
+<a name="748"><span class="lineNum">     748 </span>            :         (__boundary - 1 &lt; (end) - 1)? __boundary: (end);             \</a>
+<a name="749"><span class="lineNum">     749 </span>            : })</a>
+<a name="750"><span class="lineNum">     750 </span>            : #endif</a>
+<a name="751"><span class="lineNum">     751 </span>            : </a>
+<a name="752"><span class="lineNum">     752 </span>            : #ifndef pmd_addr_end</a>
+<a name="753"><span class="lineNum">     753 </span>            : #define pmd_addr_end(addr, end)                                         \</a>
+<a name="754"><span class="lineNum">     754 </span>            : ({      unsigned long __boundary = ((addr) + PMD_SIZE) &amp; PMD_MASK;  \</a>
+<a name="755"><span class="lineNum">     755 </span>            :         (__boundary - 1 &lt; (end) - 1)? __boundary: (end);             \</a>
+<a name="756"><span class="lineNum">     756 </span>            : })</a>
+<a name="757"><span class="lineNum">     757 </span>            : #endif</a>
+<a name="758"><span class="lineNum">     758 </span>            : </a>
+<a name="759"><span class="lineNum">     759 </span>            : /*</a>
+<a name="760"><span class="lineNum">     760 </span>            :  * When walking page tables, we usually want to skip any p?d_none entries;</a>
+<a name="761"><span class="lineNum">     761 </span>            :  * and any p?d_bad entries - reporting the error before resetting to none.</a>
+<a name="762"><span class="lineNum">     762 </span>            :  * Do the tests inline, but report and clear the bad entry in mm/memory.c.</a>
+<a name="763"><span class="lineNum">     763 </span>            :  */</a>
+<a name="764"><span class="lineNum">     764 </span>            : void pgd_clear_bad(pgd_t *);</a>
+<a name="765"><span class="lineNum">     765 </span>            : </a>
+<a name="766"><span class="lineNum">     766 </span>            : #ifndef __PAGETABLE_P4D_FOLDED</a>
+<a name="767"><span class="lineNum">     767 </span>            : void p4d_clear_bad(p4d_t *);</a>
+<a name="768"><span class="lineNum">     768 </span>            : #else</a>
+<a name="769"><span class="lineNum">     769 </span>            : #define p4d_clear_bad(p4d)        do { } while (0)</a>
+<a name="770"><span class="lineNum">     770 </span>            : #endif</a>
+<a name="771"><span class="lineNum">     771 </span>            : </a>
+<a name="772"><span class="lineNum">     772 </span>            : #ifndef __PAGETABLE_PUD_FOLDED</a>
+<a name="773"><span class="lineNum">     773 </span>            : void pud_clear_bad(pud_t *);</a>
+<a name="774"><span class="lineNum">     774 </span>            : #else</a>
+<a name="775"><span class="lineNum">     775 </span>            : #define pud_clear_bad(p4d)        do { } while (0)</a>
+<a name="776"><span class="lineNum">     776 </span>            : #endif</a>
+<a name="777"><span class="lineNum">     777 </span>            : </a>
+<a name="778"><span class="lineNum">     778 </span>            : void pmd_clear_bad(pmd_t *);</a>
+<a name="779"><span class="lineNum">     779 </span>            : </a>
+<a name="780"><span class="lineNum">     780 </span><span class="lineCov">     171936 : static inline int pgd_none_or_clear_bad(pgd_t *pgd)</span></a>
+<a name="781"><span class="lineNum">     781 </span>            : {</a>
+<a name="782"><span class="lineNum">     782 </span><span class="lineCov">     171936 :         if (pgd_none(*pgd))</span></a>
+<a name="783"><span class="lineNum">     783 </span>            :                 return 1;</a>
+<a name="784"><span class="lineNum">     784 </span><span class="lineCov">     171936 :         if (unlikely(pgd_bad(*pgd))) {</span></a>
+<a name="785"><span class="lineNum">     785 </span>            :                 pgd_clear_bad(pgd);</a>
+<a name="786"><span class="lineNum">     786 </span>            :                 return 1;</a>
+<a name="787"><span class="lineNum">     787 </span>            :         }</a>
+<a name="788"><span class="lineNum">     788 </span><span class="lineCov">     171936 :         return 0;</span></a>
+<a name="789"><span class="lineNum">     789 </span>            : }</a>
+<a name="790"><span class="lineNum">     790 </span>            : </a>
+<a name="791"><span class="lineNum">     791 </span><span class="lineCov">     171944 : static inline int p4d_none_or_clear_bad(p4d_t *p4d)</span></a>
+<a name="792"><span class="lineNum">     792 </span>            : {</a>
+<a name="793"><span class="lineNum">     793 </span><span class="lineCov">     171944 :         if (p4d_none(*p4d))</span></a>
+<a name="794"><span class="lineNum">     794 </span>            :                 return 1;</a>
+<a name="795"><span class="lineNum">     795 </span><span class="lineCov">     170450 :         if (unlikely(p4d_bad(*p4d))) {</span></a>
+<a name="796"><span class="lineNum">     796 </span>            :                 p4d_clear_bad(p4d);</a>
+<a name="797"><span class="lineNum">     797 </span>            :                 return 1;</a>
+<a name="798"><span class="lineNum">     798 </span>            :         }</a>
+<a name="799"><span class="lineNum">     799 </span>            :         return 0;</a>
+<a name="800"><span class="lineNum">     800 </span>            : }</a>
+<a name="801"><span class="lineNum">     801 </span>            : </a>
+<a name="802"><span class="lineNum">     802 </span><span class="lineCov">     170477 : static inline int pud_none_or_clear_bad(pud_t *pud)</span></a>
+<a name="803"><span class="lineNum">     803 </span>            : {</a>
+<a name="804"><span class="lineNum">     804 </span><span class="lineCov">     170477 :         if (pud_none(*pud))</span></a>
+<a name="805"><span class="lineNum">     805 </span>            :                 return 1;</a>
+<a name="806"><span class="lineNum">     806 </span><span class="lineCov">     339915 :         if (unlikely(pud_bad(*pud))) {</span></a>
+<a name="807"><span class="lineNum">     807 </span><span class="lineNoCov">          0 :                 pud_clear_bad(pud);</span></a>
+<a name="808"><span class="lineNum">     808 </span><span class="lineNoCov">          0 :                 return 1;</span></a>
+<a name="809"><span class="lineNum">     809 </span>            :         }</a>
+<a name="810"><span class="lineNum">     810 </span>            :         return 0;</a>
+<a name="811"><span class="lineNum">     811 </span>            : }</a>
+<a name="812"><span class="lineNum">     812 </span>            : </a>
+<a name="813"><span class="lineNum">     813 </span><span class="lineCov">      56978 : static inline int pmd_none_or_clear_bad(pmd_t *pmd)</span></a>
+<a name="814"><span class="lineNum">     814 </span>            : {</a>
+<a name="815"><span class="lineNum">     815 </span><span class="lineCov">      56978 :         if (pmd_none(*pmd))</span></a>
+<a name="816"><span class="lineNum">     816 </span>            :                 return 1;</a>
+<a name="817"><span class="lineNum">     817 </span><span class="lineCov">     110466 :         if (unlikely(pmd_bad(*pmd))) {</span></a>
+<a name="818"><span class="lineNum">     818 </span><span class="lineNoCov">          0 :                 pmd_clear_bad(pmd);</span></a>
+<a name="819"><span class="lineNum">     819 </span><span class="lineNoCov">          0 :                 return 1;</span></a>
+<a name="820"><span class="lineNum">     820 </span>            :         }</a>
+<a name="821"><span class="lineNum">     821 </span>            :         return 0;</a>
+<a name="822"><span class="lineNum">     822 </span>            : }</a>
+<a name="823"><span class="lineNum">     823 </span>            : </a>
+<a name="824"><span class="lineNum">     824 </span><span class="lineCov">      14630 : static inline pte_t __ptep_modify_prot_start(struct vm_area_struct *vma,</span></a>
+<a name="825"><span class="lineNum">     825 </span>            :                                              unsigned long addr,</a>
+<a name="826"><span class="lineNum">     826 </span>            :                                              pte_t *ptep)</a>
+<a name="827"><span class="lineNum">     827 </span>            : {</a>
+<a name="828"><span class="lineNum">     828 </span>            :         /*</a>
+<a name="829"><span class="lineNum">     829 </span>            :          * Get the current pte state, but zero it out to make it</a>
+<a name="830"><span class="lineNum">     830 </span>            :          * non-present, preventing the hardware from asynchronously</a>
+<a name="831"><span class="lineNum">     831 </span>            :          * updating it.</a>
+<a name="832"><span class="lineNum">     832 </span>            :          */</a>
+<a name="833"><span class="lineNum">     833 </span><span class="lineCov">      29260 :         return ptep_get_and_clear(vma-&gt;vm_mm, addr, ptep);</span></a>
+<a name="834"><span class="lineNum">     834 </span>            : }</a>
+<a name="835"><span class="lineNum">     835 </span>            : </a>
+<a name="836"><span class="lineNum">     836 </span><span class="lineCov">      14630 : static inline void __ptep_modify_prot_commit(struct vm_area_struct *vma,</span></a>
+<a name="837"><span class="lineNum">     837 </span>            :                                              unsigned long addr,</a>
+<a name="838"><span class="lineNum">     838 </span>            :                                              pte_t *ptep, pte_t pte)</a>
+<a name="839"><span class="lineNum">     839 </span>            : {</a>
+<a name="840"><span class="lineNum">     840 </span>            :         /*</a>
+<a name="841"><span class="lineNum">     841 </span>            :          * The pte is non-present, so there's no hardware state to</a>
+<a name="842"><span class="lineNum">     842 </span>            :          * preserve.</a>
+<a name="843"><span class="lineNum">     843 </span>            :          */</a>
+<a name="844"><span class="lineNum">     844 </span><span class="lineCov">      14630 :         set_pte_at(vma-&gt;vm_mm, addr, ptep, pte);</span></a>
+<a name="845"><span class="lineNum">     845 </span>            : }</a>
+<a name="846"><span class="lineNum">     846 </span>            : </a>
+<a name="847"><span class="lineNum">     847 </span>            : #ifndef __HAVE_ARCH_PTEP_MODIFY_PROT_TRANSACTION</a>
+<a name="848"><span class="lineNum">     848 </span>            : /*</a>
+<a name="849"><span class="lineNum">     849 </span>            :  * Start a pte protection read-modify-write transaction, which</a>
+<a name="850"><span class="lineNum">     850 </span>            :  * protects against asynchronous hardware modifications to the pte.</a>
+<a name="851"><span class="lineNum">     851 </span>            :  * The intention is not to prevent the hardware from making pte</a>
+<a name="852"><span class="lineNum">     852 </span>            :  * updates, but to prevent any updates it may make from being lost.</a>
+<a name="853"><span class="lineNum">     853 </span>            :  *</a>
+<a name="854"><span class="lineNum">     854 </span>            :  * This does not protect against other software modifications of the</a>
+<a name="855"><span class="lineNum">     855 </span>            :  * pte; the appropriate pte lock must be held over the transation.</a>
+<a name="856"><span class="lineNum">     856 </span>            :  *</a>
+<a name="857"><span class="lineNum">     857 </span>            :  * Note that this interface is intended to be batchable, meaning that</a>
+<a name="858"><span class="lineNum">     858 </span>            :  * ptep_modify_prot_commit may not actually update the pte, but merely</a>
+<a name="859"><span class="lineNum">     859 </span>            :  * queue the update to be done at some later time.  The update must be</a>
+<a name="860"><span class="lineNum">     860 </span>            :  * actually committed before the pte lock is released, however.</a>
+<a name="861"><span class="lineNum">     861 </span>            :  */</a>
+<a name="862"><span class="lineNum">     862 </span><span class="lineCov">      14630 : static inline pte_t ptep_modify_prot_start(struct vm_area_struct *vma,</span></a>
+<a name="863"><span class="lineNum">     863 </span>            :                                            unsigned long addr,</a>
+<a name="864"><span class="lineNum">     864 </span>            :                                            pte_t *ptep)</a>
+<a name="865"><span class="lineNum">     865 </span>            : {</a>
+<a name="866"><span class="lineNum">     866 </span><span class="lineCov">      29260 :         return __ptep_modify_prot_start(vma, addr, ptep);</span></a>
+<a name="867"><span class="lineNum">     867 </span>            : }</a>
+<a name="868"><span class="lineNum">     868 </span>            : </a>
+<a name="869"><span class="lineNum">     869 </span>            : /*</a>
+<a name="870"><span class="lineNum">     870 </span>            :  * Commit an update to a pte, leaving any hardware-controlled bits in</a>
+<a name="871"><span class="lineNum">     871 </span>            :  * the PTE unmodified.</a>
+<a name="872"><span class="lineNum">     872 </span>            :  */</a>
+<a name="873"><span class="lineNum">     873 </span><span class="lineCov">      14630 : static inline void ptep_modify_prot_commit(struct vm_area_struct *vma,</span></a>
+<a name="874"><span class="lineNum">     874 </span>            :                                            unsigned long addr,</a>
+<a name="875"><span class="lineNum">     875 </span>            :                                            pte_t *ptep, pte_t old_pte, pte_t pte)</a>
+<a name="876"><span class="lineNum">     876 </span>            : {</a>
+<a name="877"><span class="lineNum">     877 </span><span class="lineCov">      14630 :         __ptep_modify_prot_commit(vma, addr, ptep, pte);</span></a>
+<a name="878"><span class="lineNum">     878 </span>            : }</a>
+<a name="879"><span class="lineNum">     879 </span>            : #endif /* __HAVE_ARCH_PTEP_MODIFY_PROT_TRANSACTION */</a>
+<a name="880"><span class="lineNum">     880 </span>            : #endif /* CONFIG_MMU */</a>
+<a name="881"><span class="lineNum">     881 </span>            : </a>
+<a name="882"><span class="lineNum">     882 </span>            : /*</a>
+<a name="883"><span class="lineNum">     883 </span>            :  * No-op macros that just return the current protection value. Defined here</a>
+<a name="884"><span class="lineNum">     884 </span>            :  * because these macros can be used even if CONFIG_MMU is not defined.</a>
+<a name="885"><span class="lineNum">     885 </span>            :  */</a>
+<a name="886"><span class="lineNum">     886 </span>            : </a>
+<a name="887"><span class="lineNum">     887 </span>            : #ifndef pgprot_nx</a>
+<a name="888"><span class="lineNum">     888 </span>            : #define pgprot_nx(prot) (prot)</a>
+<a name="889"><span class="lineNum">     889 </span>            : #endif</a>
+<a name="890"><span class="lineNum">     890 </span>            : </a>
+<a name="891"><span class="lineNum">     891 </span>            : #ifndef pgprot_noncached</a>
+<a name="892"><span class="lineNum">     892 </span>            : #define pgprot_noncached(prot)  (prot)</a>
+<a name="893"><span class="lineNum">     893 </span>            : #endif</a>
+<a name="894"><span class="lineNum">     894 </span>            : </a>
+<a name="895"><span class="lineNum">     895 </span>            : #ifndef pgprot_writecombine</a>
+<a name="896"><span class="lineNum">     896 </span>            : #define pgprot_writecombine pgprot_noncached</a>
+<a name="897"><span class="lineNum">     897 </span>            : #endif</a>
+<a name="898"><span class="lineNum">     898 </span>            : </a>
+<a name="899"><span class="lineNum">     899 </span>            : #ifndef pgprot_writethrough</a>
+<a name="900"><span class="lineNum">     900 </span>            : #define pgprot_writethrough pgprot_noncached</a>
+<a name="901"><span class="lineNum">     901 </span>            : #endif</a>
+<a name="902"><span class="lineNum">     902 </span>            : </a>
+<a name="903"><span class="lineNum">     903 </span>            : #ifndef pgprot_device</a>
+<a name="904"><span class="lineNum">     904 </span>            : #define pgprot_device pgprot_noncached</a>
+<a name="905"><span class="lineNum">     905 </span>            : #endif</a>
+<a name="906"><span class="lineNum">     906 </span>            : </a>
+<a name="907"><span class="lineNum">     907 </span>            : #ifndef pgprot_mhp</a>
+<a name="908"><span class="lineNum">     908 </span>            : #define pgprot_mhp(prot)        (prot)</a>
+<a name="909"><span class="lineNum">     909 </span>            : #endif</a>
+<a name="910"><span class="lineNum">     910 </span>            : </a>
+<a name="911"><span class="lineNum">     911 </span>            : #ifdef CONFIG_MMU</a>
+<a name="912"><span class="lineNum">     912 </span>            : #ifndef pgprot_modify</a>
+<a name="913"><span class="lineNum">     913 </span>            : #define pgprot_modify pgprot_modify</a>
+<a name="914"><span class="lineNum">     914 </span>            : static inline pgprot_t pgprot_modify(pgprot_t oldprot, pgprot_t newprot)</a>
+<a name="915"><span class="lineNum">     915 </span>            : {</a>
+<a name="916"><span class="lineNum">     916 </span>            :         if (pgprot_val(oldprot) == pgprot_val(pgprot_noncached(oldprot)))</a>
+<a name="917"><span class="lineNum">     917 </span>            :                 newprot = pgprot_noncached(newprot);</a>
+<a name="918"><span class="lineNum">     918 </span>            :         if (pgprot_val(oldprot) == pgprot_val(pgprot_writecombine(oldprot)))</a>
+<a name="919"><span class="lineNum">     919 </span>            :                 newprot = pgprot_writecombine(newprot);</a>
+<a name="920"><span class="lineNum">     920 </span>            :         if (pgprot_val(oldprot) == pgprot_val(pgprot_device(oldprot)))</a>
+<a name="921"><span class="lineNum">     921 </span>            :                 newprot = pgprot_device(newprot);</a>
+<a name="922"><span class="lineNum">     922 </span>            :         return newprot;</a>
+<a name="923"><span class="lineNum">     923 </span>            : }</a>
+<a name="924"><span class="lineNum">     924 </span>            : #endif</a>
+<a name="925"><span class="lineNum">     925 </span>            : #endif /* CONFIG_MMU */</a>
+<a name="926"><span class="lineNum">     926 </span>            : </a>
+<a name="927"><span class="lineNum">     927 </span>            : #ifndef pgprot_encrypted</a>
+<a name="928"><span class="lineNum">     928 </span>            : #define pgprot_encrypted(prot)  (prot)</a>
+<a name="929"><span class="lineNum">     929 </span>            : #endif</a>
+<a name="930"><span class="lineNum">     930 </span>            : </a>
+<a name="931"><span class="lineNum">     931 </span>            : #ifndef pgprot_decrypted</a>
+<a name="932"><span class="lineNum">     932 </span>            : #define pgprot_decrypted(prot)  (prot)</a>
+<a name="933"><span class="lineNum">     933 </span>            : #endif</a>
+<a name="934"><span class="lineNum">     934 </span>            : </a>
+<a name="935"><span class="lineNum">     935 </span>            : /*</a>
+<a name="936"><span class="lineNum">     936 </span>            :  * A facility to provide lazy MMU batching.  This allows PTE updates and</a>
+<a name="937"><span class="lineNum">     937 </span>            :  * page invalidations to be delayed until a call to leave lazy MMU mode</a>
+<a name="938"><span class="lineNum">     938 </span>            :  * is issued.  Some architectures may benefit from doing this, and it is</a>
+<a name="939"><span class="lineNum">     939 </span>            :  * beneficial for both shadow and direct mode hypervisors, which may batch</a>
+<a name="940"><span class="lineNum">     940 </span>            :  * the PTE updates which happen during this window.  Note that using this</a>
+<a name="941"><span class="lineNum">     941 </span>            :  * interface requires that read hazards be removed from the code.  A read</a>
+<a name="942"><span class="lineNum">     942 </span>            :  * hazard could result in the direct mode hypervisor case, since the actual</a>
+<a name="943"><span class="lineNum">     943 </span>            :  * write to the page tables may not yet have taken place, so reads though</a>
+<a name="944"><span class="lineNum">     944 </span>            :  * a raw PTE pointer after it has been modified are not guaranteed to be</a>
+<a name="945"><span class="lineNum">     945 </span>            :  * up to date.  This mode can only be entered and left under the protection of</a>
+<a name="946"><span class="lineNum">     946 </span>            :  * the page table locks for all page tables which may be modified.  In the UP</a>
+<a name="947"><span class="lineNum">     947 </span>            :  * case, this is required so that preemption is disabled, and in the SMP case,</a>
+<a name="948"><span class="lineNum">     948 </span>            :  * it must synchronize the delayed page table writes properly on other CPUs.</a>
+<a name="949"><span class="lineNum">     949 </span>            :  */</a>
+<a name="950"><span class="lineNum">     950 </span>            : #ifndef __HAVE_ARCH_ENTER_LAZY_MMU_MODE</a>
+<a name="951"><span class="lineNum">     951 </span>            : #define arch_enter_lazy_mmu_mode()      do {} while (0)</a>
+<a name="952"><span class="lineNum">     952 </span>            : #define arch_leave_lazy_mmu_mode()      do {} while (0)</a>
+<a name="953"><span class="lineNum">     953 </span>            : #define arch_flush_lazy_mmu_mode()      do {} while (0)</a>
+<a name="954"><span class="lineNum">     954 </span>            : #endif</a>
+<a name="955"><span class="lineNum">     955 </span>            : </a>
+<a name="956"><span class="lineNum">     956 </span>            : /*</a>
+<a name="957"><span class="lineNum">     957 </span>            :  * A facility to provide batching of the reload of page tables and</a>
+<a name="958"><span class="lineNum">     958 </span>            :  * other process state with the actual context switch code for</a>
+<a name="959"><span class="lineNum">     959 </span>            :  * paravirtualized guests.  By convention, only one of the batched</a>
+<a name="960"><span class="lineNum">     960 </span>            :  * update (lazy) modes (CPU, MMU) should be active at any given time,</a>
+<a name="961"><span class="lineNum">     961 </span>            :  * entry should never be nested, and entry and exits should always be</a>
+<a name="962"><span class="lineNum">     962 </span>            :  * paired.  This is for sanity of maintaining and reasoning about the</a>
+<a name="963"><span class="lineNum">     963 </span>            :  * kernel code.  In this case, the exit (end of the context switch) is</a>
+<a name="964"><span class="lineNum">     964 </span>            :  * in architecture-specific code, and so doesn't need a generic</a>
+<a name="965"><span class="lineNum">     965 </span>            :  * definition.</a>
+<a name="966"><span class="lineNum">     966 </span>            :  */</a>
+<a name="967"><span class="lineNum">     967 </span>            : #ifndef __HAVE_ARCH_START_CONTEXT_SWITCH</a>
+<a name="968"><span class="lineNum">     968 </span>            : #define arch_start_context_switch(prev) do {} while (0)</a>
+<a name="969"><span class="lineNum">     969 </span>            : #endif</a>
+<a name="970"><span class="lineNum">     970 </span>            : </a>
+<a name="971"><span class="lineNum">     971 </span>            : #ifdef CONFIG_HAVE_ARCH_SOFT_DIRTY</a>
+<a name="972"><span class="lineNum">     972 </span>            : #ifndef CONFIG_ARCH_ENABLE_THP_MIGRATION</a>
+<a name="973"><span class="lineNum">     973 </span>            : static inline pmd_t pmd_swp_mksoft_dirty(pmd_t pmd)</a>
+<a name="974"><span class="lineNum">     974 </span>            : {</a>
+<a name="975"><span class="lineNum">     975 </span>            :         return pmd;</a>
+<a name="976"><span class="lineNum">     976 </span>            : }</a>
+<a name="977"><span class="lineNum">     977 </span>            : </a>
+<a name="978"><span class="lineNum">     978 </span>            : static inline int pmd_swp_soft_dirty(pmd_t pmd)</a>
+<a name="979"><span class="lineNum">     979 </span>            : {</a>
+<a name="980"><span class="lineNum">     980 </span>            :         return 0;</a>
+<a name="981"><span class="lineNum">     981 </span>            : }</a>
+<a name="982"><span class="lineNum">     982 </span>            : </a>
+<a name="983"><span class="lineNum">     983 </span>            : static inline pmd_t pmd_swp_clear_soft_dirty(pmd_t pmd)</a>
+<a name="984"><span class="lineNum">     984 </span>            : {</a>
+<a name="985"><span class="lineNum">     985 </span>            :         return pmd;</a>
+<a name="986"><span class="lineNum">     986 </span>            : }</a>
+<a name="987"><span class="lineNum">     987 </span>            : #endif</a>
+<a name="988"><span class="lineNum">     988 </span>            : #else /* !CONFIG_HAVE_ARCH_SOFT_DIRTY */</a>
+<a name="989"><span class="lineNum">     989 </span>            : static inline int pte_soft_dirty(pte_t pte)</a>
+<a name="990"><span class="lineNum">     990 </span>            : {</a>
+<a name="991"><span class="lineNum">     991 </span>            :         return 0;</a>
+<a name="992"><span class="lineNum">     992 </span>            : }</a>
+<a name="993"><span class="lineNum">     993 </span>            : </a>
+<a name="994"><span class="lineNum">     994 </span>            : static inline int pmd_soft_dirty(pmd_t pmd)</a>
+<a name="995"><span class="lineNum">     995 </span>            : {</a>
+<a name="996"><span class="lineNum">     996 </span>            :         return 0;</a>
+<a name="997"><span class="lineNum">     997 </span>            : }</a>
+<a name="998"><span class="lineNum">     998 </span>            : </a>
+<a name="999"><span class="lineNum">     999 </span>            : static inline pte_t pte_mksoft_dirty(pte_t pte)</a>
+<a name="1000"><span class="lineNum">    1000 </span>            : {</a>
+<a name="1001"><span class="lineNum">    1001 </span>            :         return pte;</a>
+<a name="1002"><span class="lineNum">    1002 </span>            : }</a>
+<a name="1003"><span class="lineNum">    1003 </span>            : </a>
+<a name="1004"><span class="lineNum">    1004 </span>            : static inline pmd_t pmd_mksoft_dirty(pmd_t pmd)</a>
+<a name="1005"><span class="lineNum">    1005 </span>            : {</a>
+<a name="1006"><span class="lineNum">    1006 </span>            :         return pmd;</a>
+<a name="1007"><span class="lineNum">    1007 </span>            : }</a>
+<a name="1008"><span class="lineNum">    1008 </span>            : </a>
+<a name="1009"><span class="lineNum">    1009 </span>            : static inline pte_t pte_clear_soft_dirty(pte_t pte)</a>
+<a name="1010"><span class="lineNum">    1010 </span>            : {</a>
+<a name="1011"><span class="lineNum">    1011 </span>            :         return pte;</a>
+<a name="1012"><span class="lineNum">    1012 </span>            : }</a>
+<a name="1013"><span class="lineNum">    1013 </span>            : </a>
+<a name="1014"><span class="lineNum">    1014 </span>            : static inline pmd_t pmd_clear_soft_dirty(pmd_t pmd)</a>
+<a name="1015"><span class="lineNum">    1015 </span>            : {</a>
+<a name="1016"><span class="lineNum">    1016 </span>            :         return pmd;</a>
+<a name="1017"><span class="lineNum">    1017 </span>            : }</a>
+<a name="1018"><span class="lineNum">    1018 </span>            : </a>
+<a name="1019"><span class="lineNum">    1019 </span>            : static inline pte_t pte_swp_mksoft_dirty(pte_t pte)</a>
+<a name="1020"><span class="lineNum">    1020 </span>            : {</a>
+<a name="1021"><span class="lineNum">    1021 </span>            :         return pte;</a>
+<a name="1022"><span class="lineNum">    1022 </span>            : }</a>
+<a name="1023"><span class="lineNum">    1023 </span>            : </a>
+<a name="1024"><span class="lineNum">    1024 </span>            : static inline int pte_swp_soft_dirty(pte_t pte)</a>
+<a name="1025"><span class="lineNum">    1025 </span>            : {</a>
+<a name="1026"><span class="lineNum">    1026 </span>            :         return 0;</a>
+<a name="1027"><span class="lineNum">    1027 </span>            : }</a>
+<a name="1028"><span class="lineNum">    1028 </span>            : </a>
+<a name="1029"><span class="lineNum">    1029 </span>            : static inline pte_t pte_swp_clear_soft_dirty(pte_t pte)</a>
+<a name="1030"><span class="lineNum">    1030 </span>            : {</a>
+<a name="1031"><span class="lineNum">    1031 </span>            :         return pte;</a>
+<a name="1032"><span class="lineNum">    1032 </span>            : }</a>
+<a name="1033"><span class="lineNum">    1033 </span>            : </a>
+<a name="1034"><span class="lineNum">    1034 </span>            : static inline pmd_t pmd_swp_mksoft_dirty(pmd_t pmd)</a>
+<a name="1035"><span class="lineNum">    1035 </span>            : {</a>
+<a name="1036"><span class="lineNum">    1036 </span>            :         return pmd;</a>
+<a name="1037"><span class="lineNum">    1037 </span>            : }</a>
+<a name="1038"><span class="lineNum">    1038 </span>            : </a>
+<a name="1039"><span class="lineNum">    1039 </span>            : static inline int pmd_swp_soft_dirty(pmd_t pmd)</a>
+<a name="1040"><span class="lineNum">    1040 </span>            : {</a>
+<a name="1041"><span class="lineNum">    1041 </span>            :         return 0;</a>
+<a name="1042"><span class="lineNum">    1042 </span>            : }</a>
+<a name="1043"><span class="lineNum">    1043 </span>            : </a>
+<a name="1044"><span class="lineNum">    1044 </span>            : static inline pmd_t pmd_swp_clear_soft_dirty(pmd_t pmd)</a>
+<a name="1045"><span class="lineNum">    1045 </span>            : {</a>
+<a name="1046"><span class="lineNum">    1046 </span>            :         return pmd;</a>
+<a name="1047"><span class="lineNum">    1047 </span>            : }</a>
+<a name="1048"><span class="lineNum">    1048 </span>            : #endif</a>
+<a name="1049"><span class="lineNum">    1049 </span>            : </a>
+<a name="1050"><span class="lineNum">    1050 </span>            : #ifndef __HAVE_PFNMAP_TRACKING</a>
+<a name="1051"><span class="lineNum">    1051 </span>            : /*</a>
+<a name="1052"><span class="lineNum">    1052 </span>            :  * Interfaces that can be used by architecture code to keep track of</a>
+<a name="1053"><span class="lineNum">    1053 </span>            :  * memory type of pfn mappings specified by the remap_pfn_range,</a>
+<a name="1054"><span class="lineNum">    1054 </span>            :  * vmf_insert_pfn.</a>
+<a name="1055"><span class="lineNum">    1055 </span>            :  */</a>
+<a name="1056"><span class="lineNum">    1056 </span>            : </a>
+<a name="1057"><span class="lineNum">    1057 </span>            : /*</a>
+<a name="1058"><span class="lineNum">    1058 </span>            :  * track_pfn_remap is called when a _new_ pfn mapping is being established</a>
+<a name="1059"><span class="lineNum">    1059 </span>            :  * by remap_pfn_range() for physical range indicated by pfn and size.</a>
+<a name="1060"><span class="lineNum">    1060 </span>            :  */</a>
+<a name="1061"><span class="lineNum">    1061 </span>            : static inline int track_pfn_remap(struct vm_area_struct *vma, pgprot_t *prot,</a>
+<a name="1062"><span class="lineNum">    1062 </span>            :                                   unsigned long pfn, unsigned long addr,</a>
+<a name="1063"><span class="lineNum">    1063 </span>            :                                   unsigned long size)</a>
+<a name="1064"><span class="lineNum">    1064 </span>            : {</a>
+<a name="1065"><span class="lineNum">    1065 </span>            :         return 0;</a>
+<a name="1066"><span class="lineNum">    1066 </span>            : }</a>
+<a name="1067"><span class="lineNum">    1067 </span>            : </a>
+<a name="1068"><span class="lineNum">    1068 </span>            : /*</a>
+<a name="1069"><span class="lineNum">    1069 </span>            :  * track_pfn_insert is called when a _new_ single pfn is established</a>
+<a name="1070"><span class="lineNum">    1070 </span>            :  * by vmf_insert_pfn().</a>
+<a name="1071"><span class="lineNum">    1071 </span>            :  */</a>
+<a name="1072"><span class="lineNum">    1072 </span>            : static inline void track_pfn_insert(struct vm_area_struct *vma, pgprot_t *prot,</a>
+<a name="1073"><span class="lineNum">    1073 </span>            :                                     pfn_t pfn)</a>
+<a name="1074"><span class="lineNum">    1074 </span>            : {</a>
+<a name="1075"><span class="lineNum">    1075 </span>            : }</a>
+<a name="1076"><span class="lineNum">    1076 </span>            : </a>
+<a name="1077"><span class="lineNum">    1077 </span>            : /*</a>
+<a name="1078"><span class="lineNum">    1078 </span>            :  * track_pfn_copy is called when vma that is covering the pfnmap gets</a>
+<a name="1079"><span class="lineNum">    1079 </span>            :  * copied through copy_page_range().</a>
+<a name="1080"><span class="lineNum">    1080 </span>            :  */</a>
+<a name="1081"><span class="lineNum">    1081 </span>            : static inline int track_pfn_copy(struct vm_area_struct *vma)</a>
+<a name="1082"><span class="lineNum">    1082 </span>            : {</a>
+<a name="1083"><span class="lineNum">    1083 </span>            :         return 0;</a>
+<a name="1084"><span class="lineNum">    1084 </span>            : }</a>
+<a name="1085"><span class="lineNum">    1085 </span>            : </a>
+<a name="1086"><span class="lineNum">    1086 </span>            : /*</a>
+<a name="1087"><span class="lineNum">    1087 </span>            :  * untrack_pfn is called while unmapping a pfnmap for a region.</a>
+<a name="1088"><span class="lineNum">    1088 </span>            :  * untrack can be called for a specific region indicated by pfn and size or</a>
+<a name="1089"><span class="lineNum">    1089 </span>            :  * can be for the entire vma (in which case pfn, size are zero).</a>
+<a name="1090"><span class="lineNum">    1090 </span>            :  */</a>
+<a name="1091"><span class="lineNum">    1091 </span>            : static inline void untrack_pfn(struct vm_area_struct *vma,</a>
+<a name="1092"><span class="lineNum">    1092 </span>            :                                unsigned long pfn, unsigned long size)</a>
+<a name="1093"><span class="lineNum">    1093 </span>            : {</a>
+<a name="1094"><span class="lineNum">    1094 </span>            : }</a>
+<a name="1095"><span class="lineNum">    1095 </span>            : </a>
+<a name="1096"><span class="lineNum">    1096 </span>            : /*</a>
+<a name="1097"><span class="lineNum">    1097 </span>            :  * untrack_pfn_moved is called while mremapping a pfnmap for a new region.</a>
+<a name="1098"><span class="lineNum">    1098 </span>            :  */</a>
+<a name="1099"><span class="lineNum">    1099 </span>            : static inline void untrack_pfn_moved(struct vm_area_struct *vma)</a>
+<a name="1100"><span class="lineNum">    1100 </span>            : {</a>
+<a name="1101"><span class="lineNum">    1101 </span>            : }</a>
+<a name="1102"><span class="lineNum">    1102 </span>            : #else</a>
+<a name="1103"><span class="lineNum">    1103 </span>            : extern int track_pfn_remap(struct vm_area_struct *vma, pgprot_t *prot,</a>
+<a name="1104"><span class="lineNum">    1104 </span>            :                            unsigned long pfn, unsigned long addr,</a>
+<a name="1105"><span class="lineNum">    1105 </span>            :                            unsigned long size);</a>
+<a name="1106"><span class="lineNum">    1106 </span>            : extern void track_pfn_insert(struct vm_area_struct *vma, pgprot_t *prot,</a>
+<a name="1107"><span class="lineNum">    1107 </span>            :                              pfn_t pfn);</a>
+<a name="1108"><span class="lineNum">    1108 </span>            : extern int track_pfn_copy(struct vm_area_struct *vma);</a>
+<a name="1109"><span class="lineNum">    1109 </span>            : extern void untrack_pfn(struct vm_area_struct *vma, unsigned long pfn,</a>
+<a name="1110"><span class="lineNum">    1110 </span>            :                         unsigned long size);</a>
+<a name="1111"><span class="lineNum">    1111 </span>            : extern void untrack_pfn_moved(struct vm_area_struct *vma);</a>
+<a name="1112"><span class="lineNum">    1112 </span>            : #endif</a>
+<a name="1113"><span class="lineNum">    1113 </span>            : </a>
+<a name="1114"><span class="lineNum">    1114 </span>            : #ifdef __HAVE_COLOR_ZERO_PAGE</a>
+<a name="1115"><span class="lineNum">    1115 </span>            : static inline int is_zero_pfn(unsigned long pfn)</a>
+<a name="1116"><span class="lineNum">    1116 </span>            : {</a>
+<a name="1117"><span class="lineNum">    1117 </span>            :         extern unsigned long zero_pfn;</a>
+<a name="1118"><span class="lineNum">    1118 </span>            :         unsigned long offset_from_zero_pfn = pfn - zero_pfn;</a>
+<a name="1119"><span class="lineNum">    1119 </span>            :         return offset_from_zero_pfn &lt;= (zero_page_mask &gt;&gt; PAGE_SHIFT);</a>
+<a name="1120"><span class="lineNum">    1120 </span>            : }</a>
+<a name="1121"><span class="lineNum">    1121 </span>            : </a>
+<a name="1122"><span class="lineNum">    1122 </span>            : #define my_zero_pfn(addr)       page_to_pfn(ZERO_PAGE(addr))</a>
+<a name="1123"><span class="lineNum">    1123 </span>            : </a>
+<a name="1124"><span class="lineNum">    1124 </span>            : #else</a>
+<a name="1125"><span class="lineNum">    1125 </span><span class="lineCov">      48668 : static inline int is_zero_pfn(unsigned long pfn)</span></a>
+<a name="1126"><span class="lineNum">    1126 </span>            : {</a>
+<a name="1127"><span class="lineNum">    1127 </span><span class="lineCov">      48668 :         extern unsigned long zero_pfn;</span></a>
+<a name="1128"><span class="lineNum">    1128 </span><span class="lineCov">      48668 :         return pfn == zero_pfn;</span></a>
+<a name="1129"><span class="lineNum">    1129 </span>            : }</a>
+<a name="1130"><span class="lineNum">    1130 </span>            : </a>
+<a name="1131"><span class="lineNum">    1131 </span><span class="lineCov">      18527 : static inline unsigned long my_zero_pfn(unsigned long addr)</span></a>
+<a name="1132"><span class="lineNum">    1132 </span>            : {</a>
+<a name="1133"><span class="lineNum">    1133 </span><span class="lineCov">      18527 :         extern unsigned long zero_pfn;</span></a>
+<a name="1134"><span class="lineNum">    1134 </span><span class="lineCov">      18527 :         return zero_pfn;</span></a>
+<a name="1135"><span class="lineNum">    1135 </span>            : }</a>
+<a name="1136"><span class="lineNum">    1136 </span>            : #endif</a>
+<a name="1137"><span class="lineNum">    1137 </span>            : </a>
+<a name="1138"><span class="lineNum">    1138 </span>            : #ifdef CONFIG_MMU</a>
+<a name="1139"><span class="lineNum">    1139 </span>            : </a>
+<a name="1140"><span class="lineNum">    1140 </span>            : #ifndef CONFIG_TRANSPARENT_HUGEPAGE</a>
+<a name="1141"><span class="lineNum">    1141 </span>            : static inline int pmd_trans_huge(pmd_t pmd)</a>
+<a name="1142"><span class="lineNum">    1142 </span>            : {</a>
+<a name="1143"><span class="lineNum">    1143 </span>            :         return 0;</a>
+<a name="1144"><span class="lineNum">    1144 </span>            : }</a>
+<a name="1145"><span class="lineNum">    1145 </span>            : #ifndef pmd_write</a>
+<a name="1146"><span class="lineNum">    1146 </span>            : static inline int pmd_write(pmd_t pmd)</a>
+<a name="1147"><span class="lineNum">    1147 </span>            : {</a>
+<a name="1148"><span class="lineNum">    1148 </span>            :         BUG();</a>
+<a name="1149"><span class="lineNum">    1149 </span>            :         return 0;</a>
+<a name="1150"><span class="lineNum">    1150 </span>            : }</a>
+<a name="1151"><span class="lineNum">    1151 </span>            : #endif /* pmd_write */</a>
+<a name="1152"><span class="lineNum">    1152 </span>            : #endif /* CONFIG_TRANSPARENT_HUGEPAGE */</a>
+<a name="1153"><span class="lineNum">    1153 </span>            : </a>
+<a name="1154"><span class="lineNum">    1154 </span>            : #ifndef pud_write</a>
+<a name="1155"><span class="lineNum">    1155 </span>            : static inline int pud_write(pud_t pud)</a>
+<a name="1156"><span class="lineNum">    1156 </span>            : {</a>
+<a name="1157"><span class="lineNum">    1157 </span>            :         BUG();</a>
+<a name="1158"><span class="lineNum">    1158 </span>            :         return 0;</a>
+<a name="1159"><span class="lineNum">    1159 </span>            : }</a>
+<a name="1160"><span class="lineNum">    1160 </span>            : #endif /* pud_write */</a>
+<a name="1161"><span class="lineNum">    1161 </span>            : </a>
+<a name="1162"><span class="lineNum">    1162 </span>            : #if !defined(CONFIG_ARCH_HAS_PTE_DEVMAP) || !defined(CONFIG_TRANSPARENT_HUGEPAGE)</a>
+<a name="1163"><span class="lineNum">    1163 </span>            : static inline int pmd_devmap(pmd_t pmd)</a>
+<a name="1164"><span class="lineNum">    1164 </span>            : {</a>
+<a name="1165"><span class="lineNum">    1165 </span>            :         return 0;</a>
+<a name="1166"><span class="lineNum">    1166 </span>            : }</a>
+<a name="1167"><span class="lineNum">    1167 </span>            : static inline int pud_devmap(pud_t pud)</a>
+<a name="1168"><span class="lineNum">    1168 </span>            : {</a>
+<a name="1169"><span class="lineNum">    1169 </span>            :         return 0;</a>
+<a name="1170"><span class="lineNum">    1170 </span>            : }</a>
+<a name="1171"><span class="lineNum">    1171 </span>            : static inline int pgd_devmap(pgd_t pgd)</a>
+<a name="1172"><span class="lineNum">    1172 </span>            : {</a>
+<a name="1173"><span class="lineNum">    1173 </span>            :         return 0;</a>
+<a name="1174"><span class="lineNum">    1174 </span>            : }</a>
+<a name="1175"><span class="lineNum">    1175 </span>            : #endif</a>
+<a name="1176"><span class="lineNum">    1176 </span>            : </a>
+<a name="1177"><span class="lineNum">    1177 </span>            : #if !defined(CONFIG_TRANSPARENT_HUGEPAGE) || \</a>
+<a name="1178"><span class="lineNum">    1178 </span>            :         (defined(CONFIG_TRANSPARENT_HUGEPAGE) &amp;&amp; \</a>
+<a name="1179"><span class="lineNum">    1179 </span>            :          !defined(CONFIG_HAVE_ARCH_TRANSPARENT_HUGEPAGE_PUD))</a>
+<a name="1180"><span class="lineNum">    1180 </span>            : static inline int pud_trans_huge(pud_t pud)</a>
+<a name="1181"><span class="lineNum">    1181 </span>            : {</a>
+<a name="1182"><span class="lineNum">    1182 </span>            :         return 0;</a>
+<a name="1183"><span class="lineNum">    1183 </span>            : }</a>
+<a name="1184"><span class="lineNum">    1184 </span>            : #endif</a>
+<a name="1185"><span class="lineNum">    1185 </span>            : </a>
+<a name="1186"><span class="lineNum">    1186 </span>            : /* See pmd_none_or_trans_huge_or_clear_bad for discussion. */</a>
+<a name="1187"><span class="lineNum">    1187 </span><span class="lineCov">     175242 : static inline int pud_none_or_trans_huge_or_dev_or_clear_bad(pud_t *pud)</span></a>
+<a name="1188"><span class="lineNum">    1188 </span>            : {</a>
+<a name="1189"><span class="lineNum">    1189 </span><span class="lineCov">     175242 :         pud_t pudval = READ_ONCE(*pud);</span></a>
+<a name="1190"><span class="lineNum">    1190 </span>            : </a>
+<a name="1191"><span class="lineNum">    1191 </span><span class="lineCov">     175242 :         if (pud_none(pudval) || pud_trans_huge(pudval) || pud_devmap(pudval))</span></a>
+<a name="1192"><span class="lineNum">    1192 </span>            :                 return 1;</a>
+<a name="1193"><span class="lineNum">    1193 </span><span class="lineCov">     350484 :         if (unlikely(pud_bad(pudval))) {</span></a>
+<a name="1194"><span class="lineNum">    1194 </span><span class="lineNoCov">          0 :                 pud_clear_bad(pud);</span></a>
+<a name="1195"><span class="lineNum">    1195 </span><span class="lineNoCov">          0 :                 return 1;</span></a>
+<a name="1196"><span class="lineNum">    1196 </span>            :         }</a>
+<a name="1197"><span class="lineNum">    1197 </span>            :         return 0;</a>
+<a name="1198"><span class="lineNum">    1198 </span>            : }</a>
+<a name="1199"><span class="lineNum">    1199 </span>            : </a>
+<a name="1200"><span class="lineNum">    1200 </span>            : /* See pmd_trans_unstable for discussion. */</a>
+<a name="1201"><span class="lineNum">    1201 </span><span class="lineCov">     175242 : static inline int pud_trans_unstable(pud_t *pud)</span></a>
+<a name="1202"><span class="lineNum">    1202 </span>            : {</a>
+<a name="1203"><span class="lineNum">    1203 </span>            : #if defined(CONFIG_TRANSPARENT_HUGEPAGE) &amp;&amp;                     \</a>
+<a name="1204"><span class="lineNum">    1204 </span>            :         defined(CONFIG_HAVE_ARCH_TRANSPARENT_HUGEPAGE_PUD)</a>
+<a name="1205"><span class="lineNum">    1205 </span><span class="lineCov">     175242 :         return pud_none_or_trans_huge_or_dev_or_clear_bad(pud);</span></a>
+<a name="1206"><span class="lineNum">    1206 </span>            : #else</a>
+<a name="1207"><span class="lineNum">    1207 </span>            :         return 0;</a>
+<a name="1208"><span class="lineNum">    1208 </span>            : #endif</a>
+<a name="1209"><span class="lineNum">    1209 </span>            : }</a>
+<a name="1210"><span class="lineNum">    1210 </span>            : </a>
+<a name="1211"><span class="lineNum">    1211 </span>            : #ifndef pmd_read_atomic</a>
+<a name="1212"><span class="lineNum">    1212 </span><span class="lineCov">     428389 : static inline pmd_t pmd_read_atomic(pmd_t *pmdp)</span></a>
+<a name="1213"><span class="lineNum">    1213 </span>            : {</a>
+<a name="1214"><span class="lineNum">    1214 </span>            :         /*</a>
+<a name="1215"><span class="lineNum">    1215 </span>            :          * Depend on compiler for an atomic pmd read. NOTE: this is</a>
+<a name="1216"><span class="lineNum">    1216 </span>            :          * only going to work, if the pmdval_t isn't larger than</a>
+<a name="1217"><span class="lineNum">    1217 </span>            :          * an unsigned long.</a>
+<a name="1218"><span class="lineNum">    1218 </span>            :          */</a>
+<a name="1219"><span class="lineNum">    1219 </span><span class="lineCov">     420444 :         return *pmdp;</span></a>
+<a name="1220"><span class="lineNum">    1220 </span>            : }</a>
+<a name="1221"><span class="lineNum">    1221 </span>            : #endif</a>
+<a name="1222"><span class="lineNum">    1222 </span>            : </a>
+<a name="1223"><span class="lineNum">    1223 </span>            : #ifndef arch_needs_pgtable_deposit</a>
+<a name="1224"><span class="lineNum">    1224 </span>            : #define arch_needs_pgtable_deposit() (false)</a>
+<a name="1225"><span class="lineNum">    1225 </span>            : #endif</a>
+<a name="1226"><span class="lineNum">    1226 </span>            : /*</a>
+<a name="1227"><span class="lineNum">    1227 </span>            :  * This function is meant to be used by sites walking pagetables with</a>
+<a name="1228"><span class="lineNum">    1228 </span>            :  * the mmap_lock held in read mode to protect against MADV_DONTNEED and</a>
+<a name="1229"><span class="lineNum">    1229 </span>            :  * transhuge page faults. MADV_DONTNEED can convert a transhuge pmd</a>
+<a name="1230"><span class="lineNum">    1230 </span>            :  * into a null pmd and the transhuge page fault can convert a null pmd</a>
+<a name="1231"><span class="lineNum">    1231 </span>            :  * into an hugepmd or into a regular pmd (if the hugepage allocation</a>
+<a name="1232"><span class="lineNum">    1232 </span>            :  * fails). While holding the mmap_lock in read mode the pmd becomes</a>
+<a name="1233"><span class="lineNum">    1233 </span>            :  * stable and stops changing under us only if it's not null and not a</a>
+<a name="1234"><span class="lineNum">    1234 </span>            :  * transhuge pmd. When those races occurs and this function makes a</a>
+<a name="1235"><span class="lineNum">    1235 </span>            :  * difference vs the standard pmd_none_or_clear_bad, the result is</a>
+<a name="1236"><span class="lineNum">    1236 </span>            :  * undefined so behaving like if the pmd was none is safe (because it</a>
+<a name="1237"><span class="lineNum">    1237 </span>            :  * can return none anyway). The compiler level barrier() is critically</a>
+<a name="1238"><span class="lineNum">    1238 </span>            :  * important to compute the two checks atomically on the same pmdval.</a>
+<a name="1239"><span class="lineNum">    1239 </span>            :  *</a>
+<a name="1240"><span class="lineNum">    1240 </span>            :  * For 32bit kernels with a 64bit large pmd_t this automatically takes</a>
+<a name="1241"><span class="lineNum">    1241 </span>            :  * care of reading the pmd atomically to avoid SMP race conditions</a>
+<a name="1242"><span class="lineNum">    1242 </span>            :  * against pmd_populate() when the mmap_lock is hold for reading by the</a>
+<a name="1243"><span class="lineNum">    1243 </span>            :  * caller (a special atomic read not done by &quot;gcc&quot; as in the generic</a>
+<a name="1244"><span class="lineNum">    1244 </span>            :  * version above, is also needed when THP is disabled because the page</a>
+<a name="1245"><span class="lineNum">    1245 </span>            :  * fault can populate the pmd from under us).</a>
+<a name="1246"><span class="lineNum">    1246 </span>            :  */</a>
+<a name="1247"><span class="lineNum">    1247 </span><span class="lineCov">     419132 : static inline int pmd_none_or_trans_huge_or_clear_bad(pmd_t *pmd)</span></a>
+<a name="1248"><span class="lineNum">    1248 </span>            : {</a>
+<a name="1249"><span class="lineNum">    1249 </span><span class="lineCov">     419132 :         pmd_t pmdval = pmd_read_atomic(pmd);</span></a>
+<a name="1250"><span class="lineNum">    1250 </span>            :         /*</a>
+<a name="1251"><span class="lineNum">    1251 </span>            :          * The barrier will stabilize the pmdval in a register or on</a>
+<a name="1252"><span class="lineNum">    1252 </span>            :          * the stack so that it will stop changing under the code.</a>
+<a name="1253"><span class="lineNum">    1253 </span>            :          *</a>
+<a name="1254"><span class="lineNum">    1254 </span>            :          * When CONFIG_TRANSPARENT_HUGEPAGE=y on x86 32bit PAE,</a>
+<a name="1255"><span class="lineNum">    1255 </span>            :          * pmd_read_atomic is allowed to return a not atomic pmdval</a>
+<a name="1256"><span class="lineNum">    1256 </span>            :          * (for example pointing to an hugepage that has never been</a>
+<a name="1257"><span class="lineNum">    1257 </span>            :          * mapped in the pmd). The below checks will only care about</a>
+<a name="1258"><span class="lineNum">    1258 </span>            :          * the low part of the pmd with 32bit PAE x86 anyway, with the</a>
+<a name="1259"><span class="lineNum">    1259 </span>            :          * exception of pmd_none(). So the important thing is that if</a>
+<a name="1260"><span class="lineNum">    1260 </span>            :          * the low part of the pmd is found null, the high part will</a>
+<a name="1261"><span class="lineNum">    1261 </span>            :          * be also null or the pmd_none() check below would be</a>
+<a name="1262"><span class="lineNum">    1262 </span>            :          * confused.</a>
+<a name="1263"><span class="lineNum">    1263 </span>            :          */</a>
+<a name="1264"><span class="lineNum">    1264 </span>            : #ifdef CONFIG_TRANSPARENT_HUGEPAGE</a>
+<a name="1265"><span class="lineNum">    1265 </span><span class="lineCov">     419132 :         barrier();</span></a>
+<a name="1266"><span class="lineNum">    1266 </span>            : #endif</a>
+<a name="1267"><span class="lineNum">    1267 </span>            :         /*</a>
+<a name="1268"><span class="lineNum">    1268 </span>            :          * !pmd_present() checks for pmd migration entries</a>
+<a name="1269"><span class="lineNum">    1269 </span>            :          *</a>
+<a name="1270"><span class="lineNum">    1270 </span>            :          * The complete check uses is_pmd_migration_entry() in linux/swapops.h</a>
+<a name="1271"><span class="lineNum">    1271 </span>            :          * But using that requires moving current function and pmd_trans_unstable()</a>
+<a name="1272"><span class="lineNum">    1272 </span>            :          * to linux/swapops.h to resovle dependency, which is too much code move.</a>
+<a name="1273"><span class="lineNum">    1273 </span>            :          *</a>
+<a name="1274"><span class="lineNum">    1274 </span>            :          * !pmd_present() is equivalent to is_pmd_migration_entry() currently,</a>
+<a name="1275"><span class="lineNum">    1275 </span>            :          * because !pmd_present() pages can only be under migration not swapped</a>
+<a name="1276"><span class="lineNum">    1276 </span>            :          * out.</a>
+<a name="1277"><span class="lineNum">    1277 </span>            :          *</a>
+<a name="1278"><span class="lineNum">    1278 </span>            :          * pmd_none() is preseved for future condition checks on pmd migration</a>
+<a name="1279"><span class="lineNum">    1279 </span>            :          * entries and not confusing with this function name, although it is</a>
+<a name="1280"><span class="lineNum">    1280 </span>            :          * redundant with !pmd_present().</a>
+<a name="1281"><span class="lineNum">    1281 </span>            :          */</a>
+<a name="1282"><span class="lineNum">    1282 </span><span class="lineCov">     419137 :         if (pmd_none(pmdval) || pmd_trans_huge(pmdval) ||</span></a>
+<a name="1283"><span class="lineNum">    1283 </span><span class="lineCov">     415803 :                 (IS_ENABLED(CONFIG_ARCH_ENABLE_THP_MIGRATION) &amp;&amp; !pmd_present(pmdval)))</span></a>
+<a name="1284"><span class="lineNum">    1284 </span>            :                 return 1;</a>
+<a name="1285"><span class="lineNum">    1285 </span><span class="lineCov">     415803 :         if (unlikely(pmd_bad(pmdval))) {</span></a>
+<a name="1286"><span class="lineNum">    1286 </span><span class="lineNoCov">          0 :                 pmd_clear_bad(pmd);</span></a>
+<a name="1287"><span class="lineNum">    1287 </span><span class="lineNoCov">          0 :                 return 1;</span></a>
+<a name="1288"><span class="lineNum">    1288 </span>            :         }</a>
+<a name="1289"><span class="lineNum">    1289 </span>            :         return 0;</a>
+<a name="1290"><span class="lineNum">    1290 </span>            : }</a>
+<a name="1291"><span class="lineNum">    1291 </span>            : </a>
+<a name="1292"><span class="lineNum">    1292 </span>            : /*</a>
+<a name="1293"><span class="lineNum">    1293 </span>            :  * This is a noop if Transparent Hugepage Support is not built into</a>
+<a name="1294"><span class="lineNum">    1294 </span>            :  * the kernel. Otherwise it is equivalent to</a>
+<a name="1295"><span class="lineNum">    1295 </span>            :  * pmd_none_or_trans_huge_or_clear_bad(), and shall only be called in</a>
+<a name="1296"><span class="lineNum">    1296 </span>            :  * places that already verified the pmd is not none and they want to</a>
+<a name="1297"><span class="lineNum">    1297 </span>            :  * walk ptes while holding the mmap sem in read mode (write mode don't</a>
+<a name="1298"><span class="lineNum">    1298 </span>            :  * need this). If THP is not enabled, the pmd can't go away under the</a>
+<a name="1299"><span class="lineNum">    1299 </span>            :  * code even if MADV_DONTNEED runs, but if THP is enabled we need to</a>
+<a name="1300"><span class="lineNum">    1300 </span>            :  * run a pmd_trans_unstable before walking the ptes after</a>
+<a name="1301"><span class="lineNum">    1301 </span>            :  * split_huge_pmd returns (because it may have run when the pmd become</a>
+<a name="1302"><span class="lineNum">    1302 </span>            :  * null, but then a page fault can map in a THP and not a regular page).</a>
+<a name="1303"><span class="lineNum">    1303 </span>            :  */</a>
+<a name="1304"><span class="lineNum">    1304 </span><span class="lineCov">     299156 : static inline int pmd_trans_unstable(pmd_t *pmd)</span></a>
+<a name="1305"><span class="lineNum">    1305 </span>            : {</a>
+<a name="1306"><span class="lineNum">    1306 </span>            : #ifdef CONFIG_TRANSPARENT_HUGEPAGE</a>
+<a name="1307"><span class="lineNum">    1307 </span><span class="lineCov">     299156 :         return pmd_none_or_trans_huge_or_clear_bad(pmd);</span></a>
+<a name="1308"><span class="lineNum">    1308 </span>            : #else</a>
+<a name="1309"><span class="lineNum">    1309 </span>            :         return 0;</a>
+<a name="1310"><span class="lineNum">    1310 </span>            : #endif</a>
+<a name="1311"><span class="lineNum">    1311 </span>            : }</a>
+<a name="1312"><span class="lineNum">    1312 </span>            : </a>
+<a name="1313"><span class="lineNum">    1313 </span>            : /*</a>
+<a name="1314"><span class="lineNum">    1314 </span>            :  * the ordering of these checks is important for pmds with _page_devmap set.</a>
+<a name="1315"><span class="lineNum">    1315 </span>            :  * if we check pmd_trans_unstable() first we will trip the bad_pmd() check</a>
+<a name="1316"><span class="lineNum">    1316 </span>            :  * inside of pmd_none_or_trans_huge_or_clear_bad(). this will end up correctly</a>
+<a name="1317"><span class="lineNum">    1317 </span>            :  * returning 1 but not before it spams dmesg with the pmd_clear_bad() output.</a>
+<a name="1318"><span class="lineNum">    1318 </span>            :  */</a>
+<a name="1319"><span class="lineNum">    1319 </span><span class="lineCov">     244652 : static inline int pmd_devmap_trans_unstable(pmd_t *pmd)</span></a>
+<a name="1320"><span class="lineNum">    1320 </span>            : {</a>
+<a name="1321"><span class="lineNum">    1321 </span><span class="lineCov">     489303 :         return pmd_devmap(*pmd) || pmd_trans_unstable(pmd);</span></a>
+<a name="1322"><span class="lineNum">    1322 </span>            : }</a>
+<a name="1323"><span class="lineNum">    1323 </span>            : </a>
+<a name="1324"><span class="lineNum">    1324 </span>            : #ifndef CONFIG_NUMA_BALANCING</a>
+<a name="1325"><span class="lineNum">    1325 </span>            : /*</a>
+<a name="1326"><span class="lineNum">    1326 </span>            :  * Technically a PTE can be PROTNONE even when not doing NUMA balancing but</a>
+<a name="1327"><span class="lineNum">    1327 </span>            :  * the only case the kernel cares is for NUMA balancing and is only ever set</a>
+<a name="1328"><span class="lineNum">    1328 </span>            :  * when the VMA is accessible. For PROT_NONE VMAs, the PTEs are not marked</a>
+<a name="1329"><span class="lineNum">    1329 </span>            :  * _PAGE_PROTNONE so by default, implement the helper as &quot;always no&quot;. It</a>
+<a name="1330"><span class="lineNum">    1330 </span>            :  * is the responsibility of the caller to distinguish between PROT_NONE</a>
+<a name="1331"><span class="lineNum">    1331 </span>            :  * protections and NUMA hinting fault protections.</a>
+<a name="1332"><span class="lineNum">    1332 </span>            :  */</a>
+<a name="1333"><span class="lineNum">    1333 </span><span class="lineCov">      47736 : static inline int pte_protnone(pte_t pte)</span></a>
+<a name="1334"><span class="lineNum">    1334 </span>            : {</a>
+<a name="1335"><span class="lineNum">    1335 </span><span class="lineCov">      47736 :         return 0;</span></a>
+<a name="1336"><span class="lineNum">    1336 </span>            : }</a>
+<a name="1337"><span class="lineNum">    1337 </span>            : </a>
+<a name="1338"><span class="lineNum">    1338 </span><span class="lineCov">          1 : static inline int pmd_protnone(pmd_t pmd)</span></a>
+<a name="1339"><span class="lineNum">    1339 </span>            : {</a>
+<a name="1340"><span class="lineNum">    1340 </span><span class="lineCov">          1 :         return 0;</span></a>
+<a name="1341"><span class="lineNum">    1341 </span>            : }</a>
+<a name="1342"><span class="lineNum">    1342 </span>            : #endif /* CONFIG_NUMA_BALANCING */</a>
+<a name="1343"><span class="lineNum">    1343 </span>            : </a>
+<a name="1344"><span class="lineNum">    1344 </span>            : #endif /* CONFIG_MMU */</a>
+<a name="1345"><span class="lineNum">    1345 </span>            : </a>
+<a name="1346"><span class="lineNum">    1346 </span>            : #ifdef CONFIG_HAVE_ARCH_HUGE_VMAP</a>
+<a name="1347"><span class="lineNum">    1347 </span>            : </a>
+<a name="1348"><span class="lineNum">    1348 </span>            : #ifndef __PAGETABLE_P4D_FOLDED</a>
+<a name="1349"><span class="lineNum">    1349 </span>            : int p4d_set_huge(p4d_t *p4d, phys_addr_t addr, pgprot_t prot);</a>
+<a name="1350"><span class="lineNum">    1350 </span>            : int p4d_clear_huge(p4d_t *p4d);</a>
+<a name="1351"><span class="lineNum">    1351 </span>            : #else</a>
+<a name="1352"><span class="lineNum">    1352 </span><span class="lineNoCov">          0 : static inline int p4d_set_huge(p4d_t *p4d, phys_addr_t addr, pgprot_t prot)</span></a>
+<a name="1353"><span class="lineNum">    1353 </span>            : {</a>
+<a name="1354"><span class="lineNum">    1354 </span><span class="lineNoCov">          0 :         return 0;</span></a>
+<a name="1355"><span class="lineNum">    1355 </span>            : }</a>
+<a name="1356"><span class="lineNum">    1356 </span><span class="lineCov">      10574 : static inline int p4d_clear_huge(p4d_t *p4d)</span></a>
+<a name="1357"><span class="lineNum">    1357 </span>            : {</a>
+<a name="1358"><span class="lineNum">    1358 </span><span class="lineCov">      10574 :         return 0;</span></a>
+<a name="1359"><span class="lineNum">    1359 </span>            : }</a>
+<a name="1360"><span class="lineNum">    1360 </span>            : #endif /* !__PAGETABLE_P4D_FOLDED */</a>
+<a name="1361"><span class="lineNum">    1361 </span>            : </a>
+<a name="1362"><span class="lineNum">    1362 </span>            : int pud_set_huge(pud_t *pud, phys_addr_t addr, pgprot_t prot);</a>
+<a name="1363"><span class="lineNum">    1363 </span>            : int pmd_set_huge(pmd_t *pmd, phys_addr_t addr, pgprot_t prot);</a>
+<a name="1364"><span class="lineNum">    1364 </span>            : int pud_clear_huge(pud_t *pud);</a>
+<a name="1365"><span class="lineNum">    1365 </span>            : int pmd_clear_huge(pmd_t *pmd);</a>
+<a name="1366"><span class="lineNum">    1366 </span>            : int p4d_free_pud_page(p4d_t *p4d, unsigned long addr);</a>
+<a name="1367"><span class="lineNum">    1367 </span>            : int pud_free_pmd_page(pud_t *pud, unsigned long addr);</a>
+<a name="1368"><span class="lineNum">    1368 </span>            : int pmd_free_pte_page(pmd_t *pmd, unsigned long addr);</a>
+<a name="1369"><span class="lineNum">    1369 </span>            : #else   /* !CONFIG_HAVE_ARCH_HUGE_VMAP */</a>
+<a name="1370"><span class="lineNum">    1370 </span>            : static inline int p4d_set_huge(p4d_t *p4d, phys_addr_t addr, pgprot_t prot)</a>
+<a name="1371"><span class="lineNum">    1371 </span>            : {</a>
+<a name="1372"><span class="lineNum">    1372 </span>            :         return 0;</a>
+<a name="1373"><span class="lineNum">    1373 </span>            : }</a>
+<a name="1374"><span class="lineNum">    1374 </span>            : static inline int pud_set_huge(pud_t *pud, phys_addr_t addr, pgprot_t prot)</a>
+<a name="1375"><span class="lineNum">    1375 </span>            : {</a>
+<a name="1376"><span class="lineNum">    1376 </span>            :         return 0;</a>
+<a name="1377"><span class="lineNum">    1377 </span>            : }</a>
+<a name="1378"><span class="lineNum">    1378 </span>            : static inline int pmd_set_huge(pmd_t *pmd, phys_addr_t addr, pgprot_t prot)</a>
+<a name="1379"><span class="lineNum">    1379 </span>            : {</a>
+<a name="1380"><span class="lineNum">    1380 </span>            :         return 0;</a>
+<a name="1381"><span class="lineNum">    1381 </span>            : }</a>
+<a name="1382"><span class="lineNum">    1382 </span>            : static inline int p4d_clear_huge(p4d_t *p4d)</a>
+<a name="1383"><span class="lineNum">    1383 </span>            : {</a>
+<a name="1384"><span class="lineNum">    1384 </span>            :         return 0;</a>
+<a name="1385"><span class="lineNum">    1385 </span>            : }</a>
+<a name="1386"><span class="lineNum">    1386 </span>            : static inline int pud_clear_huge(pud_t *pud)</a>
+<a name="1387"><span class="lineNum">    1387 </span>            : {</a>
+<a name="1388"><span class="lineNum">    1388 </span>            :         return 0;</a>
+<a name="1389"><span class="lineNum">    1389 </span>            : }</a>
+<a name="1390"><span class="lineNum">    1390 </span>            : static inline int pmd_clear_huge(pmd_t *pmd)</a>
+<a name="1391"><span class="lineNum">    1391 </span>            : {</a>
+<a name="1392"><span class="lineNum">    1392 </span>            :         return 0;</a>
+<a name="1393"><span class="lineNum">    1393 </span>            : }</a>
+<a name="1394"><span class="lineNum">    1394 </span>            : static inline int p4d_free_pud_page(p4d_t *p4d, unsigned long addr)</a>
+<a name="1395"><span class="lineNum">    1395 </span>            : {</a>
+<a name="1396"><span class="lineNum">    1396 </span>            :         return 0;</a>
+<a name="1397"><span class="lineNum">    1397 </span>            : }</a>
+<a name="1398"><span class="lineNum">    1398 </span>            : static inline int pud_free_pmd_page(pud_t *pud, unsigned long addr)</a>
+<a name="1399"><span class="lineNum">    1399 </span>            : {</a>
+<a name="1400"><span class="lineNum">    1400 </span>            :         return 0;</a>
+<a name="1401"><span class="lineNum">    1401 </span>            : }</a>
+<a name="1402"><span class="lineNum">    1402 </span>            : static inline int pmd_free_pte_page(pmd_t *pmd, unsigned long addr)</a>
+<a name="1403"><span class="lineNum">    1403 </span>            : {</a>
+<a name="1404"><span class="lineNum">    1404 </span>            :         return 0;</a>
+<a name="1405"><span class="lineNum">    1405 </span>            : }</a>
+<a name="1406"><span class="lineNum">    1406 </span>            : #endif  /* CONFIG_HAVE_ARCH_HUGE_VMAP */</a>
+<a name="1407"><span class="lineNum">    1407 </span>            : </a>
+<a name="1408"><span class="lineNum">    1408 </span>            : #ifndef __HAVE_ARCH_FLUSH_PMD_TLB_RANGE</a>
+<a name="1409"><span class="lineNum">    1409 </span>            : #ifdef CONFIG_TRANSPARENT_HUGEPAGE</a>
+<a name="1410"><span class="lineNum">    1410 </span>            : /*</a>
+<a name="1411"><span class="lineNum">    1411 </span>            :  * ARCHes with special requirements for evicting THP backing TLB entries can</a>
+<a name="1412"><span class="lineNum">    1412 </span>            :  * implement this. Otherwise also, it can help optimize normal TLB flush in</a>
+<a name="1413"><span class="lineNum">    1413 </span>            :  * THP regime. Stock flush_tlb_range() typically has optimization to nuke the</a>
+<a name="1414"><span class="lineNum">    1414 </span>            :  * entire TLB if flush span is greater than a threshold, which will</a>
+<a name="1415"><span class="lineNum">    1415 </span>            :  * likely be true for a single huge page. Thus a single THP flush will</a>
+<a name="1416"><span class="lineNum">    1416 </span>            :  * invalidate the entire TLB which is not desirable.</a>
+<a name="1417"><span class="lineNum">    1417 </span>            :  * e.g. see arch/arc: flush_pmd_tlb_range</a>
+<a name="1418"><span class="lineNum">    1418 </span>            :  */</a>
+<a name="1419"><span class="lineNum">    1419 </span>            : #define flush_pmd_tlb_range(vma, addr, end)     flush_tlb_range(vma, addr, end)</a>
+<a name="1420"><span class="lineNum">    1420 </span>            : #define flush_pud_tlb_range(vma, addr, end)     flush_tlb_range(vma, addr, end)</a>
+<a name="1421"><span class="lineNum">    1421 </span>            : #else</a>
+<a name="1422"><span class="lineNum">    1422 </span>            : #define flush_pmd_tlb_range(vma, addr, end)     BUILD_BUG()</a>
+<a name="1423"><span class="lineNum">    1423 </span>            : #define flush_pud_tlb_range(vma, addr, end)     BUILD_BUG()</a>
+<a name="1424"><span class="lineNum">    1424 </span>            : #endif</a>
+<a name="1425"><span class="lineNum">    1425 </span>            : #endif</a>
+<a name="1426"><span class="lineNum">    1426 </span>            : </a>
+<a name="1427"><span class="lineNum">    1427 </span>            : struct file;</a>
+<a name="1428"><span class="lineNum">    1428 </span>            : int phys_mem_access_prot_allowed(struct file *file, unsigned long pfn,</a>
+<a name="1429"><span class="lineNum">    1429 </span>            :                         unsigned long size, pgprot_t *vma_prot);</a>
+<a name="1430"><span class="lineNum">    1430 </span>            : </a>
+<a name="1431"><span class="lineNum">    1431 </span>            : #ifndef CONFIG_X86_ESPFIX64</a>
+<a name="1432"><span class="lineNum">    1432 </span><span class="lineCov">          1 : static inline void init_espfix_bsp(void) { }</span></a>
+<a name="1433"><span class="lineNum">    1433 </span>            : #endif</a>
+<a name="1434"><span class="lineNum">    1434 </span>            : </a>
+<a name="1435"><span class="lineNum">    1435 </span>            : extern void __init pgtable_cache_init(void);</a>
+<a name="1436"><span class="lineNum">    1436 </span>            : </a>
+<a name="1437"><span class="lineNum">    1437 </span>            : #ifndef __HAVE_ARCH_PFN_MODIFY_ALLOWED</a>
+<a name="1438"><span class="lineNum">    1438 </span>            : static inline bool pfn_modify_allowed(unsigned long pfn, pgprot_t prot)</a>
+<a name="1439"><span class="lineNum">    1439 </span>            : {</a>
+<a name="1440"><span class="lineNum">    1440 </span>            :         return true;</a>
+<a name="1441"><span class="lineNum">    1441 </span>            : }</a>
+<a name="1442"><span class="lineNum">    1442 </span>            : </a>
+<a name="1443"><span class="lineNum">    1443 </span>            : static inline bool arch_has_pfn_modify_check(void)</a>
+<a name="1444"><span class="lineNum">    1444 </span>            : {</a>
+<a name="1445"><span class="lineNum">    1445 </span>            :         return false;</a>
+<a name="1446"><span class="lineNum">    1446 </span>            : }</a>
+<a name="1447"><span class="lineNum">    1447 </span>            : #endif /* !_HAVE_ARCH_PFN_MODIFY_ALLOWED */</a>
+<a name="1448"><span class="lineNum">    1448 </span>            : </a>
+<a name="1449"><span class="lineNum">    1449 </span>            : /*</a>
+<a name="1450"><span class="lineNum">    1450 </span>            :  * Architecture PAGE_KERNEL_* fallbacks</a>
+<a name="1451"><span class="lineNum">    1451 </span>            :  *</a>
+<a name="1452"><span class="lineNum">    1452 </span>            :  * Some architectures don't define certain PAGE_KERNEL_* flags. This is either</a>
+<a name="1453"><span class="lineNum">    1453 </span>            :  * because they really don't support them, or the port needs to be updated to</a>
+<a name="1454"><span class="lineNum">    1454 </span>            :  * reflect the required functionality. Below are a set of relatively safe</a>
+<a name="1455"><span class="lineNum">    1455 </span>            :  * fallbacks, as best effort, which we can count on in lieu of the architectures</a>
+<a name="1456"><span class="lineNum">    1456 </span>            :  * not defining them on their own yet.</a>
+<a name="1457"><span class="lineNum">    1457 </span>            :  */</a>
+<a name="1458"><span class="lineNum">    1458 </span>            : </a>
+<a name="1459"><span class="lineNum">    1459 </span>            : #ifndef PAGE_KERNEL_RO</a>
+<a name="1460"><span class="lineNum">    1460 </span>            : # define PAGE_KERNEL_RO PAGE_KERNEL</a>
+<a name="1461"><span class="lineNum">    1461 </span>            : #endif</a>
+<a name="1462"><span class="lineNum">    1462 </span>            : </a>
+<a name="1463"><span class="lineNum">    1463 </span>            : #ifndef PAGE_KERNEL_EXEC</a>
+<a name="1464"><span class="lineNum">    1464 </span>            : # define PAGE_KERNEL_EXEC PAGE_KERNEL</a>
+<a name="1465"><span class="lineNum">    1465 </span>            : #endif</a>
+<a name="1466"><span class="lineNum">    1466 </span>            : </a>
+<a name="1467"><span class="lineNum">    1467 </span>            : /*</a>
+<a name="1468"><span class="lineNum">    1468 </span>            :  * Page Table Modification bits for pgtbl_mod_mask.</a>
+<a name="1469"><span class="lineNum">    1469 </span>            :  *</a>
+<a name="1470"><span class="lineNum">    1470 </span>            :  * These are used by the p?d_alloc_track*() set of functions an in the generic</a>
+<a name="1471"><span class="lineNum">    1471 </span>            :  * vmalloc/ioremap code to track at which page-table levels entries have been</a>
+<a name="1472"><span class="lineNum">    1472 </span>            :  * modified. Based on that the code can better decide when vmalloc and ioremap</a>
+<a name="1473"><span class="lineNum">    1473 </span>            :  * mapping changes need to be synchronized to other page-tables in the system.</a>
+<a name="1474"><span class="lineNum">    1474 </span>            :  */</a>
+<a name="1475"><span class="lineNum">    1475 </span>            : #define         __PGTBL_PGD_MODIFIED    0</a>
+<a name="1476"><span class="lineNum">    1476 </span>            : #define         __PGTBL_P4D_MODIFIED    1</a>
+<a name="1477"><span class="lineNum">    1477 </span>            : #define         __PGTBL_PUD_MODIFIED    2</a>
+<a name="1478"><span class="lineNum">    1478 </span>            : #define         __PGTBL_PMD_MODIFIED    3</a>
+<a name="1479"><span class="lineNum">    1479 </span>            : #define         __PGTBL_PTE_MODIFIED    4</a>
+<a name="1480"><span class="lineNum">    1480 </span>            : </a>
+<a name="1481"><span class="lineNum">    1481 </span>            : #define         PGTBL_PGD_MODIFIED      BIT(__PGTBL_PGD_MODIFIED)</a>
+<a name="1482"><span class="lineNum">    1482 </span>            : #define         PGTBL_P4D_MODIFIED      BIT(__PGTBL_P4D_MODIFIED)</a>
+<a name="1483"><span class="lineNum">    1483 </span>            : #define         PGTBL_PUD_MODIFIED      BIT(__PGTBL_PUD_MODIFIED)</a>
+<a name="1484"><span class="lineNum">    1484 </span>            : #define         PGTBL_PMD_MODIFIED      BIT(__PGTBL_PMD_MODIFIED)</a>
+<a name="1485"><span class="lineNum">    1485 </span>            : #define         PGTBL_PTE_MODIFIED      BIT(__PGTBL_PTE_MODIFIED)</a>
+<a name="1486"><span class="lineNum">    1486 </span>            : </a>
+<a name="1487"><span class="lineNum">    1487 </span>            : /* Page-Table Modification Mask */</a>
+<a name="1488"><span class="lineNum">    1488 </span>            : typedef unsigned int pgtbl_mod_mask;</a>
+<a name="1489"><span class="lineNum">    1489 </span>            : </a>
+<a name="1490"><span class="lineNum">    1490 </span>            : #endif /* !__ASSEMBLY__ */</a>
+<a name="1491"><span class="lineNum">    1491 </span>            : </a>
+<a name="1492"><span class="lineNum">    1492 </span>            : #if !defined(MAX_POSSIBLE_PHYSMEM_BITS) &amp;&amp; !defined(CONFIG_64BIT)</a>
+<a name="1493"><span class="lineNum">    1493 </span>            : #ifdef CONFIG_PHYS_ADDR_T_64BIT</a>
+<a name="1494"><span class="lineNum">    1494 </span>            : /*</a>
+<a name="1495"><span class="lineNum">    1495 </span>            :  * ZSMALLOC needs to know the highest PFN on 32-bit architectures</a>
+<a name="1496"><span class="lineNum">    1496 </span>            :  * with physical address space extension, but falls back to</a>
+<a name="1497"><span class="lineNum">    1497 </span>            :  * BITS_PER_LONG otherwise.</a>
+<a name="1498"><span class="lineNum">    1498 </span>            :  */</a>
+<a name="1499"><span class="lineNum">    1499 </span>            : #error Missing MAX_POSSIBLE_PHYSMEM_BITS definition</a>
+<a name="1500"><span class="lineNum">    1500 </span>            : #else</a>
+<a name="1501"><span class="lineNum">    1501 </span>            : #define MAX_POSSIBLE_PHYSMEM_BITS 32</a>
+<a name="1502"><span class="lineNum">    1502 </span>            : #endif</a>
+<a name="1503"><span class="lineNum">    1503 </span>            : #endif</a>
+<a name="1504"><span class="lineNum">    1504 </span>            : </a>
+<a name="1505"><span class="lineNum">    1505 </span>            : #ifndef has_transparent_hugepage</a>
+<a name="1506"><span class="lineNum">    1506 </span>            : #ifdef CONFIG_TRANSPARENT_HUGEPAGE</a>
+<a name="1507"><span class="lineNum">    1507 </span>            : #define has_transparent_hugepage() 1</a>
+<a name="1508"><span class="lineNum">    1508 </span>            : #else</a>
+<a name="1509"><span class="lineNum">    1509 </span>            : #define has_transparent_hugepage() 0</a>
+<a name="1510"><span class="lineNum">    1510 </span>            : #endif</a>
+<a name="1511"><span class="lineNum">    1511 </span>            : #endif</a>
+<a name="1512"><span class="lineNum">    1512 </span>            : </a>
+<a name="1513"><span class="lineNum">    1513 </span>            : /*</a>
+<a name="1514"><span class="lineNum">    1514 </span>            :  * On some architectures it depends on the mm if the p4d/pud or pmd</a>
+<a name="1515"><span class="lineNum">    1515 </span>            :  * layer of the page table hierarchy is folded or not.</a>
+<a name="1516"><span class="lineNum">    1516 </span>            :  */</a>
+<a name="1517"><span class="lineNum">    1517 </span>            : #ifndef mm_p4d_folded</a>
+<a name="1518"><span class="lineNum">    1518 </span>            : #define mm_p4d_folded(mm)       __is_defined(__PAGETABLE_P4D_FOLDED)</a>
+<a name="1519"><span class="lineNum">    1519 </span>            : #endif</a>
+<a name="1520"><span class="lineNum">    1520 </span>            : </a>
+<a name="1521"><span class="lineNum">    1521 </span>            : #ifndef mm_pud_folded</a>
+<a name="1522"><span class="lineNum">    1522 </span>            : #define mm_pud_folded(mm)       __is_defined(__PAGETABLE_PUD_FOLDED)</a>
+<a name="1523"><span class="lineNum">    1523 </span>            : #endif</a>
+<a name="1524"><span class="lineNum">    1524 </span>            : </a>
+<a name="1525"><span class="lineNum">    1525 </span>            : #ifndef mm_pmd_folded</a>
+<a name="1526"><span class="lineNum">    1526 </span>            : #define mm_pmd_folded(mm)       __is_defined(__PAGETABLE_PMD_FOLDED)</a>
+<a name="1527"><span class="lineNum">    1527 </span>            : #endif</a>
+<a name="1528"><span class="lineNum">    1528 </span>            : </a>
+<a name="1529"><span class="lineNum">    1529 </span>            : #ifndef p4d_offset_lockless</a>
+<a name="1530"><span class="lineNum">    1530 </span>            : #define p4d_offset_lockless(pgdp, pgd, address) p4d_offset(&amp;(pgd), address)</a>
+<a name="1531"><span class="lineNum">    1531 </span>            : #endif</a>
+<a name="1532"><span class="lineNum">    1532 </span>            : #ifndef pud_offset_lockless</a>
+<a name="1533"><span class="lineNum">    1533 </span>            : #define pud_offset_lockless(p4dp, p4d, address) pud_offset(&amp;(p4d), address)</a>
+<a name="1534"><span class="lineNum">    1534 </span>            : #endif</a>
+<a name="1535"><span class="lineNum">    1535 </span>            : #ifndef pmd_offset_lockless</a>
+<a name="1536"><span class="lineNum">    1536 </span>            : #define pmd_offset_lockless(pudp, pud, address) pmd_offset(&amp;(pud), address)</a>
+<a name="1537"><span class="lineNum">    1537 </span>            : #endif</a>
+<a name="1538"><span class="lineNum">    1538 </span>            : </a>
+<a name="1539"><span class="lineNum">    1539 </span>            : /*</a>
+<a name="1540"><span class="lineNum">    1540 </span>            :  * p?d_leaf() - true if this entry is a final mapping to a physical address.</a>
+<a name="1541"><span class="lineNum">    1541 </span>            :  * This differs from p?d_huge() by the fact that they are always available (if</a>
+<a name="1542"><span class="lineNum">    1542 </span>            :  * the architecture supports large pages at the appropriate level) even</a>
+<a name="1543"><span class="lineNum">    1543 </span>            :  * if CONFIG_HUGETLB_PAGE is not defined.</a>
+<a name="1544"><span class="lineNum">    1544 </span>            :  * Only meaningful when called on a valid entry.</a>
+<a name="1545"><span class="lineNum">    1545 </span>            :  */</a>
+<a name="1546"><span class="lineNum">    1546 </span>            : #ifndef pgd_leaf</a>
+<a name="1547"><span class="lineNum">    1547 </span>            : #define pgd_leaf(x)     0</a>
+<a name="1548"><span class="lineNum">    1548 </span>            : #endif</a>
+<a name="1549"><span class="lineNum">    1549 </span>            : #ifndef p4d_leaf</a>
+<a name="1550"><span class="lineNum">    1550 </span>            : #define p4d_leaf(x)     0</a>
+<a name="1551"><span class="lineNum">    1551 </span>            : #endif</a>
+<a name="1552"><span class="lineNum">    1552 </span>            : #ifndef pud_leaf</a>
+<a name="1553"><span class="lineNum">    1553 </span>            : #define pud_leaf(x)     0</a>
+<a name="1554"><span class="lineNum">    1554 </span>            : #endif</a>
+<a name="1555"><span class="lineNum">    1555 </span>            : #ifndef pmd_leaf</a>
+<a name="1556"><span class="lineNum">    1556 </span>            : #define pmd_leaf(x)     0</a>
+<a name="1557"><span class="lineNum">    1557 </span>            : #endif</a>
+<a name="1558"><span class="lineNum">    1558 </span>            : </a>
+<a name="1559"><span class="lineNum">    1559 </span>            : #ifndef pgd_leaf_size</a>
+<a name="1560"><span class="lineNum">    1560 </span>            : #define pgd_leaf_size(x) (1ULL &lt;&lt; PGDIR_SHIFT)</a>
+<a name="1561"><span class="lineNum">    1561 </span>            : #endif</a>
+<a name="1562"><span class="lineNum">    1562 </span>            : #ifndef p4d_leaf_size</a>
+<a name="1563"><span class="lineNum">    1563 </span>            : #define p4d_leaf_size(x) P4D_SIZE</a>
+<a name="1564"><span class="lineNum">    1564 </span>            : #endif</a>
+<a name="1565"><span class="lineNum">    1565 </span>            : #ifndef pud_leaf_size</a>
+<a name="1566"><span class="lineNum">    1566 </span>            : #define pud_leaf_size(x) PUD_SIZE</a>
+<a name="1567"><span class="lineNum">    1567 </span>            : #endif</a>
+<a name="1568"><span class="lineNum">    1568 </span>            : #ifndef pmd_leaf_size</a>
+<a name="1569"><span class="lineNum">    1569 </span>            : #define pmd_leaf_size(x) PMD_SIZE</a>
+<a name="1570"><span class="lineNum">    1570 </span>            : #endif</a>
+<a name="1571"><span class="lineNum">    1571 </span>            : #ifndef pte_leaf_size</a>
+<a name="1572"><span class="lineNum">    1572 </span>            : #define pte_leaf_size(x) PAGE_SIZE</a>
+<a name="1573"><span class="lineNum">    1573 </span>            : #endif</a>
+<a name="1574"><span class="lineNum">    1574 </span>            : </a>
+<a name="1575"><span class="lineNum">    1575 </span>            : #endif /* _LINUX_PGTABLE_H */</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

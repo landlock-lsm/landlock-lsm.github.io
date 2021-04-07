@@ -1,0 +1,213 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - landlock.info - net/ipv6/ip6_checksum.c</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">net/ipv6</a> - ip6_checksum.c<span style="font-size: 80%;"> (source / <a href="ip6_checksum.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">landlock.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">31</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2021-04-07 12:34:12</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">2</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : // SPDX-License-Identifier: GPL-2.0</a>
+<a name="2"><span class="lineNum">       2 </span>            : #include &lt;net/ip.h&gt;</a>
+<a name="3"><span class="lineNum">       3 </span>            : #include &lt;net/udp.h&gt;</a>
+<a name="4"><span class="lineNum">       4 </span>            : #include &lt;net/udplite.h&gt;</a>
+<a name="5"><span class="lineNum">       5 </span>            : #include &lt;asm/checksum.h&gt;</a>
+<a name="6"><span class="lineNum">       6 </span>            : </a>
+<a name="7"><span class="lineNum">       7 </span>            : #ifndef _HAVE_ARCH_IPV6_CSUM</a>
+<a name="8"><span class="lineNum">       8 </span>            : __sum16 csum_ipv6_magic(const struct in6_addr *saddr,</a>
+<a name="9"><span class="lineNum">       9 </span>            :                         const struct in6_addr *daddr,</a>
+<a name="10"><span class="lineNum">      10 </span>            :                         __u32 len, __u8 proto, __wsum csum)</a>
+<a name="11"><span class="lineNum">      11 </span>            : {</a>
+<a name="12"><span class="lineNum">      12 </span>            : </a>
+<a name="13"><span class="lineNum">      13 </span>            :         int carry;</a>
+<a name="14"><span class="lineNum">      14 </span>            :         __u32 ulen;</a>
+<a name="15"><span class="lineNum">      15 </span>            :         __u32 uproto;</a>
+<a name="16"><span class="lineNum">      16 </span>            :         __u32 sum = (__force u32)csum;</a>
+<a name="17"><span class="lineNum">      17 </span>            : </a>
+<a name="18"><span class="lineNum">      18 </span>            :         sum += (__force u32)saddr-&gt;s6_addr32[0];</a>
+<a name="19"><span class="lineNum">      19 </span>            :         carry = (sum &lt; (__force u32)saddr-&gt;s6_addr32[0]);</a>
+<a name="20"><span class="lineNum">      20 </span>            :         sum += carry;</a>
+<a name="21"><span class="lineNum">      21 </span>            : </a>
+<a name="22"><span class="lineNum">      22 </span>            :         sum += (__force u32)saddr-&gt;s6_addr32[1];</a>
+<a name="23"><span class="lineNum">      23 </span>            :         carry = (sum &lt; (__force u32)saddr-&gt;s6_addr32[1]);</a>
+<a name="24"><span class="lineNum">      24 </span>            :         sum += carry;</a>
+<a name="25"><span class="lineNum">      25 </span>            : </a>
+<a name="26"><span class="lineNum">      26 </span>            :         sum += (__force u32)saddr-&gt;s6_addr32[2];</a>
+<a name="27"><span class="lineNum">      27 </span>            :         carry = (sum &lt; (__force u32)saddr-&gt;s6_addr32[2]);</a>
+<a name="28"><span class="lineNum">      28 </span>            :         sum += carry;</a>
+<a name="29"><span class="lineNum">      29 </span>            : </a>
+<a name="30"><span class="lineNum">      30 </span>            :         sum += (__force u32)saddr-&gt;s6_addr32[3];</a>
+<a name="31"><span class="lineNum">      31 </span>            :         carry = (sum &lt; (__force u32)saddr-&gt;s6_addr32[3]);</a>
+<a name="32"><span class="lineNum">      32 </span>            :         sum += carry;</a>
+<a name="33"><span class="lineNum">      33 </span>            : </a>
+<a name="34"><span class="lineNum">      34 </span>            :         sum += (__force u32)daddr-&gt;s6_addr32[0];</a>
+<a name="35"><span class="lineNum">      35 </span>            :         carry = (sum &lt; (__force u32)daddr-&gt;s6_addr32[0]);</a>
+<a name="36"><span class="lineNum">      36 </span>            :         sum += carry;</a>
+<a name="37"><span class="lineNum">      37 </span>            : </a>
+<a name="38"><span class="lineNum">      38 </span>            :         sum += (__force u32)daddr-&gt;s6_addr32[1];</a>
+<a name="39"><span class="lineNum">      39 </span>            :         carry = (sum &lt; (__force u32)daddr-&gt;s6_addr32[1]);</a>
+<a name="40"><span class="lineNum">      40 </span>            :         sum += carry;</a>
+<a name="41"><span class="lineNum">      41 </span>            : </a>
+<a name="42"><span class="lineNum">      42 </span>            :         sum += (__force u32)daddr-&gt;s6_addr32[2];</a>
+<a name="43"><span class="lineNum">      43 </span>            :         carry = (sum &lt; (__force u32)daddr-&gt;s6_addr32[2]);</a>
+<a name="44"><span class="lineNum">      44 </span>            :         sum += carry;</a>
+<a name="45"><span class="lineNum">      45 </span>            : </a>
+<a name="46"><span class="lineNum">      46 </span>            :         sum += (__force u32)daddr-&gt;s6_addr32[3];</a>
+<a name="47"><span class="lineNum">      47 </span>            :         carry = (sum &lt; (__force u32)daddr-&gt;s6_addr32[3]);</a>
+<a name="48"><span class="lineNum">      48 </span>            :         sum += carry;</a>
+<a name="49"><span class="lineNum">      49 </span>            : </a>
+<a name="50"><span class="lineNum">      50 </span>            :         ulen = (__force u32)htonl((__u32) len);</a>
+<a name="51"><span class="lineNum">      51 </span>            :         sum += ulen;</a>
+<a name="52"><span class="lineNum">      52 </span>            :         carry = (sum &lt; ulen);</a>
+<a name="53"><span class="lineNum">      53 </span>            :         sum += carry;</a>
+<a name="54"><span class="lineNum">      54 </span>            : </a>
+<a name="55"><span class="lineNum">      55 </span>            :         uproto = (__force u32)htonl(proto);</a>
+<a name="56"><span class="lineNum">      56 </span>            :         sum += uproto;</a>
+<a name="57"><span class="lineNum">      57 </span>            :         carry = (sum &lt; uproto);</a>
+<a name="58"><span class="lineNum">      58 </span>            :         sum += carry;</a>
+<a name="59"><span class="lineNum">      59 </span>            : </a>
+<a name="60"><span class="lineNum">      60 </span>            :         return csum_fold((__force __wsum)sum);</a>
+<a name="61"><span class="lineNum">      61 </span>            : }</a>
+<a name="62"><span class="lineNum">      62 </span>            : EXPORT_SYMBOL(csum_ipv6_magic);</a>
+<a name="63"><span class="lineNum">      63 </span>            : #endif</a>
+<a name="64"><span class="lineNum">      64 </span>            : </a>
+<a name="65"><span class="lineNum">      65 </span><span class="lineNoCov">          0 : int udp6_csum_init(struct sk_buff *skb, struct udphdr *uh, int proto)</span></a>
+<a name="66"><span class="lineNum">      66 </span>            : {</a>
+<a name="67"><span class="lineNum">      67 </span><span class="lineNoCov">          0 :         int err;</span></a>
+<a name="68"><span class="lineNum">      68 </span>            : </a>
+<a name="69"><span class="lineNum">      69 </span><span class="lineNoCov">          0 :         UDP_SKB_CB(skb)-&gt;partial_cov = 0;</span></a>
+<a name="70"><span class="lineNum">      70 </span><span class="lineNoCov">          0 :         UDP_SKB_CB(skb)-&gt;cscov = skb-&gt;len;</span></a>
+<a name="71"><span class="lineNum">      71 </span>            : </a>
+<a name="72"><span class="lineNum">      72 </span><span class="lineNoCov">          0 :         if (proto == IPPROTO_UDPLITE) {</span></a>
+<a name="73"><span class="lineNum">      73 </span><span class="lineNoCov">          0 :                 err = udplite_checksum_init(skb, uh);</span></a>
+<a name="74"><span class="lineNum">      74 </span><span class="lineNoCov">          0 :                 if (err)</span></a>
+<a name="75"><span class="lineNum">      75 </span>            :                         return err;</a>
+<a name="76"><span class="lineNum">      76 </span>            : </a>
+<a name="77"><span class="lineNum">      77 </span><span class="lineNoCov">          0 :                 if (UDP_SKB_CB(skb)-&gt;partial_cov) {</span></a>
+<a name="78"><span class="lineNum">      78 </span><span class="lineNoCov">          0 :                         skb-&gt;csum = ip6_compute_pseudo(skb, proto);</span></a>
+<a name="79"><span class="lineNum">      79 </span><span class="lineNoCov">          0 :                         return 0;</span></a>
+<a name="80"><span class="lineNum">      80 </span>            :                 }</a>
+<a name="81"><span class="lineNum">      81 </span>            :         }</a>
+<a name="82"><span class="lineNum">      82 </span>            : </a>
+<a name="83"><span class="lineNum">      83 </span>            :         /* To support RFC 6936 (allow zero checksum in UDP/IPV6 for tunnels)</a>
+<a name="84"><span class="lineNum">      84 </span>            :          * we accept a checksum of zero here. When we find the socket</a>
+<a name="85"><span class="lineNum">      85 </span>            :          * for the UDP packet we'll check if that socket allows zero checksum</a>
+<a name="86"><span class="lineNum">      86 </span>            :          * for IPv6 (set by socket option).</a>
+<a name="87"><span class="lineNum">      87 </span>            :          *</a>
+<a name="88"><span class="lineNum">      88 </span>            :          * Note, we are only interested in != 0 or == 0, thus the</a>
+<a name="89"><span class="lineNum">      89 </span>            :          * force to int.</a>
+<a name="90"><span class="lineNum">      90 </span>            :          */</a>
+<a name="91"><span class="lineNum">      91 </span><span class="lineNoCov">          0 :         err = (__force int)skb_checksum_init_zero_check(skb, proto, uh-&gt;check,</span></a>
+<a name="92"><span class="lineNum">      92 </span>            :                                                         ip6_compute_pseudo);</a>
+<a name="93"><span class="lineNum">      93 </span><span class="lineNoCov">          0 :         if (err)</span></a>
+<a name="94"><span class="lineNum">      94 </span>            :                 return err;</a>
+<a name="95"><span class="lineNum">      95 </span>            : </a>
+<a name="96"><span class="lineNum">      96 </span><span class="lineNoCov">          0 :         if (skb-&gt;ip_summed == CHECKSUM_COMPLETE &amp;&amp; !skb-&gt;csum_valid) {</span></a>
+<a name="97"><span class="lineNum">      97 </span>            :                 /* If SW calculated the value, we know it's bad */</a>
+<a name="98"><span class="lineNum">      98 </span><span class="lineNoCov">          0 :                 if (skb-&gt;csum_complete_sw)</span></a>
+<a name="99"><span class="lineNum">      99 </span>            :                         return 1;</a>
+<a name="100"><span class="lineNum">     100 </span>            : </a>
+<a name="101"><span class="lineNum">     101 </span>            :                 /* HW says the value is bad. Let's validate that.</a>
+<a name="102"><span class="lineNum">     102 </span>            :                  * skb-&gt;csum is no longer the full packet checksum,</a>
+<a name="103"><span class="lineNum">     103 </span>            :                  * so don't treat is as such.</a>
+<a name="104"><span class="lineNum">     104 </span>            :                  */</a>
+<a name="105"><span class="lineNum">     105 </span><span class="lineNoCov">          0 :                 skb_checksum_complete_unset(skb);</span></a>
+<a name="106"><span class="lineNum">     106 </span>            :         }</a>
+<a name="107"><span class="lineNum">     107 </span>            : </a>
+<a name="108"><span class="lineNum">     108 </span>            :         return 0;</a>
+<a name="109"><span class="lineNum">     109 </span>            : }</a>
+<a name="110"><span class="lineNum">     110 </span>            : EXPORT_SYMBOL(udp6_csum_init);</a>
+<a name="111"><span class="lineNum">     111 </span>            : </a>
+<a name="112"><span class="lineNum">     112 </span>            : /* Function to set UDP checksum for an IPv6 UDP packet. This is intended</a>
+<a name="113"><span class="lineNum">     113 </span>            :  * for the simple case like when setting the checksum for a UDP tunnel.</a>
+<a name="114"><span class="lineNum">     114 </span>            :  */</a>
+<a name="115"><span class="lineNum">     115 </span><span class="lineNoCov">          0 : void udp6_set_csum(bool nocheck, struct sk_buff *skb,</span></a>
+<a name="116"><span class="lineNum">     116 </span>            :                    const struct in6_addr *saddr,</a>
+<a name="117"><span class="lineNum">     117 </span>            :                    const struct in6_addr *daddr, int len)</a>
+<a name="118"><span class="lineNum">     118 </span>            : {</a>
+<a name="119"><span class="lineNum">     119 </span><span class="lineNoCov">          0 :         struct udphdr *uh = udp_hdr(skb);</span></a>
+<a name="120"><span class="lineNum">     120 </span>            : </a>
+<a name="121"><span class="lineNum">     121 </span><span class="lineNoCov">          0 :         if (nocheck)</span></a>
+<a name="122"><span class="lineNum">     122 </span><span class="lineNoCov">          0 :                 uh-&gt;check = 0;</span></a>
+<a name="123"><span class="lineNum">     123 </span><span class="lineNoCov">          0 :         else if (skb_is_gso(skb))</span></a>
+<a name="124"><span class="lineNum">     124 </span><span class="lineNoCov">          0 :                 uh-&gt;check = ~udp_v6_check(len, saddr, daddr, 0);</span></a>
+<a name="125"><span class="lineNum">     125 </span><span class="lineNoCov">          0 :         else if (skb-&gt;ip_summed == CHECKSUM_PARTIAL) {</span></a>
+<a name="126"><span class="lineNum">     126 </span><span class="lineNoCov">          0 :                 uh-&gt;check = 0;</span></a>
+<a name="127"><span class="lineNum">     127 </span><span class="lineNoCov">          0 :                 uh-&gt;check = udp_v6_check(len, saddr, daddr, lco_csum(skb));</span></a>
+<a name="128"><span class="lineNum">     128 </span><span class="lineNoCov">          0 :                 if (uh-&gt;check == 0)</span></a>
+<a name="129"><span class="lineNum">     129 </span><span class="lineNoCov">          0 :                         uh-&gt;check = CSUM_MANGLED_0;</span></a>
+<a name="130"><span class="lineNum">     130 </span>            :         } else {</a>
+<a name="131"><span class="lineNum">     131 </span><span class="lineNoCov">          0 :                 skb-&gt;ip_summed = CHECKSUM_PARTIAL;</span></a>
+<a name="132"><span class="lineNum">     132 </span><span class="lineNoCov">          0 :                 skb-&gt;csum_start = skb_transport_header(skb) - skb-&gt;head;</span></a>
+<a name="133"><span class="lineNum">     133 </span><span class="lineNoCov">          0 :                 skb-&gt;csum_offset = offsetof(struct udphdr, check);</span></a>
+<a name="134"><span class="lineNum">     134 </span><span class="lineNoCov">          0 :                 uh-&gt;check = ~udp_v6_check(len, saddr, daddr, 0);</span></a>
+<a name="135"><span class="lineNum">     135 </span>            :         }</a>
+<a name="136"><span class="lineNum">     136 </span><span class="lineNoCov">          0 : }</span></a>
+<a name="137"><span class="lineNum">     137 </span>            : EXPORT_SYMBOL(udp6_set_csum);</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

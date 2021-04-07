@@ -1,0 +1,465 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - landlock.info - kernel/trace/trace_printk.c</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">kernel/trace</a> - trace_printk.c<span style="font-size: 80%;"> (source / <a href="trace_printk.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">landlock.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">8</td>
+            <td class="headerCovTableEntry">87</td>
+            <td class="headerCovTableEntryLo">9.2 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2021-04-07 12:34:12</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">2</td>
+            <td class="headerCovTableEntry">12</td>
+            <td class="headerCovTableEntryLo">16.7 %</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : // SPDX-License-Identifier: GPL-2.0</a>
+<a name="2"><span class="lineNum">       2 </span>            : /*</a>
+<a name="3"><span class="lineNum">       3 </span>            :  * trace binary printk</a>
+<a name="4"><span class="lineNum">       4 </span>            :  *</a>
+<a name="5"><span class="lineNum">       5 </span>            :  * Copyright (C) 2008 Lai Jiangshan &lt;laijs@cn.fujitsu.com&gt;</a>
+<a name="6"><span class="lineNum">       6 </span>            :  *</a>
+<a name="7"><span class="lineNum">       7 </span>            :  */</a>
+<a name="8"><span class="lineNum">       8 </span>            : #include &lt;linux/seq_file.h&gt;</a>
+<a name="9"><span class="lineNum">       9 </span>            : #include &lt;linux/security.h&gt;</a>
+<a name="10"><span class="lineNum">      10 </span>            : #include &lt;linux/uaccess.h&gt;</a>
+<a name="11"><span class="lineNum">      11 </span>            : #include &lt;linux/kernel.h&gt;</a>
+<a name="12"><span class="lineNum">      12 </span>            : #include &lt;linux/ftrace.h&gt;</a>
+<a name="13"><span class="lineNum">      13 </span>            : #include &lt;linux/string.h&gt;</a>
+<a name="14"><span class="lineNum">      14 </span>            : #include &lt;linux/module.h&gt;</a>
+<a name="15"><span class="lineNum">      15 </span>            : #include &lt;linux/mutex.h&gt;</a>
+<a name="16"><span class="lineNum">      16 </span>            : #include &lt;linux/ctype.h&gt;</a>
+<a name="17"><span class="lineNum">      17 </span>            : #include &lt;linux/list.h&gt;</a>
+<a name="18"><span class="lineNum">      18 </span>            : #include &lt;linux/slab.h&gt;</a>
+<a name="19"><span class="lineNum">      19 </span>            : </a>
+<a name="20"><span class="lineNum">      20 </span>            : #include &quot;trace.h&quot;</a>
+<a name="21"><span class="lineNum">      21 </span>            : </a>
+<a name="22"><span class="lineNum">      22 </span>            : #ifdef CONFIG_MODULES</a>
+<a name="23"><span class="lineNum">      23 </span>            : </a>
+<a name="24"><span class="lineNum">      24 </span>            : /*</a>
+<a name="25"><span class="lineNum">      25 </span>            :  * modules trace_printk()'s formats are autosaved in struct trace_bprintk_fmt</a>
+<a name="26"><span class="lineNum">      26 </span>            :  * which are queued on trace_bprintk_fmt_list.</a>
+<a name="27"><span class="lineNum">      27 </span>            :  */</a>
+<a name="28"><span class="lineNum">      28 </span>            : static LIST_HEAD(trace_bprintk_fmt_list);</a>
+<a name="29"><span class="lineNum">      29 </span>            : </a>
+<a name="30"><span class="lineNum">      30 </span>            : /* serialize accesses to trace_bprintk_fmt_list */</a>
+<a name="31"><span class="lineNum">      31 </span>            : static DEFINE_MUTEX(btrace_mutex);</a>
+<a name="32"><span class="lineNum">      32 </span>            : </a>
+<a name="33"><span class="lineNum">      33 </span>            : struct trace_bprintk_fmt {</a>
+<a name="34"><span class="lineNum">      34 </span>            :         struct list_head list;</a>
+<a name="35"><span class="lineNum">      35 </span>            :         const char *fmt;</a>
+<a name="36"><span class="lineNum">      36 </span>            : };</a>
+<a name="37"><span class="lineNum">      37 </span>            : </a>
+<a name="38"><span class="lineNum">      38 </span>            : static inline struct trace_bprintk_fmt *lookup_format(const char *fmt)</a>
+<a name="39"><span class="lineNum">      39 </span>            : {</a>
+<a name="40"><span class="lineNum">      40 </span>            :         struct trace_bprintk_fmt *pos;</a>
+<a name="41"><span class="lineNum">      41 </span>            : </a>
+<a name="42"><span class="lineNum">      42 </span>            :         if (!fmt)</a>
+<a name="43"><span class="lineNum">      43 </span>            :                 return ERR_PTR(-EINVAL);</a>
+<a name="44"><span class="lineNum">      44 </span>            : </a>
+<a name="45"><span class="lineNum">      45 </span>            :         list_for_each_entry(pos, &amp;trace_bprintk_fmt_list, list) {</a>
+<a name="46"><span class="lineNum">      46 </span>            :                 if (!strcmp(pos-&gt;fmt, fmt))</a>
+<a name="47"><span class="lineNum">      47 </span>            :                         return pos;</a>
+<a name="48"><span class="lineNum">      48 </span>            :         }</a>
+<a name="49"><span class="lineNum">      49 </span>            :         return NULL;</a>
+<a name="50"><span class="lineNum">      50 </span>            : }</a>
+<a name="51"><span class="lineNum">      51 </span>            : </a>
+<a name="52"><span class="lineNum">      52 </span>            : static</a>
+<a name="53"><span class="lineNum">      53 </span>            : void hold_module_trace_bprintk_format(const char **start, const char **end)</a>
+<a name="54"><span class="lineNum">      54 </span>            : {</a>
+<a name="55"><span class="lineNum">      55 </span>            :         const char **iter;</a>
+<a name="56"><span class="lineNum">      56 </span>            :         char *fmt;</a>
+<a name="57"><span class="lineNum">      57 </span>            : </a>
+<a name="58"><span class="lineNum">      58 </span>            :         /* allocate the trace_printk per cpu buffers */</a>
+<a name="59"><span class="lineNum">      59 </span>            :         if (start != end)</a>
+<a name="60"><span class="lineNum">      60 </span>            :                 trace_printk_init_buffers();</a>
+<a name="61"><span class="lineNum">      61 </span>            : </a>
+<a name="62"><span class="lineNum">      62 </span>            :         mutex_lock(&amp;btrace_mutex);</a>
+<a name="63"><span class="lineNum">      63 </span>            :         for (iter = start; iter &lt; end; iter++) {</a>
+<a name="64"><span class="lineNum">      64 </span>            :                 struct trace_bprintk_fmt *tb_fmt = lookup_format(*iter);</a>
+<a name="65"><span class="lineNum">      65 </span>            :                 if (tb_fmt) {</a>
+<a name="66"><span class="lineNum">      66 </span>            :                         if (!IS_ERR(tb_fmt))</a>
+<a name="67"><span class="lineNum">      67 </span>            :                                 *iter = tb_fmt-&gt;fmt;</a>
+<a name="68"><span class="lineNum">      68 </span>            :                         continue;</a>
+<a name="69"><span class="lineNum">      69 </span>            :                 }</a>
+<a name="70"><span class="lineNum">      70 </span>            : </a>
+<a name="71"><span class="lineNum">      71 </span>            :                 fmt = NULL;</a>
+<a name="72"><span class="lineNum">      72 </span>            :                 tb_fmt = kmalloc(sizeof(*tb_fmt), GFP_KERNEL);</a>
+<a name="73"><span class="lineNum">      73 </span>            :                 if (tb_fmt) {</a>
+<a name="74"><span class="lineNum">      74 </span>            :                         fmt = kmalloc(strlen(*iter) + 1, GFP_KERNEL);</a>
+<a name="75"><span class="lineNum">      75 </span>            :                         if (fmt) {</a>
+<a name="76"><span class="lineNum">      76 </span>            :                                 list_add_tail(&amp;tb_fmt-&gt;list, &amp;trace_bprintk_fmt_list);</a>
+<a name="77"><span class="lineNum">      77 </span>            :                                 strcpy(fmt, *iter);</a>
+<a name="78"><span class="lineNum">      78 </span>            :                                 tb_fmt-&gt;fmt = fmt;</a>
+<a name="79"><span class="lineNum">      79 </span>            :                         } else</a>
+<a name="80"><span class="lineNum">      80 </span>            :                                 kfree(tb_fmt);</a>
+<a name="81"><span class="lineNum">      81 </span>            :                 }</a>
+<a name="82"><span class="lineNum">      82 </span>            :                 *iter = fmt;</a>
+<a name="83"><span class="lineNum">      83 </span>            : </a>
+<a name="84"><span class="lineNum">      84 </span>            :         }</a>
+<a name="85"><span class="lineNum">      85 </span>            :         mutex_unlock(&amp;btrace_mutex);</a>
+<a name="86"><span class="lineNum">      86 </span>            : }</a>
+<a name="87"><span class="lineNum">      87 </span>            : </a>
+<a name="88"><span class="lineNum">      88 </span>            : static int module_trace_bprintk_format_notify(struct notifier_block *self,</a>
+<a name="89"><span class="lineNum">      89 </span>            :                 unsigned long val, void *data)</a>
+<a name="90"><span class="lineNum">      90 </span>            : {</a>
+<a name="91"><span class="lineNum">      91 </span>            :         struct module *mod = data;</a>
+<a name="92"><span class="lineNum">      92 </span>            :         if (mod-&gt;num_trace_bprintk_fmt) {</a>
+<a name="93"><span class="lineNum">      93 </span>            :                 const char **start = mod-&gt;trace_bprintk_fmt_start;</a>
+<a name="94"><span class="lineNum">      94 </span>            :                 const char **end = start + mod-&gt;num_trace_bprintk_fmt;</a>
+<a name="95"><span class="lineNum">      95 </span>            : </a>
+<a name="96"><span class="lineNum">      96 </span>            :                 if (val == MODULE_STATE_COMING)</a>
+<a name="97"><span class="lineNum">      97 </span>            :                         hold_module_trace_bprintk_format(start, end);</a>
+<a name="98"><span class="lineNum">      98 </span>            :         }</a>
+<a name="99"><span class="lineNum">      99 </span>            :         return NOTIFY_OK;</a>
+<a name="100"><span class="lineNum">     100 </span>            : }</a>
+<a name="101"><span class="lineNum">     101 </span>            : </a>
+<a name="102"><span class="lineNum">     102 </span>            : /*</a>
+<a name="103"><span class="lineNum">     103 </span>            :  * The debugfs/tracing/printk_formats file maps the addresses with</a>
+<a name="104"><span class="lineNum">     104 </span>            :  * the ASCII formats that are used in the bprintk events in the</a>
+<a name="105"><span class="lineNum">     105 </span>            :  * buffer. For userspace tools to be able to decode the events from</a>
+<a name="106"><span class="lineNum">     106 </span>            :  * the buffer, they need to be able to map the address with the format.</a>
+<a name="107"><span class="lineNum">     107 </span>            :  *</a>
+<a name="108"><span class="lineNum">     108 </span>            :  * The addresses of the bprintk formats are in their own section</a>
+<a name="109"><span class="lineNum">     109 </span>            :  * __trace_printk_fmt. But for modules we copy them into a link list.</a>
+<a name="110"><span class="lineNum">     110 </span>            :  * The code to print the formats and their addresses passes around the</a>
+<a name="111"><span class="lineNum">     111 </span>            :  * address of the fmt string. If the fmt address passed into the seq</a>
+<a name="112"><span class="lineNum">     112 </span>            :  * functions is within the kernel core __trace_printk_fmt section, then</a>
+<a name="113"><span class="lineNum">     113 </span>            :  * it simply uses the next pointer in the list.</a>
+<a name="114"><span class="lineNum">     114 </span>            :  *</a>
+<a name="115"><span class="lineNum">     115 </span>            :  * When the fmt pointer is outside the kernel core __trace_printk_fmt</a>
+<a name="116"><span class="lineNum">     116 </span>            :  * section, then we need to read the link list pointers. The trick is</a>
+<a name="117"><span class="lineNum">     117 </span>            :  * we pass the address of the string to the seq function just like</a>
+<a name="118"><span class="lineNum">     118 </span>            :  * we do for the kernel core formats. To get back the structure that</a>
+<a name="119"><span class="lineNum">     119 </span>            :  * holds the format, we simply use container_of() and then go to the</a>
+<a name="120"><span class="lineNum">     120 </span>            :  * next format in the list.</a>
+<a name="121"><span class="lineNum">     121 </span>            :  */</a>
+<a name="122"><span class="lineNum">     122 </span>            : static const char **</a>
+<a name="123"><span class="lineNum">     123 </span>            : find_next_mod_format(int start_index, void *v, const char **fmt, loff_t *pos)</a>
+<a name="124"><span class="lineNum">     124 </span>            : {</a>
+<a name="125"><span class="lineNum">     125 </span>            :         struct trace_bprintk_fmt *mod_fmt;</a>
+<a name="126"><span class="lineNum">     126 </span>            : </a>
+<a name="127"><span class="lineNum">     127 </span>            :         if (list_empty(&amp;trace_bprintk_fmt_list))</a>
+<a name="128"><span class="lineNum">     128 </span>            :                 return NULL;</a>
+<a name="129"><span class="lineNum">     129 </span>            : </a>
+<a name="130"><span class="lineNum">     130 </span>            :         /*</a>
+<a name="131"><span class="lineNum">     131 </span>            :          * v will point to the address of the fmt record from t_next</a>
+<a name="132"><span class="lineNum">     132 </span>            :          * v will be NULL from t_start.</a>
+<a name="133"><span class="lineNum">     133 </span>            :          * If this is the first pointer or called from start</a>
+<a name="134"><span class="lineNum">     134 </span>            :          * then we need to walk the list.</a>
+<a name="135"><span class="lineNum">     135 </span>            :          */</a>
+<a name="136"><span class="lineNum">     136 </span>            :         if (!v || start_index == *pos) {</a>
+<a name="137"><span class="lineNum">     137 </span>            :                 struct trace_bprintk_fmt *p;</a>
+<a name="138"><span class="lineNum">     138 </span>            : </a>
+<a name="139"><span class="lineNum">     139 </span>            :                 /* search the module list */</a>
+<a name="140"><span class="lineNum">     140 </span>            :                 list_for_each_entry(p, &amp;trace_bprintk_fmt_list, list) {</a>
+<a name="141"><span class="lineNum">     141 </span>            :                         if (start_index == *pos)</a>
+<a name="142"><span class="lineNum">     142 </span>            :                                 return &amp;p-&gt;fmt;</a>
+<a name="143"><span class="lineNum">     143 </span>            :                         start_index++;</a>
+<a name="144"><span class="lineNum">     144 </span>            :                 }</a>
+<a name="145"><span class="lineNum">     145 </span>            :                 /* pos &gt; index */</a>
+<a name="146"><span class="lineNum">     146 </span>            :                 return NULL;</a>
+<a name="147"><span class="lineNum">     147 </span>            :         }</a>
+<a name="148"><span class="lineNum">     148 </span>            : </a>
+<a name="149"><span class="lineNum">     149 </span>            :         /*</a>
+<a name="150"><span class="lineNum">     150 </span>            :          * v points to the address of the fmt field in the mod list</a>
+<a name="151"><span class="lineNum">     151 </span>            :          * structure that holds the module print format.</a>
+<a name="152"><span class="lineNum">     152 </span>            :          */</a>
+<a name="153"><span class="lineNum">     153 </span>            :         mod_fmt = container_of(v, typeof(*mod_fmt), fmt);</a>
+<a name="154"><span class="lineNum">     154 </span>            :         if (mod_fmt-&gt;list.next == &amp;trace_bprintk_fmt_list)</a>
+<a name="155"><span class="lineNum">     155 </span>            :                 return NULL;</a>
+<a name="156"><span class="lineNum">     156 </span>            : </a>
+<a name="157"><span class="lineNum">     157 </span>            :         mod_fmt = container_of(mod_fmt-&gt;list.next, typeof(*mod_fmt), list);</a>
+<a name="158"><span class="lineNum">     158 </span>            : </a>
+<a name="159"><span class="lineNum">     159 </span>            :         return &amp;mod_fmt-&gt;fmt;</a>
+<a name="160"><span class="lineNum">     160 </span>            : }</a>
+<a name="161"><span class="lineNum">     161 </span>            : </a>
+<a name="162"><span class="lineNum">     162 </span>            : static void format_mod_start(void)</a>
+<a name="163"><span class="lineNum">     163 </span>            : {</a>
+<a name="164"><span class="lineNum">     164 </span>            :         mutex_lock(&amp;btrace_mutex);</a>
+<a name="165"><span class="lineNum">     165 </span>            : }</a>
+<a name="166"><span class="lineNum">     166 </span>            : </a>
+<a name="167"><span class="lineNum">     167 </span>            : static void format_mod_stop(void)</a>
+<a name="168"><span class="lineNum">     168 </span>            : {</a>
+<a name="169"><span class="lineNum">     169 </span>            :         mutex_unlock(&amp;btrace_mutex);</a>
+<a name="170"><span class="lineNum">     170 </span>            : }</a>
+<a name="171"><span class="lineNum">     171 </span>            : </a>
+<a name="172"><span class="lineNum">     172 </span>            : #else /* !CONFIG_MODULES */</a>
+<a name="173"><span class="lineNum">     173 </span>            : __init static int</a>
+<a name="174"><span class="lineNum">     174 </span>            : module_trace_bprintk_format_notify(struct notifier_block *self,</a>
+<a name="175"><span class="lineNum">     175 </span>            :                 unsigned long val, void *data)</a>
+<a name="176"><span class="lineNum">     176 </span>            : {</a>
+<a name="177"><span class="lineNum">     177 </span>            :         return NOTIFY_OK;</a>
+<a name="178"><span class="lineNum">     178 </span>            : }</a>
+<a name="179"><span class="lineNum">     179 </span>            : static inline const char **</a>
+<a name="180"><span class="lineNum">     180 </span>            : find_next_mod_format(int start_index, void *v, const char **fmt, loff_t *pos)</a>
+<a name="181"><span class="lineNum">     181 </span>            : {</a>
+<a name="182"><span class="lineNum">     182 </span>            :         return NULL;</a>
+<a name="183"><span class="lineNum">     183 </span>            : }</a>
+<a name="184"><span class="lineNum">     184 </span><span class="lineNoCov">          0 : static inline void format_mod_start(void) { }</span></a>
+<a name="185"><span class="lineNum">     185 </span><span class="lineNoCov">          0 : static inline void format_mod_stop(void) { }</span></a>
+<a name="186"><span class="lineNum">     186 </span>            : #endif /* CONFIG_MODULES */</a>
+<a name="187"><span class="lineNum">     187 </span>            : </a>
+<a name="188"><span class="lineNum">     188 </span>            : static bool __read_mostly trace_printk_enabled = true;</a>
+<a name="189"><span class="lineNum">     189 </span>            : </a>
+<a name="190"><span class="lineNum">     190 </span><span class="lineNoCov">          0 : void trace_printk_control(bool enabled)</span></a>
+<a name="191"><span class="lineNum">     191 </span>            : {</a>
+<a name="192"><span class="lineNum">     192 </span><span class="lineNoCov">          0 :         trace_printk_enabled = enabled;</span></a>
+<a name="193"><span class="lineNum">     193 </span><span class="lineNoCov">          0 : }</span></a>
+<a name="194"><span class="lineNum">     194 </span>            : </a>
+<a name="195"><span class="lineNum">     195 </span>            : __initdata_or_module static</a>
+<a name="196"><span class="lineNum">     196 </span>            : struct notifier_block module_trace_bprintk_format_nb = {</a>
+<a name="197"><span class="lineNum">     197 </span>            :         .notifier_call = module_trace_bprintk_format_notify,</a>
+<a name="198"><span class="lineNum">     198 </span>            : };</a>
+<a name="199"><span class="lineNum">     199 </span>            : </a>
+<a name="200"><span class="lineNum">     200 </span><span class="lineNoCov">          0 : int __trace_bprintk(unsigned long ip, const char *fmt, ...)</span></a>
+<a name="201"><span class="lineNum">     201 </span>            : {</a>
+<a name="202"><span class="lineNum">     202 </span><span class="lineNoCov">          0 :         int ret;</span></a>
+<a name="203"><span class="lineNum">     203 </span><span class="lineNoCov">          0 :         va_list ap;</span></a>
+<a name="204"><span class="lineNum">     204 </span>            : </a>
+<a name="205"><span class="lineNum">     205 </span><span class="lineNoCov">          0 :         if (unlikely(!fmt))</span></a>
+<a name="206"><span class="lineNum">     206 </span>            :                 return 0;</a>
+<a name="207"><span class="lineNum">     207 </span>            : </a>
+<a name="208"><span class="lineNum">     208 </span><span class="lineNoCov">          0 :         if (!trace_printk_enabled)</span></a>
+<a name="209"><span class="lineNum">     209 </span>            :                 return 0;</a>
+<a name="210"><span class="lineNum">     210 </span>            : </a>
+<a name="211"><span class="lineNum">     211 </span><span class="lineNoCov">          0 :         va_start(ap, fmt);</span></a>
+<a name="212"><span class="lineNum">     212 </span><span class="lineNoCov">          0 :         ret = trace_vbprintk(ip, fmt, ap);</span></a>
+<a name="213"><span class="lineNum">     213 </span><span class="lineNoCov">          0 :         va_end(ap);</span></a>
+<a name="214"><span class="lineNum">     214 </span><span class="lineNoCov">          0 :         return ret;</span></a>
+<a name="215"><span class="lineNum">     215 </span>            : }</a>
+<a name="216"><span class="lineNum">     216 </span>            : EXPORT_SYMBOL_GPL(__trace_bprintk);</a>
+<a name="217"><span class="lineNum">     217 </span>            : </a>
+<a name="218"><span class="lineNum">     218 </span><span class="lineNoCov">          0 : int __ftrace_vbprintk(unsigned long ip, const char *fmt, va_list ap)</span></a>
+<a name="219"><span class="lineNum">     219 </span>            : {</a>
+<a name="220"><span class="lineNum">     220 </span><span class="lineNoCov">          0 :         if (unlikely(!fmt))</span></a>
+<a name="221"><span class="lineNum">     221 </span>            :                 return 0;</a>
+<a name="222"><span class="lineNum">     222 </span>            : </a>
+<a name="223"><span class="lineNum">     223 </span><span class="lineNoCov">          0 :         if (!trace_printk_enabled)</span></a>
+<a name="224"><span class="lineNum">     224 </span>            :                 return 0;</a>
+<a name="225"><span class="lineNum">     225 </span>            : </a>
+<a name="226"><span class="lineNum">     226 </span><span class="lineNoCov">          0 :         return trace_vbprintk(ip, fmt, ap);</span></a>
+<a name="227"><span class="lineNum">     227 </span>            : }</a>
+<a name="228"><span class="lineNum">     228 </span>            : EXPORT_SYMBOL_GPL(__ftrace_vbprintk);</a>
+<a name="229"><span class="lineNum">     229 </span>            : </a>
+<a name="230"><span class="lineNum">     230 </span><span class="lineNoCov">          0 : int __trace_printk(unsigned long ip, const char *fmt, ...)</span></a>
+<a name="231"><span class="lineNum">     231 </span>            : {</a>
+<a name="232"><span class="lineNum">     232 </span><span class="lineNoCov">          0 :         int ret;</span></a>
+<a name="233"><span class="lineNum">     233 </span><span class="lineNoCov">          0 :         va_list ap;</span></a>
+<a name="234"><span class="lineNum">     234 </span>            : </a>
+<a name="235"><span class="lineNum">     235 </span><span class="lineNoCov">          0 :         if (!trace_printk_enabled)</span></a>
+<a name="236"><span class="lineNum">     236 </span>            :                 return 0;</a>
+<a name="237"><span class="lineNum">     237 </span>            : </a>
+<a name="238"><span class="lineNum">     238 </span><span class="lineNoCov">          0 :         va_start(ap, fmt);</span></a>
+<a name="239"><span class="lineNum">     239 </span><span class="lineNoCov">          0 :         ret = trace_vprintk(ip, fmt, ap);</span></a>
+<a name="240"><span class="lineNum">     240 </span><span class="lineNoCov">          0 :         va_end(ap);</span></a>
+<a name="241"><span class="lineNum">     241 </span><span class="lineNoCov">          0 :         return ret;</span></a>
+<a name="242"><span class="lineNum">     242 </span>            : }</a>
+<a name="243"><span class="lineNum">     243 </span>            : EXPORT_SYMBOL_GPL(__trace_printk);</a>
+<a name="244"><span class="lineNum">     244 </span>            : </a>
+<a name="245"><span class="lineNum">     245 </span><span class="lineNoCov">          0 : int __ftrace_vprintk(unsigned long ip, const char *fmt, va_list ap)</span></a>
+<a name="246"><span class="lineNum">     246 </span>            : {</a>
+<a name="247"><span class="lineNum">     247 </span><span class="lineNoCov">          0 :         if (!trace_printk_enabled)</span></a>
+<a name="248"><span class="lineNum">     248 </span>            :                 return 0;</a>
+<a name="249"><span class="lineNum">     249 </span>            : </a>
+<a name="250"><span class="lineNum">     250 </span><span class="lineNoCov">          0 :         return trace_vprintk(ip, fmt, ap);</span></a>
+<a name="251"><span class="lineNum">     251 </span>            : }</a>
+<a name="252"><span class="lineNum">     252 </span>            : EXPORT_SYMBOL_GPL(__ftrace_vprintk);</a>
+<a name="253"><span class="lineNum">     253 </span>            : </a>
+<a name="254"><span class="lineNum">     254 </span><span class="lineNoCov">          0 : static const char **find_next(void *v, loff_t *pos)</span></a>
+<a name="255"><span class="lineNum">     255 </span>            : {</a>
+<a name="256"><span class="lineNum">     256 </span><span class="lineNoCov">          0 :         const char **fmt = v;</span></a>
+<a name="257"><span class="lineNum">     257 </span><span class="lineNoCov">          0 :         int start_index;</span></a>
+<a name="258"><span class="lineNum">     258 </span><span class="lineNoCov">          0 :         int last_index;</span></a>
+<a name="259"><span class="lineNum">     259 </span>            : </a>
+<a name="260"><span class="lineNum">     260 </span><span class="lineNoCov">          0 :         start_index = __stop___trace_bprintk_fmt - __start___trace_bprintk_fmt;</span></a>
+<a name="261"><span class="lineNum">     261 </span>            : </a>
+<a name="262"><span class="lineNum">     262 </span><span class="lineNoCov">          0 :         if (*pos &lt; start_index)</span></a>
+<a name="263"><span class="lineNum">     263 </span><span class="lineNoCov">          0 :                 return __start___trace_bprintk_fmt + *pos;</span></a>
+<a name="264"><span class="lineNum">     264 </span>            : </a>
+<a name="265"><span class="lineNum">     265 </span>            :         /*</a>
+<a name="266"><span class="lineNum">     266 </span>            :          * The __tracepoint_str section is treated the same as the</a>
+<a name="267"><span class="lineNum">     267 </span>            :          * __trace_printk_fmt section. The difference is that the</a>
+<a name="268"><span class="lineNum">     268 </span>            :          * __trace_printk_fmt section should only be used by trace_printk()</a>
+<a name="269"><span class="lineNum">     269 </span>            :          * in a debugging environment, as if anything exists in that section</a>
+<a name="270"><span class="lineNum">     270 </span>            :          * the trace_prink() helper buffers are allocated, which would just</a>
+<a name="271"><span class="lineNum">     271 </span>            :          * waste space in a production environment.</a>
+<a name="272"><span class="lineNum">     272 </span>            :          *</a>
+<a name="273"><span class="lineNum">     273 </span>            :          * The __tracepoint_str sections on the other hand are used by</a>
+<a name="274"><span class="lineNum">     274 </span>            :          * tracepoints which need to map pointers to their strings to</a>
+<a name="275"><span class="lineNum">     275 </span>            :          * the ASCII text for userspace.</a>
+<a name="276"><span class="lineNum">     276 </span>            :          */</a>
+<a name="277"><span class="lineNum">     277 </span><span class="lineNoCov">          0 :         last_index = start_index;</span></a>
+<a name="278"><span class="lineNum">     278 </span><span class="lineNoCov">          0 :         start_index = __stop___tracepoint_str - __start___tracepoint_str;</span></a>
+<a name="279"><span class="lineNum">     279 </span>            : </a>
+<a name="280"><span class="lineNum">     280 </span><span class="lineNoCov">          0 :         if (*pos &lt; last_index + start_index)</span></a>
+<a name="281"><span class="lineNum">     281 </span><span class="lineNoCov">          0 :                 return __start___tracepoint_str + (*pos - last_index);</span></a>
+<a name="282"><span class="lineNum">     282 </span>            : </a>
+<a name="283"><span class="lineNum">     283 </span>            :         start_index += last_index;</a>
+<a name="284"><span class="lineNum">     284 </span><span class="lineNoCov">          0 :         return find_next_mod_format(start_index, v, fmt, pos);</span></a>
+<a name="285"><span class="lineNum">     285 </span>            : }</a>
+<a name="286"><span class="lineNum">     286 </span>            : </a>
+<a name="287"><span class="lineNum">     287 </span>            : static void *</a>
+<a name="288"><span class="lineNum">     288 </span><span class="lineNoCov">          0 : t_start(struct seq_file *m, loff_t *pos)</span></a>
+<a name="289"><span class="lineNum">     289 </span>            : {</a>
+<a name="290"><span class="lineNum">     290 </span><span class="lineNoCov">          0 :         format_mod_start();</span></a>
+<a name="291"><span class="lineNum">     291 </span><span class="lineNoCov">          0 :         return find_next(NULL, pos);</span></a>
+<a name="292"><span class="lineNum">     292 </span>            : }</a>
+<a name="293"><span class="lineNum">     293 </span>            : </a>
+<a name="294"><span class="lineNum">     294 </span><span class="lineNoCov">          0 : static void *t_next(struct seq_file *m, void * v, loff_t *pos)</span></a>
+<a name="295"><span class="lineNum">     295 </span>            : {</a>
+<a name="296"><span class="lineNum">     296 </span><span class="lineNoCov">          0 :         (*pos)++;</span></a>
+<a name="297"><span class="lineNum">     297 </span><span class="lineNoCov">          0 :         return find_next(v, pos);</span></a>
+<a name="298"><span class="lineNum">     298 </span>            : }</a>
+<a name="299"><span class="lineNum">     299 </span>            : </a>
+<a name="300"><span class="lineNum">     300 </span><span class="lineNoCov">          0 : static int t_show(struct seq_file *m, void *v)</span></a>
+<a name="301"><span class="lineNum">     301 </span>            : {</a>
+<a name="302"><span class="lineNum">     302 </span><span class="lineNoCov">          0 :         const char **fmt = v;</span></a>
+<a name="303"><span class="lineNum">     303 </span><span class="lineNoCov">          0 :         const char *str = *fmt;</span></a>
+<a name="304"><span class="lineNum">     304 </span><span class="lineNoCov">          0 :         int i;</span></a>
+<a name="305"><span class="lineNum">     305 </span>            : </a>
+<a name="306"><span class="lineNum">     306 </span><span class="lineNoCov">          0 :         if (!*fmt)</span></a>
+<a name="307"><span class="lineNum">     307 </span>            :                 return 0;</a>
+<a name="308"><span class="lineNum">     308 </span>            : </a>
+<a name="309"><span class="lineNum">     309 </span><span class="lineNoCov">          0 :         seq_printf(m, &quot;0x%lx : \&quot;&quot;, *(unsigned long *)fmt);</span></a>
+<a name="310"><span class="lineNum">     310 </span>            : </a>
+<a name="311"><span class="lineNum">     311 </span>            :         /*</a>
+<a name="312"><span class="lineNum">     312 </span>            :          * Tabs and new lines need to be converted.</a>
+<a name="313"><span class="lineNum">     313 </span>            :          */</a>
+<a name="314"><span class="lineNum">     314 </span><span class="lineNoCov">          0 :         for (i = 0; str[i]; i++) {</span></a>
+<a name="315"><span class="lineNum">     315 </span><span class="lineNoCov">          0 :                 switch (str[i]) {</span></a>
+<a name="316"><span class="lineNum">     316 </span><span class="lineNoCov">          0 :                 case '\n':</span></a>
+<a name="317"><span class="lineNum">     317 </span><span class="lineNoCov">          0 :                         seq_puts(m, &quot;\\n&quot;);</span></a>
+<a name="318"><span class="lineNum">     318 </span><span class="lineNoCov">          0 :                         break;</span></a>
+<a name="319"><span class="lineNum">     319 </span><span class="lineNoCov">          0 :                 case '\t':</span></a>
+<a name="320"><span class="lineNum">     320 </span><span class="lineNoCov">          0 :                         seq_puts(m, &quot;\\t&quot;);</span></a>
+<a name="321"><span class="lineNum">     321 </span><span class="lineNoCov">          0 :                         break;</span></a>
+<a name="322"><span class="lineNum">     322 </span><span class="lineNoCov">          0 :                 case '\\':</span></a>
+<a name="323"><span class="lineNum">     323 </span><span class="lineNoCov">          0 :                         seq_putc(m, '\\');</span></a>
+<a name="324"><span class="lineNum">     324 </span><span class="lineNoCov">          0 :                         break;</span></a>
+<a name="325"><span class="lineNum">     325 </span><span class="lineNoCov">          0 :                 case '&quot;':</span></a>
+<a name="326"><span class="lineNum">     326 </span><span class="lineNoCov">          0 :                         seq_puts(m, &quot;\\\&quot;&quot;);</span></a>
+<a name="327"><span class="lineNum">     327 </span><span class="lineNoCov">          0 :                         break;</span></a>
+<a name="328"><span class="lineNum">     328 </span><span class="lineNoCov">          0 :                 default:</span></a>
+<a name="329"><span class="lineNum">     329 </span><span class="lineNoCov">          0 :                         seq_putc(m, str[i]);</span></a>
+<a name="330"><span class="lineNum">     330 </span>            :                 }</a>
+<a name="331"><span class="lineNum">     331 </span>            :         }</a>
+<a name="332"><span class="lineNum">     332 </span><span class="lineNoCov">          0 :         seq_puts(m, &quot;\&quot;\n&quot;);</span></a>
+<a name="333"><span class="lineNum">     333 </span>            : </a>
+<a name="334"><span class="lineNum">     334 </span><span class="lineNoCov">          0 :         return 0;</span></a>
+<a name="335"><span class="lineNum">     335 </span>            : }</a>
+<a name="336"><span class="lineNum">     336 </span>            : </a>
+<a name="337"><span class="lineNum">     337 </span><span class="lineNoCov">          0 : static void t_stop(struct seq_file *m, void *p)</span></a>
+<a name="338"><span class="lineNum">     338 </span>            : {</a>
+<a name="339"><span class="lineNum">     339 </span><span class="lineNoCov">          0 :         format_mod_stop();</span></a>
+<a name="340"><span class="lineNum">     340 </span><span class="lineNoCov">          0 : }</span></a>
+<a name="341"><span class="lineNum">     341 </span>            : </a>
+<a name="342"><span class="lineNum">     342 </span>            : static const struct seq_operations show_format_seq_ops = {</a>
+<a name="343"><span class="lineNum">     343 </span>            :         .start = t_start,</a>
+<a name="344"><span class="lineNum">     344 </span>            :         .next = t_next,</a>
+<a name="345"><span class="lineNum">     345 </span>            :         .show = t_show,</a>
+<a name="346"><span class="lineNum">     346 </span>            :         .stop = t_stop,</a>
+<a name="347"><span class="lineNum">     347 </span>            : };</a>
+<a name="348"><span class="lineNum">     348 </span>            : </a>
+<a name="349"><span class="lineNum">     349 </span>            : static int</a>
+<a name="350"><span class="lineNum">     350 </span><span class="lineNoCov">          0 : ftrace_formats_open(struct inode *inode, struct file *file)</span></a>
+<a name="351"><span class="lineNum">     351 </span>            : {</a>
+<a name="352"><span class="lineNum">     352 </span><span class="lineNoCov">          0 :         int ret;</span></a>
+<a name="353"><span class="lineNum">     353 </span>            : </a>
+<a name="354"><span class="lineNum">     354 </span><span class="lineNoCov">          0 :         ret = security_locked_down(LOCKDOWN_TRACEFS);</span></a>
+<a name="355"><span class="lineNum">     355 </span><span class="lineNoCov">          0 :         if (ret)</span></a>
+<a name="356"><span class="lineNum">     356 </span>            :                 return ret;</a>
+<a name="357"><span class="lineNum">     357 </span>            : </a>
+<a name="358"><span class="lineNum">     358 </span><span class="lineNoCov">          0 :         return seq_open(file, &amp;show_format_seq_ops);</span></a>
+<a name="359"><span class="lineNum">     359 </span>            : }</a>
+<a name="360"><span class="lineNum">     360 </span>            : </a>
+<a name="361"><span class="lineNum">     361 </span>            : static const struct file_operations ftrace_formats_fops = {</a>
+<a name="362"><span class="lineNum">     362 </span>            :         .open = ftrace_formats_open,</a>
+<a name="363"><span class="lineNum">     363 </span>            :         .read = seq_read,</a>
+<a name="364"><span class="lineNum">     364 </span>            :         .llseek = seq_lseek,</a>
+<a name="365"><span class="lineNum">     365 </span>            :         .release = seq_release,</a>
+<a name="366"><span class="lineNum">     366 </span>            : };</a>
+<a name="367"><span class="lineNum">     367 </span>            : </a>
+<a name="368"><span class="lineNum">     368 </span><span class="lineCov">          1 : static __init int init_trace_printk_function_export(void)</span></a>
+<a name="369"><span class="lineNum">     369 </span>            : {</a>
+<a name="370"><span class="lineNum">     370 </span><span class="lineCov">          1 :         int ret;</span></a>
+<a name="371"><span class="lineNum">     371 </span>            : </a>
+<a name="372"><span class="lineNum">     372 </span><span class="lineCov">          1 :         ret = tracing_init_dentry();</span></a>
+<a name="373"><span class="lineNum">     373 </span><span class="lineCov">          1 :         if (ret)</span></a>
+<a name="374"><span class="lineNum">     374 </span>            :                 return 0;</a>
+<a name="375"><span class="lineNum">     375 </span>            : </a>
+<a name="376"><span class="lineNum">     376 </span><span class="lineCov">          1 :         trace_create_file(&quot;printk_formats&quot;, 0444, NULL,</span></a>
+<a name="377"><span class="lineNum">     377 </span>            :                                     NULL, &amp;ftrace_formats_fops);</a>
+<a name="378"><span class="lineNum">     378 </span>            : </a>
+<a name="379"><span class="lineNum">     379 </span><span class="lineCov">          1 :         return 0;</span></a>
+<a name="380"><span class="lineNum">     380 </span>            : }</a>
+<a name="381"><span class="lineNum">     381 </span>            : </a>
+<a name="382"><span class="lineNum">     382 </span>            : fs_initcall(init_trace_printk_function_export);</a>
+<a name="383"><span class="lineNum">     383 </span>            : </a>
+<a name="384"><span class="lineNum">     384 </span><span class="lineCov">          1 : static __init int init_trace_printk(void)</span></a>
+<a name="385"><span class="lineNum">     385 </span>            : {</a>
+<a name="386"><span class="lineNum">     386 </span><span class="lineCov">          1 :         return register_module_notifier(&amp;module_trace_bprintk_format_nb);</span></a>
+<a name="387"><span class="lineNum">     387 </span>            : }</a>
+<a name="388"><span class="lineNum">     388 </span>            : </a>
+<a name="389"><span class="lineNum">     389 </span>            : early_initcall(init_trace_printk);</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

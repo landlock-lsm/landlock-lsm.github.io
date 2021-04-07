@@ -1,0 +1,519 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - landlock.info - include/linux/jiffies.h</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">include/linux</a> - jiffies.h<span style="font-size: 80%;"> (source / <a href="jiffies.h.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">landlock.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">12</td>
+            <td class="headerCovTableEntry">20</td>
+            <td class="headerCovTableEntryLo">60.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2021-04-07 12:34:12</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntryHi">-</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : /* SPDX-License-Identifier: GPL-2.0 */</a>
+<a name="2"><span class="lineNum">       2 </span>            : #ifndef _LINUX_JIFFIES_H</a>
+<a name="3"><span class="lineNum">       3 </span>            : #define _LINUX_JIFFIES_H</a>
+<a name="4"><span class="lineNum">       4 </span>            : </a>
+<a name="5"><span class="lineNum">       5 </span>            : #include &lt;linux/cache.h&gt;</a>
+<a name="6"><span class="lineNum">       6 </span>            : #include &lt;linux/limits.h&gt;</a>
+<a name="7"><span class="lineNum">       7 </span>            : #include &lt;linux/math64.h&gt;</a>
+<a name="8"><span class="lineNum">       8 </span>            : #include &lt;linux/minmax.h&gt;</a>
+<a name="9"><span class="lineNum">       9 </span>            : #include &lt;linux/types.h&gt;</a>
+<a name="10"><span class="lineNum">      10 </span>            : #include &lt;linux/time.h&gt;</a>
+<a name="11"><span class="lineNum">      11 </span>            : #include &lt;linux/timex.h&gt;</a>
+<a name="12"><span class="lineNum">      12 </span>            : #include &lt;vdso/jiffies.h&gt;</a>
+<a name="13"><span class="lineNum">      13 </span>            : #include &lt;asm/param.h&gt;                    /* for HZ */</a>
+<a name="14"><span class="lineNum">      14 </span>            : #include &lt;generated/timeconst.h&gt;</a>
+<a name="15"><span class="lineNum">      15 </span>            : </a>
+<a name="16"><span class="lineNum">      16 </span>            : /*</a>
+<a name="17"><span class="lineNum">      17 </span>            :  * The following defines establish the engineering parameters of the PLL</a>
+<a name="18"><span class="lineNum">      18 </span>            :  * model. The HZ variable establishes the timer interrupt frequency, 100 Hz</a>
+<a name="19"><span class="lineNum">      19 </span>            :  * for the SunOS kernel, 256 Hz for the Ultrix kernel and 1024 Hz for the</a>
+<a name="20"><span class="lineNum">      20 </span>            :  * OSF/1 kernel. The SHIFT_HZ define expresses the same value as the</a>
+<a name="21"><span class="lineNum">      21 </span>            :  * nearest power of two in order to avoid hardware multiply operations.</a>
+<a name="22"><span class="lineNum">      22 </span>            :  */</a>
+<a name="23"><span class="lineNum">      23 </span>            : #if HZ &gt;= 12 &amp;&amp; HZ &lt; 24</a>
+<a name="24"><span class="lineNum">      24 </span>            : # define SHIFT_HZ       4</a>
+<a name="25"><span class="lineNum">      25 </span>            : #elif HZ &gt;= 24 &amp;&amp; HZ &lt; 48</a>
+<a name="26"><span class="lineNum">      26 </span>            : # define SHIFT_HZ       5</a>
+<a name="27"><span class="lineNum">      27 </span>            : #elif HZ &gt;= 48 &amp;&amp; HZ &lt; 96</a>
+<a name="28"><span class="lineNum">      28 </span>            : # define SHIFT_HZ       6</a>
+<a name="29"><span class="lineNum">      29 </span>            : #elif HZ &gt;= 96 &amp;&amp; HZ &lt; 192</a>
+<a name="30"><span class="lineNum">      30 </span>            : # define SHIFT_HZ       7</a>
+<a name="31"><span class="lineNum">      31 </span>            : #elif HZ &gt;= 192 &amp;&amp; HZ &lt; 384</a>
+<a name="32"><span class="lineNum">      32 </span>            : # define SHIFT_HZ       8</a>
+<a name="33"><span class="lineNum">      33 </span>            : #elif HZ &gt;= 384 &amp;&amp; HZ &lt; 768</a>
+<a name="34"><span class="lineNum">      34 </span>            : # define SHIFT_HZ       9</a>
+<a name="35"><span class="lineNum">      35 </span>            : #elif HZ &gt;= 768 &amp;&amp; HZ &lt; 1536</a>
+<a name="36"><span class="lineNum">      36 </span>            : # define SHIFT_HZ       10</a>
+<a name="37"><span class="lineNum">      37 </span>            : #elif HZ &gt;= 1536 &amp;&amp; HZ &lt; 3072</a>
+<a name="38"><span class="lineNum">      38 </span>            : # define SHIFT_HZ       11</a>
+<a name="39"><span class="lineNum">      39 </span>            : #elif HZ &gt;= 3072 &amp;&amp; HZ &lt; 6144</a>
+<a name="40"><span class="lineNum">      40 </span>            : # define SHIFT_HZ       12</a>
+<a name="41"><span class="lineNum">      41 </span>            : #elif HZ &gt;= 6144 &amp;&amp; HZ &lt; 12288</a>
+<a name="42"><span class="lineNum">      42 </span>            : # define SHIFT_HZ       13</a>
+<a name="43"><span class="lineNum">      43 </span>            : #else</a>
+<a name="44"><span class="lineNum">      44 </span>            : # error Invalid value of HZ.</a>
+<a name="45"><span class="lineNum">      45 </span>            : #endif</a>
+<a name="46"><span class="lineNum">      46 </span>            : </a>
+<a name="47"><span class="lineNum">      47 </span>            : /* Suppose we want to divide two numbers NOM and DEN: NOM/DEN, then we can</a>
+<a name="48"><span class="lineNum">      48 </span>            :  * improve accuracy by shifting LSH bits, hence calculating:</a>
+<a name="49"><span class="lineNum">      49 </span>            :  *     (NOM &lt;&lt; LSH) / DEN</a>
+<a name="50"><span class="lineNum">      50 </span>            :  * This however means trouble for large NOM, because (NOM &lt;&lt; LSH) may no</a>
+<a name="51"><span class="lineNum">      51 </span>            :  * longer fit in 32 bits. The following way of calculating this gives us</a>
+<a name="52"><span class="lineNum">      52 </span>            :  * some slack, under the following conditions:</a>
+<a name="53"><span class="lineNum">      53 </span>            :  *   - (NOM / DEN) fits in (32 - LSH) bits.</a>
+<a name="54"><span class="lineNum">      54 </span>            :  *   - (NOM % DEN) fits in (32 - LSH) bits.</a>
+<a name="55"><span class="lineNum">      55 </span>            :  */</a>
+<a name="56"><span class="lineNum">      56 </span>            : #define SH_DIV(NOM,DEN,LSH) (   (((NOM) / (DEN)) &lt;&lt; (LSH))              \</a>
+<a name="57"><span class="lineNum">      57 </span>            :                              + ((((NOM) % (DEN)) &lt;&lt; (LSH)) + (DEN) / 2) / (DEN))</a>
+<a name="58"><span class="lineNum">      58 </span>            : </a>
+<a name="59"><span class="lineNum">      59 </span>            : /* LATCH is used in the interval timer and ftape setup. */</a>
+<a name="60"><span class="lineNum">      60 </span>            : #define LATCH ((CLOCK_TICK_RATE + HZ/2) / HZ)   /* For divider */</a>
+<a name="61"><span class="lineNum">      61 </span>            : </a>
+<a name="62"><span class="lineNum">      62 </span>            : extern int register_refined_jiffies(long clock_tick_rate);</a>
+<a name="63"><span class="lineNum">      63 </span>            : </a>
+<a name="64"><span class="lineNum">      64 </span>            : /* TICK_USEC is the time between ticks in usec assuming SHIFTED_HZ */</a>
+<a name="65"><span class="lineNum">      65 </span>            : #define TICK_USEC ((USEC_PER_SEC + HZ/2) / HZ)</a>
+<a name="66"><span class="lineNum">      66 </span>            : </a>
+<a name="67"><span class="lineNum">      67 </span>            : /* USER_TICK_USEC is the time between ticks in usec assuming fake USER_HZ */</a>
+<a name="68"><span class="lineNum">      68 </span>            : #define USER_TICK_USEC ((1000000UL + USER_HZ/2) / USER_HZ)</a>
+<a name="69"><span class="lineNum">      69 </span>            : </a>
+<a name="70"><span class="lineNum">      70 </span>            : #ifndef __jiffy_arch_data</a>
+<a name="71"><span class="lineNum">      71 </span>            : #define __jiffy_arch_data</a>
+<a name="72"><span class="lineNum">      72 </span>            : #endif</a>
+<a name="73"><span class="lineNum">      73 </span>            : </a>
+<a name="74"><span class="lineNum">      74 </span>            : /*</a>
+<a name="75"><span class="lineNum">      75 </span>            :  * The 64-bit value is not atomic - you MUST NOT read it</a>
+<a name="76"><span class="lineNum">      76 </span>            :  * without sampling the sequence number in jiffies_lock.</a>
+<a name="77"><span class="lineNum">      77 </span>            :  * get_jiffies_64() will do this for you as appropriate.</a>
+<a name="78"><span class="lineNum">      78 </span>            :  */</a>
+<a name="79"><span class="lineNum">      79 </span>            : extern u64 __cacheline_aligned_in_smp jiffies_64;</a>
+<a name="80"><span class="lineNum">      80 </span>            : extern unsigned long volatile __cacheline_aligned_in_smp __jiffy_arch_data jiffies;</a>
+<a name="81"><span class="lineNum">      81 </span>            : </a>
+<a name="82"><span class="lineNum">      82 </span>            : #if (BITS_PER_LONG &lt; 64)</a>
+<a name="83"><span class="lineNum">      83 </span>            : u64 get_jiffies_64(void);</a>
+<a name="84"><span class="lineNum">      84 </span>            : #else</a>
+<a name="85"><span class="lineNum">      85 </span><span class="lineNoCov">          0 : static inline u64 get_jiffies_64(void)</span></a>
+<a name="86"><span class="lineNum">      86 </span>            : {</a>
+<a name="87"><span class="lineNum">      87 </span><span class="lineNoCov">          0 :         return (u64)jiffies;</span></a>
+<a name="88"><span class="lineNum">      88 </span>            : }</a>
+<a name="89"><span class="lineNum">      89 </span>            : #endif</a>
+<a name="90"><span class="lineNum">      90 </span>            : </a>
+<a name="91"><span class="lineNum">      91 </span>            : /*</a>
+<a name="92"><span class="lineNum">      92 </span>            :  *      These inlines deal with timer wrapping correctly. You are </a>
+<a name="93"><span class="lineNum">      93 </span>            :  *      strongly encouraged to use them</a>
+<a name="94"><span class="lineNum">      94 </span>            :  *      1. Because people otherwise forget</a>
+<a name="95"><span class="lineNum">      95 </span>            :  *      2. Because if the timer wrap changes in future you won't have to</a>
+<a name="96"><span class="lineNum">      96 </span>            :  *         alter your driver code.</a>
+<a name="97"><span class="lineNum">      97 </span>            :  *</a>
+<a name="98"><span class="lineNum">      98 </span>            :  * time_after(a,b) returns true if the time a is after time b.</a>
+<a name="99"><span class="lineNum">      99 </span>            :  *</a>
+<a name="100"><span class="lineNum">     100 </span>            :  * Do this with &quot;&lt;0&quot; and &quot;&gt;=0&quot; to only test the sign of the result. A</a>
+<a name="101"><span class="lineNum">     101 </span>            :  * good compiler would generate better code (and a really good compiler</a>
+<a name="102"><span class="lineNum">     102 </span>            :  * wouldn't care). Gcc is currently neither.</a>
+<a name="103"><span class="lineNum">     103 </span>            :  */</a>
+<a name="104"><span class="lineNum">     104 </span>            : #define time_after(a,b)         \</a>
+<a name="105"><span class="lineNum">     105 </span>            :         (typecheck(unsigned long, a) &amp;&amp; \</a>
+<a name="106"><span class="lineNum">     106 </span>            :          typecheck(unsigned long, b) &amp;&amp; \</a>
+<a name="107"><span class="lineNum">     107 </span>            :          ((long)((b) - (a)) &lt; 0))</a>
+<a name="108"><span class="lineNum">     108 </span>            : #define time_before(a,b)        time_after(b,a)</a>
+<a name="109"><span class="lineNum">     109 </span>            : </a>
+<a name="110"><span class="lineNum">     110 </span>            : #define time_after_eq(a,b)      \</a>
+<a name="111"><span class="lineNum">     111 </span>            :         (typecheck(unsigned long, a) &amp;&amp; \</a>
+<a name="112"><span class="lineNum">     112 </span>            :          typecheck(unsigned long, b) &amp;&amp; \</a>
+<a name="113"><span class="lineNum">     113 </span>            :          ((long)((a) - (b)) &gt;= 0))</a>
+<a name="114"><span class="lineNum">     114 </span>            : #define time_before_eq(a,b)     time_after_eq(b,a)</a>
+<a name="115"><span class="lineNum">     115 </span>            : </a>
+<a name="116"><span class="lineNum">     116 </span>            : /*</a>
+<a name="117"><span class="lineNum">     117 </span>            :  * Calculate whether a is in the range of [b, c].</a>
+<a name="118"><span class="lineNum">     118 </span>            :  */</a>
+<a name="119"><span class="lineNum">     119 </span>            : #define time_in_range(a,b,c) \</a>
+<a name="120"><span class="lineNum">     120 </span>            :         (time_after_eq(a,b) &amp;&amp; \</a>
+<a name="121"><span class="lineNum">     121 </span>            :          time_before_eq(a,c))</a>
+<a name="122"><span class="lineNum">     122 </span>            : </a>
+<a name="123"><span class="lineNum">     123 </span>            : /*</a>
+<a name="124"><span class="lineNum">     124 </span>            :  * Calculate whether a is in the range of [b, c).</a>
+<a name="125"><span class="lineNum">     125 </span>            :  */</a>
+<a name="126"><span class="lineNum">     126 </span>            : #define time_in_range_open(a,b,c) \</a>
+<a name="127"><span class="lineNum">     127 </span>            :         (time_after_eq(a,b) &amp;&amp; \</a>
+<a name="128"><span class="lineNum">     128 </span>            :          time_before(a,c))</a>
+<a name="129"><span class="lineNum">     129 </span>            : </a>
+<a name="130"><span class="lineNum">     130 </span>            : /* Same as above, but does so with platform independent 64bit types.</a>
+<a name="131"><span class="lineNum">     131 </span>            :  * These must be used when utilizing jiffies_64 (i.e. return value of</a>
+<a name="132"><span class="lineNum">     132 </span>            :  * get_jiffies_64() */</a>
+<a name="133"><span class="lineNum">     133 </span>            : #define time_after64(a,b)       \</a>
+<a name="134"><span class="lineNum">     134 </span>            :         (typecheck(__u64, a) &amp;&amp; \</a>
+<a name="135"><span class="lineNum">     135 </span>            :          typecheck(__u64, b) &amp;&amp; \</a>
+<a name="136"><span class="lineNum">     136 </span>            :          ((__s64)((b) - (a)) &lt; 0))</a>
+<a name="137"><span class="lineNum">     137 </span>            : #define time_before64(a,b)      time_after64(b,a)</a>
+<a name="138"><span class="lineNum">     138 </span>            : </a>
+<a name="139"><span class="lineNum">     139 </span>            : #define time_after_eq64(a,b)    \</a>
+<a name="140"><span class="lineNum">     140 </span>            :         (typecheck(__u64, a) &amp;&amp; \</a>
+<a name="141"><span class="lineNum">     141 </span>            :          typecheck(__u64, b) &amp;&amp; \</a>
+<a name="142"><span class="lineNum">     142 </span>            :          ((__s64)((a) - (b)) &gt;= 0))</a>
+<a name="143"><span class="lineNum">     143 </span>            : #define time_before_eq64(a,b)   time_after_eq64(b,a)</a>
+<a name="144"><span class="lineNum">     144 </span>            : </a>
+<a name="145"><span class="lineNum">     145 </span>            : #define time_in_range64(a, b, c) \</a>
+<a name="146"><span class="lineNum">     146 </span>            :         (time_after_eq64(a, b) &amp;&amp; \</a>
+<a name="147"><span class="lineNum">     147 </span>            :          time_before_eq64(a, c))</a>
+<a name="148"><span class="lineNum">     148 </span>            : </a>
+<a name="149"><span class="lineNum">     149 </span>            : /*</a>
+<a name="150"><span class="lineNum">     150 </span>            :  * These four macros compare jiffies and 'a' for convenience.</a>
+<a name="151"><span class="lineNum">     151 </span>            :  */</a>
+<a name="152"><span class="lineNum">     152 </span>            : </a>
+<a name="153"><span class="lineNum">     153 </span>            : /* time_is_before_jiffies(a) return true if a is before jiffies */</a>
+<a name="154"><span class="lineNum">     154 </span>            : #define time_is_before_jiffies(a) time_after(jiffies, a)</a>
+<a name="155"><span class="lineNum">     155 </span>            : #define time_is_before_jiffies64(a) time_after64(get_jiffies_64(), a)</a>
+<a name="156"><span class="lineNum">     156 </span>            : </a>
+<a name="157"><span class="lineNum">     157 </span>            : /* time_is_after_jiffies(a) return true if a is after jiffies */</a>
+<a name="158"><span class="lineNum">     158 </span>            : #define time_is_after_jiffies(a) time_before(jiffies, a)</a>
+<a name="159"><span class="lineNum">     159 </span>            : #define time_is_after_jiffies64(a) time_before64(get_jiffies_64(), a)</a>
+<a name="160"><span class="lineNum">     160 </span>            : </a>
+<a name="161"><span class="lineNum">     161 </span>            : /* time_is_before_eq_jiffies(a) return true if a is before or equal to jiffies*/</a>
+<a name="162"><span class="lineNum">     162 </span>            : #define time_is_before_eq_jiffies(a) time_after_eq(jiffies, a)</a>
+<a name="163"><span class="lineNum">     163 </span>            : #define time_is_before_eq_jiffies64(a) time_after_eq64(get_jiffies_64(), a)</a>
+<a name="164"><span class="lineNum">     164 </span>            : </a>
+<a name="165"><span class="lineNum">     165 </span>            : /* time_is_after_eq_jiffies(a) return true if a is after or equal to jiffies*/</a>
+<a name="166"><span class="lineNum">     166 </span>            : #define time_is_after_eq_jiffies(a) time_before_eq(jiffies, a)</a>
+<a name="167"><span class="lineNum">     167 </span>            : #define time_is_after_eq_jiffies64(a) time_before_eq64(get_jiffies_64(), a)</a>
+<a name="168"><span class="lineNum">     168 </span>            : </a>
+<a name="169"><span class="lineNum">     169 </span>            : /*</a>
+<a name="170"><span class="lineNum">     170 </span>            :  * Have the 32 bit jiffies value wrap 5 minutes after boot</a>
+<a name="171"><span class="lineNum">     171 </span>            :  * so jiffies wrap bugs show up earlier.</a>
+<a name="172"><span class="lineNum">     172 </span>            :  */</a>
+<a name="173"><span class="lineNum">     173 </span>            : #define INITIAL_JIFFIES ((unsigned long)(unsigned int) (-300*HZ))</a>
+<a name="174"><span class="lineNum">     174 </span>            : </a>
+<a name="175"><span class="lineNum">     175 </span>            : /*</a>
+<a name="176"><span class="lineNum">     176 </span>            :  * Change timeval to jiffies, trying to avoid the</a>
+<a name="177"><span class="lineNum">     177 </span>            :  * most obvious overflows..</a>
+<a name="178"><span class="lineNum">     178 </span>            :  *</a>
+<a name="179"><span class="lineNum">     179 </span>            :  * And some not so obvious.</a>
+<a name="180"><span class="lineNum">     180 </span>            :  *</a>
+<a name="181"><span class="lineNum">     181 </span>            :  * Note that we don't want to return LONG_MAX, because</a>
+<a name="182"><span class="lineNum">     182 </span>            :  * for various timeout reasons we often end up having</a>
+<a name="183"><span class="lineNum">     183 </span>            :  * to wait &quot;jiffies+1&quot; in order to guarantee that we wait</a>
+<a name="184"><span class="lineNum">     184 </span>            :  * at _least_ &quot;jiffies&quot; - so &quot;jiffies+1&quot; had better still</a>
+<a name="185"><span class="lineNum">     185 </span>            :  * be positive.</a>
+<a name="186"><span class="lineNum">     186 </span>            :  */</a>
+<a name="187"><span class="lineNum">     187 </span>            : #define MAX_JIFFY_OFFSET ((LONG_MAX &gt;&gt; 1)-1)</a>
+<a name="188"><span class="lineNum">     188 </span>            : </a>
+<a name="189"><span class="lineNum">     189 </span>            : extern unsigned long preset_lpj;</a>
+<a name="190"><span class="lineNum">     190 </span>            : </a>
+<a name="191"><span class="lineNum">     191 </span>            : /*</a>
+<a name="192"><span class="lineNum">     192 </span>            :  * We want to do realistic conversions of time so we need to use the same</a>
+<a name="193"><span class="lineNum">     193 </span>            :  * values the update wall clock code uses as the jiffies size.  This value</a>
+<a name="194"><span class="lineNum">     194 </span>            :  * is: TICK_NSEC (which is defined in timex.h).  This</a>
+<a name="195"><span class="lineNum">     195 </span>            :  * is a constant and is in nanoseconds.  We will use scaled math</a>
+<a name="196"><span class="lineNum">     196 </span>            :  * with a set of scales defined here as SEC_JIFFIE_SC,  USEC_JIFFIE_SC and</a>
+<a name="197"><span class="lineNum">     197 </span>            :  * NSEC_JIFFIE_SC.  Note that these defines contain nothing but</a>
+<a name="198"><span class="lineNum">     198 </span>            :  * constants and so are computed at compile time.  SHIFT_HZ (computed in</a>
+<a name="199"><span class="lineNum">     199 </span>            :  * timex.h) adjusts the scaling for different HZ values.</a>
+<a name="200"><span class="lineNum">     200 </span>            : </a>
+<a name="201"><span class="lineNum">     201 </span>            :  * Scaled math???  What is that?</a>
+<a name="202"><span class="lineNum">     202 </span>            :  *</a>
+<a name="203"><span class="lineNum">     203 </span>            :  * Scaled math is a way to do integer math on values that would,</a>
+<a name="204"><span class="lineNum">     204 </span>            :  * otherwise, either overflow, underflow, or cause undesired div</a>
+<a name="205"><span class="lineNum">     205 </span>            :  * instructions to appear in the execution path.  In short, we &quot;scale&quot;</a>
+<a name="206"><span class="lineNum">     206 </span>            :  * up the operands so they take more bits (more precision, less</a>
+<a name="207"><span class="lineNum">     207 </span>            :  * underflow), do the desired operation and then &quot;scale&quot; the result back</a>
+<a name="208"><span class="lineNum">     208 </span>            :  * by the same amount.  If we do the scaling by shifting we avoid the</a>
+<a name="209"><span class="lineNum">     209 </span>            :  * costly mpy and the dastardly div instructions.</a>
+<a name="210"><span class="lineNum">     210 </span>            : </a>
+<a name="211"><span class="lineNum">     211 </span>            :  * Suppose, for example, we want to convert from seconds to jiffies</a>
+<a name="212"><span class="lineNum">     212 </span>            :  * where jiffies is defined in nanoseconds as NSEC_PER_JIFFIE.  The</a>
+<a name="213"><span class="lineNum">     213 </span>            :  * simple math is: jiff = (sec * NSEC_PER_SEC) / NSEC_PER_JIFFIE; We</a>
+<a name="214"><span class="lineNum">     214 </span>            :  * observe that (NSEC_PER_SEC / NSEC_PER_JIFFIE) is a constant which we</a>
+<a name="215"><span class="lineNum">     215 </span>            :  * might calculate at compile time, however, the result will only have</a>
+<a name="216"><span class="lineNum">     216 </span>            :  * about 3-4 bits of precision (less for smaller values of HZ).</a>
+<a name="217"><span class="lineNum">     217 </span>            :  *</a>
+<a name="218"><span class="lineNum">     218 </span>            :  * So, we scale as follows:</a>
+<a name="219"><span class="lineNum">     219 </span>            :  * jiff = (sec) * (NSEC_PER_SEC / NSEC_PER_JIFFIE);</a>
+<a name="220"><span class="lineNum">     220 </span>            :  * jiff = ((sec) * ((NSEC_PER_SEC * SCALE)/ NSEC_PER_JIFFIE)) / SCALE;</a>
+<a name="221"><span class="lineNum">     221 </span>            :  * Then we make SCALE a power of two so:</a>
+<a name="222"><span class="lineNum">     222 </span>            :  * jiff = ((sec) * ((NSEC_PER_SEC &lt;&lt; SCALE)/ NSEC_PER_JIFFIE)) &gt;&gt; SCALE;</a>
+<a name="223"><span class="lineNum">     223 </span>            :  * Now we define:</a>
+<a name="224"><span class="lineNum">     224 </span>            :  * #define SEC_CONV = ((NSEC_PER_SEC &lt;&lt; SCALE)/ NSEC_PER_JIFFIE))</a>
+<a name="225"><span class="lineNum">     225 </span>            :  * jiff = (sec * SEC_CONV) &gt;&gt; SCALE;</a>
+<a name="226"><span class="lineNum">     226 </span>            :  *</a>
+<a name="227"><span class="lineNum">     227 </span>            :  * Often the math we use will expand beyond 32-bits so we tell C how to</a>
+<a name="228"><span class="lineNum">     228 </span>            :  * do this and pass the 64-bit result of the mpy through the &quot;&gt;&gt; SCALE&quot;</a>
+<a name="229"><span class="lineNum">     229 </span>            :  * which should take the result back to 32-bits.  We want this expansion</a>
+<a name="230"><span class="lineNum">     230 </span>            :  * to capture as much precision as possible.  At the same time we don't</a>
+<a name="231"><span class="lineNum">     231 </span>            :  * want to overflow so we pick the SCALE to avoid this.  In this file,</a>
+<a name="232"><span class="lineNum">     232 </span>            :  * that means using a different scale for each range of HZ values (as</a>
+<a name="233"><span class="lineNum">     233 </span>            :  * defined in timex.h).</a>
+<a name="234"><span class="lineNum">     234 </span>            :  *</a>
+<a name="235"><span class="lineNum">     235 </span>            :  * For those who want to know, gcc will give a 64-bit result from a &quot;*&quot;</a>
+<a name="236"><span class="lineNum">     236 </span>            :  * operator if the result is a long long AND at least one of the</a>
+<a name="237"><span class="lineNum">     237 </span>            :  * operands is cast to long long (usually just prior to the &quot;*&quot; so as</a>
+<a name="238"><span class="lineNum">     238 </span>            :  * not to confuse it into thinking it really has a 64-bit operand,</a>
+<a name="239"><span class="lineNum">     239 </span>            :  * which, buy the way, it can do, but it takes more code and at least 2</a>
+<a name="240"><span class="lineNum">     240 </span>            :  * mpys).</a>
+<a name="241"><span class="lineNum">     241 </span>            : </a>
+<a name="242"><span class="lineNum">     242 </span>            :  * We also need to be aware that one second in nanoseconds is only a</a>
+<a name="243"><span class="lineNum">     243 </span>            :  * couple of bits away from overflowing a 32-bit word, so we MUST use</a>
+<a name="244"><span class="lineNum">     244 </span>            :  * 64-bits to get the full range time in nanoseconds.</a>
+<a name="245"><span class="lineNum">     245 </span>            : </a>
+<a name="246"><span class="lineNum">     246 </span>            :  */</a>
+<a name="247"><span class="lineNum">     247 </span>            : </a>
+<a name="248"><span class="lineNum">     248 </span>            : /*</a>
+<a name="249"><span class="lineNum">     249 </span>            :  * Here are the scales we will use.  One for seconds, nanoseconds and</a>
+<a name="250"><span class="lineNum">     250 </span>            :  * microseconds.</a>
+<a name="251"><span class="lineNum">     251 </span>            :  *</a>
+<a name="252"><span class="lineNum">     252 </span>            :  * Within the limits of cpp we do a rough cut at the SEC_JIFFIE_SC and</a>
+<a name="253"><span class="lineNum">     253 </span>            :  * check if the sign bit is set.  If not, we bump the shift count by 1.</a>
+<a name="254"><span class="lineNum">     254 </span>            :  * (Gets an extra bit of precision where we can use it.)</a>
+<a name="255"><span class="lineNum">     255 </span>            :  * We know it is set for HZ = 1024 and HZ = 100 not for 1000.</a>
+<a name="256"><span class="lineNum">     256 </span>            :  * Haven't tested others.</a>
+<a name="257"><span class="lineNum">     257 </span>            : </a>
+<a name="258"><span class="lineNum">     258 </span>            :  * Limits of cpp (for #if expressions) only long (no long long), but</a>
+<a name="259"><span class="lineNum">     259 </span>            :  * then we only need the most signicant bit.</a>
+<a name="260"><span class="lineNum">     260 </span>            :  */</a>
+<a name="261"><span class="lineNum">     261 </span>            : </a>
+<a name="262"><span class="lineNum">     262 </span>            : #define SEC_JIFFIE_SC (31 - SHIFT_HZ)</a>
+<a name="263"><span class="lineNum">     263 </span>            : #if !((((NSEC_PER_SEC &lt;&lt; 2) / TICK_NSEC) &lt;&lt; (SEC_JIFFIE_SC - 2)) &amp; 0x80000000)</a>
+<a name="264"><span class="lineNum">     264 </span>            : #undef SEC_JIFFIE_SC</a>
+<a name="265"><span class="lineNum">     265 </span>            : #define SEC_JIFFIE_SC (32 - SHIFT_HZ)</a>
+<a name="266"><span class="lineNum">     266 </span>            : #endif</a>
+<a name="267"><span class="lineNum">     267 </span>            : #define NSEC_JIFFIE_SC (SEC_JIFFIE_SC + 29)</a>
+<a name="268"><span class="lineNum">     268 </span>            : #define SEC_CONVERSION ((unsigned long)((((u64)NSEC_PER_SEC &lt;&lt; SEC_JIFFIE_SC) +\</a>
+<a name="269"><span class="lineNum">     269 </span>            :                                 TICK_NSEC -1) / (u64)TICK_NSEC))</a>
+<a name="270"><span class="lineNum">     270 </span>            : </a>
+<a name="271"><span class="lineNum">     271 </span>            : #define NSEC_CONVERSION ((unsigned long)((((u64)1 &lt;&lt; NSEC_JIFFIE_SC) +\</a>
+<a name="272"><span class="lineNum">     272 </span>            :                                         TICK_NSEC -1) / (u64)TICK_NSEC))</a>
+<a name="273"><span class="lineNum">     273 </span>            : /*</a>
+<a name="274"><span class="lineNum">     274 </span>            :  * The maximum jiffie value is (MAX_INT &gt;&gt; 1).  Here we translate that</a>
+<a name="275"><span class="lineNum">     275 </span>            :  * into seconds.  The 64-bit case will overflow if we are not careful,</a>
+<a name="276"><span class="lineNum">     276 </span>            :  * so use the messy SH_DIV macro to do it.  Still all constants.</a>
+<a name="277"><span class="lineNum">     277 </span>            :  */</a>
+<a name="278"><span class="lineNum">     278 </span>            : #if BITS_PER_LONG &lt; 64</a>
+<a name="279"><span class="lineNum">     279 </span>            : # define MAX_SEC_IN_JIFFIES \</a>
+<a name="280"><span class="lineNum">     280 </span>            :         (long)((u64)((u64)MAX_JIFFY_OFFSET * TICK_NSEC) / NSEC_PER_SEC)</a>
+<a name="281"><span class="lineNum">     281 </span>            : #else   /* take care of overflow on 64 bits machines */</a>
+<a name="282"><span class="lineNum">     282 </span>            : # define MAX_SEC_IN_JIFFIES \</a>
+<a name="283"><span class="lineNum">     283 </span>            :         (SH_DIV((MAX_JIFFY_OFFSET &gt;&gt; SEC_JIFFIE_SC) * TICK_NSEC, NSEC_PER_SEC, 1) - 1)</a>
+<a name="284"><span class="lineNum">     284 </span>            : </a>
+<a name="285"><span class="lineNum">     285 </span>            : #endif</a>
+<a name="286"><span class="lineNum">     286 </span>            : </a>
+<a name="287"><span class="lineNum">     287 </span>            : /*</a>
+<a name="288"><span class="lineNum">     288 </span>            :  * Convert various time units to each other:</a>
+<a name="289"><span class="lineNum">     289 </span>            :  */</a>
+<a name="290"><span class="lineNum">     290 </span>            : extern unsigned int jiffies_to_msecs(const unsigned long j);</a>
+<a name="291"><span class="lineNum">     291 </span>            : extern unsigned int jiffies_to_usecs(const unsigned long j);</a>
+<a name="292"><span class="lineNum">     292 </span>            : </a>
+<a name="293"><span class="lineNum">     293 </span><span class="lineNoCov">          0 : static inline u64 jiffies_to_nsecs(const unsigned long j)</span></a>
+<a name="294"><span class="lineNum">     294 </span>            : {</a>
+<a name="295"><span class="lineNum">     295 </span><span class="lineNoCov">          0 :         return (u64)jiffies_to_usecs(j) * NSEC_PER_USEC;</span></a>
+<a name="296"><span class="lineNum">     296 </span>            : }</a>
+<a name="297"><span class="lineNum">     297 </span>            : </a>
+<a name="298"><span class="lineNum">     298 </span>            : extern u64 jiffies64_to_nsecs(u64 j);</a>
+<a name="299"><span class="lineNum">     299 </span>            : extern u64 jiffies64_to_msecs(u64 j);</a>
+<a name="300"><span class="lineNum">     300 </span>            : </a>
+<a name="301"><span class="lineNum">     301 </span>            : extern unsigned long __msecs_to_jiffies(const unsigned int m);</a>
+<a name="302"><span class="lineNum">     302 </span>            : #if HZ &lt;= MSEC_PER_SEC &amp;&amp; !(MSEC_PER_SEC % HZ)</a>
+<a name="303"><span class="lineNum">     303 </span>            : /*</a>
+<a name="304"><span class="lineNum">     304 </span>            :  * HZ is equal to or smaller than 1000, and 1000 is a nice round</a>
+<a name="305"><span class="lineNum">     305 </span>            :  * multiple of HZ, divide with the factor between them, but round</a>
+<a name="306"><span class="lineNum">     306 </span>            :  * upwards:</a>
+<a name="307"><span class="lineNum">     307 </span>            :  */</a>
+<a name="308"><span class="lineNum">     308 </span><span class="lineCov">      58614 : static inline unsigned long _msecs_to_jiffies(const unsigned int m)</span></a>
+<a name="309"><span class="lineNum">     309 </span>            : {</a>
+<a name="310"><span class="lineNum">     310 </span><span class="lineCov">      58614 :         return (m + (MSEC_PER_SEC / HZ) - 1) / (MSEC_PER_SEC / HZ);</span></a>
+<a name="311"><span class="lineNum">     311 </span>            : }</a>
+<a name="312"><span class="lineNum">     312 </span>            : #elif HZ &gt; MSEC_PER_SEC &amp;&amp; !(HZ % MSEC_PER_SEC)</a>
+<a name="313"><span class="lineNum">     313 </span>            : /*</a>
+<a name="314"><span class="lineNum">     314 </span>            :  * HZ is larger than 1000, and HZ is a nice round multiple of 1000 -</a>
+<a name="315"><span class="lineNum">     315 </span>            :  * simply multiply with the factor between them.</a>
+<a name="316"><span class="lineNum">     316 </span>            :  *</a>
+<a name="317"><span class="lineNum">     317 </span>            :  * But first make sure the multiplication result cannot overflow:</a>
+<a name="318"><span class="lineNum">     318 </span>            :  */</a>
+<a name="319"><span class="lineNum">     319 </span>            : static inline unsigned long _msecs_to_jiffies(const unsigned int m)</a>
+<a name="320"><span class="lineNum">     320 </span>            : {</a>
+<a name="321"><span class="lineNum">     321 </span>            :         if (m &gt; jiffies_to_msecs(MAX_JIFFY_OFFSET))</a>
+<a name="322"><span class="lineNum">     322 </span>            :                 return MAX_JIFFY_OFFSET;</a>
+<a name="323"><span class="lineNum">     323 </span>            :         return m * (HZ / MSEC_PER_SEC);</a>
+<a name="324"><span class="lineNum">     324 </span>            : }</a>
+<a name="325"><span class="lineNum">     325 </span>            : #else</a>
+<a name="326"><span class="lineNum">     326 </span>            : /*</a>
+<a name="327"><span class="lineNum">     327 </span>            :  * Generic case - multiply, round and divide. But first check that if</a>
+<a name="328"><span class="lineNum">     328 </span>            :  * we are doing a net multiplication, that we wouldn't overflow:</a>
+<a name="329"><span class="lineNum">     329 </span>            :  */</a>
+<a name="330"><span class="lineNum">     330 </span>            : static inline unsigned long _msecs_to_jiffies(const unsigned int m)</a>
+<a name="331"><span class="lineNum">     331 </span>            : {</a>
+<a name="332"><span class="lineNum">     332 </span>            :         if (HZ &gt; MSEC_PER_SEC &amp;&amp; m &gt; jiffies_to_msecs(MAX_JIFFY_OFFSET))</a>
+<a name="333"><span class="lineNum">     333 </span>            :                 return MAX_JIFFY_OFFSET;</a>
+<a name="334"><span class="lineNum">     334 </span>            : </a>
+<a name="335"><span class="lineNum">     335 </span>            :         return (MSEC_TO_HZ_MUL32 * m + MSEC_TO_HZ_ADJ32) &gt;&gt; MSEC_TO_HZ_SHR32;</a>
+<a name="336"><span class="lineNum">     336 </span>            : }</a>
+<a name="337"><span class="lineNum">     337 </span>            : #endif</a>
+<a name="338"><span class="lineNum">     338 </span>            : /**</a>
+<a name="339"><span class="lineNum">     339 </span>            :  * msecs_to_jiffies: - convert milliseconds to jiffies</a>
+<a name="340"><span class="lineNum">     340 </span>            :  * @m:  time in milliseconds</a>
+<a name="341"><span class="lineNum">     341 </span>            :  *</a>
+<a name="342"><span class="lineNum">     342 </span>            :  * conversion is done as follows:</a>
+<a name="343"><span class="lineNum">     343 </span>            :  *</a>
+<a name="344"><span class="lineNum">     344 </span>            :  * - negative values mean 'infinite timeout' (MAX_JIFFY_OFFSET)</a>
+<a name="345"><span class="lineNum">     345 </span>            :  *</a>
+<a name="346"><span class="lineNum">     346 </span>            :  * - 'too large' values [that would result in larger than</a>
+<a name="347"><span class="lineNum">     347 </span>            :  *   MAX_JIFFY_OFFSET values] mean 'infinite timeout' too.</a>
+<a name="348"><span class="lineNum">     348 </span>            :  *</a>
+<a name="349"><span class="lineNum">     349 </span>            :  * - all other values are converted to jiffies by either multiplying</a>
+<a name="350"><span class="lineNum">     350 </span>            :  *   the input value by a factor or dividing it with a factor and</a>
+<a name="351"><span class="lineNum">     351 </span>            :  *   handling any 32-bit overflows.</a>
+<a name="352"><span class="lineNum">     352 </span>            :  *   for the details see __msecs_to_jiffies()</a>
+<a name="353"><span class="lineNum">     353 </span>            :  *</a>
+<a name="354"><span class="lineNum">     354 </span>            :  * msecs_to_jiffies() checks for the passed in value being a constant</a>
+<a name="355"><span class="lineNum">     355 </span>            :  * via __builtin_constant_p() allowing gcc to eliminate most of the</a>
+<a name="356"><span class="lineNum">     356 </span>            :  * code, __msecs_to_jiffies() is called if the value passed does not</a>
+<a name="357"><span class="lineNum">     357 </span>            :  * allow constant folding and the actual conversion must be done at</a>
+<a name="358"><span class="lineNum">     358 </span>            :  * runtime.</a>
+<a name="359"><span class="lineNum">     359 </span>            :  * the HZ range specific helpers _msecs_to_jiffies() are called both</a>
+<a name="360"><span class="lineNum">     360 </span>            :  * directly here and from __msecs_to_jiffies() in the case where</a>
+<a name="361"><span class="lineNum">     361 </span>            :  * constant folding is not possible.</a>
+<a name="362"><span class="lineNum">     362 </span>            :  */</a>
+<a name="363"><span class="lineNum">     363 </span><span class="lineCov">      55226 : static __always_inline unsigned long msecs_to_jiffies(const unsigned int m)</span></a>
+<a name="364"><span class="lineNum">     364 </span>            : {</a>
+<a name="365"><span class="lineNum">     365 </span><span class="lineCov">      54297 :         if (__builtin_constant_p(m)) {</span></a>
+<a name="366"><span class="lineNum">     366 </span><span class="lineCov">      22202 :                 if ((int)m &lt; 0)</span></a>
+<a name="367"><span class="lineNum">     367 </span>            :                         return MAX_JIFFY_OFFSET;</a>
+<a name="368"><span class="lineNum">     368 </span><span class="lineCov">      23131 :                 return _msecs_to_jiffies(m);</span></a>
+<a name="369"><span class="lineNum">     369 </span>            :         } else {</a>
+<a name="370"><span class="lineNum">     370 </span><span class="lineCov">      32095 :                 return __msecs_to_jiffies(m);</span></a>
+<a name="371"><span class="lineNum">     371 </span>            :         }</a>
+<a name="372"><span class="lineNum">     372 </span>            : }</a>
+<a name="373"><span class="lineNum">     373 </span>            : </a>
+<a name="374"><span class="lineNum">     374 </span>            : extern unsigned long __usecs_to_jiffies(const unsigned int u);</a>
+<a name="375"><span class="lineNum">     375 </span>            : #if !(USEC_PER_SEC % HZ)</a>
+<a name="376"><span class="lineNum">     376 </span><span class="lineCov">        827 : static inline unsigned long _usecs_to_jiffies(const unsigned int u)</span></a>
+<a name="377"><span class="lineNum">     377 </span>            : {</a>
+<a name="378"><span class="lineNum">     378 </span><span class="lineCov">        827 :         return (u + (USEC_PER_SEC / HZ) - 1) / (USEC_PER_SEC / HZ);</span></a>
+<a name="379"><span class="lineNum">     379 </span>            : }</a>
+<a name="380"><span class="lineNum">     380 </span>            : #else</a>
+<a name="381"><span class="lineNum">     381 </span>            : static inline unsigned long _usecs_to_jiffies(const unsigned int u)</a>
+<a name="382"><span class="lineNum">     382 </span>            : {</a>
+<a name="383"><span class="lineNum">     383 </span>            :         return (USEC_TO_HZ_MUL32 * u + USEC_TO_HZ_ADJ32)</a>
+<a name="384"><span class="lineNum">     384 </span>            :                 &gt;&gt; USEC_TO_HZ_SHR32;</a>
+<a name="385"><span class="lineNum">     385 </span>            : }</a>
+<a name="386"><span class="lineNum">     386 </span>            : #endif</a>
+<a name="387"><span class="lineNum">     387 </span>            : </a>
+<a name="388"><span class="lineNum">     388 </span>            : /**</a>
+<a name="389"><span class="lineNum">     389 </span>            :  * usecs_to_jiffies: - convert microseconds to jiffies</a>
+<a name="390"><span class="lineNum">     390 </span>            :  * @u:  time in microseconds</a>
+<a name="391"><span class="lineNum">     391 </span>            :  *</a>
+<a name="392"><span class="lineNum">     392 </span>            :  * conversion is done as follows:</a>
+<a name="393"><span class="lineNum">     393 </span>            :  *</a>
+<a name="394"><span class="lineNum">     394 </span>            :  * - 'too large' values [that would result in larger than</a>
+<a name="395"><span class="lineNum">     395 </span>            :  *   MAX_JIFFY_OFFSET values] mean 'infinite timeout' too.</a>
+<a name="396"><span class="lineNum">     396 </span>            :  *</a>
+<a name="397"><span class="lineNum">     397 </span>            :  * - all other values are converted to jiffies by either multiplying</a>
+<a name="398"><span class="lineNum">     398 </span>            :  *   the input value by a factor or dividing it with a factor and</a>
+<a name="399"><span class="lineNum">     399 </span>            :  *   handling any 32-bit overflows as for msecs_to_jiffies.</a>
+<a name="400"><span class="lineNum">     400 </span>            :  *</a>
+<a name="401"><span class="lineNum">     401 </span>            :  * usecs_to_jiffies() checks for the passed in value being a constant</a>
+<a name="402"><span class="lineNum">     402 </span>            :  * via __builtin_constant_p() allowing gcc to eliminate most of the</a>
+<a name="403"><span class="lineNum">     403 </span>            :  * code, __usecs_to_jiffies() is called if the value passed does not</a>
+<a name="404"><span class="lineNum">     404 </span>            :  * allow constant folding and the actual conversion must be done at</a>
+<a name="405"><span class="lineNum">     405 </span>            :  * runtime.</a>
+<a name="406"><span class="lineNum">     406 </span>            :  * the HZ range specific helpers _usecs_to_jiffies() are called both</a>
+<a name="407"><span class="lineNum">     407 </span>            :  * directly here and from __msecs_to_jiffies() in the case where</a>
+<a name="408"><span class="lineNum">     408 </span>            :  * constant folding is not possible.</a>
+<a name="409"><span class="lineNum">     409 </span>            :  */</a>
+<a name="410"><span class="lineNum">     410 </span><span class="lineCov">        832 : static __always_inline unsigned long usecs_to_jiffies(const unsigned int u)</span></a>
+<a name="411"><span class="lineNum">     411 </span>            : {</a>
+<a name="412"><span class="lineNum">     412 </span><span class="lineCov">        832 :         if (__builtin_constant_p(u)) {</span></a>
+<a name="413"><span class="lineNum">     413 </span><span class="lineNoCov">          0 :                 if (u &gt; jiffies_to_usecs(MAX_JIFFY_OFFSET))</span></a>
+<a name="414"><span class="lineNum">     414 </span>            :                         return MAX_JIFFY_OFFSET;</a>
+<a name="415"><span class="lineNum">     415 </span><span class="lineNoCov">          0 :                 return _usecs_to_jiffies(u);</span></a>
+<a name="416"><span class="lineNum">     416 </span>            :         } else {</a>
+<a name="417"><span class="lineNum">     417 </span><span class="lineCov">        832 :                 return __usecs_to_jiffies(u);</span></a>
+<a name="418"><span class="lineNum">     418 </span>            :         }</a>
+<a name="419"><span class="lineNum">     419 </span>            : }</a>
+<a name="420"><span class="lineNum">     420 </span>            : </a>
+<a name="421"><span class="lineNum">     421 </span>            : extern unsigned long timespec64_to_jiffies(const struct timespec64 *value);</a>
+<a name="422"><span class="lineNum">     422 </span>            : extern void jiffies_to_timespec64(const unsigned long jiffies,</a>
+<a name="423"><span class="lineNum">     423 </span>            :                                   struct timespec64 *value);</a>
+<a name="424"><span class="lineNum">     424 </span>            : extern clock_t jiffies_to_clock_t(unsigned long x);</a>
+<a name="425"><span class="lineNum">     425 </span><span class="lineNoCov">          0 : static inline clock_t jiffies_delta_to_clock_t(long delta)</span></a>
+<a name="426"><span class="lineNum">     426 </span>            : {</a>
+<a name="427"><span class="lineNum">     427 </span><span class="lineNoCov">          0 :         return jiffies_to_clock_t(max(0L, delta));</span></a>
+<a name="428"><span class="lineNum">     428 </span>            : }</a>
+<a name="429"><span class="lineNum">     429 </span>            : </a>
+<a name="430"><span class="lineNum">     430 </span>            : static inline unsigned int jiffies_delta_to_msecs(long delta)</a>
+<a name="431"><span class="lineNum">     431 </span>            : {</a>
+<a name="432"><span class="lineNum">     432 </span>            :         return jiffies_to_msecs(max(0L, delta));</a>
+<a name="433"><span class="lineNum">     433 </span>            : }</a>
+<a name="434"><span class="lineNum">     434 </span>            : </a>
+<a name="435"><span class="lineNum">     435 </span>            : extern unsigned long clock_t_to_jiffies(unsigned long x);</a>
+<a name="436"><span class="lineNum">     436 </span>            : extern u64 jiffies_64_to_clock_t(u64 x);</a>
+<a name="437"><span class="lineNum">     437 </span>            : extern u64 nsec_to_clock_t(u64 x);</a>
+<a name="438"><span class="lineNum">     438 </span>            : extern u64 nsecs_to_jiffies64(u64 n);</a>
+<a name="439"><span class="lineNum">     439 </span>            : extern unsigned long nsecs_to_jiffies(u64 n);</a>
+<a name="440"><span class="lineNum">     440 </span>            : </a>
+<a name="441"><span class="lineNum">     441 </span>            : #define TIMESTAMP_SIZE  30</a>
+<a name="442"><span class="lineNum">     442 </span>            : </a>
+<a name="443"><span class="lineNum">     443 </span>            : #endif</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

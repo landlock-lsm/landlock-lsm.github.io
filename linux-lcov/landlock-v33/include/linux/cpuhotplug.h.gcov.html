@@ -1,0 +1,492 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - landlock.info - include/linux/cpuhotplug.h</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">include/linux</a> - cpuhotplug.h<span style="font-size: 80%;"> (source / <a href="cpuhotplug.h.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">landlock.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">10</td>
+            <td class="headerCovTableEntry">20</td>
+            <td class="headerCovTableEntryLo">50.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2021-04-07 12:34:12</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntryHi">-</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : /* SPDX-License-Identifier: GPL-2.0 */</a>
+<a name="2"><span class="lineNum">       2 </span>            : #ifndef __CPUHOTPLUG_H</a>
+<a name="3"><span class="lineNum">       3 </span>            : #define __CPUHOTPLUG_H</a>
+<a name="4"><span class="lineNum">       4 </span>            : </a>
+<a name="5"><span class="lineNum">       5 </span>            : #include &lt;linux/types.h&gt;</a>
+<a name="6"><span class="lineNum">       6 </span>            : </a>
+<a name="7"><span class="lineNum">       7 </span>            : /*</a>
+<a name="8"><span class="lineNum">       8 </span>            :  * CPU-up                       CPU-down</a>
+<a name="9"><span class="lineNum">       9 </span>            :  *</a>
+<a name="10"><span class="lineNum">      10 </span>            :  * BP           AP              BP              AP</a>
+<a name="11"><span class="lineNum">      11 </span>            :  *</a>
+<a name="12"><span class="lineNum">      12 </span>            :  * OFFLINE                      OFFLINE</a>
+<a name="13"><span class="lineNum">      13 </span>            :  *   |                            ^</a>
+<a name="14"><span class="lineNum">      14 </span>            :  *   v                            |</a>
+<a name="15"><span class="lineNum">      15 </span>            :  * BRINGUP_CPU-&gt;AP_OFFLINE   BRINGUP_CPU  &lt;- AP_IDLE_DEAD (idle thread/play_dead)</a>
+<a name="16"><span class="lineNum">      16 </span>            :  *                |                             AP_OFFLINE</a>
+<a name="17"><span class="lineNum">      17 </span>            :  *                v (IRQ-off)     ,---------------^</a>
+<a name="18"><span class="lineNum">      18 </span>            :  *              AP_ONLNE          | (stop_machine)</a>
+<a name="19"><span class="lineNum">      19 </span>            :  *                |             TEARDOWN_CPU &lt;-      AP_ONLINE_IDLE</a>
+<a name="20"><span class="lineNum">      20 </span>            :  *                |                               ^</a>
+<a name="21"><span class="lineNum">      21 </span>            :  *                v                               |</a>
+<a name="22"><span class="lineNum">      22 </span>            :  *              AP_ACTIVE                       AP_ACTIVE</a>
+<a name="23"><span class="lineNum">      23 </span>            :  */</a>
+<a name="24"><span class="lineNum">      24 </span>            : </a>
+<a name="25"><span class="lineNum">      25 </span>            : enum cpuhp_state {</a>
+<a name="26"><span class="lineNum">      26 </span>            :         CPUHP_INVALID = -1,</a>
+<a name="27"><span class="lineNum">      27 </span>            :         CPUHP_OFFLINE = 0,</a>
+<a name="28"><span class="lineNum">      28 </span>            :         CPUHP_CREATE_THREADS,</a>
+<a name="29"><span class="lineNum">      29 </span>            :         CPUHP_PERF_PREPARE,</a>
+<a name="30"><span class="lineNum">      30 </span>            :         CPUHP_PERF_X86_PREPARE,</a>
+<a name="31"><span class="lineNum">      31 </span>            :         CPUHP_PERF_X86_AMD_UNCORE_PREP,</a>
+<a name="32"><span class="lineNum">      32 </span>            :         CPUHP_PERF_POWER,</a>
+<a name="33"><span class="lineNum">      33 </span>            :         CPUHP_PERF_SUPERH,</a>
+<a name="34"><span class="lineNum">      34 </span>            :         CPUHP_X86_HPET_DEAD,</a>
+<a name="35"><span class="lineNum">      35 </span>            :         CPUHP_X86_APB_DEAD,</a>
+<a name="36"><span class="lineNum">      36 </span>            :         CPUHP_X86_MCE_DEAD,</a>
+<a name="37"><span class="lineNum">      37 </span>            :         CPUHP_VIRT_NET_DEAD,</a>
+<a name="38"><span class="lineNum">      38 </span>            :         CPUHP_SLUB_DEAD,</a>
+<a name="39"><span class="lineNum">      39 </span>            :         CPUHP_DEBUG_OBJ_DEAD,</a>
+<a name="40"><span class="lineNum">      40 </span>            :         CPUHP_MM_WRITEBACK_DEAD,</a>
+<a name="41"><span class="lineNum">      41 </span>            :         CPUHP_MM_VMSTAT_DEAD,</a>
+<a name="42"><span class="lineNum">      42 </span>            :         CPUHP_SOFTIRQ_DEAD,</a>
+<a name="43"><span class="lineNum">      43 </span>            :         CPUHP_NET_MVNETA_DEAD,</a>
+<a name="44"><span class="lineNum">      44 </span>            :         CPUHP_CPUIDLE_DEAD,</a>
+<a name="45"><span class="lineNum">      45 </span>            :         CPUHP_ARM64_FPSIMD_DEAD,</a>
+<a name="46"><span class="lineNum">      46 </span>            :         CPUHP_ARM_OMAP_WAKE_DEAD,</a>
+<a name="47"><span class="lineNum">      47 </span>            :         CPUHP_IRQ_POLL_DEAD,</a>
+<a name="48"><span class="lineNum">      48 </span>            :         CPUHP_BLOCK_SOFTIRQ_DEAD,</a>
+<a name="49"><span class="lineNum">      49 </span>            :         CPUHP_ACPI_CPUDRV_DEAD,</a>
+<a name="50"><span class="lineNum">      50 </span>            :         CPUHP_S390_PFAULT_DEAD,</a>
+<a name="51"><span class="lineNum">      51 </span>            :         CPUHP_BLK_MQ_DEAD,</a>
+<a name="52"><span class="lineNum">      52 </span>            :         CPUHP_FS_BUFF_DEAD,</a>
+<a name="53"><span class="lineNum">      53 </span>            :         CPUHP_PRINTK_DEAD,</a>
+<a name="54"><span class="lineNum">      54 </span>            :         CPUHP_MM_MEMCQ_DEAD,</a>
+<a name="55"><span class="lineNum">      55 </span>            :         CPUHP_PERCPU_CNT_DEAD,</a>
+<a name="56"><span class="lineNum">      56 </span>            :         CPUHP_RADIX_DEAD,</a>
+<a name="57"><span class="lineNum">      57 </span>            :         CPUHP_PAGE_ALLOC_DEAD,</a>
+<a name="58"><span class="lineNum">      58 </span>            :         CPUHP_NET_DEV_DEAD,</a>
+<a name="59"><span class="lineNum">      59 </span>            :         CPUHP_PCI_XGENE_DEAD,</a>
+<a name="60"><span class="lineNum">      60 </span>            :         CPUHP_IOMMU_INTEL_DEAD,</a>
+<a name="61"><span class="lineNum">      61 </span>            :         CPUHP_LUSTRE_CFS_DEAD,</a>
+<a name="62"><span class="lineNum">      62 </span>            :         CPUHP_AP_ARM_CACHE_B15_RAC_DEAD,</a>
+<a name="63"><span class="lineNum">      63 </span>            :         CPUHP_PADATA_DEAD,</a>
+<a name="64"><span class="lineNum">      64 </span>            :         CPUHP_WORKQUEUE_PREP,</a>
+<a name="65"><span class="lineNum">      65 </span>            :         CPUHP_POWER_NUMA_PREPARE,</a>
+<a name="66"><span class="lineNum">      66 </span>            :         CPUHP_HRTIMERS_PREPARE,</a>
+<a name="67"><span class="lineNum">      67 </span>            :         CPUHP_PROFILE_PREPARE,</a>
+<a name="68"><span class="lineNum">      68 </span>            :         CPUHP_X2APIC_PREPARE,</a>
+<a name="69"><span class="lineNum">      69 </span>            :         CPUHP_SMPCFD_PREPARE,</a>
+<a name="70"><span class="lineNum">      70 </span>            :         CPUHP_RELAY_PREPARE,</a>
+<a name="71"><span class="lineNum">      71 </span>            :         CPUHP_SLAB_PREPARE,</a>
+<a name="72"><span class="lineNum">      72 </span>            :         CPUHP_MD_RAID5_PREPARE,</a>
+<a name="73"><span class="lineNum">      73 </span>            :         CPUHP_RCUTREE_PREP,</a>
+<a name="74"><span class="lineNum">      74 </span>            :         CPUHP_CPUIDLE_COUPLED_PREPARE,</a>
+<a name="75"><span class="lineNum">      75 </span>            :         CPUHP_POWERPC_PMAC_PREPARE,</a>
+<a name="76"><span class="lineNum">      76 </span>            :         CPUHP_POWERPC_MMU_CTX_PREPARE,</a>
+<a name="77"><span class="lineNum">      77 </span>            :         CPUHP_XEN_PREPARE,</a>
+<a name="78"><span class="lineNum">      78 </span>            :         CPUHP_XEN_EVTCHN_PREPARE,</a>
+<a name="79"><span class="lineNum">      79 </span>            :         CPUHP_ARM_SHMOBILE_SCU_PREPARE,</a>
+<a name="80"><span class="lineNum">      80 </span>            :         CPUHP_SH_SH3X_PREPARE,</a>
+<a name="81"><span class="lineNum">      81 </span>            :         CPUHP_NET_FLOW_PREPARE,</a>
+<a name="82"><span class="lineNum">      82 </span>            :         CPUHP_TOPOLOGY_PREPARE,</a>
+<a name="83"><span class="lineNum">      83 </span>            :         CPUHP_NET_IUCV_PREPARE,</a>
+<a name="84"><span class="lineNum">      84 </span>            :         CPUHP_ARM_BL_PREPARE,</a>
+<a name="85"><span class="lineNum">      85 </span>            :         CPUHP_TRACE_RB_PREPARE,</a>
+<a name="86"><span class="lineNum">      86 </span>            :         CPUHP_MM_ZS_PREPARE,</a>
+<a name="87"><span class="lineNum">      87 </span>            :         CPUHP_MM_ZSWP_MEM_PREPARE,</a>
+<a name="88"><span class="lineNum">      88 </span>            :         CPUHP_MM_ZSWP_POOL_PREPARE,</a>
+<a name="89"><span class="lineNum">      89 </span>            :         CPUHP_KVM_PPC_BOOK3S_PREPARE,</a>
+<a name="90"><span class="lineNum">      90 </span>            :         CPUHP_ZCOMP_PREPARE,</a>
+<a name="91"><span class="lineNum">      91 </span>            :         CPUHP_TIMERS_PREPARE,</a>
+<a name="92"><span class="lineNum">      92 </span>            :         CPUHP_MIPS_SOC_PREPARE,</a>
+<a name="93"><span class="lineNum">      93 </span>            :         CPUHP_BP_PREPARE_DYN,</a>
+<a name="94"><span class="lineNum">      94 </span>            :         CPUHP_BP_PREPARE_DYN_END                = CPUHP_BP_PREPARE_DYN + 20,</a>
+<a name="95"><span class="lineNum">      95 </span>            :         CPUHP_BRINGUP_CPU,</a>
+<a name="96"><span class="lineNum">      96 </span>            :         CPUHP_AP_IDLE_DEAD,</a>
+<a name="97"><span class="lineNum">      97 </span>            :         CPUHP_AP_OFFLINE,</a>
+<a name="98"><span class="lineNum">      98 </span>            :         CPUHP_AP_SCHED_STARTING,</a>
+<a name="99"><span class="lineNum">      99 </span>            :         CPUHP_AP_RCUTREE_DYING,</a>
+<a name="100"><span class="lineNum">     100 </span>            :         CPUHP_AP_CPU_PM_STARTING,</a>
+<a name="101"><span class="lineNum">     101 </span>            :         CPUHP_AP_IRQ_GIC_STARTING,</a>
+<a name="102"><span class="lineNum">     102 </span>            :         CPUHP_AP_IRQ_HIP04_STARTING,</a>
+<a name="103"><span class="lineNum">     103 </span>            :         CPUHP_AP_IRQ_ARMADA_XP_STARTING,</a>
+<a name="104"><span class="lineNum">     104 </span>            :         CPUHP_AP_IRQ_BCM2836_STARTING,</a>
+<a name="105"><span class="lineNum">     105 </span>            :         CPUHP_AP_IRQ_MIPS_GIC_STARTING,</a>
+<a name="106"><span class="lineNum">     106 </span>            :         CPUHP_AP_IRQ_RISCV_STARTING,</a>
+<a name="107"><span class="lineNum">     107 </span>            :         CPUHP_AP_IRQ_SIFIVE_PLIC_STARTING,</a>
+<a name="108"><span class="lineNum">     108 </span>            :         CPUHP_AP_ARM_MVEBU_COHERENCY,</a>
+<a name="109"><span class="lineNum">     109 </span>            :         CPUHP_AP_MICROCODE_LOADER,</a>
+<a name="110"><span class="lineNum">     110 </span>            :         CPUHP_AP_PERF_X86_AMD_UNCORE_STARTING,</a>
+<a name="111"><span class="lineNum">     111 </span>            :         CPUHP_AP_PERF_X86_STARTING,</a>
+<a name="112"><span class="lineNum">     112 </span>            :         CPUHP_AP_PERF_X86_AMD_IBS_STARTING,</a>
+<a name="113"><span class="lineNum">     113 </span>            :         CPUHP_AP_PERF_X86_CQM_STARTING,</a>
+<a name="114"><span class="lineNum">     114 </span>            :         CPUHP_AP_PERF_X86_CSTATE_STARTING,</a>
+<a name="115"><span class="lineNum">     115 </span>            :         CPUHP_AP_PERF_XTENSA_STARTING,</a>
+<a name="116"><span class="lineNum">     116 </span>            :         CPUHP_AP_MIPS_OP_LOONGSON3_STARTING,</a>
+<a name="117"><span class="lineNum">     117 </span>            :         CPUHP_AP_ARM_SDEI_STARTING,</a>
+<a name="118"><span class="lineNum">     118 </span>            :         CPUHP_AP_ARM_VFP_STARTING,</a>
+<a name="119"><span class="lineNum">     119 </span>            :         CPUHP_AP_ARM64_DEBUG_MONITORS_STARTING,</a>
+<a name="120"><span class="lineNum">     120 </span>            :         CPUHP_AP_PERF_ARM_HW_BREAKPOINT_STARTING,</a>
+<a name="121"><span class="lineNum">     121 </span>            :         CPUHP_AP_PERF_ARM_ACPI_STARTING,</a>
+<a name="122"><span class="lineNum">     122 </span>            :         CPUHP_AP_PERF_ARM_STARTING,</a>
+<a name="123"><span class="lineNum">     123 </span>            :         CPUHP_AP_ARM_L2X0_STARTING,</a>
+<a name="124"><span class="lineNum">     124 </span>            :         CPUHP_AP_EXYNOS4_MCT_TIMER_STARTING,</a>
+<a name="125"><span class="lineNum">     125 </span>            :         CPUHP_AP_ARM_ARCH_TIMER_STARTING,</a>
+<a name="126"><span class="lineNum">     126 </span>            :         CPUHP_AP_ARM_GLOBAL_TIMER_STARTING,</a>
+<a name="127"><span class="lineNum">     127 </span>            :         CPUHP_AP_JCORE_TIMER_STARTING,</a>
+<a name="128"><span class="lineNum">     128 </span>            :         CPUHP_AP_ARM_TWD_STARTING,</a>
+<a name="129"><span class="lineNum">     129 </span>            :         CPUHP_AP_QCOM_TIMER_STARTING,</a>
+<a name="130"><span class="lineNum">     130 </span>            :         CPUHP_AP_TEGRA_TIMER_STARTING,</a>
+<a name="131"><span class="lineNum">     131 </span>            :         CPUHP_AP_ARMADA_TIMER_STARTING,</a>
+<a name="132"><span class="lineNum">     132 </span>            :         CPUHP_AP_MARCO_TIMER_STARTING,</a>
+<a name="133"><span class="lineNum">     133 </span>            :         CPUHP_AP_MIPS_GIC_TIMER_STARTING,</a>
+<a name="134"><span class="lineNum">     134 </span>            :         CPUHP_AP_ARC_TIMER_STARTING,</a>
+<a name="135"><span class="lineNum">     135 </span>            :         CPUHP_AP_RISCV_TIMER_STARTING,</a>
+<a name="136"><span class="lineNum">     136 </span>            :         CPUHP_AP_CLINT_TIMER_STARTING,</a>
+<a name="137"><span class="lineNum">     137 </span>            :         CPUHP_AP_CSKY_TIMER_STARTING,</a>
+<a name="138"><span class="lineNum">     138 </span>            :         CPUHP_AP_HYPERV_TIMER_STARTING,</a>
+<a name="139"><span class="lineNum">     139 </span>            :         CPUHP_AP_KVM_STARTING,</a>
+<a name="140"><span class="lineNum">     140 </span>            :         CPUHP_AP_KVM_ARM_VGIC_INIT_STARTING,</a>
+<a name="141"><span class="lineNum">     141 </span>            :         CPUHP_AP_KVM_ARM_VGIC_STARTING,</a>
+<a name="142"><span class="lineNum">     142 </span>            :         CPUHP_AP_KVM_ARM_TIMER_STARTING,</a>
+<a name="143"><span class="lineNum">     143 </span>            :         /* Must be the last timer callback */</a>
+<a name="144"><span class="lineNum">     144 </span>            :         CPUHP_AP_DUMMY_TIMER_STARTING,</a>
+<a name="145"><span class="lineNum">     145 </span>            :         CPUHP_AP_ARM_XEN_STARTING,</a>
+<a name="146"><span class="lineNum">     146 </span>            :         CPUHP_AP_ARM_CORESIGHT_STARTING,</a>
+<a name="147"><span class="lineNum">     147 </span>            :         CPUHP_AP_ARM_CORESIGHT_CTI_STARTING,</a>
+<a name="148"><span class="lineNum">     148 </span>            :         CPUHP_AP_ARM64_ISNDEP_STARTING,</a>
+<a name="149"><span class="lineNum">     149 </span>            :         CPUHP_AP_SMPCFD_DYING,</a>
+<a name="150"><span class="lineNum">     150 </span>            :         CPUHP_AP_X86_TBOOT_DYING,</a>
+<a name="151"><span class="lineNum">     151 </span>            :         CPUHP_AP_ARM_CACHE_B15_RAC_DYING,</a>
+<a name="152"><span class="lineNum">     152 </span>            :         CPUHP_AP_ONLINE,</a>
+<a name="153"><span class="lineNum">     153 </span>            :         CPUHP_TEARDOWN_CPU,</a>
+<a name="154"><span class="lineNum">     154 </span>            :         CPUHP_AP_ONLINE_IDLE,</a>
+<a name="155"><span class="lineNum">     155 </span>            :         CPUHP_AP_SCHED_WAIT_EMPTY,</a>
+<a name="156"><span class="lineNum">     156 </span>            :         CPUHP_AP_SMPBOOT_THREADS,</a>
+<a name="157"><span class="lineNum">     157 </span>            :         CPUHP_AP_X86_VDSO_VMA_ONLINE,</a>
+<a name="158"><span class="lineNum">     158 </span>            :         CPUHP_AP_IRQ_AFFINITY_ONLINE,</a>
+<a name="159"><span class="lineNum">     159 </span>            :         CPUHP_AP_BLK_MQ_ONLINE,</a>
+<a name="160"><span class="lineNum">     160 </span>            :         CPUHP_AP_ARM_MVEBU_SYNC_CLOCKS,</a>
+<a name="161"><span class="lineNum">     161 </span>            :         CPUHP_AP_X86_INTEL_EPB_ONLINE,</a>
+<a name="162"><span class="lineNum">     162 </span>            :         CPUHP_AP_PERF_ONLINE,</a>
+<a name="163"><span class="lineNum">     163 </span>            :         CPUHP_AP_PERF_X86_ONLINE,</a>
+<a name="164"><span class="lineNum">     164 </span>            :         CPUHP_AP_PERF_X86_UNCORE_ONLINE,</a>
+<a name="165"><span class="lineNum">     165 </span>            :         CPUHP_AP_PERF_X86_AMD_UNCORE_ONLINE,</a>
+<a name="166"><span class="lineNum">     166 </span>            :         CPUHP_AP_PERF_X86_AMD_POWER_ONLINE,</a>
+<a name="167"><span class="lineNum">     167 </span>            :         CPUHP_AP_PERF_X86_RAPL_ONLINE,</a>
+<a name="168"><span class="lineNum">     168 </span>            :         CPUHP_AP_PERF_X86_CQM_ONLINE,</a>
+<a name="169"><span class="lineNum">     169 </span>            :         CPUHP_AP_PERF_X86_CSTATE_ONLINE,</a>
+<a name="170"><span class="lineNum">     170 </span>            :         CPUHP_AP_PERF_S390_CF_ONLINE,</a>
+<a name="171"><span class="lineNum">     171 </span>            :         CPUHP_AP_PERF_S390_CFD_ONLINE,</a>
+<a name="172"><span class="lineNum">     172 </span>            :         CPUHP_AP_PERF_S390_SF_ONLINE,</a>
+<a name="173"><span class="lineNum">     173 </span>            :         CPUHP_AP_PERF_ARM_CCI_ONLINE,</a>
+<a name="174"><span class="lineNum">     174 </span>            :         CPUHP_AP_PERF_ARM_CCN_ONLINE,</a>
+<a name="175"><span class="lineNum">     175 </span>            :         CPUHP_AP_PERF_ARM_HISI_DDRC_ONLINE,</a>
+<a name="176"><span class="lineNum">     176 </span>            :         CPUHP_AP_PERF_ARM_HISI_HHA_ONLINE,</a>
+<a name="177"><span class="lineNum">     177 </span>            :         CPUHP_AP_PERF_ARM_HISI_L3_ONLINE,</a>
+<a name="178"><span class="lineNum">     178 </span>            :         CPUHP_AP_PERF_ARM_L2X0_ONLINE,</a>
+<a name="179"><span class="lineNum">     179 </span>            :         CPUHP_AP_PERF_ARM_QCOM_L2_ONLINE,</a>
+<a name="180"><span class="lineNum">     180 </span>            :         CPUHP_AP_PERF_ARM_QCOM_L3_ONLINE,</a>
+<a name="181"><span class="lineNum">     181 </span>            :         CPUHP_AP_PERF_ARM_APM_XGENE_ONLINE,</a>
+<a name="182"><span class="lineNum">     182 </span>            :         CPUHP_AP_PERF_ARM_CAVIUM_TX2_UNCORE_ONLINE,</a>
+<a name="183"><span class="lineNum">     183 </span>            :         CPUHP_AP_PERF_POWERPC_NEST_IMC_ONLINE,</a>
+<a name="184"><span class="lineNum">     184 </span>            :         CPUHP_AP_PERF_POWERPC_CORE_IMC_ONLINE,</a>
+<a name="185"><span class="lineNum">     185 </span>            :         CPUHP_AP_PERF_POWERPC_THREAD_IMC_ONLINE,</a>
+<a name="186"><span class="lineNum">     186 </span>            :         CPUHP_AP_PERF_POWERPC_TRACE_IMC_ONLINE,</a>
+<a name="187"><span class="lineNum">     187 </span>            :         CPUHP_AP_PERF_POWERPC_HV_24x7_ONLINE,</a>
+<a name="188"><span class="lineNum">     188 </span>            :         CPUHP_AP_PERF_POWERPC_HV_GPCI_ONLINE,</a>
+<a name="189"><span class="lineNum">     189 </span>            :         CPUHP_AP_PERF_CSKY_ONLINE,</a>
+<a name="190"><span class="lineNum">     190 </span>            :         CPUHP_AP_WATCHDOG_ONLINE,</a>
+<a name="191"><span class="lineNum">     191 </span>            :         CPUHP_AP_WORKQUEUE_ONLINE,</a>
+<a name="192"><span class="lineNum">     192 </span>            :         CPUHP_AP_RCUTREE_ONLINE,</a>
+<a name="193"><span class="lineNum">     193 </span>            :         CPUHP_AP_BASE_CACHEINFO_ONLINE,</a>
+<a name="194"><span class="lineNum">     194 </span>            :         CPUHP_AP_ONLINE_DYN,</a>
+<a name="195"><span class="lineNum">     195 </span>            :         CPUHP_AP_ONLINE_DYN_END         = CPUHP_AP_ONLINE_DYN + 30,</a>
+<a name="196"><span class="lineNum">     196 </span>            :         CPUHP_AP_X86_HPET_ONLINE,</a>
+<a name="197"><span class="lineNum">     197 </span>            :         CPUHP_AP_X86_KVM_CLK_ONLINE,</a>
+<a name="198"><span class="lineNum">     198 </span>            :         CPUHP_AP_DTPM_CPU_ONLINE,</a>
+<a name="199"><span class="lineNum">     199 </span>            :         CPUHP_AP_ACTIVE,</a>
+<a name="200"><span class="lineNum">     200 </span>            :         CPUHP_ONLINE,</a>
+<a name="201"><span class="lineNum">     201 </span>            : };</a>
+<a name="202"><span class="lineNum">     202 </span>            : </a>
+<a name="203"><span class="lineNum">     203 </span>            : int __cpuhp_setup_state(enum cpuhp_state state, const char *name, bool invoke,</a>
+<a name="204"><span class="lineNum">     204 </span>            :                         int (*startup)(unsigned int cpu),</a>
+<a name="205"><span class="lineNum">     205 </span>            :                         int (*teardown)(unsigned int cpu), bool multi_instance);</a>
+<a name="206"><span class="lineNum">     206 </span>            : </a>
+<a name="207"><span class="lineNum">     207 </span>            : int __cpuhp_setup_state_cpuslocked(enum cpuhp_state state, const char *name,</a>
+<a name="208"><span class="lineNum">     208 </span>            :                                    bool invoke,</a>
+<a name="209"><span class="lineNum">     209 </span>            :                                    int (*startup)(unsigned int cpu),</a>
+<a name="210"><span class="lineNum">     210 </span>            :                                    int (*teardown)(unsigned int cpu),</a>
+<a name="211"><span class="lineNum">     211 </span>            :                                    bool multi_instance);</a>
+<a name="212"><span class="lineNum">     212 </span>            : /**</a>
+<a name="213"><span class="lineNum">     213 </span>            :  * cpuhp_setup_state - Setup hotplug state callbacks with calling the callbacks</a>
+<a name="214"><span class="lineNum">     214 </span>            :  * @state:      The state for which the calls are installed</a>
+<a name="215"><span class="lineNum">     215 </span>            :  * @name:       Name of the callback (will be used in debug output)</a>
+<a name="216"><span class="lineNum">     216 </span>            :  * @startup:    startup callback function</a>
+<a name="217"><span class="lineNum">     217 </span>            :  * @teardown:   teardown callback function</a>
+<a name="218"><span class="lineNum">     218 </span>            :  *</a>
+<a name="219"><span class="lineNum">     219 </span>            :  * Installs the callback functions and invokes the startup callback on</a>
+<a name="220"><span class="lineNum">     220 </span>            :  * the present cpus which have already reached the @state.</a>
+<a name="221"><span class="lineNum">     221 </span>            :  */</a>
+<a name="222"><span class="lineNum">     222 </span><span class="lineCov">         10 : static inline int cpuhp_setup_state(enum cpuhp_state state,</span></a>
+<a name="223"><span class="lineNum">     223 </span>            :                                     const char *name,</a>
+<a name="224"><span class="lineNum">     224 </span>            :                                     int (*startup)(unsigned int cpu),</a>
+<a name="225"><span class="lineNum">     225 </span>            :                                     int (*teardown)(unsigned int cpu))</a>
+<a name="226"><span class="lineNum">     226 </span>            : {</a>
+<a name="227"><span class="lineNum">     227 </span><span class="lineCov">          9 :         return __cpuhp_setup_state(state, name, true, startup, teardown, false);</span></a>
+<a name="228"><span class="lineNum">     228 </span>            : }</a>
+<a name="229"><span class="lineNum">     229 </span>            : </a>
+<a name="230"><span class="lineNum">     230 </span>            : static inline int cpuhp_setup_state_cpuslocked(enum cpuhp_state state,</a>
+<a name="231"><span class="lineNum">     231 </span>            :                                                const char *name,</a>
+<a name="232"><span class="lineNum">     232 </span>            :                                                int (*startup)(unsigned int cpu),</a>
+<a name="233"><span class="lineNum">     233 </span>            :                                                int (*teardown)(unsigned int cpu))</a>
+<a name="234"><span class="lineNum">     234 </span>            : {</a>
+<a name="235"><span class="lineNum">     235 </span>            :         return __cpuhp_setup_state_cpuslocked(state, name, true, startup,</a>
+<a name="236"><span class="lineNum">     236 </span>            :                                               teardown, false);</a>
+<a name="237"><span class="lineNum">     237 </span>            : }</a>
+<a name="238"><span class="lineNum">     238 </span>            : </a>
+<a name="239"><span class="lineNum">     239 </span>            : /**</a>
+<a name="240"><span class="lineNum">     240 </span>            :  * cpuhp_setup_state_nocalls - Setup hotplug state callbacks without calling the</a>
+<a name="241"><span class="lineNum">     241 </span>            :  *                             callbacks</a>
+<a name="242"><span class="lineNum">     242 </span>            :  * @state:      The state for which the calls are installed</a>
+<a name="243"><span class="lineNum">     243 </span>            :  * @name:       Name of the callback.</a>
+<a name="244"><span class="lineNum">     244 </span>            :  * @startup:    startup callback function</a>
+<a name="245"><span class="lineNum">     245 </span>            :  * @teardown:   teardown callback function</a>
+<a name="246"><span class="lineNum">     246 </span>            :  *</a>
+<a name="247"><span class="lineNum">     247 </span>            :  * Same as @cpuhp_setup_state except that no calls are executed are invoked</a>
+<a name="248"><span class="lineNum">     248 </span>            :  * during installation of this callback. NOP if SMP=n or HOTPLUG_CPU=n.</a>
+<a name="249"><span class="lineNum">     249 </span>            :  */</a>
+<a name="250"><span class="lineNum">     250 </span><span class="lineCov">         15 : static inline int cpuhp_setup_state_nocalls(enum cpuhp_state state,</span></a>
+<a name="251"><span class="lineNum">     251 </span>            :                                             const char *name,</a>
+<a name="252"><span class="lineNum">     252 </span>            :                                             int (*startup)(unsigned int cpu),</a>
+<a name="253"><span class="lineNum">     253 </span>            :                                             int (*teardown)(unsigned int cpu))</a>
+<a name="254"><span class="lineNum">     254 </span>            : {</a>
+<a name="255"><span class="lineNum">     255 </span><span class="lineCov">         15 :         return __cpuhp_setup_state(state, name, false, startup, teardown,</span></a>
+<a name="256"><span class="lineNum">     256 </span>            :                                    false);</a>
+<a name="257"><span class="lineNum">     257 </span>            : }</a>
+<a name="258"><span class="lineNum">     258 </span>            : </a>
+<a name="259"><span class="lineNum">     259 </span>            : static inline int cpuhp_setup_state_nocalls_cpuslocked(enum cpuhp_state state,</a>
+<a name="260"><span class="lineNum">     260 </span>            :                                                      const char *name,</a>
+<a name="261"><span class="lineNum">     261 </span>            :                                                      int (*startup)(unsigned int cpu),</a>
+<a name="262"><span class="lineNum">     262 </span>            :                                                      int (*teardown)(unsigned int cpu))</a>
+<a name="263"><span class="lineNum">     263 </span>            : {</a>
+<a name="264"><span class="lineNum">     264 </span>            :         return __cpuhp_setup_state_cpuslocked(state, name, false, startup,</a>
+<a name="265"><span class="lineNum">     265 </span>            :                                             teardown, false);</a>
+<a name="266"><span class="lineNum">     266 </span>            : }</a>
+<a name="267"><span class="lineNum">     267 </span>            : </a>
+<a name="268"><span class="lineNum">     268 </span>            : /**</a>
+<a name="269"><span class="lineNum">     269 </span>            :  * cpuhp_setup_state_multi - Add callbacks for multi state</a>
+<a name="270"><span class="lineNum">     270 </span>            :  * @state:      The state for which the calls are installed</a>
+<a name="271"><span class="lineNum">     271 </span>            :  * @name:       Name of the callback.</a>
+<a name="272"><span class="lineNum">     272 </span>            :  * @startup:    startup callback function</a>
+<a name="273"><span class="lineNum">     273 </span>            :  * @teardown:   teardown callback function</a>
+<a name="274"><span class="lineNum">     274 </span>            :  *</a>
+<a name="275"><span class="lineNum">     275 </span>            :  * Sets the internal multi_instance flag and prepares a state to work as a multi</a>
+<a name="276"><span class="lineNum">     276 </span>            :  * instance callback. No callbacks are invoked at this point. The callbacks are</a>
+<a name="277"><span class="lineNum">     277 </span>            :  * invoked once an instance for this state are registered via</a>
+<a name="278"><span class="lineNum">     278 </span>            :  * @cpuhp_state_add_instance or @cpuhp_state_add_instance_nocalls.</a>
+<a name="279"><span class="lineNum">     279 </span>            :  */</a>
+<a name="280"><span class="lineNum">     280 </span><span class="lineCov">          5 : static inline int cpuhp_setup_state_multi(enum cpuhp_state state,</span></a>
+<a name="281"><span class="lineNum">     281 </span>            :                                           const char *name,</a>
+<a name="282"><span class="lineNum">     282 </span>            :                                           int (*startup)(unsigned int cpu,</a>
+<a name="283"><span class="lineNum">     283 </span>            :                                                          struct hlist_node *node),</a>
+<a name="284"><span class="lineNum">     284 </span>            :                                           int (*teardown)(unsigned int cpu,</a>
+<a name="285"><span class="lineNum">     285 </span>            :                                                           struct hlist_node *node))</a>
+<a name="286"><span class="lineNum">     286 </span>            : {</a>
+<a name="287"><span class="lineNum">     287 </span><span class="lineCov">          4 :         return __cpuhp_setup_state(state, name, false,</span></a>
+<a name="288"><span class="lineNum">     288 </span>            :                                    (void *) startup,</a>
+<a name="289"><span class="lineNum">     289 </span>            :                                    (void *) teardown, true);</a>
+<a name="290"><span class="lineNum">     290 </span>            : }</a>
+<a name="291"><span class="lineNum">     291 </span>            : </a>
+<a name="292"><span class="lineNum">     292 </span>            : int __cpuhp_state_add_instance(enum cpuhp_state state, struct hlist_node *node,</a>
+<a name="293"><span class="lineNum">     293 </span>            :                                bool invoke);</a>
+<a name="294"><span class="lineNum">     294 </span>            : int __cpuhp_state_add_instance_cpuslocked(enum cpuhp_state state,</a>
+<a name="295"><span class="lineNum">     295 </span>            :                                           struct hlist_node *node, bool invoke);</a>
+<a name="296"><span class="lineNum">     296 </span>            : </a>
+<a name="297"><span class="lineNum">     297 </span>            : /**</a>
+<a name="298"><span class="lineNum">     298 </span>            :  * cpuhp_state_add_instance - Add an instance for a state and invoke startup</a>
+<a name="299"><span class="lineNum">     299 </span>            :  *                            callback.</a>
+<a name="300"><span class="lineNum">     300 </span>            :  * @state:      The state for which the instance is installed</a>
+<a name="301"><span class="lineNum">     301 </span>            :  * @node:       The node for this individual state.</a>
+<a name="302"><span class="lineNum">     302 </span>            :  *</a>
+<a name="303"><span class="lineNum">     303 </span>            :  * Installs the instance for the @state and invokes the startup callback on</a>
+<a name="304"><span class="lineNum">     304 </span>            :  * the present cpus which have already reached the @state. The @state must have</a>
+<a name="305"><span class="lineNum">     305 </span>            :  * been earlier marked as multi-instance by @cpuhp_setup_state_multi.</a>
+<a name="306"><span class="lineNum">     306 </span>            :  */</a>
+<a name="307"><span class="lineNum">     307 </span><span class="lineCov">          2 : static inline int cpuhp_state_add_instance(enum cpuhp_state state,</span></a>
+<a name="308"><span class="lineNum">     308 </span>            :                                            struct hlist_node *node)</a>
+<a name="309"><span class="lineNum">     309 </span>            : {</a>
+<a name="310"><span class="lineNum">     310 </span><span class="lineCov">          2 :         return __cpuhp_state_add_instance(state, node, true);</span></a>
+<a name="311"><span class="lineNum">     311 </span>            : }</a>
+<a name="312"><span class="lineNum">     312 </span>            : </a>
+<a name="313"><span class="lineNum">     313 </span>            : /**</a>
+<a name="314"><span class="lineNum">     314 </span>            :  * cpuhp_state_add_instance_nocalls - Add an instance for a state without</a>
+<a name="315"><span class="lineNum">     315 </span>            :  *                                    invoking the startup callback.</a>
+<a name="316"><span class="lineNum">     316 </span>            :  * @state:      The state for which the instance is installed</a>
+<a name="317"><span class="lineNum">     317 </span>            :  * @node:       The node for this individual state.</a>
+<a name="318"><span class="lineNum">     318 </span>            :  *</a>
+<a name="319"><span class="lineNum">     319 </span>            :  * Installs the instance for the @state The @state must have been earlier</a>
+<a name="320"><span class="lineNum">     320 </span>            :  * marked as multi-instance by @cpuhp_setup_state_multi.</a>
+<a name="321"><span class="lineNum">     321 </span>            :  */</a>
+<a name="322"><span class="lineNum">     322 </span><span class="lineCov">         12 : static inline int cpuhp_state_add_instance_nocalls(enum cpuhp_state state,</span></a>
+<a name="323"><span class="lineNum">     323 </span>            :                                                    struct hlist_node *node)</a>
+<a name="324"><span class="lineNum">     324 </span>            : {</a>
+<a name="325"><span class="lineNum">     325 </span><span class="lineCov">         11 :         return __cpuhp_state_add_instance(state, node, false);</span></a>
+<a name="326"><span class="lineNum">     326 </span>            : }</a>
+<a name="327"><span class="lineNum">     327 </span>            : </a>
+<a name="328"><span class="lineNum">     328 </span>            : static inline int</a>
+<a name="329"><span class="lineNum">     329 </span>            : cpuhp_state_add_instance_nocalls_cpuslocked(enum cpuhp_state state,</a>
+<a name="330"><span class="lineNum">     330 </span>            :                                             struct hlist_node *node)</a>
+<a name="331"><span class="lineNum">     331 </span>            : {</a>
+<a name="332"><span class="lineNum">     332 </span>            :         return __cpuhp_state_add_instance_cpuslocked(state, node, false);</a>
+<a name="333"><span class="lineNum">     333 </span>            : }</a>
+<a name="334"><span class="lineNum">     334 </span>            : </a>
+<a name="335"><span class="lineNum">     335 </span>            : void __cpuhp_remove_state(enum cpuhp_state state, bool invoke);</a>
+<a name="336"><span class="lineNum">     336 </span>            : void __cpuhp_remove_state_cpuslocked(enum cpuhp_state state, bool invoke);</a>
+<a name="337"><span class="lineNum">     337 </span>            : </a>
+<a name="338"><span class="lineNum">     338 </span>            : /**</a>
+<a name="339"><span class="lineNum">     339 </span>            :  * cpuhp_remove_state - Remove hotplug state callbacks and invoke the teardown</a>
+<a name="340"><span class="lineNum">     340 </span>            :  * @state:      The state for which the calls are removed</a>
+<a name="341"><span class="lineNum">     341 </span>            :  *</a>
+<a name="342"><span class="lineNum">     342 </span>            :  * Removes the callback functions and invokes the teardown callback on</a>
+<a name="343"><span class="lineNum">     343 </span>            :  * the present cpus which have already reached the @state.</a>
+<a name="344"><span class="lineNum">     344 </span>            :  */</a>
+<a name="345"><span class="lineNum">     345 </span><span class="lineNoCov">          0 : static inline void cpuhp_remove_state(enum cpuhp_state state)</span></a>
+<a name="346"><span class="lineNum">     346 </span>            : {</a>
+<a name="347"><span class="lineNum">     347 </span><span class="lineNoCov">          0 :         __cpuhp_remove_state(state, true);</span></a>
+<a name="348"><span class="lineNum">     348 </span><span class="lineNoCov">          0 : }</span></a>
+<a name="349"><span class="lineNum">     349 </span>            : </a>
+<a name="350"><span class="lineNum">     350 </span>            : /**</a>
+<a name="351"><span class="lineNum">     351 </span>            :  * cpuhp_remove_state_nocalls - Remove hotplug state callbacks without invoking</a>
+<a name="352"><span class="lineNum">     352 </span>            :  *                              teardown</a>
+<a name="353"><span class="lineNum">     353 </span>            :  * @state:      The state for which the calls are removed</a>
+<a name="354"><span class="lineNum">     354 </span>            :  */</a>
+<a name="355"><span class="lineNum">     355 </span>            : static inline void cpuhp_remove_state_nocalls(enum cpuhp_state state)</a>
+<a name="356"><span class="lineNum">     356 </span>            : {</a>
+<a name="357"><span class="lineNum">     357 </span>            :         __cpuhp_remove_state(state, false);</a>
+<a name="358"><span class="lineNum">     358 </span>            : }</a>
+<a name="359"><span class="lineNum">     359 </span>            : </a>
+<a name="360"><span class="lineNum">     360 </span>            : static inline void cpuhp_remove_state_nocalls_cpuslocked(enum cpuhp_state state)</a>
+<a name="361"><span class="lineNum">     361 </span>            : {</a>
+<a name="362"><span class="lineNum">     362 </span>            :         __cpuhp_remove_state_cpuslocked(state, false);</a>
+<a name="363"><span class="lineNum">     363 </span>            : }</a>
+<a name="364"><span class="lineNum">     364 </span>            : </a>
+<a name="365"><span class="lineNum">     365 </span>            : /**</a>
+<a name="366"><span class="lineNum">     366 </span>            :  * cpuhp_remove_multi_state - Remove hotplug multi state callback</a>
+<a name="367"><span class="lineNum">     367 </span>            :  * @state:      The state for which the calls are removed</a>
+<a name="368"><span class="lineNum">     368 </span>            :  *</a>
+<a name="369"><span class="lineNum">     369 </span>            :  * Removes the callback functions from a multi state. This is the reverse of</a>
+<a name="370"><span class="lineNum">     370 </span>            :  * cpuhp_setup_state_multi(). All instances should have been removed before</a>
+<a name="371"><span class="lineNum">     371 </span>            :  * invoking this function.</a>
+<a name="372"><span class="lineNum">     372 </span>            :  */</a>
+<a name="373"><span class="lineNum">     373 </span><span class="lineNoCov">          0 : static inline void cpuhp_remove_multi_state(enum cpuhp_state state)</span></a>
+<a name="374"><span class="lineNum">     374 </span>            : {</a>
+<a name="375"><span class="lineNum">     375 </span><span class="lineNoCov">          0 :         __cpuhp_remove_state(state, false);</span></a>
+<a name="376"><span class="lineNum">     376 </span><span class="lineNoCov">          0 : }</span></a>
+<a name="377"><span class="lineNum">     377 </span>            : </a>
+<a name="378"><span class="lineNum">     378 </span>            : int __cpuhp_state_remove_instance(enum cpuhp_state state,</a>
+<a name="379"><span class="lineNum">     379 </span>            :                                   struct hlist_node *node, bool invoke);</a>
+<a name="380"><span class="lineNum">     380 </span>            : </a>
+<a name="381"><span class="lineNum">     381 </span>            : /**</a>
+<a name="382"><span class="lineNum">     382 </span>            :  * cpuhp_state_remove_instance - Remove hotplug instance from state and invoke</a>
+<a name="383"><span class="lineNum">     383 </span>            :  *                               the teardown callback</a>
+<a name="384"><span class="lineNum">     384 </span>            :  * @state:      The state from which the instance is removed</a>
+<a name="385"><span class="lineNum">     385 </span>            :  * @node:       The node for this individual state.</a>
+<a name="386"><span class="lineNum">     386 </span>            :  *</a>
+<a name="387"><span class="lineNum">     387 </span>            :  * Removes the instance and invokes the teardown callback on the present cpus</a>
+<a name="388"><span class="lineNum">     388 </span>            :  * which have already reached the @state.</a>
+<a name="389"><span class="lineNum">     389 </span>            :  */</a>
+<a name="390"><span class="lineNum">     390 </span><span class="lineNoCov">          0 : static inline int cpuhp_state_remove_instance(enum cpuhp_state state,</span></a>
+<a name="391"><span class="lineNum">     391 </span>            :                                               struct hlist_node *node)</a>
+<a name="392"><span class="lineNum">     392 </span>            : {</a>
+<a name="393"><span class="lineNum">     393 </span><span class="lineNoCov">          0 :         return __cpuhp_state_remove_instance(state, node, true);</span></a>
+<a name="394"><span class="lineNum">     394 </span>            : }</a>
+<a name="395"><span class="lineNum">     395 </span>            : </a>
+<a name="396"><span class="lineNum">     396 </span>            : /**</a>
+<a name="397"><span class="lineNum">     397 </span>            :  * cpuhp_state_remove_instance_nocalls - Remove hotplug instance from state</a>
+<a name="398"><span class="lineNum">     398 </span>            :  *                                       without invoking the reatdown callback</a>
+<a name="399"><span class="lineNum">     399 </span>            :  * @state:      The state from which the instance is removed</a>
+<a name="400"><span class="lineNum">     400 </span>            :  * @node:       The node for this individual state.</a>
+<a name="401"><span class="lineNum">     401 </span>            :  *</a>
+<a name="402"><span class="lineNum">     402 </span>            :  * Removes the instance without invoking the teardown callback.</a>
+<a name="403"><span class="lineNum">     403 </span>            :  */</a>
+<a name="404"><span class="lineNum">     404 </span><span class="lineNoCov">          0 : static inline int cpuhp_state_remove_instance_nocalls(enum cpuhp_state state,</span></a>
+<a name="405"><span class="lineNum">     405 </span>            :                                                       struct hlist_node *node)</a>
+<a name="406"><span class="lineNum">     406 </span>            : {</a>
+<a name="407"><span class="lineNum">     407 </span><span class="lineNoCov">          0 :         return __cpuhp_state_remove_instance(state, node, false);</span></a>
+<a name="408"><span class="lineNum">     408 </span>            : }</a>
+<a name="409"><span class="lineNum">     409 </span>            : </a>
+<a name="410"><span class="lineNum">     410 </span>            : #ifdef CONFIG_SMP</a>
+<a name="411"><span class="lineNum">     411 </span>            : void cpuhp_online_idle(enum cpuhp_state state);</a>
+<a name="412"><span class="lineNum">     412 </span>            : #else</a>
+<a name="413"><span class="lineNum">     413 </span>            : static inline void cpuhp_online_idle(enum cpuhp_state state) { }</a>
+<a name="414"><span class="lineNum">     414 </span>            : #endif</a>
+<a name="415"><span class="lineNum">     415 </span>            : </a>
+<a name="416"><span class="lineNum">     416 </span>            : #endif</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

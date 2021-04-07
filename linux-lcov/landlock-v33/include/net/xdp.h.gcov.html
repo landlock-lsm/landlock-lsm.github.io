@@ -1,0 +1,365 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - landlock.info - include/net/xdp.h</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">include/net</a> - xdp.h<span style="font-size: 80%;"> (source / <a href="xdp.h.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">landlock.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">42</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2021-04-07 12:34:12</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">3</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : /* SPDX-License-Identifier: GPL-2.0-only */</a>
+<a name="2"><span class="lineNum">       2 </span>            : /* include/net/xdp.h</a>
+<a name="3"><span class="lineNum">       3 </span>            :  *</a>
+<a name="4"><span class="lineNum">       4 </span>            :  * Copyright (c) 2017 Jesper Dangaard Brouer, Red Hat Inc.</a>
+<a name="5"><span class="lineNum">       5 </span>            :  */</a>
+<a name="6"><span class="lineNum">       6 </span>            : #ifndef __LINUX_NET_XDP_H__</a>
+<a name="7"><span class="lineNum">       7 </span>            : #define __LINUX_NET_XDP_H__</a>
+<a name="8"><span class="lineNum">       8 </span>            : </a>
+<a name="9"><span class="lineNum">       9 </span>            : #include &lt;linux/skbuff.h&gt; /* skb_shared_info */</a>
+<a name="10"><span class="lineNum">      10 </span>            : </a>
+<a name="11"><span class="lineNum">      11 </span>            : /**</a>
+<a name="12"><span class="lineNum">      12 </span>            :  * DOC: XDP RX-queue information</a>
+<a name="13"><span class="lineNum">      13 </span>            :  *</a>
+<a name="14"><span class="lineNum">      14 </span>            :  * The XDP RX-queue info (xdp_rxq_info) is associated with the driver</a>
+<a name="15"><span class="lineNum">      15 </span>            :  * level RX-ring queues.  It is information that is specific to how</a>
+<a name="16"><span class="lineNum">      16 </span>            :  * the driver have configured a given RX-ring queue.</a>
+<a name="17"><span class="lineNum">      17 </span>            :  *</a>
+<a name="18"><span class="lineNum">      18 </span>            :  * Each xdp_buff frame received in the driver carry a (pointer)</a>
+<a name="19"><span class="lineNum">      19 </span>            :  * reference to this xdp_rxq_info structure.  This provides the XDP</a>
+<a name="20"><span class="lineNum">      20 </span>            :  * data-path read-access to RX-info for both kernel and bpf-side</a>
+<a name="21"><span class="lineNum">      21 </span>            :  * (limited subset).</a>
+<a name="22"><span class="lineNum">      22 </span>            :  *</a>
+<a name="23"><span class="lineNum">      23 </span>            :  * For now, direct access is only safe while running in NAPI/softirq</a>
+<a name="24"><span class="lineNum">      24 </span>            :  * context.  Contents is read-mostly and must not be updated during</a>
+<a name="25"><span class="lineNum">      25 </span>            :  * driver NAPI/softirq poll.</a>
+<a name="26"><span class="lineNum">      26 </span>            :  *</a>
+<a name="27"><span class="lineNum">      27 </span>            :  * The driver usage API is a register and unregister API.</a>
+<a name="28"><span class="lineNum">      28 </span>            :  *</a>
+<a name="29"><span class="lineNum">      29 </span>            :  * The struct is not directly tied to the XDP prog.  A new XDP prog</a>
+<a name="30"><span class="lineNum">      30 </span>            :  * can be attached as long as it doesn't change the underlying</a>
+<a name="31"><span class="lineNum">      31 </span>            :  * RX-ring.  If the RX-ring does change significantly, the NIC driver</a>
+<a name="32"><span class="lineNum">      32 </span>            :  * naturally need to stop the RX-ring before purging and reallocating</a>
+<a name="33"><span class="lineNum">      33 </span>            :  * memory.  In that process the driver MUST call unregistor (which</a>
+<a name="34"><span class="lineNum">      34 </span>            :  * also apply for driver shutdown and unload).  The register API is</a>
+<a name="35"><span class="lineNum">      35 </span>            :  * also mandatory during RX-ring setup.</a>
+<a name="36"><span class="lineNum">      36 </span>            :  */</a>
+<a name="37"><span class="lineNum">      37 </span>            : </a>
+<a name="38"><span class="lineNum">      38 </span>            : enum xdp_mem_type {</a>
+<a name="39"><span class="lineNum">      39 </span>            :         MEM_TYPE_PAGE_SHARED = 0, /* Split-page refcnt based model */</a>
+<a name="40"><span class="lineNum">      40 </span>            :         MEM_TYPE_PAGE_ORDER0,     /* Orig XDP full page model */</a>
+<a name="41"><span class="lineNum">      41 </span>            :         MEM_TYPE_PAGE_POOL,</a>
+<a name="42"><span class="lineNum">      42 </span>            :         MEM_TYPE_XSK_BUFF_POOL,</a>
+<a name="43"><span class="lineNum">      43 </span>            :         MEM_TYPE_MAX,</a>
+<a name="44"><span class="lineNum">      44 </span>            : };</a>
+<a name="45"><span class="lineNum">      45 </span>            : </a>
+<a name="46"><span class="lineNum">      46 </span>            : /* XDP flags for ndo_xdp_xmit */</a>
+<a name="47"><span class="lineNum">      47 </span>            : #define XDP_XMIT_FLUSH          (1U &lt;&lt; 0) /* doorbell signal consumer */</a>
+<a name="48"><span class="lineNum">      48 </span>            : #define XDP_XMIT_FLAGS_MASK     XDP_XMIT_FLUSH</a>
+<a name="49"><span class="lineNum">      49 </span>            : </a>
+<a name="50"><span class="lineNum">      50 </span>            : struct xdp_mem_info {</a>
+<a name="51"><span class="lineNum">      51 </span>            :         u32 type; /* enum xdp_mem_type, but known size type */</a>
+<a name="52"><span class="lineNum">      52 </span>            :         u32 id;</a>
+<a name="53"><span class="lineNum">      53 </span>            : };</a>
+<a name="54"><span class="lineNum">      54 </span>            : </a>
+<a name="55"><span class="lineNum">      55 </span>            : struct page_pool;</a>
+<a name="56"><span class="lineNum">      56 </span>            : </a>
+<a name="57"><span class="lineNum">      57 </span>            : struct xdp_rxq_info {</a>
+<a name="58"><span class="lineNum">      58 </span>            :         struct net_device *dev;</a>
+<a name="59"><span class="lineNum">      59 </span>            :         u32 queue_index;</a>
+<a name="60"><span class="lineNum">      60 </span>            :         u32 reg_state;</a>
+<a name="61"><span class="lineNum">      61 </span>            :         struct xdp_mem_info mem;</a>
+<a name="62"><span class="lineNum">      62 </span>            :         unsigned int napi_id;</a>
+<a name="63"><span class="lineNum">      63 </span>            : } ____cacheline_aligned; /* perf critical, avoid false-sharing */</a>
+<a name="64"><span class="lineNum">      64 </span>            : </a>
+<a name="65"><span class="lineNum">      65 </span>            : struct xdp_txq_info {</a>
+<a name="66"><span class="lineNum">      66 </span>            :         struct net_device *dev;</a>
+<a name="67"><span class="lineNum">      67 </span>            : };</a>
+<a name="68"><span class="lineNum">      68 </span>            : </a>
+<a name="69"><span class="lineNum">      69 </span>            : struct xdp_buff {</a>
+<a name="70"><span class="lineNum">      70 </span>            :         void *data;</a>
+<a name="71"><span class="lineNum">      71 </span>            :         void *data_end;</a>
+<a name="72"><span class="lineNum">      72 </span>            :         void *data_meta;</a>
+<a name="73"><span class="lineNum">      73 </span>            :         void *data_hard_start;</a>
+<a name="74"><span class="lineNum">      74 </span>            :         struct xdp_rxq_info *rxq;</a>
+<a name="75"><span class="lineNum">      75 </span>            :         struct xdp_txq_info *txq;</a>
+<a name="76"><span class="lineNum">      76 </span>            :         u32 frame_sz; /* frame size to deduce data_hard_end/reserved tailroom*/</a>
+<a name="77"><span class="lineNum">      77 </span>            : };</a>
+<a name="78"><span class="lineNum">      78 </span>            : </a>
+<a name="79"><span class="lineNum">      79 </span>            : static __always_inline void</a>
+<a name="80"><span class="lineNum">      80 </span><span class="lineNoCov">          0 : xdp_init_buff(struct xdp_buff *xdp, u32 frame_sz, struct xdp_rxq_info *rxq)</span></a>
+<a name="81"><span class="lineNum">      81 </span>            : {</a>
+<a name="82"><span class="lineNum">      82 </span><span class="lineNoCov">          0 :         xdp-&gt;frame_sz = frame_sz;</span></a>
+<a name="83"><span class="lineNum">      83 </span><span class="lineNoCov">          0 :         xdp-&gt;rxq = rxq;</span></a>
+<a name="84"><span class="lineNum">      84 </span>            : }</a>
+<a name="85"><span class="lineNum">      85 </span>            : </a>
+<a name="86"><span class="lineNum">      86 </span>            : static __always_inline void</a>
+<a name="87"><span class="lineNum">      87 </span><span class="lineNoCov">          0 : xdp_prepare_buff(struct xdp_buff *xdp, unsigned char *hard_start,</span></a>
+<a name="88"><span class="lineNum">      88 </span>            :                  int headroom, int data_len, const bool meta_valid)</a>
+<a name="89"><span class="lineNum">      89 </span>            : {</a>
+<a name="90"><span class="lineNum">      90 </span><span class="lineNoCov">          0 :         unsigned char *data = hard_start + headroom;</span></a>
+<a name="91"><span class="lineNum">      91 </span>            : </a>
+<a name="92"><span class="lineNum">      92 </span><span class="lineNoCov">          0 :         xdp-&gt;data_hard_start = hard_start;</span></a>
+<a name="93"><span class="lineNum">      93 </span><span class="lineNoCov">          0 :         xdp-&gt;data = data;</span></a>
+<a name="94"><span class="lineNum">      94 </span><span class="lineNoCov">          0 :         xdp-&gt;data_end = data + data_len;</span></a>
+<a name="95"><span class="lineNum">      95 </span><span class="lineNoCov">          0 :         xdp-&gt;data_meta = meta_valid ? data : data + 1;</span></a>
+<a name="96"><span class="lineNum">      96 </span>            : }</a>
+<a name="97"><span class="lineNum">      97 </span>            : </a>
+<a name="98"><span class="lineNum">      98 </span>            : /* Reserve memory area at end-of data area.</a>
+<a name="99"><span class="lineNum">      99 </span>            :  *</a>
+<a name="100"><span class="lineNum">     100 </span>            :  * This macro reserves tailroom in the XDP buffer by limiting the</a>
+<a name="101"><span class="lineNum">     101 </span>            :  * XDP/BPF data access to data_hard_end.  Notice same area (and size)</a>
+<a name="102"><span class="lineNum">     102 </span>            :  * is used for XDP_PASS, when constructing the SKB via build_skb().</a>
+<a name="103"><span class="lineNum">     103 </span>            :  */</a>
+<a name="104"><span class="lineNum">     104 </span>            : #define xdp_data_hard_end(xdp)                          \</a>
+<a name="105"><span class="lineNum">     105 </span>            :         ((xdp)-&gt;data_hard_start + (xdp)-&gt;frame_sz -       \</a>
+<a name="106"><span class="lineNum">     106 </span>            :          SKB_DATA_ALIGN(sizeof(struct skb_shared_info)))</a>
+<a name="107"><span class="lineNum">     107 </span>            : </a>
+<a name="108"><span class="lineNum">     108 </span>            : static inline struct skb_shared_info *</a>
+<a name="109"><span class="lineNum">     109 </span>            : xdp_get_shared_info_from_buff(struct xdp_buff *xdp)</a>
+<a name="110"><span class="lineNum">     110 </span>            : {</a>
+<a name="111"><span class="lineNum">     111 </span>            :         return (struct skb_shared_info *)xdp_data_hard_end(xdp);</a>
+<a name="112"><span class="lineNum">     112 </span>            : }</a>
+<a name="113"><span class="lineNum">     113 </span>            : </a>
+<a name="114"><span class="lineNum">     114 </span>            : struct xdp_frame {</a>
+<a name="115"><span class="lineNum">     115 </span>            :         void *data;</a>
+<a name="116"><span class="lineNum">     116 </span>            :         u16 len;</a>
+<a name="117"><span class="lineNum">     117 </span>            :         u16 headroom;</a>
+<a name="118"><span class="lineNum">     118 </span>            :         u32 metasize:8;</a>
+<a name="119"><span class="lineNum">     119 </span>            :         u32 frame_sz:24;</a>
+<a name="120"><span class="lineNum">     120 </span>            :         /* Lifetime of xdp_rxq_info is limited to NAPI/enqueue time,</a>
+<a name="121"><span class="lineNum">     121 </span>            :          * while mem info is valid on remote CPU.</a>
+<a name="122"><span class="lineNum">     122 </span>            :          */</a>
+<a name="123"><span class="lineNum">     123 </span>            :         struct xdp_mem_info mem;</a>
+<a name="124"><span class="lineNum">     124 </span>            :         struct net_device *dev_rx; /* used by cpumap */</a>
+<a name="125"><span class="lineNum">     125 </span>            : };</a>
+<a name="126"><span class="lineNum">     126 </span>            : </a>
+<a name="127"><span class="lineNum">     127 </span>            : #define XDP_BULK_QUEUE_SIZE     16</a>
+<a name="128"><span class="lineNum">     128 </span>            : struct xdp_frame_bulk {</a>
+<a name="129"><span class="lineNum">     129 </span>            :         int count;</a>
+<a name="130"><span class="lineNum">     130 </span>            :         void *xa;</a>
+<a name="131"><span class="lineNum">     131 </span>            :         void *q[XDP_BULK_QUEUE_SIZE];</a>
+<a name="132"><span class="lineNum">     132 </span>            : };</a>
+<a name="133"><span class="lineNum">     133 </span>            : </a>
+<a name="134"><span class="lineNum">     134 </span>            : static __always_inline void xdp_frame_bulk_init(struct xdp_frame_bulk *bq)</a>
+<a name="135"><span class="lineNum">     135 </span>            : {</a>
+<a name="136"><span class="lineNum">     136 </span>            :         /* bq-&gt;count will be zero'ed when bq-&gt;xa gets updated */</a>
+<a name="137"><span class="lineNum">     137 </span>            :         bq-&gt;xa = NULL;</a>
+<a name="138"><span class="lineNum">     138 </span>            : }</a>
+<a name="139"><span class="lineNum">     139 </span>            : </a>
+<a name="140"><span class="lineNum">     140 </span>            : static inline struct skb_shared_info *</a>
+<a name="141"><span class="lineNum">     141 </span>            : xdp_get_shared_info_from_frame(struct xdp_frame *frame)</a>
+<a name="142"><span class="lineNum">     142 </span>            : {</a>
+<a name="143"><span class="lineNum">     143 </span>            :         void *data_hard_start = frame-&gt;data - frame-&gt;headroom - sizeof(*frame);</a>
+<a name="144"><span class="lineNum">     144 </span>            : </a>
+<a name="145"><span class="lineNum">     145 </span>            :         return (struct skb_shared_info *)(data_hard_start + frame-&gt;frame_sz -</a>
+<a name="146"><span class="lineNum">     146 </span>            :                                 SKB_DATA_ALIGN(sizeof(struct skb_shared_info)));</a>
+<a name="147"><span class="lineNum">     147 </span>            : }</a>
+<a name="148"><span class="lineNum">     148 </span>            : </a>
+<a name="149"><span class="lineNum">     149 </span>            : struct xdp_cpumap_stats {</a>
+<a name="150"><span class="lineNum">     150 </span>            :         unsigned int redirect;</a>
+<a name="151"><span class="lineNum">     151 </span>            :         unsigned int pass;</a>
+<a name="152"><span class="lineNum">     152 </span>            :         unsigned int drop;</a>
+<a name="153"><span class="lineNum">     153 </span>            : };</a>
+<a name="154"><span class="lineNum">     154 </span>            : </a>
+<a name="155"><span class="lineNum">     155 </span>            : /* Clear kernel pointers in xdp_frame */</a>
+<a name="156"><span class="lineNum">     156 </span><span class="lineNoCov">          0 : static inline void xdp_scrub_frame(struct xdp_frame *frame)</span></a>
+<a name="157"><span class="lineNum">     157 </span>            : {</a>
+<a name="158"><span class="lineNum">     158 </span><span class="lineNoCov">          0 :         frame-&gt;data = NULL;</span></a>
+<a name="159"><span class="lineNum">     159 </span><span class="lineNoCov">          0 :         frame-&gt;dev_rx = NULL;</span></a>
+<a name="160"><span class="lineNum">     160 </span>            : }</a>
+<a name="161"><span class="lineNum">     161 </span>            : </a>
+<a name="162"><span class="lineNum">     162 </span>            : /* Avoids inlining WARN macro in fast-path */</a>
+<a name="163"><span class="lineNum">     163 </span>            : void xdp_warn(const char *msg, const char *func, const int line);</a>
+<a name="164"><span class="lineNum">     164 </span>            : #define XDP_WARN(msg) xdp_warn(msg, __func__, __LINE__)</a>
+<a name="165"><span class="lineNum">     165 </span>            : </a>
+<a name="166"><span class="lineNum">     166 </span>            : struct xdp_frame *xdp_convert_zc_to_xdp_frame(struct xdp_buff *xdp);</a>
+<a name="167"><span class="lineNum">     167 </span>            : struct sk_buff *__xdp_build_skb_from_frame(struct xdp_frame *xdpf,</a>
+<a name="168"><span class="lineNum">     168 </span>            :                                            struct sk_buff *skb,</a>
+<a name="169"><span class="lineNum">     169 </span>            :                                            struct net_device *dev);</a>
+<a name="170"><span class="lineNum">     170 </span>            : struct sk_buff *xdp_build_skb_from_frame(struct xdp_frame *xdpf,</a>
+<a name="171"><span class="lineNum">     171 </span>            :                                          struct net_device *dev);</a>
+<a name="172"><span class="lineNum">     172 </span>            : int xdp_alloc_skb_bulk(void **skbs, int n_skb, gfp_t gfp);</a>
+<a name="173"><span class="lineNum">     173 </span>            : </a>
+<a name="174"><span class="lineNum">     174 </span>            : static inline</a>
+<a name="175"><span class="lineNum">     175 </span>            : void xdp_convert_frame_to_buff(struct xdp_frame *frame, struct xdp_buff *xdp)</a>
+<a name="176"><span class="lineNum">     176 </span>            : {</a>
+<a name="177"><span class="lineNum">     177 </span>            :         xdp-&gt;data_hard_start = frame-&gt;data - frame-&gt;headroom - sizeof(*frame);</a>
+<a name="178"><span class="lineNum">     178 </span>            :         xdp-&gt;data = frame-&gt;data;</a>
+<a name="179"><span class="lineNum">     179 </span>            :         xdp-&gt;data_end = frame-&gt;data + frame-&gt;len;</a>
+<a name="180"><span class="lineNum">     180 </span>            :         xdp-&gt;data_meta = frame-&gt;data - frame-&gt;metasize;</a>
+<a name="181"><span class="lineNum">     181 </span>            :         xdp-&gt;frame_sz = frame-&gt;frame_sz;</a>
+<a name="182"><span class="lineNum">     182 </span>            : }</a>
+<a name="183"><span class="lineNum">     183 </span>            : </a>
+<a name="184"><span class="lineNum">     184 </span>            : static inline</a>
+<a name="185"><span class="lineNum">     185 </span><span class="lineNoCov">          0 : int xdp_update_frame_from_buff(struct xdp_buff *xdp,</span></a>
+<a name="186"><span class="lineNum">     186 </span>            :                                struct xdp_frame *xdp_frame)</a>
+<a name="187"><span class="lineNum">     187 </span>            : {</a>
+<a name="188"><span class="lineNum">     188 </span><span class="lineNoCov">          0 :         int metasize, headroom;</span></a>
+<a name="189"><span class="lineNum">     189 </span>            : </a>
+<a name="190"><span class="lineNum">     190 </span>            :         /* Assure headroom is available for storing info */</a>
+<a name="191"><span class="lineNum">     191 </span><span class="lineNoCov">          0 :         headroom = xdp-&gt;data - xdp-&gt;data_hard_start;</span></a>
+<a name="192"><span class="lineNum">     192 </span><span class="lineNoCov">          0 :         metasize = xdp-&gt;data - xdp-&gt;data_meta;</span></a>
+<a name="193"><span class="lineNum">     193 </span><span class="lineNoCov">          0 :         metasize = metasize &gt; 0 ? metasize : 0;</span></a>
+<a name="194"><span class="lineNum">     194 </span><span class="lineNoCov">          0 :         if (unlikely((headroom - metasize) &lt; sizeof(*xdp_frame)))</span></a>
+<a name="195"><span class="lineNum">     195 </span>            :                 return -ENOSPC;</a>
+<a name="196"><span class="lineNum">     196 </span>            : </a>
+<a name="197"><span class="lineNum">     197 </span>            :         /* Catch if driver didn't reserve tailroom for skb_shared_info */</a>
+<a name="198"><span class="lineNum">     198 </span><span class="lineNoCov">          0 :         if (unlikely(xdp-&gt;data_end &gt; xdp_data_hard_end(xdp))) {</span></a>
+<a name="199"><span class="lineNum">     199 </span><span class="lineNoCov">          0 :                 XDP_WARN(&quot;Driver BUG: missing reserved tailroom&quot;);</span></a>
+<a name="200"><span class="lineNum">     200 </span><span class="lineNoCov">          0 :                 return -ENOSPC;</span></a>
+<a name="201"><span class="lineNum">     201 </span>            :         }</a>
+<a name="202"><span class="lineNum">     202 </span>            : </a>
+<a name="203"><span class="lineNum">     203 </span><span class="lineNoCov">          0 :         xdp_frame-&gt;data = xdp-&gt;data;</span></a>
+<a name="204"><span class="lineNum">     204 </span><span class="lineNoCov">          0 :         xdp_frame-&gt;len  = xdp-&gt;data_end - xdp-&gt;data;</span></a>
+<a name="205"><span class="lineNum">     205 </span><span class="lineNoCov">          0 :         xdp_frame-&gt;headroom = headroom - sizeof(*xdp_frame);</span></a>
+<a name="206"><span class="lineNum">     206 </span><span class="lineNoCov">          0 :         xdp_frame-&gt;metasize = metasize;</span></a>
+<a name="207"><span class="lineNum">     207 </span><span class="lineNoCov">          0 :         xdp_frame-&gt;frame_sz = xdp-&gt;frame_sz;</span></a>
+<a name="208"><span class="lineNum">     208 </span>            : </a>
+<a name="209"><span class="lineNum">     209 </span><span class="lineNoCov">          0 :         return 0;</span></a>
+<a name="210"><span class="lineNum">     210 </span>            : }</a>
+<a name="211"><span class="lineNum">     211 </span>            : </a>
+<a name="212"><span class="lineNum">     212 </span>            : /* Convert xdp_buff to xdp_frame */</a>
+<a name="213"><span class="lineNum">     213 </span>            : static inline</a>
+<a name="214"><span class="lineNum">     214 </span><span class="lineNoCov">          0 : struct xdp_frame *xdp_convert_buff_to_frame(struct xdp_buff *xdp)</span></a>
+<a name="215"><span class="lineNum">     215 </span>            : {</a>
+<a name="216"><span class="lineNum">     216 </span><span class="lineNoCov">          0 :         struct xdp_frame *xdp_frame;</span></a>
+<a name="217"><span class="lineNum">     217 </span>            : </a>
+<a name="218"><span class="lineNum">     218 </span><span class="lineNoCov">          0 :         if (xdp-&gt;rxq-&gt;mem.type == MEM_TYPE_XSK_BUFF_POOL)</span></a>
+<a name="219"><span class="lineNum">     219 </span><span class="lineNoCov">          0 :                 return xdp_convert_zc_to_xdp_frame(xdp);</span></a>
+<a name="220"><span class="lineNum">     220 </span>            : </a>
+<a name="221"><span class="lineNum">     221 </span>            :         /* Store info in top of packet */</a>
+<a name="222"><span class="lineNum">     222 </span><span class="lineNoCov">          0 :         xdp_frame = xdp-&gt;data_hard_start;</span></a>
+<a name="223"><span class="lineNum">     223 </span><span class="lineNoCov">          0 :         if (unlikely(xdp_update_frame_from_buff(xdp, xdp_frame) &lt; 0))</span></a>
+<a name="224"><span class="lineNum">     224 </span>            :                 return NULL;</a>
+<a name="225"><span class="lineNum">     225 </span>            : </a>
+<a name="226"><span class="lineNum">     226 </span>            :         /* rxq only valid until napi_schedule ends, convert to xdp_mem_info */</a>
+<a name="227"><span class="lineNum">     227 </span><span class="lineNoCov">          0 :         xdp_frame-&gt;mem = xdp-&gt;rxq-&gt;mem;</span></a>
+<a name="228"><span class="lineNum">     228 </span>            : </a>
+<a name="229"><span class="lineNum">     229 </span><span class="lineNoCov">          0 :         return xdp_frame;</span></a>
+<a name="230"><span class="lineNum">     230 </span>            : }</a>
+<a name="231"><span class="lineNum">     231 </span>            : </a>
+<a name="232"><span class="lineNum">     232 </span>            : void xdp_return_frame(struct xdp_frame *xdpf);</a>
+<a name="233"><span class="lineNum">     233 </span>            : void xdp_return_frame_rx_napi(struct xdp_frame *xdpf);</a>
+<a name="234"><span class="lineNum">     234 </span>            : void xdp_return_buff(struct xdp_buff *xdp);</a>
+<a name="235"><span class="lineNum">     235 </span>            : void xdp_flush_frame_bulk(struct xdp_frame_bulk *bq);</a>
+<a name="236"><span class="lineNum">     236 </span>            : void xdp_return_frame_bulk(struct xdp_frame *xdpf,</a>
+<a name="237"><span class="lineNum">     237 </span>            :                            struct xdp_frame_bulk *bq);</a>
+<a name="238"><span class="lineNum">     238 </span>            : </a>
+<a name="239"><span class="lineNum">     239 </span>            : /* When sending xdp_frame into the network stack, then there is no</a>
+<a name="240"><span class="lineNum">     240 </span>            :  * return point callback, which is needed to release e.g. DMA-mapping</a>
+<a name="241"><span class="lineNum">     241 </span>            :  * resources with page_pool.  Thus, have explicit function to release</a>
+<a name="242"><span class="lineNum">     242 </span>            :  * frame resources.</a>
+<a name="243"><span class="lineNum">     243 </span>            :  */</a>
+<a name="244"><span class="lineNum">     244 </span>            : void __xdp_release_frame(void *data, struct xdp_mem_info *mem);</a>
+<a name="245"><span class="lineNum">     245 </span><span class="lineNoCov">          0 : static inline void xdp_release_frame(struct xdp_frame *xdpf)</span></a>
+<a name="246"><span class="lineNum">     246 </span>            : {</a>
+<a name="247"><span class="lineNum">     247 </span><span class="lineNoCov">          0 :         struct xdp_mem_info *mem = &amp;xdpf-&gt;mem;</span></a>
+<a name="248"><span class="lineNum">     248 </span>            : </a>
+<a name="249"><span class="lineNum">     249 </span>            :         /* Curr only page_pool needs this */</a>
+<a name="250"><span class="lineNum">     250 </span><span class="lineNoCov">          0 :         if (mem-&gt;type == MEM_TYPE_PAGE_POOL)</span></a>
+<a name="251"><span class="lineNum">     251 </span><span class="lineNoCov">          0 :                 __xdp_release_frame(xdpf-&gt;data, mem);</span></a>
+<a name="252"><span class="lineNum">     252 </span><span class="lineNoCov">          0 : }</span></a>
+<a name="253"><span class="lineNum">     253 </span>            : </a>
+<a name="254"><span class="lineNum">     254 </span>            : int xdp_rxq_info_reg(struct xdp_rxq_info *xdp_rxq,</a>
+<a name="255"><span class="lineNum">     255 </span>            :                      struct net_device *dev, u32 queue_index, unsigned int napi_id);</a>
+<a name="256"><span class="lineNum">     256 </span>            : void xdp_rxq_info_unreg(struct xdp_rxq_info *xdp_rxq);</a>
+<a name="257"><span class="lineNum">     257 </span>            : void xdp_rxq_info_unused(struct xdp_rxq_info *xdp_rxq);</a>
+<a name="258"><span class="lineNum">     258 </span>            : bool xdp_rxq_info_is_reg(struct xdp_rxq_info *xdp_rxq);</a>
+<a name="259"><span class="lineNum">     259 </span>            : int xdp_rxq_info_reg_mem_model(struct xdp_rxq_info *xdp_rxq,</a>
+<a name="260"><span class="lineNum">     260 </span>            :                                enum xdp_mem_type type, void *allocator);</a>
+<a name="261"><span class="lineNum">     261 </span>            : void xdp_rxq_info_unreg_mem_model(struct xdp_rxq_info *xdp_rxq);</a>
+<a name="262"><span class="lineNum">     262 </span>            : </a>
+<a name="263"><span class="lineNum">     263 </span>            : /* Drivers not supporting XDP metadata can use this helper, which</a>
+<a name="264"><span class="lineNum">     264 </span>            :  * rejects any room expansion for metadata as a result.</a>
+<a name="265"><span class="lineNum">     265 </span>            :  */</a>
+<a name="266"><span class="lineNum">     266 </span>            : static __always_inline void</a>
+<a name="267"><span class="lineNum">     267 </span>            : xdp_set_data_meta_invalid(struct xdp_buff *xdp)</a>
+<a name="268"><span class="lineNum">     268 </span>            : {</a>
+<a name="269"><span class="lineNum">     269 </span>            :         xdp-&gt;data_meta = xdp-&gt;data + 1;</a>
+<a name="270"><span class="lineNum">     270 </span>            : }</a>
+<a name="271"><span class="lineNum">     271 </span>            : </a>
+<a name="272"><span class="lineNum">     272 </span>            : static __always_inline bool</a>
+<a name="273"><span class="lineNum">     273 </span><span class="lineNoCov">          0 : xdp_data_meta_unsupported(const struct xdp_buff *xdp)</span></a>
+<a name="274"><span class="lineNum">     274 </span>            : {</a>
+<a name="275"><span class="lineNum">     275 </span><span class="lineNoCov">          0 :         return unlikely(xdp-&gt;data_meta &gt; xdp-&gt;data);</span></a>
+<a name="276"><span class="lineNum">     276 </span>            : }</a>
+<a name="277"><span class="lineNum">     277 </span>            : </a>
+<a name="278"><span class="lineNum">     278 </span>            : struct xdp_attachment_info {</a>
+<a name="279"><span class="lineNum">     279 </span>            :         struct bpf_prog *prog;</a>
+<a name="280"><span class="lineNum">     280 </span>            :         u32 flags;</a>
+<a name="281"><span class="lineNum">     281 </span>            : };</a>
+<a name="282"><span class="lineNum">     282 </span>            : </a>
+<a name="283"><span class="lineNum">     283 </span>            : struct netdev_bpf;</a>
+<a name="284"><span class="lineNum">     284 </span>            : void xdp_attachment_setup(struct xdp_attachment_info *info,</a>
+<a name="285"><span class="lineNum">     285 </span>            :                           struct netdev_bpf *bpf);</a>
+<a name="286"><span class="lineNum">     286 </span>            : </a>
+<a name="287"><span class="lineNum">     287 </span>            : #define DEV_MAP_BULK_SIZE XDP_BULK_QUEUE_SIZE</a>
+<a name="288"><span class="lineNum">     288 </span>            : </a>
+<a name="289"><span class="lineNum">     289 </span>            : #endif /* __LINUX_NET_XDP_H__ */</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

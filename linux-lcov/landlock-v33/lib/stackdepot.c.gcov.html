@@ -1,0 +1,442 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - landlock.info - lib/stackdepot.c</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">lib</a> - stackdepot.c<span style="font-size: 80%;"> (source / <a href="stackdepot.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">landlock.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">97</td>
+            <td class="headerCovTableEntry">125</td>
+            <td class="headerCovTableEntryMed">77.6 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2021-04-07 12:34:12</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">6</td>
+            <td class="headerCovTableEntry">8</td>
+            <td class="headerCovTableEntryMed">75.0 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : // SPDX-License-Identifier: GPL-2.0-only</a>
+<a name="2"><span class="lineNum">       2 </span>            : /*</a>
+<a name="3"><span class="lineNum">       3 </span>            :  * Generic stack depot for storing stack traces.</a>
+<a name="4"><span class="lineNum">       4 </span>            :  *</a>
+<a name="5"><span class="lineNum">       5 </span>            :  * Some debugging tools need to save stack traces of certain events which can</a>
+<a name="6"><span class="lineNum">       6 </span>            :  * be later presented to the user. For example, KASAN needs to safe alloc and</a>
+<a name="7"><span class="lineNum">       7 </span>            :  * free stacks for each object, but storing two stack traces per object</a>
+<a name="8"><span class="lineNum">       8 </span>            :  * requires too much memory (e.g. SLUB_DEBUG needs 256 bytes per object for</a>
+<a name="9"><span class="lineNum">       9 </span>            :  * that).</a>
+<a name="10"><span class="lineNum">      10 </span>            :  *</a>
+<a name="11"><span class="lineNum">      11 </span>            :  * Instead, stack depot maintains a hashtable of unique stacktraces. Since alloc</a>
+<a name="12"><span class="lineNum">      12 </span>            :  * and free stacks repeat a lot, we save about 100x space.</a>
+<a name="13"><span class="lineNum">      13 </span>            :  * Stacks are never removed from depot, so we store them contiguously one after</a>
+<a name="14"><span class="lineNum">      14 </span>            :  * another in a contiguos memory allocation.</a>
+<a name="15"><span class="lineNum">      15 </span>            :  *</a>
+<a name="16"><span class="lineNum">      16 </span>            :  * Author: Alexander Potapenko &lt;glider@google.com&gt;</a>
+<a name="17"><span class="lineNum">      17 </span>            :  * Copyright (C) 2016 Google, Inc.</a>
+<a name="18"><span class="lineNum">      18 </span>            :  *</a>
+<a name="19"><span class="lineNum">      19 </span>            :  * Based on code by Dmitry Chernenkov.</a>
+<a name="20"><span class="lineNum">      20 </span>            :  */</a>
+<a name="21"><span class="lineNum">      21 </span>            : </a>
+<a name="22"><span class="lineNum">      22 </span>            : #include &lt;linux/gfp.h&gt;</a>
+<a name="23"><span class="lineNum">      23 </span>            : #include &lt;linux/interrupt.h&gt;</a>
+<a name="24"><span class="lineNum">      24 </span>            : #include &lt;linux/jhash.h&gt;</a>
+<a name="25"><span class="lineNum">      25 </span>            : #include &lt;linux/kernel.h&gt;</a>
+<a name="26"><span class="lineNum">      26 </span>            : #include &lt;linux/mm.h&gt;</a>
+<a name="27"><span class="lineNum">      27 </span>            : #include &lt;linux/percpu.h&gt;</a>
+<a name="28"><span class="lineNum">      28 </span>            : #include &lt;linux/printk.h&gt;</a>
+<a name="29"><span class="lineNum">      29 </span>            : #include &lt;linux/slab.h&gt;</a>
+<a name="30"><span class="lineNum">      30 </span>            : #include &lt;linux/stacktrace.h&gt;</a>
+<a name="31"><span class="lineNum">      31 </span>            : #include &lt;linux/stackdepot.h&gt;</a>
+<a name="32"><span class="lineNum">      32 </span>            : #include &lt;linux/string.h&gt;</a>
+<a name="33"><span class="lineNum">      33 </span>            : #include &lt;linux/types.h&gt;</a>
+<a name="34"><span class="lineNum">      34 </span>            : #include &lt;linux/memblock.h&gt;</a>
+<a name="35"><span class="lineNum">      35 </span>            : </a>
+<a name="36"><span class="lineNum">      36 </span>            : #define DEPOT_STACK_BITS (sizeof(depot_stack_handle_t) * 8)</a>
+<a name="37"><span class="lineNum">      37 </span>            : </a>
+<a name="38"><span class="lineNum">      38 </span>            : #define STACK_ALLOC_NULL_PROTECTION_BITS 1</a>
+<a name="39"><span class="lineNum">      39 </span>            : #define STACK_ALLOC_ORDER 2 /* 'Slab' size order for stack depot, 4 pages */</a>
+<a name="40"><span class="lineNum">      40 </span>            : #define STACK_ALLOC_SIZE (1LL &lt;&lt; (PAGE_SHIFT + STACK_ALLOC_ORDER))</a>
+<a name="41"><span class="lineNum">      41 </span>            : #define STACK_ALLOC_ALIGN 4</a>
+<a name="42"><span class="lineNum">      42 </span>            : #define STACK_ALLOC_OFFSET_BITS (STACK_ALLOC_ORDER + PAGE_SHIFT - \</a>
+<a name="43"><span class="lineNum">      43 </span>            :                                         STACK_ALLOC_ALIGN)</a>
+<a name="44"><span class="lineNum">      44 </span>            : #define STACK_ALLOC_INDEX_BITS (DEPOT_STACK_BITS - \</a>
+<a name="45"><span class="lineNum">      45 </span>            :                 STACK_ALLOC_NULL_PROTECTION_BITS - STACK_ALLOC_OFFSET_BITS)</a>
+<a name="46"><span class="lineNum">      46 </span>            : #define STACK_ALLOC_SLABS_CAP 8192</a>
+<a name="47"><span class="lineNum">      47 </span>            : #define STACK_ALLOC_MAX_SLABS \</a>
+<a name="48"><span class="lineNum">      48 </span>            :         (((1LL &lt;&lt; (STACK_ALLOC_INDEX_BITS)) &lt; STACK_ALLOC_SLABS_CAP) ? \</a>
+<a name="49"><span class="lineNum">      49 </span>            :          (1LL &lt;&lt; (STACK_ALLOC_INDEX_BITS)) : STACK_ALLOC_SLABS_CAP)</a>
+<a name="50"><span class="lineNum">      50 </span>            : </a>
+<a name="51"><span class="lineNum">      51 </span>            : /* The compact structure to store the reference to stacks. */</a>
+<a name="52"><span class="lineNum">      52 </span>            : union handle_parts {</a>
+<a name="53"><span class="lineNum">      53 </span>            :         depot_stack_handle_t handle;</a>
+<a name="54"><span class="lineNum">      54 </span>            :         struct {</a>
+<a name="55"><span class="lineNum">      55 </span>            :                 u32 slabindex : STACK_ALLOC_INDEX_BITS;</a>
+<a name="56"><span class="lineNum">      56 </span>            :                 u32 offset : STACK_ALLOC_OFFSET_BITS;</a>
+<a name="57"><span class="lineNum">      57 </span>            :                 u32 valid : STACK_ALLOC_NULL_PROTECTION_BITS;</a>
+<a name="58"><span class="lineNum">      58 </span>            :         };</a>
+<a name="59"><span class="lineNum">      59 </span>            : };</a>
+<a name="60"><span class="lineNum">      60 </span>            : </a>
+<a name="61"><span class="lineNum">      61 </span>            : struct stack_record {</a>
+<a name="62"><span class="lineNum">      62 </span>            :         struct stack_record *next;      /* Link in the hashtable */</a>
+<a name="63"><span class="lineNum">      63 </span>            :         u32 hash;                       /* Hash in the hastable */</a>
+<a name="64"><span class="lineNum">      64 </span>            :         u32 size;                       /* Number of frames in the stack */</a>
+<a name="65"><span class="lineNum">      65 </span>            :         union handle_parts handle;</a>
+<a name="66"><span class="lineNum">      66 </span>            :         unsigned long entries[];        /* Variable-sized array of entries. */</a>
+<a name="67"><span class="lineNum">      67 </span>            : };</a>
+<a name="68"><span class="lineNum">      68 </span>            : </a>
+<a name="69"><span class="lineNum">      69 </span>            : static void *stack_slabs[STACK_ALLOC_MAX_SLABS];</a>
+<a name="70"><span class="lineNum">      70 </span>            : </a>
+<a name="71"><span class="lineNum">      71 </span>            : static int depot_index;</a>
+<a name="72"><span class="lineNum">      72 </span>            : static int next_slab_inited;</a>
+<a name="73"><span class="lineNum">      73 </span>            : static size_t depot_offset;</a>
+<a name="74"><span class="lineNum">      74 </span>            : static DEFINE_SPINLOCK(depot_lock);</a>
+<a name="75"><span class="lineNum">      75 </span>            : </a>
+<a name="76"><span class="lineNum">      76 </span><span class="lineCov">      12681 : static bool init_stack_slab(void **prealloc)</span></a>
+<a name="77"><span class="lineNum">      77 </span>            : {</a>
+<a name="78"><span class="lineNum">      78 </span><span class="lineCov">      12681 :         if (!*prealloc)</span></a>
+<a name="79"><span class="lineNum">      79 </span>            :                 return false;</a>
+<a name="80"><span class="lineNum">      80 </span>            :         /*</a>
+<a name="81"><span class="lineNum">      81 </span>            :          * This smp_load_acquire() pairs with smp_store_release() to</a>
+<a name="82"><span class="lineNum">      82 </span>            :          * |next_slab_inited| below and in depot_alloc_stack().</a>
+<a name="83"><span class="lineNum">      83 </span>            :          */</a>
+<a name="84"><span class="lineNum">      84 </span><span class="lineCov">        146 :         if (smp_load_acquire(&amp;next_slab_inited))</span></a>
+<a name="85"><span class="lineNum">      85 </span>            :                 return true;</a>
+<a name="86"><span class="lineNum">      86 </span><span class="lineCov">        146 :         if (stack_slabs[depot_index] == NULL) {</span></a>
+<a name="87"><span class="lineNum">      87 </span><span class="lineCov">          1 :                 stack_slabs[depot_index] = *prealloc;</span></a>
+<a name="88"><span class="lineNum">      88 </span><span class="lineCov">          1 :                 *prealloc = NULL;</span></a>
+<a name="89"><span class="lineNum">      89 </span>            :         } else {</a>
+<a name="90"><span class="lineNum">      90 </span>            :                 /* If this is the last depot slab, do not touch the next one. */</a>
+<a name="91"><span class="lineNum">      91 </span><span class="lineCov">        145 :                 if (depot_index + 1 &lt; STACK_ALLOC_MAX_SLABS) {</span></a>
+<a name="92"><span class="lineNum">      92 </span><span class="lineCov">        145 :                         stack_slabs[depot_index + 1] = *prealloc;</span></a>
+<a name="93"><span class="lineNum">      93 </span><span class="lineCov">        145 :                         *prealloc = NULL;</span></a>
+<a name="94"><span class="lineNum">      94 </span>            :                 }</a>
+<a name="95"><span class="lineNum">      95 </span>            :                 /*</a>
+<a name="96"><span class="lineNum">      96 </span>            :                  * This smp_store_release pairs with smp_load_acquire() from</a>
+<a name="97"><span class="lineNum">      97 </span>            :                  * |next_slab_inited| above and in stack_depot_save().</a>
+<a name="98"><span class="lineNum">      98 </span>            :                  */</a>
+<a name="99"><span class="lineNum">      99 </span><span class="lineCov">        145 :                 smp_store_release(&amp;next_slab_inited, 1);</span></a>
+<a name="100"><span class="lineNum">     100 </span>            :         }</a>
+<a name="101"><span class="lineNum">     101 </span>            :         return true;</a>
+<a name="102"><span class="lineNum">     102 </span>            : }</a>
+<a name="103"><span class="lineNum">     103 </span>            : </a>
+<a name="104"><span class="lineNum">     104 </span>            : /* Allocation of a new stack in raw storage */</a>
+<a name="105"><span class="lineNum">     105 </span><span class="lineCov">      12681 : static struct stack_record *depot_alloc_stack(unsigned long *entries, int size,</span></a>
+<a name="106"><span class="lineNum">     106 </span>            :                 u32 hash, void **prealloc, gfp_t alloc_flags)</a>
+<a name="107"><span class="lineNum">     107 </span>            : {</a>
+<a name="108"><span class="lineNum">     108 </span><span class="lineCov">      12681 :         struct stack_record *stack;</span></a>
+<a name="109"><span class="lineNum">     109 </span><span class="lineCov">      12681 :         size_t required_size = struct_size(stack, entries, size);</span></a>
+<a name="110"><span class="lineNum">     110 </span>            : </a>
+<a name="111"><span class="lineNum">     111 </span><span class="lineCov">      12681 :         required_size = ALIGN(required_size, 1 &lt;&lt; STACK_ALLOC_ALIGN);</span></a>
+<a name="112"><span class="lineNum">     112 </span>            : </a>
+<a name="113"><span class="lineNum">     113 </span><span class="lineCov">      12681 :         if (unlikely(depot_offset + required_size &gt; STACK_ALLOC_SIZE)) {</span></a>
+<a name="114"><span class="lineNum">     114 </span><span class="lineCov">        144 :                 if (unlikely(depot_index + 1 &gt;= STACK_ALLOC_MAX_SLABS)) {</span></a>
+<a name="115"><span class="lineNum">     115 </span><span class="lineNoCov">          0 :                         WARN_ONCE(1, &quot;Stack depot reached limit capacity&quot;);</span></a>
+<a name="116"><span class="lineNum">     116 </span><span class="lineNoCov">          0 :                         return NULL;</span></a>
+<a name="117"><span class="lineNum">     117 </span>            :                 }</a>
+<a name="118"><span class="lineNum">     118 </span><span class="lineCov">        144 :                 depot_index++;</span></a>
+<a name="119"><span class="lineNum">     119 </span><span class="lineCov">        144 :                 depot_offset = 0;</span></a>
+<a name="120"><span class="lineNum">     120 </span>            :                 /*</a>
+<a name="121"><span class="lineNum">     121 </span>            :                  * smp_store_release() here pairs with smp_load_acquire() from</a>
+<a name="122"><span class="lineNum">     122 </span>            :                  * |next_slab_inited| in stack_depot_save() and</a>
+<a name="123"><span class="lineNum">     123 </span>            :                  * init_stack_slab().</a>
+<a name="124"><span class="lineNum">     124 </span>            :                  */</a>
+<a name="125"><span class="lineNum">     125 </span><span class="lineCov">        144 :                 if (depot_index + 1 &lt; STACK_ALLOC_MAX_SLABS)</span></a>
+<a name="126"><span class="lineNum">     126 </span><span class="lineCov">        144 :                         smp_store_release(&amp;next_slab_inited, 0);</span></a>
+<a name="127"><span class="lineNum">     127 </span>            :         }</a>
+<a name="128"><span class="lineNum">     128 </span><span class="lineCov">      12681 :         init_stack_slab(prealloc);</span></a>
+<a name="129"><span class="lineNum">     129 </span><span class="lineCov">      12681 :         if (stack_slabs[depot_index] == NULL)</span></a>
+<a name="130"><span class="lineNum">     130 </span>            :                 return NULL;</a>
+<a name="131"><span class="lineNum">     131 </span>            : </a>
+<a name="132"><span class="lineNum">     132 </span><span class="lineCov">      12681 :         stack = stack_slabs[depot_index] + depot_offset;</span></a>
+<a name="133"><span class="lineNum">     133 </span>            : </a>
+<a name="134"><span class="lineNum">     134 </span><span class="lineCov">      12681 :         stack-&gt;hash = hash;</span></a>
+<a name="135"><span class="lineNum">     135 </span><span class="lineCov">      12681 :         stack-&gt;size = size;</span></a>
+<a name="136"><span class="lineNum">     136 </span><span class="lineCov">      12681 :         stack-&gt;handle.slabindex = depot_index;</span></a>
+<a name="137"><span class="lineNum">     137 </span><span class="lineCov">      12681 :         stack-&gt;handle.offset = depot_offset &gt;&gt; STACK_ALLOC_ALIGN;</span></a>
+<a name="138"><span class="lineNum">     138 </span><span class="lineCov">      12681 :         stack-&gt;handle.valid = 1;</span></a>
+<a name="139"><span class="lineNum">     139 </span><span class="lineCov">      12681 :         memcpy(stack-&gt;entries, entries, flex_array_size(stack, entries, size));</span></a>
+<a name="140"><span class="lineNum">     140 </span><span class="lineCov">      12681 :         depot_offset += required_size;</span></a>
+<a name="141"><span class="lineNum">     141 </span>            : </a>
+<a name="142"><span class="lineNum">     142 </span><span class="lineCov">      12681 :         return stack;</span></a>
+<a name="143"><span class="lineNum">     143 </span>            : }</a>
+<a name="144"><span class="lineNum">     144 </span>            : </a>
+<a name="145"><span class="lineNum">     145 </span>            : #define STACK_HASH_SIZE (1L &lt;&lt; CONFIG_STACK_HASH_ORDER)</a>
+<a name="146"><span class="lineNum">     146 </span>            : #define STACK_HASH_MASK (STACK_HASH_SIZE - 1)</a>
+<a name="147"><span class="lineNum">     147 </span>            : #define STACK_HASH_SEED 0x9747b28c</a>
+<a name="148"><span class="lineNum">     148 </span>            : </a>
+<a name="149"><span class="lineNum">     149 </span>            : static bool stack_depot_disable;</a>
+<a name="150"><span class="lineNum">     150 </span>            : static struct stack_record **stack_table;</a>
+<a name="151"><span class="lineNum">     151 </span>            : </a>
+<a name="152"><span class="lineNum">     152 </span><span class="lineNoCov">          0 : static int __init is_stack_depot_disabled(char *str)</span></a>
+<a name="153"><span class="lineNum">     153 </span>            : {</a>
+<a name="154"><span class="lineNum">     154 </span><span class="lineNoCov">          0 :         int ret;</span></a>
+<a name="155"><span class="lineNum">     155 </span>            : </a>
+<a name="156"><span class="lineNum">     156 </span><span class="lineNoCov">          0 :         ret = kstrtobool(str, &amp;stack_depot_disable);</span></a>
+<a name="157"><span class="lineNum">     157 </span><span class="lineNoCov">          0 :         if (!ret &amp;&amp; stack_depot_disable) {</span></a>
+<a name="158"><span class="lineNum">     158 </span><span class="lineNoCov">          0 :                 pr_info(&quot;Stack Depot is disabled\n&quot;);</span></a>
+<a name="159"><span class="lineNum">     159 </span><span class="lineNoCov">          0 :                 stack_table = NULL;</span></a>
+<a name="160"><span class="lineNum">     160 </span>            :         }</a>
+<a name="161"><span class="lineNum">     161 </span><span class="lineNoCov">          0 :         return 0;</span></a>
+<a name="162"><span class="lineNum">     162 </span>            : }</a>
+<a name="163"><span class="lineNum">     163 </span>            : early_param(&quot;stack_depot_disable&quot;, is_stack_depot_disabled);</a>
+<a name="164"><span class="lineNum">     164 </span>            : </a>
+<a name="165"><span class="lineNum">     165 </span><span class="lineCov">          1 : int __init stack_depot_init(void)</span></a>
+<a name="166"><span class="lineNum">     166 </span>            : {</a>
+<a name="167"><span class="lineNum">     167 </span><span class="lineCov">          1 :         if (!stack_depot_disable) {</span></a>
+<a name="168"><span class="lineNum">     168 </span><span class="lineCov">          1 :                 size_t size = (STACK_HASH_SIZE * sizeof(struct stack_record *));</span></a>
+<a name="169"><span class="lineNum">     169 </span><span class="lineCov">          1 :                 int i;</span></a>
+<a name="170"><span class="lineNum">     170 </span>            : </a>
+<a name="171"><span class="lineNum">     171 </span><span class="lineCov">          1 :                 stack_table = memblock_alloc(size, size);</span></a>
+<a name="172"><span class="lineNum">     172 </span><span class="lineCov">    1048577 :                 for (i = 0; i &lt; STACK_HASH_SIZE;  i++)</span></a>
+<a name="173"><span class="lineNum">     173 </span><span class="lineCov">    1048576 :                         stack_table[i] = NULL;</span></a>
+<a name="174"><span class="lineNum">     174 </span>            :         }</a>
+<a name="175"><span class="lineNum">     175 </span><span class="lineCov">          1 :         return 0;</span></a>
+<a name="176"><span class="lineNum">     176 </span>            : }</a>
+<a name="177"><span class="lineNum">     177 </span>            : </a>
+<a name="178"><span class="lineNum">     178 </span>            : /* Calculate hash for a stack */</a>
+<a name="179"><span class="lineNum">     179 </span><span class="lineCov">    5366666 : static inline u32 hash_stack(unsigned long *entries, unsigned int size)</span></a>
+<a name="180"><span class="lineNum">     180 </span>            : {</a>
+<a name="181"><span class="lineNum">     181 </span><span class="lineCov">    5366666 :         return jhash2((u32 *)entries,</span></a>
+<a name="182"><span class="lineNum">     182 </span><span class="lineCov">    5366666 :                       array_size(size,  sizeof(*entries)) / sizeof(u32),</span></a>
+<a name="183"><span class="lineNum">     183 </span>            :                       STACK_HASH_SEED);</a>
+<a name="184"><span class="lineNum">     184 </span>            : }</a>
+<a name="185"><span class="lineNum">     185 </span>            : </a>
+<a name="186"><span class="lineNum">     186 </span>            : /* Use our own, non-instrumented version of memcmp().</a>
+<a name="187"><span class="lineNum">     187 </span>            :  *</a>
+<a name="188"><span class="lineNum">     188 </span>            :  * We actually don't care about the order, just the equality.</a>
+<a name="189"><span class="lineNum">     189 </span>            :  */</a>
+<a name="190"><span class="lineNum">     190 </span>            : static inline</a>
+<a name="191"><span class="lineNum">     191 </span><span class="lineCov">    5355615 : int stackdepot_memcmp(const unsigned long *u1, const unsigned long *u2,</span></a>
+<a name="192"><span class="lineNum">     192 </span>            :                         unsigned int n)</a>
+<a name="193"><span class="lineNum">     193 </span>            : {</a>
+<a name="194"><span class="lineNum">     194 </span><span class="lineCov">   88214336 :         for ( ; n-- ; u1++, u2++) {</span></a>
+<a name="195"><span class="lineNum">     195 </span><span class="lineCov">   82858721 :                 if (*u1 != *u2)</span></a>
+<a name="196"><span class="lineNum">     196 </span>            :                         return 1;</a>
+<a name="197"><span class="lineNum">     197 </span>            :         }</a>
+<a name="198"><span class="lineNum">     198 </span>            :         return 0;</a>
+<a name="199"><span class="lineNum">     199 </span>            : }</a>
+<a name="200"><span class="lineNum">     200 </span>            : </a>
+<a name="201"><span class="lineNum">     201 </span>            : /* Find a stack that is equal to the one stored in entries in the hash */</a>
+<a name="202"><span class="lineNum">     202 </span><span class="lineCov">    5379790 : static inline struct stack_record *find_stack(struct stack_record *bucket,</span></a>
+<a name="203"><span class="lineNum">     203 </span>            :                                              unsigned long *entries, int size,</a>
+<a name="204"><span class="lineNum">     204 </span>            :                                              u32 hash)</a>
+<a name="205"><span class="lineNum">     205 </span>            : {</a>
+<a name="206"><span class="lineNum">     206 </span><span class="lineCov">    5379790 :         struct stack_record *found;</span></a>
+<a name="207"><span class="lineNum">     207 </span>            : </a>
+<a name="208"><span class="lineNum">     208 </span><span class="lineCov">    5474139 :         for (found = bucket; found; found = found-&gt;next) {</span></a>
+<a name="209"><span class="lineNum">     209 </span><span class="lineCov">    5450909 :                 if (found-&gt;hash == hash &amp;&amp;</span></a>
+<a name="210"><span class="lineNum">     210 </span><span class="lineCov">    5355235 :                     found-&gt;size == size &amp;&amp;</span></a>
+<a name="211"><span class="lineNum">     211 </span><span class="lineCov">   10711230 :                     !stackdepot_memcmp(entries, found-&gt;entries, size))</span></a>
+<a name="212"><span class="lineNum">     212 </span><span class="lineCov">    5356560 :                         return found;</span></a>
+<a name="213"><span class="lineNum">     213 </span>            :         }</a>
+<a name="214"><span class="lineNum">     214 </span>            :         return NULL;</a>
+<a name="215"><span class="lineNum">     215 </span>            : }</a>
+<a name="216"><span class="lineNum">     216 </span>            : </a>
+<a name="217"><span class="lineNum">     217 </span>            : /**</a>
+<a name="218"><span class="lineNum">     218 </span>            :  * stack_depot_fetch - Fetch stack entries from a depot</a>
+<a name="219"><span class="lineNum">     219 </span>            :  *</a>
+<a name="220"><span class="lineNum">     220 </span>            :  * @handle:             Stack depot handle which was returned from</a>
+<a name="221"><span class="lineNum">     221 </span>            :  *                      stack_depot_save().</a>
+<a name="222"><span class="lineNum">     222 </span>            :  * @entries:            Pointer to store the entries address</a>
+<a name="223"><span class="lineNum">     223 </span>            :  *</a>
+<a name="224"><span class="lineNum">     224 </span>            :  * Return: The number of trace entries for this depot.</a>
+<a name="225"><span class="lineNum">     225 </span>            :  */</a>
+<a name="226"><span class="lineNum">     226 </span><span class="lineNoCov">          0 : unsigned int stack_depot_fetch(depot_stack_handle_t handle,</span></a>
+<a name="227"><span class="lineNum">     227 </span>            :                                unsigned long **entries)</a>
+<a name="228"><span class="lineNum">     228 </span>            : {</a>
+<a name="229"><span class="lineNum">     229 </span><span class="lineNoCov">          0 :         union handle_parts parts = { .handle = handle };</span></a>
+<a name="230"><span class="lineNum">     230 </span><span class="lineNoCov">          0 :         void *slab;</span></a>
+<a name="231"><span class="lineNum">     231 </span><span class="lineNoCov">          0 :         size_t offset = parts.offset &lt;&lt; STACK_ALLOC_ALIGN;</span></a>
+<a name="232"><span class="lineNum">     232 </span><span class="lineNoCov">          0 :         struct stack_record *stack;</span></a>
+<a name="233"><span class="lineNum">     233 </span>            : </a>
+<a name="234"><span class="lineNum">     234 </span><span class="lineNoCov">          0 :         *entries = NULL;</span></a>
+<a name="235"><span class="lineNum">     235 </span><span class="lineNoCov">          0 :         if (parts.slabindex &gt; depot_index) {</span></a>
+<a name="236"><span class="lineNum">     236 </span><span class="lineNoCov">          0 :                 WARN(1, &quot;slab index %d out of bounds (%d) for stack id %08x\n&quot;,</span></a>
+<a name="237"><span class="lineNum">     237 </span>            :                         parts.slabindex, depot_index, handle);</a>
+<a name="238"><span class="lineNum">     238 </span><span class="lineNoCov">          0 :                 return 0;</span></a>
+<a name="239"><span class="lineNum">     239 </span>            :         }</a>
+<a name="240"><span class="lineNum">     240 </span><span class="lineNoCov">          0 :         slab = stack_slabs[parts.slabindex];</span></a>
+<a name="241"><span class="lineNum">     241 </span><span class="lineNoCov">          0 :         if (!slab)</span></a>
+<a name="242"><span class="lineNum">     242 </span>            :                 return 0;</a>
+<a name="243"><span class="lineNum">     243 </span><span class="lineNoCov">          0 :         stack = slab + offset;</span></a>
+<a name="244"><span class="lineNum">     244 </span>            : </a>
+<a name="245"><span class="lineNum">     245 </span><span class="lineNoCov">          0 :         *entries = stack-&gt;entries;</span></a>
+<a name="246"><span class="lineNum">     246 </span><span class="lineNoCov">          0 :         return stack-&gt;size;</span></a>
+<a name="247"><span class="lineNum">     247 </span>            : }</a>
+<a name="248"><span class="lineNum">     248 </span>            : EXPORT_SYMBOL_GPL(stack_depot_fetch);</a>
+<a name="249"><span class="lineNum">     249 </span>            : </a>
+<a name="250"><span class="lineNum">     250 </span>            : /**</a>
+<a name="251"><span class="lineNum">     251 </span>            :  * stack_depot_save - Save a stack trace from an array</a>
+<a name="252"><span class="lineNum">     252 </span>            :  *</a>
+<a name="253"><span class="lineNum">     253 </span>            :  * @entries:            Pointer to storage array</a>
+<a name="254"><span class="lineNum">     254 </span>            :  * @nr_entries:         Size of the storage array</a>
+<a name="255"><span class="lineNum">     255 </span>            :  * @alloc_flags:        Allocation gfp flags</a>
+<a name="256"><span class="lineNum">     256 </span>            :  *</a>
+<a name="257"><span class="lineNum">     257 </span>            :  * Return: The handle of the stack struct stored in depot</a>
+<a name="258"><span class="lineNum">     258 </span>            :  */</a>
+<a name="259"><span class="lineNum">     259 </span><span class="lineCov">    5366666 : depot_stack_handle_t stack_depot_save(unsigned long *entries,</span></a>
+<a name="260"><span class="lineNum">     260 </span>            :                                       unsigned int nr_entries,</a>
+<a name="261"><span class="lineNum">     261 </span>            :                                       gfp_t alloc_flags)</a>
+<a name="262"><span class="lineNum">     262 </span>            : {</a>
+<a name="263"><span class="lineNum">     263 </span><span class="lineCov">    5366666 :         struct stack_record *found = NULL, **bucket;</span></a>
+<a name="264"><span class="lineNum">     264 </span><span class="lineCov">    5366666 :         depot_stack_handle_t retval = 0;</span></a>
+<a name="265"><span class="lineNum">     265 </span><span class="lineCov">    5366666 :         struct page *page = NULL;</span></a>
+<a name="266"><span class="lineNum">     266 </span><span class="lineCov">    5366666 :         void *prealloc = NULL;</span></a>
+<a name="267"><span class="lineNum">     267 </span><span class="lineCov">    5366666 :         unsigned long flags;</span></a>
+<a name="268"><span class="lineNum">     268 </span><span class="lineCov">    5366666 :         u32 hash;</span></a>
+<a name="269"><span class="lineNum">     269 </span>            : </a>
+<a name="270"><span class="lineNum">     270 </span><span class="lineCov">    5366666 :         if (unlikely(nr_entries == 0) || stack_depot_disable)</span></a>
+<a name="271"><span class="lineNum">     271 </span><span class="lineNoCov">          0 :                 goto fast_exit;</span></a>
+<a name="272"><span class="lineNum">     272 </span>            : </a>
+<a name="273"><span class="lineNum">     273 </span><span class="lineCov">    5366666 :         hash = hash_stack(entries, nr_entries);</span></a>
+<a name="274"><span class="lineNum">     274 </span><span class="lineCov">    5367546 :         bucket = &amp;stack_table[hash &amp; STACK_HASH_MASK];</span></a>
+<a name="275"><span class="lineNum">     275 </span>            : </a>
+<a name="276"><span class="lineNum">     276 </span>            :         /*</a>
+<a name="277"><span class="lineNum">     277 </span>            :          * Fast path: look the stack trace up without locking.</a>
+<a name="278"><span class="lineNum">     278 </span>            :          * The smp_load_acquire() here pairs with smp_store_release() to</a>
+<a name="279"><span class="lineNum">     279 </span>            :          * |bucket| below.</a>
+<a name="280"><span class="lineNum">     280 </span>            :          */</a>
+<a name="281"><span class="lineNum">     281 </span><span class="lineCov">    5367546 :         found = find_stack(smp_load_acquire(bucket), entries,</span></a>
+<a name="282"><span class="lineNum">     282 </span>            :                            nr_entries, hash);</a>
+<a name="283"><span class="lineNum">     283 </span><span class="lineCov">    5368840 :         if (found)</span></a>
+<a name="284"><span class="lineNum">     284 </span><span class="lineCov">    5356159 :                 goto exit;</span></a>
+<a name="285"><span class="lineNum">     285 </span>            : </a>
+<a name="286"><span class="lineNum">     286 </span>            :         /*</a>
+<a name="287"><span class="lineNum">     287 </span>            :          * Check if the current or the next stack slab need to be initialized.</a>
+<a name="288"><span class="lineNum">     288 </span>            :          * If so, allocate the memory - we won't be able to do that under the</a>
+<a name="289"><span class="lineNum">     289 </span>            :          * lock.</a>
+<a name="290"><span class="lineNum">     290 </span>            :          *</a>
+<a name="291"><span class="lineNum">     291 </span>            :          * The smp_load_acquire() here pairs with smp_store_release() to</a>
+<a name="292"><span class="lineNum">     292 </span>            :          * |next_slab_inited| in depot_alloc_stack() and init_stack_slab().</a>
+<a name="293"><span class="lineNum">     293 </span>            :          */</a>
+<a name="294"><span class="lineNum">     294 </span><span class="lineCov">      12681 :         if (unlikely(!smp_load_acquire(&amp;next_slab_inited))) {</span></a>
+<a name="295"><span class="lineNum">     295 </span>            :                 /*</a>
+<a name="296"><span class="lineNum">     296 </span>            :                  * Zero out zone modifiers, as we don't have specific zone</a>
+<a name="297"><span class="lineNum">     297 </span>            :                  * requirements. Keep the flags related to allocation in atomic</a>
+<a name="298"><span class="lineNum">     298 </span>            :                  * contexts and I/O.</a>
+<a name="299"><span class="lineNum">     299 </span>            :                  */</a>
+<a name="300"><span class="lineNum">     300 </span><span class="lineCov">        146 :                 alloc_flags &amp;= ~GFP_ZONEMASK;</span></a>
+<a name="301"><span class="lineNum">     301 </span><span class="lineCov">        146 :                 alloc_flags &amp;= (GFP_ATOMIC | GFP_KERNEL);</span></a>
+<a name="302"><span class="lineNum">     302 </span><span class="lineCov">        146 :                 alloc_flags |= __GFP_NOWARN;</span></a>
+<a name="303"><span class="lineNum">     303 </span><span class="lineCov">        146 :                 page = alloc_pages(alloc_flags, STACK_ALLOC_ORDER);</span></a>
+<a name="304"><span class="lineNum">     304 </span><span class="lineCov">        146 :                 if (page)</span></a>
+<a name="305"><span class="lineNum">     305 </span><span class="lineCov">        146 :                         prealloc = page_address(page);</span></a>
+<a name="306"><span class="lineNum">     306 </span>            :         }</a>
+<a name="307"><span class="lineNum">     307 </span>            : </a>
+<a name="308"><span class="lineNum">     308 </span><span class="lineCov">      12681 :         spin_lock_irqsave(&amp;depot_lock, flags);</span></a>
+<a name="309"><span class="lineNum">     309 </span>            : </a>
+<a name="310"><span class="lineNum">     310 </span><span class="lineCov">      12681 :         found = find_stack(*bucket, entries, nr_entries, hash);</span></a>
+<a name="311"><span class="lineNum">     311 </span><span class="lineCov">      12681 :         if (!found) {</span></a>
+<a name="312"><span class="lineNum">     312 </span><span class="lineCov">      12681 :                 struct stack_record *new =</span></a>
+<a name="313"><span class="lineNum">     313 </span><span class="lineCov">      12681 :                         depot_alloc_stack(entries, nr_entries,</span></a>
+<a name="314"><span class="lineNum">     314 </span>            :                                           hash, &amp;prealloc, alloc_flags);</a>
+<a name="315"><span class="lineNum">     315 </span><span class="lineCov">      12681 :                 if (new) {</span></a>
+<a name="316"><span class="lineNum">     316 </span><span class="lineCov">      12681 :                         new-&gt;next = *bucket;</span></a>
+<a name="317"><span class="lineNum">     317 </span>            :                         /*</a>
+<a name="318"><span class="lineNum">     318 </span>            :                          * This smp_store_release() pairs with</a>
+<a name="319"><span class="lineNum">     319 </span>            :                          * smp_load_acquire() from |bucket| above.</a>
+<a name="320"><span class="lineNum">     320 </span>            :                          */</a>
+<a name="321"><span class="lineNum">     321 </span><span class="lineCov">      12681 :                         smp_store_release(bucket, new);</span></a>
+<a name="322"><span class="lineNum">     322 </span><span class="lineCov">      12681 :                         found = new;</span></a>
+<a name="323"><span class="lineNum">     323 </span>            :                 }</a>
+<a name="324"><span class="lineNum">     324 </span><span class="lineNoCov">          0 :         } else if (prealloc) {</span></a>
+<a name="325"><span class="lineNum">     325 </span>            :                 /*</a>
+<a name="326"><span class="lineNum">     326 </span>            :                  * We didn't need to store this stack trace, but let's keep</a>
+<a name="327"><span class="lineNum">     327 </span>            :                  * the preallocated memory for the future.</a>
+<a name="328"><span class="lineNum">     328 </span>            :                  */</a>
+<a name="329"><span class="lineNum">     329 </span><span class="lineNoCov">          0 :                 WARN_ON(!init_stack_slab(&amp;prealloc));</span></a>
+<a name="330"><span class="lineNum">     330 </span>            :         }</a>
+<a name="331"><span class="lineNum">     331 </span>            : </a>
+<a name="332"><span class="lineNum">     332 </span><span class="lineCov">      12681 :         spin_unlock_irqrestore(&amp;depot_lock, flags);</span></a>
+<a name="333"><span class="lineNum">     333 </span><span class="lineCov">    5368840 : exit:</span></a>
+<a name="334"><span class="lineNum">     334 </span><span class="lineCov">    5368840 :         if (prealloc) {</span></a>
+<a name="335"><span class="lineNum">     335 </span>            :                 /* Nobody used this memory, ok to free it. */</a>
+<a name="336"><span class="lineNum">     336 </span><span class="lineNoCov">          0 :                 free_pages((unsigned long)prealloc, STACK_ALLOC_ORDER);</span></a>
+<a name="337"><span class="lineNum">     337 </span>            :         }</a>
+<a name="338"><span class="lineNum">     338 </span><span class="lineCov">    5369036 :         if (found)</span></a>
+<a name="339"><span class="lineNum">     339 </span><span class="lineCov">    5369036 :                 retval = found-&gt;handle.handle;</span></a>
+<a name="340"><span class="lineNum">     340 </span><span class="lineNoCov">          0 : fast_exit:</span></a>
+<a name="341"><span class="lineNum">     341 </span><span class="lineCov">    5369036 :         return retval;</span></a>
+<a name="342"><span class="lineNum">     342 </span>            : }</a>
+<a name="343"><span class="lineNum">     343 </span>            : EXPORT_SYMBOL_GPL(stack_depot_save);</a>
+<a name="344"><span class="lineNum">     344 </span>            : </a>
+<a name="345"><span class="lineNum">     345 </span><span class="lineCov">   83060181 : static inline int in_irqentry_text(unsigned long ptr)</span></a>
+<a name="346"><span class="lineNum">     346 </span>            : {</a>
+<a name="347"><span class="lineNum">     347 </span><span class="lineCov">   84830290 :         return (ptr &gt;= (unsigned long)&amp;__irqentry_text_start &amp;&amp;</span></a>
+<a name="348"><span class="lineNum">     348 </span><span class="lineCov">    1770109 :                 ptr &lt; (unsigned long)&amp;__irqentry_text_end) ||</span></a>
+<a name="349"><span class="lineNum">     349 </span><span class="lineCov">   82921672 :                 (ptr &gt;= (unsigned long)&amp;__softirqentry_text_start &amp;&amp;</span></a>
+<a name="350"><span class="lineNum">     350 </span><span class="lineCov">    1631672 :                  ptr &lt; (unsigned long)&amp;__softirqentry_text_end);</span></a>
+<a name="351"><span class="lineNum">     351 </span>            : }</a>
+<a name="352"><span class="lineNum">     352 </span>            : </a>
+<a name="353"><span class="lineNum">     353 </span><span class="lineCov">    5367786 : unsigned int filter_irq_stacks(unsigned long *entries,</span></a>
+<a name="354"><span class="lineNum">     354 </span>            :                                              unsigned int nr_entries)</a>
+<a name="355"><span class="lineNum">     355 </span>            : {</a>
+<a name="356"><span class="lineNum">     356 </span><span class="lineCov">    5367786 :         unsigned int i;</span></a>
+<a name="357"><span class="lineNum">     357 </span>            : </a>
+<a name="358"><span class="lineNum">     358 </span><span class="lineCov">   86953482 :         for (i = 0; i &lt; nr_entries; i++) {</span></a>
+<a name="359"><span class="lineNum">     359 </span><span class="lineCov">  164645877 :                 if (in_irqentry_text(entries[i])) {</span></a>
+<a name="360"><span class="lineNum">     360 </span>            :                         /* Include the irqentry function into the stack. */</a>
+<a name="361"><span class="lineNum">     361 </span><span class="lineCov">    1474485 :                         return i + 1;</span></a>
+<a name="362"><span class="lineNum">     362 </span>            :                 }</a>
+<a name="363"><span class="lineNum">     363 </span>            :         }</a>
+<a name="364"><span class="lineNum">     364 </span>            :         return nr_entries;</a>
+<a name="365"><span class="lineNum">     365 </span>            : }</a>
+<a name="366"><span class="lineNum">     366 </span>            : EXPORT_SYMBOL_GPL(filter_irq_stacks);</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

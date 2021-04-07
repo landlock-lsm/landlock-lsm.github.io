@@ -1,0 +1,139 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - landlock.info - include/linux/sched/wake_q.h</title>
+  <link rel="stylesheet" type="text/css" href="../../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../../index.html">top level</a> - <a href="index.html">include/linux/sched</a> - wake_q.h<span style="font-size: 80%;"> (source / <a href="wake_q.h.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">landlock.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">5</td>
+            <td class="headerCovTableEntry">5</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2021-04-07 12:34:12</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntryHi">-</td>
+          </tr>
+          <tr><td><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : /* SPDX-License-Identifier: GPL-2.0 */</a>
+<a name="2"><span class="lineNum">       2 </span>            : #ifndef _LINUX_SCHED_WAKE_Q_H</a>
+<a name="3"><span class="lineNum">       3 </span>            : #define _LINUX_SCHED_WAKE_Q_H</a>
+<a name="4"><span class="lineNum">       4 </span>            : </a>
+<a name="5"><span class="lineNum">       5 </span>            : /*</a>
+<a name="6"><span class="lineNum">       6 </span>            :  * Wake-queues are lists of tasks with a pending wakeup, whose</a>
+<a name="7"><span class="lineNum">       7 </span>            :  * callers have already marked the task as woken internally,</a>
+<a name="8"><span class="lineNum">       8 </span>            :  * and can thus carry on. A common use case is being able to</a>
+<a name="9"><span class="lineNum">       9 </span>            :  * do the wakeups once the corresponding user lock as been</a>
+<a name="10"><span class="lineNum">      10 </span>            :  * released.</a>
+<a name="11"><span class="lineNum">      11 </span>            :  *</a>
+<a name="12"><span class="lineNum">      12 </span>            :  * We hold reference to each task in the list across the wakeup,</a>
+<a name="13"><span class="lineNum">      13 </span>            :  * thus guaranteeing that the memory is still valid by the time</a>
+<a name="14"><span class="lineNum">      14 </span>            :  * the actual wakeups are performed in wake_up_q().</a>
+<a name="15"><span class="lineNum">      15 </span>            :  *</a>
+<a name="16"><span class="lineNum">      16 </span>            :  * One per task suffices, because there's never a need for a task to be</a>
+<a name="17"><span class="lineNum">      17 </span>            :  * in two wake queues simultaneously; it is forbidden to abandon a task</a>
+<a name="18"><span class="lineNum">      18 </span>            :  * in a wake queue (a call to wake_up_q() _must_ follow), so if a task is</a>
+<a name="19"><span class="lineNum">      19 </span>            :  * already in a wake queue, the wakeup will happen soon and the second</a>
+<a name="20"><span class="lineNum">      20 </span>            :  * waker can just skip it.</a>
+<a name="21"><span class="lineNum">      21 </span>            :  *</a>
+<a name="22"><span class="lineNum">      22 </span>            :  * The DEFINE_WAKE_Q macro declares and initializes the list head.</a>
+<a name="23"><span class="lineNum">      23 </span>            :  * wake_up_q() does NOT reinitialize the list; it's expected to be</a>
+<a name="24"><span class="lineNum">      24 </span>            :  * called near the end of a function. Otherwise, the list can be</a>
+<a name="25"><span class="lineNum">      25 </span>            :  * re-initialized for later re-use by wake_q_init().</a>
+<a name="26"><span class="lineNum">      26 </span>            :  *</a>
+<a name="27"><span class="lineNum">      27 </span>            :  * NOTE that this can cause spurious wakeups. schedule() callers</a>
+<a name="28"><span class="lineNum">      28 </span>            :  * must ensure the call is done inside a loop, confirming that the</a>
+<a name="29"><span class="lineNum">      29 </span>            :  * wakeup condition has in fact occurred.</a>
+<a name="30"><span class="lineNum">      30 </span>            :  *</a>
+<a name="31"><span class="lineNum">      31 </span>            :  * NOTE that there is no guarantee the wakeup will happen any later than the</a>
+<a name="32"><span class="lineNum">      32 </span>            :  * wake_q_add() location. Therefore task must be ready to be woken at the</a>
+<a name="33"><span class="lineNum">      33 </span>            :  * location of the wake_q_add().</a>
+<a name="34"><span class="lineNum">      34 </span>            :  */</a>
+<a name="35"><span class="lineNum">      35 </span>            : </a>
+<a name="36"><span class="lineNum">      36 </span>            : #include &lt;linux/sched.h&gt;</a>
+<a name="37"><span class="lineNum">      37 </span>            : </a>
+<a name="38"><span class="lineNum">      38 </span>            : struct wake_q_head {</a>
+<a name="39"><span class="lineNum">      39 </span>            :         struct wake_q_node *first;</a>
+<a name="40"><span class="lineNum">      40 </span>            :         struct wake_q_node **lastp;</a>
+<a name="41"><span class="lineNum">      41 </span>            : };</a>
+<a name="42"><span class="lineNum">      42 </span>            : </a>
+<a name="43"><span class="lineNum">      43 </span>            : #define WAKE_Q_TAIL ((struct wake_q_node *) 0x01)</a>
+<a name="44"><span class="lineNum">      44 </span>            : </a>
+<a name="45"><span class="lineNum">      45 </span>            : #define DEFINE_WAKE_Q(name)                             \</a>
+<a name="46"><span class="lineNum">      46 </span>            :         struct wake_q_head name = { WAKE_Q_TAIL, &amp;name.first }</a>
+<a name="47"><span class="lineNum">      47 </span>            : </a>
+<a name="48"><span class="lineNum">      48 </span><span class="lineCov">          3 : static inline void wake_q_init(struct wake_q_head *head)</span></a>
+<a name="49"><span class="lineNum">      49 </span>            : {</a>
+<a name="50"><span class="lineNum">      50 </span><span class="lineCov">          3 :         head-&gt;first = WAKE_Q_TAIL;</span></a>
+<a name="51"><span class="lineNum">      51 </span><span class="lineCov">          3 :         head-&gt;lastp = &amp;head-&gt;first;</span></a>
+<a name="52"><span class="lineNum">      52 </span>            : }</a>
+<a name="53"><span class="lineNum">      53 </span>            : </a>
+<a name="54"><span class="lineNum">      54 </span><span class="lineCov">         32 : static inline bool wake_q_empty(struct wake_q_head *head)</span></a>
+<a name="55"><span class="lineNum">      55 </span>            : {</a>
+<a name="56"><span class="lineNum">      56 </span><span class="lineCov">         32 :         return head-&gt;first == WAKE_Q_TAIL;</span></a>
+<a name="57"><span class="lineNum">      57 </span>            : }</a>
+<a name="58"><span class="lineNum">      58 </span>            : </a>
+<a name="59"><span class="lineNum">      59 </span>            : extern void wake_q_add(struct wake_q_head *head, struct task_struct *task);</a>
+<a name="60"><span class="lineNum">      60 </span>            : extern void wake_q_add_safe(struct wake_q_head *head, struct task_struct *task);</a>
+<a name="61"><span class="lineNum">      61 </span>            : extern void wake_up_q(struct wake_q_head *head);</a>
+<a name="62"><span class="lineNum">      62 </span>            : </a>
+<a name="63"><span class="lineNum">      63 </span>            : #endif /* _LINUX_SCHED_WAKE_Q_H */</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>
