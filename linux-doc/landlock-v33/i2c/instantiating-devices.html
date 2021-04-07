@@ -1,0 +1,558 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>How to instantiate I2C devices &mdash; The Linux Kernel 5.12.0-rc3+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="I2C Bus Drivers" href="busses/index.html" />
+    <link rel="prev" title="The SMBus Protocol" href="smbus-protocol.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.12.0-rc3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">I2C/SMBus Subsystem</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#introduction">Introduction</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="summary.html">Introduction to I2C and SMBus</a></li>
+<li class="toctree-l3"><a class="reference internal" href="i2c-protocol.html">The I2C Protocol</a></li>
+<li class="toctree-l3"><a class="reference internal" href="smbus-protocol.html">The SMBus Protocol</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">How to instantiate I2C devices</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#method-1-declare-the-i2c-devices-statically">Method 1: Declare the I2C devices statically</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#method-2-instantiate-the-devices-explicitly">Method 2: Instantiate the devices explicitly</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#method-3-probe-an-i2c-bus-for-certain-devices">Method 3: Probe an I2C bus for certain devices</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#method-4-instantiate-from-user-space">Method 4: Instantiate from user-space</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="busses/index.html">I2C Bus Drivers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="i2c-topology.html">I2C muxes and complex topologies</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muxes/i2c-mux-gpio.html">Kernel driver i2c-mux-gpio</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#writing-device-drivers">Writing device drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#debugging">Debugging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#slave-i2c">Slave I2C</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#advanced-topics">Advanced topics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#legacy-documentation">Legacy documentation</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/index.html">Nios II Specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="index.html">I2C/SMBus Subsystem</a> &raquo;</li>
+        
+      <li>How to instantiate I2C devices</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/i2c/instantiating-devices.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="how-to-instantiate-i2c-devices">
+<h1>How to instantiate I2C devices<a class="headerlink" href="#how-to-instantiate-i2c-devices" title="Permalink to this headline">¶</a></h1>
+<p>Unlike PCI or USB devices, I2C devices are not enumerated at the hardware
+level. Instead, the software must know which devices are connected on each
+I2C bus segment, and what address these devices are using. For this
+reason, the kernel code must instantiate I2C devices explicitly. There are
+several ways to achieve this, depending on the context and requirements.</p>
+<div class="section" id="method-1-declare-the-i2c-devices-statically">
+<h2>Method 1: Declare the I2C devices statically<a class="headerlink" href="#method-1-declare-the-i2c-devices-statically" title="Permalink to this headline">¶</a></h2>
+<p>This method is appropriate when the I2C bus is a system bus as is the case
+for many embedded systems. On such systems, each I2C bus has a number which
+is known in advance. It is thus possible to pre-declare the I2C devices
+which live on this bus.</p>
+<p>This information is provided to the kernel in a different way on different
+architectures: device tree, ACPI or board files.</p>
+<p>When the I2C bus in question is registered, the I2C devices will be
+instantiated automatically by i2c-core. The devices will be automatically
+unbound and destroyed when the I2C bus they sit on goes away (if ever).</p>
+<div class="section" id="declare-the-i2c-devices-via-devicetree">
+<h3>Declare the I2C devices via devicetree<a class="headerlink" href="#declare-the-i2c-devices-via-devicetree" title="Permalink to this headline">¶</a></h3>
+<p>On platforms using devicetree, the declaration of I2C devices is done in
+subnodes of the master controller.</p>
+<p>Example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>i2c1: i2c@400a0000 {
+        /* ... master properties skipped ... */
+        clock-frequency = &lt;100000&gt;;
+
+        flash@50 {
+                compatible = &quot;atmel,24c256&quot;;
+                reg = &lt;0x50&gt;;
+        };
+
+        pca9532: gpio@60 {
+                compatible = &quot;nxp,pca9532&quot;;
+                gpio-controller;
+                #gpio-cells = &lt;2&gt;;
+                reg = &lt;0x60&gt;;
+        };
+};
+</pre></div>
+</div>
+<p>Here, two devices are attached to the bus using a speed of 100kHz. For
+additional properties which might be needed to set up the device, please refer
+to its devicetree documentation in Documentation/devicetree/bindings/.</p>
+</div>
+<div class="section" id="declare-the-i2c-devices-via-acpi">
+<h3>Declare the I2C devices via ACPI<a class="headerlink" href="#declare-the-i2c-devices-via-acpi" title="Permalink to this headline">¶</a></h3>
+<p>ACPI can also describe I2C devices. There is special documentation for this
+which is currently located at <a class="reference internal" href="../firmware-guide/acpi/enumeration.html"><span class="doc">ACPI Based Device Enumeration</span></a>.</p>
+</div>
+<div class="section" id="declare-the-i2c-devices-in-board-files">
+<h3>Declare the I2C devices in board files<a class="headerlink" href="#declare-the-i2c-devices-in-board-files" title="Permalink to this headline">¶</a></h3>
+<p>In many embedded architectures, devicetree has replaced the old hardware
+description based on board files, but the latter are still used in old
+code. Instantiating I2C devices via board files is done with an array of
+<a class="reference internal" href="../driver-api/i2c.html#c.i2c_board_info" title="i2c_board_info"><code class="xref c c-struct docutils literal notranslate"><span class="pre">struct</span> <span class="pre">i2c_board_info</span></code></a> which is registered by calling
+<a class="reference internal" href="../driver-api/i2c.html#c.i2c_register_board_info" title="i2c_register_board_info"><code class="xref c c-func docutils literal notranslate"><span class="pre">i2c_register_board_info()</span></code></a>.</p>
+<p>Example (from omap2 h4):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>static struct i2c_board_info h4_i2c_board_info[] __initdata = {
+      {
+              I2C_BOARD_INFO(&quot;isp1301_omap&quot;, 0x2d),
+              .irq            = OMAP_GPIO_IRQ(125),
+      },
+      {       /* EEPROM on mainboard */
+              I2C_BOARD_INFO(&quot;24c01&quot;, 0x52),
+              .platform_data  = &amp;m24c01,
+      },
+      {       /* EEPROM on cpu card */
+              I2C_BOARD_INFO(&quot;24c01&quot;, 0x57),
+              .platform_data  = &amp;m24c01,
+      },
+};
+
+static void __init omap_h4_init(void)
+{
+      (...)
+      i2c_register_board_info(1, h4_i2c_board_info,
+                      ARRAY_SIZE(h4_i2c_board_info));
+      (...)
+}
+</pre></div>
+</div>
+<p>The above code declares 3 devices on I2C bus 1, including their respective
+addresses and custom data needed by their drivers.</p>
+</div>
+</div>
+<div class="section" id="method-2-instantiate-the-devices-explicitly">
+<h2>Method 2: Instantiate the devices explicitly<a class="headerlink" href="#method-2-instantiate-the-devices-explicitly" title="Permalink to this headline">¶</a></h2>
+<p>This method is appropriate when a larger device uses an I2C bus for
+internal communication. A typical case is TV adapters. These can have a
+tuner, a video decoder, an audio decoder, etc. usually connected to the
+main chip by the means of an I2C bus. You won’t know the number of the I2C
+bus in advance, so the method 1 described above can’t be used. Instead,
+you can instantiate your I2C devices explicitly. This is done by filling
+a <a class="reference internal" href="../driver-api/i2c.html#c.i2c_board_info" title="i2c_board_info"><code class="xref c c-struct docutils literal notranslate"><span class="pre">struct</span> <span class="pre">i2c_board_info</span></code></a> and calling <a class="reference internal" href="../driver-api/i2c.html#c.i2c_new_client_device" title="i2c_new_client_device"><code class="xref c c-func docutils literal notranslate"><span class="pre">i2c_new_client_device()</span></code></a>.</p>
+<p>Example (from the sfe4001 network driver):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>static struct i2c_board_info sfe4001_hwmon_info = {
+      I2C_BOARD_INFO(&quot;max6647&quot;, 0x4e),
+};
+
+int sfe4001_init(struct efx_nic *efx)
+{
+      (...)
+      efx-&gt;board_info.hwmon_client =
+              i2c_new_client_device(&amp;efx-&gt;i2c_adap, &amp;sfe4001_hwmon_info);
+
+      (...)
+}
+</pre></div>
+</div>
+<p>The above code instantiates 1 I2C device on the I2C bus which is on the
+network adapter in question.</p>
+<p>A variant of this is when you don’t know for sure if an I2C device is
+present or not (for example for an optional feature which is not present
+on cheap variants of a board but you have no way to tell them apart), or
+it may have different addresses from one board to the next (manufacturer
+changing its design without notice). In this case, you can call
+i2c_new_scanned_device() instead of <a class="reference internal" href="../driver-api/i2c.html#c.i2c_new_client_device" title="i2c_new_client_device"><code class="xref c c-func docutils literal notranslate"><span class="pre">i2c_new_client_device()</span></code></a>.</p>
+<p>Example (from the nxp OHCI driver):</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>static const unsigned short normal_i2c[] = { 0x2c, 0x2d, I2C_CLIENT_END };
+
+static int usb_hcd_nxp_probe(struct platform_device *pdev)
+{
+      (...)
+      struct i2c_adapter *i2c_adap;
+      struct i2c_board_info i2c_info;
+
+      (...)
+      i2c_adap = i2c_get_adapter(2);
+      memset(&amp;i2c_info, 0, sizeof(struct i2c_board_info));
+      strscpy(i2c_info.type, &quot;isp1301_nxp&quot;, sizeof(i2c_info.type));
+      isp1301_i2c_client = i2c_new_scanned_device(i2c_adap, &amp;i2c_info,
+                                                  normal_i2c, NULL);
+      i2c_put_adapter(i2c_adap);
+      (...)
+}
+</pre></div>
+</div>
+<p>The above code instantiates up to 1 I2C device on the I2C bus which is on
+the OHCI adapter in question. It first tries at address 0x2c, if nothing
+is found there it tries address 0x2d, and if still nothing is found, it
+simply gives up.</p>
+<p>The driver which instantiated the I2C device is responsible for destroying
+it on cleanup. This is done by calling <a class="reference internal" href="../driver-api/i2c.html#c.i2c_unregister_device" title="i2c_unregister_device"><code class="xref c c-func docutils literal notranslate"><span class="pre">i2c_unregister_device()</span></code></a> on the
+pointer that was earlier returned by <a class="reference internal" href="../driver-api/i2c.html#c.i2c_new_client_device" title="i2c_new_client_device"><code class="xref c c-func docutils literal notranslate"><span class="pre">i2c_new_client_device()</span></code></a> or
+i2c_new_scanned_device().</p>
+</div>
+<div class="section" id="method-3-probe-an-i2c-bus-for-certain-devices">
+<h2>Method 3: Probe an I2C bus for certain devices<a class="headerlink" href="#method-3-probe-an-i2c-bus-for-certain-devices" title="Permalink to this headline">¶</a></h2>
+<p>Sometimes you do not have enough information about an I2C device, not even
+to call i2c_new_scanned_device(). The typical case is hardware monitoring
+chips on PC mainboards. There are several dozen models, which can live
+at 25 different addresses. Given the huge number of mainboards out there,
+it is next to impossible to build an exhaustive list of the hardware
+monitoring chips being used. Fortunately, most of these chips have
+manufacturer and device ID registers, so they can be identified by
+probing.</p>
+<p>In that case, I2C devices are neither declared nor instantiated
+explicitly. Instead, i2c-core will probe for such devices as soon as their
+drivers are loaded, and if any is found, an I2C device will be
+instantiated automatically. In order to prevent any misbehavior of this
+mechanism, the following restrictions apply:</p>
+<ul class="simple">
+<li><p>The I2C device driver must implement the detect() method, which
+identifies a supported device by reading from arbitrary registers.</p></li>
+<li><p>Only buses which are likely to have a supported device and agree to be
+probed, will be probed. For example this avoids probing for hardware
+monitoring chips on a TV adapter.</p></li>
+</ul>
+<p>Example:
+See lm90_driver and lm90_detect() in drivers/hwmon/lm90.c</p>
+<p>I2C devices instantiated as a result of such a successful probe will be
+destroyed automatically when the driver which detected them is removed,
+or when the underlying I2C bus is itself destroyed, whichever happens
+first.</p>
+<p>Those of you familiar with the I2C subsystem of 2.4 kernels and early 2.6
+kernels will find out that this method 3 is essentially similar to what
+was done there. Two significant differences are:</p>
+<ul class="simple">
+<li><p>Probing is only one way to instantiate I2C devices now, while it was the
+only way back then. Where possible, methods 1 and 2 should be preferred.
+Method 3 should only be used when there is no other way, as it can have
+undesirable side effects.</p></li>
+<li><p>I2C buses must now explicitly say which I2C driver classes can probe
+them (by the means of the class bitfield), while all I2C buses were
+probed by default back then. The default is an empty class which means
+that no probing happens. The purpose of the class bitfield is to limit
+the aforementioned undesirable side effects.</p></li>
+</ul>
+<p>Once again, method 3 should be avoided wherever possible. Explicit device
+instantiation (methods 1 and 2) is much preferred for it is safer and
+faster.</p>
+</div>
+<div class="section" id="method-4-instantiate-from-user-space">
+<h2>Method 4: Instantiate from user-space<a class="headerlink" href="#method-4-instantiate-from-user-space" title="Permalink to this headline">¶</a></h2>
+<p>In general, the kernel should know which I2C devices are connected and
+what addresses they live at. However, in certain cases, it does not, so a
+sysfs interface was added to let the user provide the information. This
+interface is made of 2 attribute files which are created in every I2C bus
+directory: <code class="docutils literal notranslate"><span class="pre">new_device</span></code> and <code class="docutils literal notranslate"><span class="pre">delete_device</span></code>. Both files are write
+only and you must write the right parameters to them in order to properly
+instantiate, respectively delete, an I2C device.</p>
+<p>File <code class="docutils literal notranslate"><span class="pre">new_device</span></code> takes 2 parameters: the name of the I2C device (a
+string) and the address of the I2C device (a number, typically expressed
+in hexadecimal starting with 0x, but can also be expressed in decimal.)</p>
+<p>File <code class="docutils literal notranslate"><span class="pre">delete_device</span></code> takes a single parameter: the address of the I2C
+device. As no two devices can live at the same address on a given I2C
+segment, the address is sufficient to uniquely identify the device to be
+deleted.</p>
+<p>Example:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span># echo eeprom 0x50 &gt; /sys/bus/i2c/devices/i2c-3/new_device
+</pre></div>
+</div>
+<p>While this interface should only be used when in-kernel device declaration
+can’t be done, there is a variety of cases where it can be helpful:</p>
+<ul class="simple">
+<li><p>The I2C driver usually detects devices (method 3 above) but the bus
+segment your device lives on doesn’t have the proper class bit set and
+thus detection doesn’t trigger.</p></li>
+<li><p>The I2C driver usually detects devices, but your device lives at an
+unexpected address.</p></li>
+<li><p>The I2C driver usually detects devices, but your device is not detected,
+either because the detection routine is too strict, or because your
+device is not officially supported yet but you know it is compatible.</p></li>
+<li><p>You are developing a driver on a test board, where you soldered the I2C
+device yourself.</p></li>
+</ul>
+<p>This interface is a replacement for the force_* module parameters some I2C
+drivers implement. Being implemented in i2c-core rather than in each
+device driver individually, it is much more efficient, and also has the
+advantage that you do not have to reload the driver to change a setting.
+You can also instantiate the device before the driver is loaded or even
+available, and you don’t need to know what driver the device needs.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="busses/index.html" class="btn btn-neutral float-right" title="I2C Bus Drivers" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="smbus-protocol.html" class="btn btn-neutral float-left" title="The SMBus Protocol" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright The kernel development community.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

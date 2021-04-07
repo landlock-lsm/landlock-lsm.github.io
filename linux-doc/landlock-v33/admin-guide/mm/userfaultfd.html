@@ -1,0 +1,664 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Userfaultfd &mdash; The Linux Kernel 5.12.0-rc3+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Kernel module signing facility" href="../module-signing.html" />
+    <link rel="prev" title="Transparent Hugepage Support" href="transhuge.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.12.0-rc3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="../index.html">The Linux kernel user’s and administrator’s guide</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../README.html">Linux kernel release 5.x &lt;http://kernel.org/&gt;</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../kernel-parameters.html">The kernel’s command-line parameters</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../devices.html">Linux allocated devices (4.x+ version)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sysctl/index.html">Documentation for /proc/sys</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../abi.html">Linux ABI description</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../features.html">Feature status on all architectures</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../hw-vuln/index.html">Hardware vulnerabilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reporting-issues.html">Reporting issues</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../reporting-bugs.html">Reporting bugs (obsolete)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../security-bugs.html">Security bugs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../bug-hunting.html">Bug hunting</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../bug-bisect.html">Bisecting a bug</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../tainted-kernels.html">Tainted kernels</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ramoops.html">Ramoops oops/panic logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dynamic-debug-howto.html">Dynamic debug</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../init.html">Explaining the “No working init found.” boot hang message</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../kdump/index.html">Documentation for Kdump - The kexec-based Crash Dumping Solution</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../perf/index.html">Performance monitor support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pstore-blk.html">pstore block oops/panic logger</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sysfs-rules.html">Rules on how to access information in sysfs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../acpi/index.html">ACPI Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../aoe/index.html">ATA over Ethernet (AoE)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../auxdisplay/index.html">Auxiliary Display Support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../bcache.html">A block layer cache (bcache)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../binderfs.html">The Android binderfs Filesystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../binfmt-misc.html">Kernel Support for miscellaneous Binary Formats (binfmt_misc)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../blockdev/index.html">The Linux RapidIO Subsystem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../bootconfig.html">Boot Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../braille-console.html">Linux Braille Console</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../btmrvl.html">btmrvl driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cgroup-v1/index.html">Control Groups version 1</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cgroup-v2.html">Control Group v2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cifs/index.html">CIFS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../clearing-warn-once.html">Clearing WARN_ONCE</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cpu-load.html">CPU load</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../cputopology.html">How CPU topology info is exported via sysfs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../dell_rbu.html">Dell Remote BIOS Update driver (dell_rbu)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../device-mapper/index.html">Device Mapper</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../edid.html">EDID</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../efi-stub.html">The EFI Boot Stub</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ext4.html">ext4 General Information</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../nfs/index.html">NFS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../gpio/index.html">gpio</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../highuid.html">Notes on the change from 16-bit UIDs to 32-bit UIDs</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../hw_random.html">Linux support for random number generator in i8xx chipsets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../initrd.html">Using the initial RAM disk (initrd)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../iostats.html">I/O statistics fields</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../java.html">Java(tm) Binary Kernel Support for Linux v1.03</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../jfs.html">IBM’s Journaled File System (JFS) for Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../kernel-per-CPU-kthreads.html">Reducing OS jitter due to per-cpu kthreads</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../laptops/index.html">Laptop Drivers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../lcd-panel-cgram.html">Parallel port LCD/Keypad Panel support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ldm.html">LDM - Logical Disk Manager (Dynamic Disks)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../lockup-watchdogs.html">Softlockup detector and hardlockup detector (aka nmi_watchdog)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../LSM/index.html">Linux Security Module Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../md.html">RAID arrays</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../media/index.html">Media subsystem admin and user guide</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="index.html">Memory Management</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="concepts.html">Concepts overview</a></li>
+<li class="toctree-l3"><a class="reference internal" href="cma_debugfs.html">CMA Debugfs Interface</a></li>
+<li class="toctree-l3"><a class="reference internal" href="hugetlbpage.html">HugeTLB Pages</a></li>
+<li class="toctree-l3"><a class="reference internal" href="idle_page_tracking.html">Idle Page Tracking</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ksm.html">Kernel Samepage Merging</a></li>
+<li class="toctree-l3"><a class="reference internal" href="memory-hotplug.html">Memory Hotplug</a></li>
+<li class="toctree-l3"><a class="reference internal" href="nommu-mmap.html">No-MMU memory mapping support</a></li>
+<li class="toctree-l3"><a class="reference internal" href="numa_memory_policy.html">NUMA Memory Policy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="numaperf.html">NUMA Locality</a></li>
+<li class="toctree-l3"><a class="reference internal" href="numaperf.html#numa-performance">NUMA Performance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="numaperf.html#numa-cache">NUMA Cache</a></li>
+<li class="toctree-l3"><a class="reference internal" href="numaperf.html#see-also">See Also</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pagemap.html">Examining Process Page Tables</a></li>
+<li class="toctree-l3"><a class="reference internal" href="soft-dirty.html">Soft-Dirty PTEs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="transhuge.html">Transparent Hugepage Support</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Userfaultfd</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#objective">Objective</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#design">Design</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#api">API</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#qemu-kvm">QEMU/KVM</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#non-cooperative-userfaultfd">Non-cooperative userfaultfd</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../module-signing.html">Kernel module signing facility</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../mono.html">Mono(tm) Binary Kernel Support for Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../namespaces/index.html">Namespaces</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../numastat.html">Numa policy hit/miss statistics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../parport.html">Parport</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../perf-security.html">Perf events and tool security</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pm/index.html">Power Management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../pnp.html">Linux Plug and Play Documentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../rapidio.html">RapidIO Subsystem Guide</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ras.html">Reliability, Availability and Serviceability</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../rtc.html">Real Time Clock (RTC) Drivers for Linux</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../serial-console.html">Linux Serial Console</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../svga.html">Video Mode Selection Support 2.13</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../syscall-user-dispatch.html">Syscall User Dispatch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../sysrq.html">Linux Magic System Request Key Hacks</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../thunderbolt.html">USB4 and Thunderbolt</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../ufs.html">Using UFS</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../unicode.html">Unicode support</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../vga-softcursor.html">Software cursor for VGA</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../video-output.html">Video Output Switcher Control</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../xfs.html">The SGI XFS Filesystem</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../core-api/index.html">Core API Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../nios2/index.html">Nios II Specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">The Linux kernel user’s and administrator’s guide</a> &raquo;</li>
+        
+          <li><a href="index.html">Memory Management</a> &raquo;</li>
+        
+      <li>Userfaultfd</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../../_sources/admin-guide/mm/userfaultfd.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="userfaultfd">
+<span id="id1"></span><h1>Userfaultfd<a class="headerlink" href="#userfaultfd" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="objective">
+<h2>Objective<a class="headerlink" href="#objective" title="Permalink to this headline">¶</a></h2>
+<p>Userfaults allow the implementation of on-demand paging from userland
+and more generally they allow userland to take control of various
+memory page faults, something otherwise only the kernel code could do.</p>
+<p>For example userfaults allows a proper and more optimal implementation
+of the <code class="docutils literal notranslate"><span class="pre">PROT_NONE+SIGSEGV</span></code> trick.</p>
+</div>
+<div class="section" id="design">
+<h2>Design<a class="headerlink" href="#design" title="Permalink to this headline">¶</a></h2>
+<p>Userfaults are delivered and resolved through the <code class="docutils literal notranslate"><span class="pre">userfaultfd</span></code> syscall.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">userfaultfd</span></code> (aside from registering and unregistering virtual
+memory ranges) provides two primary functionalities:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">read/POLLIN</span></code> protocol to notify a userland thread of the faults
+happening</p></li>
+<li><p>various <code class="docutils literal notranslate"><span class="pre">UFFDIO_*</span></code> ioctls that can manage the virtual memory regions
+registered in the <code class="docutils literal notranslate"><span class="pre">userfaultfd</span></code> that allows userland to efficiently
+resolve the userfaults it receives via 1) or to manage the virtual
+memory in the background</p></li>
+</ol>
+<p>The real advantage of userfaults if compared to regular virtual memory
+management of mremap/mprotect is that the userfaults in all their
+operations never involve heavyweight structures like vmas (in fact the
+<code class="docutils literal notranslate"><span class="pre">userfaultfd</span></code> runtime load never takes the mmap_lock for writing).</p>
+<p>Vmas are not suitable for page- (or hugepage) granular fault tracking
+when dealing with virtual address spaces that could span
+Terabytes. Too many vmas would be needed for that.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">userfaultfd</span></code> once opened by invoking the syscall, can also be
+passed using unix domain sockets to a manager process, so the same
+manager process could handle the userfaults of a multitude of
+different processes without them being aware about what is going on
+(well of course unless they later try to use the <code class="docutils literal notranslate"><span class="pre">userfaultfd</span></code>
+themselves on the same region the manager is already tracking, which
+is a corner case that would currently return <code class="docutils literal notranslate"><span class="pre">-EBUSY</span></code>).</p>
+</div>
+<div class="section" id="api">
+<h2>API<a class="headerlink" href="#api" title="Permalink to this headline">¶</a></h2>
+<p>When first opened the <code class="docutils literal notranslate"><span class="pre">userfaultfd</span></code> must be enabled invoking the
+<code class="docutils literal notranslate"><span class="pre">UFFDIO_API</span></code> ioctl specifying a <code class="docutils literal notranslate"><span class="pre">uffdio_api.api</span></code> value set to <code class="docutils literal notranslate"><span class="pre">UFFD_API</span></code> (or
+a later API version) which will specify the <code class="docutils literal notranslate"><span class="pre">read/POLLIN</span></code> protocol
+userland intends to speak on the <code class="docutils literal notranslate"><span class="pre">UFFD</span></code> and the <code class="docutils literal notranslate"><span class="pre">uffdio_api.features</span></code>
+userland requires. The <code class="docutils literal notranslate"><span class="pre">UFFDIO_API</span></code> ioctl if successful (i.e. if the
+requested <code class="docutils literal notranslate"><span class="pre">uffdio_api.api</span></code> is spoken also by the running kernel and the
+requested features are going to be enabled) will return into
+<code class="docutils literal notranslate"><span class="pre">uffdio_api.features</span></code> and <code class="docutils literal notranslate"><span class="pre">uffdio_api.ioctls</span></code> two 64bit bitmasks of
+respectively all the available features of the read(2) protocol and
+the generic ioctl available.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">uffdio_api.features</span></code> bitmask returned by the <code class="docutils literal notranslate"><span class="pre">UFFDIO_API</span></code> ioctl
+defines what memory types are supported by the <code class="docutils literal notranslate"><span class="pre">userfaultfd</span></code> and what
+events, except page fault notifications, may be generated.</p>
+<p>If the kernel supports registering <code class="docutils literal notranslate"><span class="pre">userfaultfd</span></code> ranges on hugetlbfs
+virtual memory areas, <code class="docutils literal notranslate"><span class="pre">UFFD_FEATURE_MISSING_HUGETLBFS</span></code> will be set in
+<code class="docutils literal notranslate"><span class="pre">uffdio_api.features</span></code>. Similarly, <code class="docutils literal notranslate"><span class="pre">UFFD_FEATURE_MISSING_SHMEM</span></code> will be
+set if the kernel supports registering <code class="docutils literal notranslate"><span class="pre">userfaultfd</span></code> ranges on shared
+memory (covering all shmem APIs, i.e. tmpfs, <code class="docutils literal notranslate"><span class="pre">IPCSHM</span></code>, <code class="docutils literal notranslate"><span class="pre">/dev/zero</span></code>,
+<code class="docutils literal notranslate"><span class="pre">MAP_SHARED</span></code>, <code class="docutils literal notranslate"><span class="pre">memfd_create</span></code>, etc).</p>
+<p>The userland application that wants to use <code class="docutils literal notranslate"><span class="pre">userfaultfd</span></code> with hugetlbfs
+or shared memory need to set the corresponding flag in
+<code class="docutils literal notranslate"><span class="pre">uffdio_api.features</span></code> to enable those features.</p>
+<p>If the userland desires to receive notifications for events other than
+page faults, it has to verify that <code class="docutils literal notranslate"><span class="pre">uffdio_api.features</span></code> has appropriate
+<code class="docutils literal notranslate"><span class="pre">UFFD_FEATURE_EVENT_*</span></code> bits set. These events are described in more
+detail below in <a class="reference internal" href="#non-cooperative-userfaultfd">Non-cooperative userfaultfd</a> section.</p>
+<p>Once the <code class="docutils literal notranslate"><span class="pre">userfaultfd</span></code> has been enabled the <code class="docutils literal notranslate"><span class="pre">UFFDIO_REGISTER</span></code> ioctl should
+be invoked (if present in the returned <code class="docutils literal notranslate"><span class="pre">uffdio_api.ioctls</span></code> bitmask) to
+register a memory range in the <code class="docutils literal notranslate"><span class="pre">userfaultfd</span></code> by setting the
+uffdio_register structure accordingly. The <code class="docutils literal notranslate"><span class="pre">uffdio_register.mode</span></code>
+bitmask will specify to the kernel which kind of faults to track for
+the range (<code class="docutils literal notranslate"><span class="pre">UFFDIO_REGISTER_MODE_MISSING</span></code> would track missing
+pages). The <code class="docutils literal notranslate"><span class="pre">UFFDIO_REGISTER</span></code> ioctl will return the
+<code class="docutils literal notranslate"><span class="pre">uffdio_register.ioctls</span></code> bitmask of ioctls that are suitable to resolve
+userfaults on the range registered. Not all ioctls will necessarily be
+supported for all memory types depending on the underlying virtual
+memory backend (anonymous memory vs tmpfs vs real filebacked
+mappings).</p>
+<p>Userland can use the <code class="docutils literal notranslate"><span class="pre">uffdio_register.ioctls</span></code> to manage the virtual
+address space in the background (to add or potentially also remove
+memory from the <code class="docutils literal notranslate"><span class="pre">userfaultfd</span></code> registered range). This means a userfault
+could be triggering just before userland maps in the background the
+user-faulted page.</p>
+<p>The primary ioctl to resolve userfaults is <code class="docutils literal notranslate"><span class="pre">UFFDIO_COPY</span></code>. That
+atomically copies a page into the userfault registered range and wakes
+up the blocked userfaults
+(unless <code class="docutils literal notranslate"><span class="pre">uffdio_copy.mode</span> <span class="pre">&amp;</span> <span class="pre">UFFDIO_COPY_MODE_DONTWAKE</span></code> is set).
+Other ioctl works similarly to <code class="docutils literal notranslate"><span class="pre">UFFDIO_COPY</span></code>. They’re atomic as in
+guaranteeing that nothing can see an half copied page since it’ll
+keep userfaulting until the copy has finished.</p>
+<p>Notes:</p>
+<ul class="simple">
+<li><p>If you requested <code class="docutils literal notranslate"><span class="pre">UFFDIO_REGISTER_MODE_MISSING</span></code> when registering then
+you must provide some kind of page in your thread after reading from
+the uffd.  You must provide either <code class="docutils literal notranslate"><span class="pre">UFFDIO_COPY</span></code> or <code class="docutils literal notranslate"><span class="pre">UFFDIO_ZEROPAGE</span></code>.
+The normal behavior of the OS automatically providing a zero page on
+an anonymous mmaping is not in place.</p></li>
+<li><p>None of the page-delivering ioctls default to the range that you
+registered with.  You must fill in all fields for the appropriate
+ioctl struct including the range.</p></li>
+<li><p>You get the address of the access that triggered the missing page
+event out of a struct uffd_msg that you read in the thread from the
+uffd.  You can supply as many pages as you want with <code class="docutils literal notranslate"><span class="pre">UFFDIO_COPY</span></code> or
+<code class="docutils literal notranslate"><span class="pre">UFFDIO_ZEROPAGE</span></code>.  Keep in mind that unless you used DONTWAKE then
+the first of any of those IOCTLs wakes up the faulting thread.</p></li>
+<li><p>Be sure to test for all errors including
+(<code class="docutils literal notranslate"><span class="pre">pollfd[0].revents</span> <span class="pre">&amp;</span> <span class="pre">POLLERR</span></code>).  This can happen, e.g. when ranges
+supplied were incorrect.</p></li>
+</ul>
+<div class="section" id="write-protect-notifications">
+<h3>Write Protect Notifications<a class="headerlink" href="#write-protect-notifications" title="Permalink to this headline">¶</a></h3>
+<p>This is equivalent to (but faster than) using mprotect and a SIGSEGV
+signal handler.</p>
+<p>Firstly you need to register a range with <code class="docutils literal notranslate"><span class="pre">UFFDIO_REGISTER_MODE_WP</span></code>.
+Instead of using mprotect(2) you use
+<code class="docutils literal notranslate"><span class="pre">ioctl(uffd,</span> <span class="pre">UFFDIO_WRITEPROTECT,</span> <span class="pre">struct</span> <span class="pre">*uffdio_writeprotect)</span></code>
+while <code class="docutils literal notranslate"><span class="pre">mode</span> <span class="pre">=</span> <span class="pre">UFFDIO_WRITEPROTECT_MODE_WP</span></code>
+in the struct passed in.  The range does not default to and does not
+have to be identical to the range you registered with.  You can write
+protect as many ranges as you like (inside the registered range).
+Then, in the thread reading from uffd the struct will have
+<code class="docutils literal notranslate"><span class="pre">msg.arg.pagefault.flags</span> <span class="pre">&amp;</span> <span class="pre">UFFD_PAGEFAULT_FLAG_WP</span></code> set. Now you send
+<code class="docutils literal notranslate"><span class="pre">ioctl(uffd,</span> <span class="pre">UFFDIO_WRITEPROTECT,</span> <span class="pre">struct</span> <span class="pre">*uffdio_writeprotect)</span></code>
+again while <code class="docutils literal notranslate"><span class="pre">pagefault.mode</span></code> does not have <code class="docutils literal notranslate"><span class="pre">UFFDIO_WRITEPROTECT_MODE_WP</span></code>
+set. This wakes up the thread which will continue to run with writes. This
+allows you to do the bookkeeping about the write in the uffd reading
+thread before the ioctl.</p>
+<p>If you registered with both <code class="docutils literal notranslate"><span class="pre">UFFDIO_REGISTER_MODE_MISSING</span></code> and
+<code class="docutils literal notranslate"><span class="pre">UFFDIO_REGISTER_MODE_WP</span></code> then you need to think about the sequence in
+which you supply a page and undo write protect.  Note that there is a
+difference between writes into a WP area and into a !WP area.  The
+former will have <code class="docutils literal notranslate"><span class="pre">UFFD_PAGEFAULT_FLAG_WP</span></code> set, the latter
+<code class="docutils literal notranslate"><span class="pre">UFFD_PAGEFAULT_FLAG_WRITE</span></code>.  The latter did not fail on protection but
+you still need to supply a page when <code class="docutils literal notranslate"><span class="pre">UFFDIO_REGISTER_MODE_MISSING</span></code> was
+used.</p>
+</div>
+</div>
+<div class="section" id="qemu-kvm">
+<h2>QEMU/KVM<a class="headerlink" href="#qemu-kvm" title="Permalink to this headline">¶</a></h2>
+<p>QEMU/KVM is using the <code class="docutils literal notranslate"><span class="pre">userfaultfd</span></code> syscall to implement postcopy live
+migration. Postcopy live migration is one form of memory
+externalization consisting of a virtual machine running with part or
+all of its memory residing on a different node in the cloud. The
+<code class="docutils literal notranslate"><span class="pre">userfaultfd</span></code> abstraction is generic enough that not a single line of
+KVM kernel code had to be modified in order to add postcopy live
+migration to QEMU.</p>
+<p>Guest async page faults, <code class="docutils literal notranslate"><span class="pre">FOLL_NOWAIT</span></code> and all other <code class="docutils literal notranslate"><span class="pre">GUP*</span></code> features work
+just fine in combination with userfaults. Userfaults trigger async
+page faults in the guest scheduler so those guest processes that
+aren’t waiting for userfaults (i.e. network bound) can keep running in
+the guest vcpus.</p>
+<p>It is generally beneficial to run one pass of precopy live migration
+just before starting postcopy live migration, in order to avoid
+generating userfaults for readonly guest regions.</p>
+<p>The implementation of postcopy live migration currently uses one
+single bidirectional socket but in the future two different sockets
+will be used (to reduce the latency of the userfaults to the minimum
+possible without having to decrease <code class="docutils literal notranslate"><span class="pre">/proc/sys/net/ipv4/tcp_wmem</span></code>).</p>
+<p>The QEMU in the source node writes all pages that it knows are missing
+in the destination node, into the socket, and the migration thread of
+the QEMU running in the destination node runs <code class="docutils literal notranslate"><span class="pre">UFFDIO_COPY|ZEROPAGE</span></code>
+ioctls on the <code class="docutils literal notranslate"><span class="pre">userfaultfd</span></code> in order to map the received pages into the
+guest (<code class="docutils literal notranslate"><span class="pre">UFFDIO_ZEROCOPY</span></code> is used if the source page was a zero page).</p>
+<p>A different postcopy thread in the destination node listens with
+poll() to the <code class="docutils literal notranslate"><span class="pre">userfaultfd</span></code> in parallel. When a <code class="docutils literal notranslate"><span class="pre">POLLIN</span></code> event is
+generated after a userfault triggers, the postcopy thread read() from
+the <code class="docutils literal notranslate"><span class="pre">userfaultfd</span></code> and receives the fault address (or <code class="docutils literal notranslate"><span class="pre">-EAGAIN</span></code> in case the
+userfault was already resolved and waken by a <code class="docutils literal notranslate"><span class="pre">UFFDIO_COPY|ZEROPAGE</span></code> run
+by the parallel QEMU migration thread).</p>
+<p>After the QEMU postcopy thread (running in the destination node) gets
+the userfault address it writes the information about the missing page
+into the socket. The QEMU source node receives the information and
+roughly “seeks” to that page address and continues sending all
+remaining missing pages from that new page offset. Soon after that
+(just the time to flush the tcp_wmem queue through the network) the
+migration thread in the QEMU running in the destination node will
+receive the page that triggered the userfault and it’ll map it as
+usual with the <code class="docutils literal notranslate"><span class="pre">UFFDIO_COPY|ZEROPAGE</span></code> (without actually knowing if it
+was spontaneously sent by the source or if it was an urgent page
+requested through a userfault).</p>
+<p>By the time the userfaults start, the QEMU in the destination node
+doesn’t need to keep any per-page state bitmap relative to the live
+migration around and a single per-page bitmap has to be maintained in
+the QEMU running in the source node to know which pages are still
+missing in the destination node. The bitmap in the source node is
+checked to find which missing pages to send in round robin and we seek
+over it when receiving incoming userfaults. After sending each page of
+course the bitmap is updated accordingly. It’s also useful to avoid
+sending the same page twice (in case the userfault is read by the
+postcopy thread just before <code class="docutils literal notranslate"><span class="pre">UFFDIO_COPY|ZEROPAGE</span></code> runs in the migration
+thread).</p>
+</div>
+<div class="section" id="non-cooperative-userfaultfd">
+<h2>Non-cooperative userfaultfd<a class="headerlink" href="#non-cooperative-userfaultfd" title="Permalink to this headline">¶</a></h2>
+<p>When the <code class="docutils literal notranslate"><span class="pre">userfaultfd</span></code> is monitored by an external manager, the manager
+must be able to track changes in the process virtual memory
+layout. Userfaultfd can notify the manager about such changes using
+the same read(2) protocol as for the page fault notifications. The
+manager has to explicitly enable these events by setting appropriate
+bits in <code class="docutils literal notranslate"><span class="pre">uffdio_api.features</span></code> passed to <code class="docutils literal notranslate"><span class="pre">UFFDIO_API</span></code> ioctl:</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">UFFD_FEATURE_EVENT_FORK</span></code></dt><dd><p>enable <code class="docutils literal notranslate"><span class="pre">userfaultfd</span></code> hooks for fork(). When this feature is
+enabled, the <code class="docutils literal notranslate"><span class="pre">userfaultfd</span></code> context of the parent process is
+duplicated into the newly created process. The manager
+receives <code class="docutils literal notranslate"><span class="pre">UFFD_EVENT_FORK</span></code> with file descriptor of the new
+<code class="docutils literal notranslate"><span class="pre">userfaultfd</span></code> context in the <code class="docutils literal notranslate"><span class="pre">uffd_msg.fork</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">UFFD_FEATURE_EVENT_REMAP</span></code></dt><dd><p>enable notifications about mremap() calls. When the
+non-cooperative process moves a virtual memory area to a
+different location, the manager will receive
+<code class="docutils literal notranslate"><span class="pre">UFFD_EVENT_REMAP</span></code>. The <code class="docutils literal notranslate"><span class="pre">uffd_msg.remap</span></code> will contain the old and
+new addresses of the area and its original length.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">UFFD_FEATURE_EVENT_REMOVE</span></code></dt><dd><p>enable notifications about madvise(MADV_REMOVE) and
+madvise(MADV_DONTNEED) calls. The event <code class="docutils literal notranslate"><span class="pre">UFFD_EVENT_REMOVE</span></code> will
+be generated upon these calls to madvise(). The <code class="docutils literal notranslate"><span class="pre">uffd_msg.remove</span></code>
+will contain start and end addresses of the removed area.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">UFFD_FEATURE_EVENT_UNMAP</span></code></dt><dd><p>enable notifications about memory unmapping. The manager will
+get <code class="docutils literal notranslate"><span class="pre">UFFD_EVENT_UNMAP</span></code> with <code class="docutils literal notranslate"><span class="pre">uffd_msg.remove</span></code> containing start and
+end addresses of the unmapped area.</p>
+</dd>
+</dl>
+<p>Although the <code class="docutils literal notranslate"><span class="pre">UFFD_FEATURE_EVENT_REMOVE</span></code> and <code class="docutils literal notranslate"><span class="pre">UFFD_FEATURE_EVENT_UNMAP</span></code>
+are pretty similar, they quite differ in the action expected from the
+<code class="docutils literal notranslate"><span class="pre">userfaultfd</span></code> manager. In the former case, the virtual memory is
+removed, but the area is not, the area remains monitored by the
+<code class="docutils literal notranslate"><span class="pre">userfaultfd</span></code>, and if a page fault occurs in that area it will be
+delivered to the manager. The proper resolution for such page fault is
+to zeromap the faulting address. However, in the latter case, when an
+area is unmapped, either explicitly (with munmap() system call), or
+implicitly (e.g. during mremap()), the area is removed and in turn the
+<code class="docutils literal notranslate"><span class="pre">userfaultfd</span></code> context for such area disappears too and the manager will
+not get further userland page faults from the removed area. Still, the
+notification is required in order to prevent manager from using
+<code class="docutils literal notranslate"><span class="pre">UFFDIO_COPY</span></code> on the unmapped area.</p>
+<p>Unlike userland page faults which have to be synchronous and require
+explicit or implicit wakeup, all the events are delivered
+asynchronously and the non-cooperative process resumes execution as
+soon as manager executes read(). The <code class="docutils literal notranslate"><span class="pre">userfaultfd</span></code> manager should
+carefully synchronize calls to <code class="docutils literal notranslate"><span class="pre">UFFDIO_COPY</span></code> with the events
+processing. To aid the synchronization, the <code class="docutils literal notranslate"><span class="pre">UFFDIO_COPY</span></code> ioctl will
+return <code class="docutils literal notranslate"><span class="pre">-ENOSPC</span></code> when the monitored process exits at the time of
+<code class="docutils literal notranslate"><span class="pre">UFFDIO_COPY</span></code>, and <code class="docutils literal notranslate"><span class="pre">-ENOENT</span></code>, when the non-cooperative process has changed
+its virtual memory layout simultaneously with outstanding <code class="docutils literal notranslate"><span class="pre">UFFDIO_COPY</span></code>
+operation.</p>
+<p>The current asynchronous model of the event delivery is optimal for
+single threaded non-cooperative <code class="docutils literal notranslate"><span class="pre">userfaultfd</span></code> manager implementations. A
+synchronous event delivery model can be added later as a new
+<code class="docutils literal notranslate"><span class="pre">userfaultfd</span></code> feature to facilitate multithreading enhancements of the
+non cooperative manager, for example to allow <code class="docutils literal notranslate"><span class="pre">UFFDIO_COPY</span></code> ioctls to
+run in parallel to the event reception. Single threaded
+implementations should continue to use the current async event
+delivery model instead.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="../module-signing.html" class="btn btn-neutral float-right" title="Kernel module signing facility" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="transhuge.html" class="btn btn-neutral float-left" title="Transparent Hugepage Support" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright The kernel development community.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
