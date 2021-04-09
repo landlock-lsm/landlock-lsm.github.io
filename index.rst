@@ -14,6 +14,15 @@ unexpected/malicious behaviors in user space applications.  Landlock empowers
 any process, including unprivileged ones, to securely restrict themselves.
 
 
+GNU Tar -- [PATCH v1] Landlock support
+--------------------------------------
+
+`patch`__ -- `code`__
+
+__ https://lists.gnu.org/archive/html/bug-tar/2021-04/msg00001.html
+__ https://github.com/landlock-lsm/tar/commits/landlock-v1
+
+
 [PATCH v33] -- Landlock LSM
 ---------------------------
 
