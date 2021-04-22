@@ -1,0 +1,1419 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>A Tour Through TREE_RCU’s Data Structures [LWN.net] &mdash; The Linux Kernel 5.12.0-rc3+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+    <link rel="next" title="Cache and TLB Flushing Under Linux" href="../../../core-api/cachetlb.html" />
+    <link rel="prev" title="A Tour Through RCU’s Requirements" href="../Requirements/Requirements.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.12.0-rc3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../../../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../../../core-api/index.html">Core API Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../../../core-api/index.html#core-utilities">Core utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core-api/index.html#data-structures-and-low-level-utilities">Data structures and low-level utilities</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../../../core-api/index.html#concurrency-primitives">Concurrency primitives</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../../../core-api/refcount-vs-atomic.html">refcount_t API compared to atomic_t</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core-api/irq/index.html">IRQs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core-api/local_ops.html">Semantics and Behavior of Local Atomic Operations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../core-api/padata.html">The padata parallel execution mechanism</a></li>
+<li class="toctree-l3 current"><a class="reference internal" href="../../index.html">RCU concepts</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="../../arrayRCU.html">Using RCU to Protect Read-Mostly Arrays</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../checklist.html">Review Checklist for RCU Patches</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../lockdep.html">RCU and lockdep checking</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../lockdep-splat.html">Lockdep-RCU Splat</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../rcubarrier.html">RCU and Unloadable Modules</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../rcu_dereference.html">PROPER CARE AND FEEDING OF RETURN VALUES FROM rcu_dereference()</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../whatisRCU.html">What is RCU?  –  “Read, Copy, Update”</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../rcu.html">RCU Concepts</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../rculist_nulls.html">Using RCU hlist_nulls to protect list and objects</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../rcuref.html">Reference-count design for elements of lists/arrays protected by RCU</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../torture.html">RCU Torture Test Operation</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../stallwarn.html">Using RCU’s CPU Stall Detector</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../listRCU.html">Using RCU to Protect Read-Mostly Linked Lists</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../NMI-RCU.html">Using RCU to Protect Dynamic NMI Handlers</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../UP.html">RCU on Uniprocessor Systems</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../Memory-Ordering/Tree-RCU-Memory-Ordering.html">A Tour Through TREE_RCU’s Grace-Period Memory Ordering</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../Expedited-Grace-Periods/Expedited-Grace-Periods.html">A Tour Through TREE_RCU’s Expedited Grace Periods</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../Requirements/Requirements.html">A Tour Through RCU’s Requirements</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">A Tour Through TREE_RCU’s Data Structures [LWN.net]</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core-api/index.html#low-level-hardware-management">Low-level hardware management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core-api/index.html#memory-management">Memory management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core-api/index.html#interfaces-for-kernel-debugging">Interfaces for kernel debugging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../core-api/index.html#everything-else">Everything else</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../nios2/index.html">Nios II Specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../../core-api/index.html">Core API Documentation</a> &raquo;</li>
+        
+          <li><a href="../../index.html">RCU concepts</a> &raquo;</li>
+        
+      <li>A Tour Through TREE_RCU’s Data Structures [LWN.net]</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../../../_sources/RCU/Design/Data-Structures/Data-Structures.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="a-tour-through-tree-rcu-s-data-structures-lwn-net">
+<h1>A Tour Through TREE_RCU’s Data Structures [LWN.net]<a class="headerlink" href="#a-tour-through-tree-rcu-s-data-structures-lwn-net" title="Permalink to this headline">¶</a></h1>
+<p>December 18, 2016</p>
+<p>This article was contributed by Paul E. McKenney</p>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>This document describes RCU’s major data structures and their relationship
+to each other.</p>
+</div>
+<div class="section" id="data-structure-relationships">
+<h2>Data-Structure Relationships<a class="headerlink" href="#data-structure-relationships" title="Permalink to this headline">¶</a></h2>
+<p>RCU is for all intents and purposes a large state machine, and its
+data structures maintain the state in such a way as to allow RCU readers
+to execute extremely quickly, while also processing the RCU grace periods
+requested by updaters in an efficient and extremely scalable fashion.
+The efficiency and scalability of RCU updaters is provided primarily
+by a combining tree, as shown below:</p>
+<div class="figure align-default">
+<img alt="../../../_images/BigTreeClassicRCU.svg" src="../../../_images/BigTreeClassicRCU.svg" /></div>
+<p>This diagram shows an enclosing <code class="docutils literal notranslate"><span class="pre">rcu_state</span></code> structure containing a tree
+of <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structures. Each leaf node of the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> tree has up
+to 16 <code class="docutils literal notranslate"><span class="pre">rcu_data</span></code> structures associated with it, so that there are
+<code class="docutils literal notranslate"><span class="pre">NR_CPUS</span></code> number of <code class="docutils literal notranslate"><span class="pre">rcu_data</span></code> structures, one for each possible CPU.
+This structure is adjusted at boot time, if needed, to handle the common
+case where <code class="docutils literal notranslate"><span class="pre">nr_cpu_ids</span></code> is much less than <code class="docutils literal notranslate"><span class="pre">NR_CPUs</span></code>.
+For example, a number of Linux distributions set <code class="docutils literal notranslate"><span class="pre">NR_CPUs=4096</span></code>,
+which results in a three-level <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> tree.
+If the actual hardware has only 16 CPUs, RCU will adjust itself
+at boot time, resulting in an <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> tree with only a single node.</p>
+<p>The purpose of this combining tree is to allow per-CPU events
+such as quiescent states, dyntick-idle transitions,
+and CPU hotplug operations to be processed efficiently
+and scalably.
+Quiescent states are recorded by the per-CPU <code class="docutils literal notranslate"><span class="pre">rcu_data</span></code> structures,
+and other events are recorded by the leaf-level <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code>
+structures.
+All of these events are combined at each level of the tree until finally
+grace periods are completed at the tree’s root <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code>
+structure.
+A grace period can be completed at the root once every CPU
+(or, in the case of <code class="docutils literal notranslate"><span class="pre">CONFIG_PREEMPT_RCU</span></code>, task)
+has passed through a quiescent state.
+Once a grace period has completed, record of that fact is propagated
+back down the tree.</p>
+<p>As can be seen from the diagram, on a 64-bit system
+a two-level tree with 64 leaves can accommodate 1,024 CPUs, with a fanout
+of 64 at the root and a fanout of 16 at the leaves.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Quick Quiz</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>Why isn’t the fanout at the leaves also 64?</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Answer</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>Because there are more types of events that affect the leaf-level
+<code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structures than further up the tree. Therefore, if the
+leaf <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structures have fanout of 64, the contention on
+these structures’ <code class="docutils literal notranslate"><span class="pre">-&gt;structures</span></code> becomes excessive. Experimentation
+on a wide variety of systems has shown that a fanout of 16 works well
+for the leaves of the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> tree.</p>
+<p>Of course, further experience with systems having hundreds or
+thousands of CPUs may demonstrate that the fanout for the non-leaf
+<code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structures must also be reduced. Such reduction can be
+easily carried out when and if it proves necessary. In the meantime,
+if you are using such a system and running into contention problems
+on the non-leaf <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structures, you may use the
+<code class="docutils literal notranslate"><span class="pre">CONFIG_RCU_FANOUT</span></code> kernel configuration parameter to reduce the
+non-leaf fanout as needed.</p>
+<p>Kernels built for systems with strong NUMA characteristics might
+also need to adjust <code class="docutils literal notranslate"><span class="pre">CONFIG_RCU_FANOUT</span></code> so that the domains of
+the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structures align with hardware boundaries.
+However, there has thus far been no need for this.</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p>If your system has more than 1,024 CPUs (or more than 512 CPUs on a
+32-bit system), then RCU will automatically add more levels to the tree.
+For example, if you are crazy enough to build a 64-bit system with
+65,536 CPUs, RCU would configure the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> tree as follows:</p>
+<div class="figure align-default">
+<img alt="../../../_images/HugeTreeClassicRCU.svg" src="../../../_images/HugeTreeClassicRCU.svg" /></div>
+<p>RCU currently permits up to a four-level tree, which on a 64-bit system
+accommodates up to 4,194,304 CPUs, though only a mere 524,288 CPUs for
+32-bit systems. On the other hand, you can set both
+<code class="docutils literal notranslate"><span class="pre">CONFIG_RCU_FANOUT</span></code> and <code class="docutils literal notranslate"><span class="pre">CONFIG_RCU_FANOUT_LEAF</span></code> to be as small as
+2, which would result in a 16-CPU test using a 4-level tree. This can be
+useful for testing large-system capabilities on small test machines.</p>
+<p>This multi-level combining tree allows us to get most of the performance
+and scalability benefits of partitioning, even though RCU grace-period
+detection is inherently a global operation. The trick here is that only
+the last CPU to report a quiescent state into a given <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code>
+structure need advance to the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure at the next level
+up the tree. This means that at the leaf-level <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure,
+only one access out of sixteen will progress up the tree. For the
+internal <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structures, the situation is even more extreme:
+Only one access out of sixty-four will progress up the tree. Because the
+vast majority of the CPUs do not progress up the tree, the lock
+contention remains roughly constant up the tree. No matter how many CPUs
+there are in the system, at most 64 quiescent-state reports per grace
+period will progress all the way to the root <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure,
+thus ensuring that the lock contention on that root <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code>
+structure remains acceptably low.</p>
+<p>In effect, the combining tree acts like a big shock absorber, keeping
+lock contention under control at all tree levels regardless of the level
+of loading on the system.</p>
+<p>RCU updaters wait for normal grace periods by registering RCU callbacks,
+either directly via <code class="docutils literal notranslate"><span class="pre">call_rcu()</span></code> or indirectly via
+<code class="docutils literal notranslate"><span class="pre">synchronize_rcu()</span></code> and friends. RCU callbacks are represented by
+<code class="docutils literal notranslate"><span class="pre">rcu_head</span></code> structures, which are queued on <code class="docutils literal notranslate"><span class="pre">rcu_data</span></code> structures
+while they are waiting for a grace period to elapse, as shown in the
+following figure:</p>
+<div class="figure align-default">
+<img alt="../../../_images/BigTreePreemptRCUBHdyntickCB.svg" src="../../../_images/BigTreePreemptRCUBHdyntickCB.svg" /></div>
+<p>This figure shows how <code class="docutils literal notranslate"><span class="pre">TREE_RCU</span></code>’s and <code class="docutils literal notranslate"><span class="pre">PREEMPT_RCU</span></code>’s major data
+structures are related. Lesser data structures will be introduced with
+the algorithms that make use of them.</p>
+<p>Note that each of the data structures in the above figure has its own
+synchronization:</p>
+<ol class="arabic simple">
+<li><p>Each <code class="docutils literal notranslate"><span class="pre">rcu_state</span></code> structures has a lock and a mutex, and some fields
+are protected by the corresponding root <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure’s lock.</p></li>
+<li><p>Each <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure has a spinlock.</p></li>
+<li><p>The fields in <code class="docutils literal notranslate"><span class="pre">rcu_data</span></code> are private to the corresponding CPU,
+although a few can be read and written by other CPUs.</p></li>
+</ol>
+<p>It is important to note that different data structures can have very
+different ideas about the state of RCU at any given time. For but one
+example, awareness of the start or end of a given RCU grace period
+propagates slowly through the data structures. This slow propagation is
+absolutely necessary for RCU to have good read-side performance. If this
+balkanized implementation seems foreign to you, one useful trick is to
+consider each instance of these data structures to be a different
+person, each having the usual slightly different view of reality.</p>
+<p>The general role of each of these data structures is as follows:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">rcu_state</span></code>: This structure forms the interconnection between the
+<code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> and <code class="docutils literal notranslate"><span class="pre">rcu_data</span></code> structures, tracks grace periods,
+serves as short-term repository for callbacks orphaned by CPU-hotplug
+events, maintains <code class="docutils literal notranslate"><span class="pre">rcu_barrier()</span></code> state, tracks expedited
+grace-period state, and maintains state used to force quiescent
+states when grace periods extend too long,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rcu_node</span></code>: This structure forms the combining tree that propagates
+quiescent-state information from the leaves to the root, and also
+propagates grace-period information from the root to the leaves. It
+provides local copies of the grace-period state in order to allow
+this information to be accessed in a synchronized manner without
+suffering the scalability limitations that would otherwise be imposed
+by global locking. In <code class="docutils literal notranslate"><span class="pre">CONFIG_PREEMPT_RCU</span></code> kernels, it manages the
+lists of tasks that have blocked while in their current RCU read-side
+critical section. In <code class="docutils literal notranslate"><span class="pre">CONFIG_PREEMPT_RCU</span></code> with
+<code class="docutils literal notranslate"><span class="pre">CONFIG_RCU_BOOST</span></code>, it manages the per-<code class="docutils literal notranslate"><span class="pre">rcu_node</span></code>
+priority-boosting kernel threads (kthreads) and state. Finally, it
+records CPU-hotplug state in order to determine which CPUs should be
+ignored during a given grace period.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rcu_data</span></code>: This per-CPU structure is the focus of quiescent-state
+detection and RCU callback queuing. It also tracks its relationship
+to the corresponding leaf <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure to allow
+more-efficient propagation of quiescent states up the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code>
+combining tree. Like the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure, it provides a local
+copy of the grace-period information to allow for-free synchronized
+access to this information from the corresponding CPU. Finally, this
+structure records past dyntick-idle state for the corresponding CPU
+and also tracks statistics.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rcu_head</span></code>: This structure represents RCU callbacks, and is the
+only structure allocated and managed by RCU users. The <code class="docutils literal notranslate"><span class="pre">rcu_head</span></code>
+structure is normally embedded within the RCU-protected data
+structure.</p></li>
+</ol>
+<p>If all you wanted from this article was a general notion of how RCU’s
+data structures are related, you are done. Otherwise, each of the
+following sections give more details on the <code class="docutils literal notranslate"><span class="pre">rcu_state</span></code>, <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code>
+and <code class="docutils literal notranslate"><span class="pre">rcu_data</span></code> data structures.</p>
+<div class="section" id="the-rcu-state-structure">
+<h3>The <code class="docutils literal notranslate"><span class="pre">rcu_state</span></code> Structure<a class="headerlink" href="#the-rcu-state-structure" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">rcu_state</span></code> structure is the base structure that represents the
+state of RCU in the system. This structure forms the interconnection
+between the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> and <code class="docutils literal notranslate"><span class="pre">rcu_data</span></code> structures, tracks grace
+periods, contains the lock used to synchronize with CPU-hotplug events,
+and maintains state used to force quiescent states when grace periods
+extend too long,</p>
+<p>A few of the <code class="docutils literal notranslate"><span class="pre">rcu_state</span></code> structure’s fields are discussed, singly and
+in groups, in the following sections. The more specialized fields are
+covered in the discussion of their use.</p>
+<div class="section" id="relationship-to-rcu-node-and-rcu-data-structures">
+<h4>Relationship to rcu_node and rcu_data Structures<a class="headerlink" href="#relationship-to-rcu-node-and-rcu-data-structures" title="Permalink to this headline">¶</a></h4>
+<p>This portion of the <code class="docutils literal notranslate"><span class="pre">rcu_state</span></code> structure is declared as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>1   struct rcu_node node[NUM_RCU_NODES];
+2   struct rcu_node *level[NUM_RCU_LVLS + 1];
+3   struct rcu_data __percpu *rda;
+</pre></div>
+</div>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Quick Quiz</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>Wait a minute! You said that the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structures formed a
+tree, but they are declared as a flat array! What gives?</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Answer</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>The tree is laid out in the array. The first node In the array is the
+head, the next set of nodes in the array are children of the head
+node, and so on until the last set of nodes in the array are the
+leaves.
+See the following diagrams to see how this works.</p></td>
+</tr>
+</tbody>
+</table>
+<p>The <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> tree is embedded into the <code class="docutils literal notranslate"><span class="pre">-&gt;node[]</span></code> array as shown
+in the following figure:</p>
+<div class="figure align-default">
+<img alt="../../../_images/TreeMapping.svg" src="../../../_images/TreeMapping.svg" /></div>
+<p>One interesting consequence of this mapping is that a breadth-first
+traversal of the tree is implemented as a simple linear scan of the
+array, which is in fact what the <code class="docutils literal notranslate"><span class="pre">rcu_for_each_node_breadth_first()</span></code>
+macro does. This macro is used at the beginning and ends of grace
+periods.</p>
+<p>Each entry of the <code class="docutils literal notranslate"><span class="pre">-&gt;level</span></code> array references the first <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code>
+structure on the corresponding level of the tree, for example, as shown
+below:</p>
+<div class="figure align-default">
+<img alt="../../../_images/TreeMappingLevel.svg" src="../../../_images/TreeMappingLevel.svg" /></div>
+<p>The zero<sup>th</sup> element of the array references the root
+<code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure, the first element references the first child of
+the root <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code>, and finally the second element references the
+first leaf <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure.</p>
+<p>For whatever it is worth, if you draw the tree to be tree-shaped rather
+than array-shaped, it is easy to draw a planar representation:</p>
+<div class="figure align-default">
+<img alt="../../../_images/TreeLevel.svg" src="../../../_images/TreeLevel.svg" /></div>
+<p>Finally, the <code class="docutils literal notranslate"><span class="pre">-&gt;rda</span></code> field references a per-CPU pointer to the
+corresponding CPU’s <code class="docutils literal notranslate"><span class="pre">rcu_data</span></code> structure.</p>
+<p>All of these fields are constant once initialization is complete, and
+therefore need no protection.</p>
+</div>
+<div class="section" id="grace-period-tracking">
+<h4>Grace-Period Tracking<a class="headerlink" href="#grace-period-tracking" title="Permalink to this headline">¶</a></h4>
+<p>This portion of the <code class="docutils literal notranslate"><span class="pre">rcu_state</span></code> structure is declared as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>1   unsigned long gp_seq;
+</pre></div>
+</div>
+<p>RCU grace periods are numbered, and the <code class="docutils literal notranslate"><span class="pre">-&gt;gp_seq</span></code> field contains the
+current grace-period sequence number. The bottom two bits are the state
+of the current grace period, which can be zero for not yet started or
+one for in progress. In other words, if the bottom two bits of
+<code class="docutils literal notranslate"><span class="pre">-&gt;gp_seq</span></code> are zero, then RCU is idle. Any other value in the bottom
+two bits indicates that something is broken. This field is protected by
+the root <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;lock</span></code> field.</p>
+<p>There are <code class="docutils literal notranslate"><span class="pre">-&gt;gp_seq</span></code> fields in the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> and <code class="docutils literal notranslate"><span class="pre">rcu_data</span></code>
+structures as well. The fields in the <code class="docutils literal notranslate"><span class="pre">rcu_state</span></code> structure represent
+the most current value, and those of the other structures are compared
+in order to detect the beginnings and ends of grace periods in a
+distributed fashion. The values flow from <code class="docutils literal notranslate"><span class="pre">rcu_state</span></code> to <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code>
+(down the tree from the root to the leaves) to <code class="docutils literal notranslate"><span class="pre">rcu_data</span></code>.</p>
+</div>
+<div class="section" id="miscellaneous">
+<h4>Miscellaneous<a class="headerlink" href="#miscellaneous" title="Permalink to this headline">¶</a></h4>
+<p>This portion of the <code class="docutils literal notranslate"><span class="pre">rcu_state</span></code> structure is declared as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>1   unsigned long gp_max;
+2   char abbr;
+3   char *name;
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">-&gt;gp_max</span></code> field tracks the duration of the longest grace period
+in jiffies. It is protected by the root <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code>’s <code class="docutils literal notranslate"><span class="pre">-&gt;lock</span></code>.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">-&gt;name</span></code> and <code class="docutils literal notranslate"><span class="pre">-&gt;abbr</span></code> fields distinguish between preemptible RCU
+(“rcu_preempt” and “p”) and non-preemptible RCU (“rcu_sched” and “s”).
+These fields are used for diagnostic and tracing purposes.</p>
+</div>
+</div>
+<div class="section" id="the-rcu-node-structure">
+<h3>The <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> Structure<a class="headerlink" href="#the-rcu-node-structure" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structures form the combining tree that propagates
+quiescent-state information from the leaves to the root and also that
+propagates grace-period information from the root down to the leaves.
+They provides local copies of the grace-period state in order to allow
+this information to be accessed in a synchronized manner without
+suffering the scalability limitations that would otherwise be imposed by
+global locking. In <code class="docutils literal notranslate"><span class="pre">CONFIG_PREEMPT_RCU</span></code> kernels, they manage the lists
+of tasks that have blocked while in their current RCU read-side critical
+section. In <code class="docutils literal notranslate"><span class="pre">CONFIG_PREEMPT_RCU</span></code> with <code class="docutils literal notranslate"><span class="pre">CONFIG_RCU_BOOST</span></code>, they
+manage the per-<code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> priority-boosting kernel threads
+(kthreads) and state. Finally, they record CPU-hotplug state in order to
+determine which CPUs should be ignored during a given grace period.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure’s fields are discussed, singly and in groups,
+in the following sections.</p>
+<div class="section" id="connection-to-combining-tree">
+<h4>Connection to Combining Tree<a class="headerlink" href="#connection-to-combining-tree" title="Permalink to this headline">¶</a></h4>
+<p>This portion of the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure is declared as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>1   struct rcu_node *parent;
+2   u8 level;
+3   u8 grpnum;
+4   unsigned long grpmask;
+5   int grplo;
+6   int grphi;
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">-&gt;parent</span></code> pointer references the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> one level up in the
+tree, and is <code class="docutils literal notranslate"><span class="pre">NULL</span></code> for the root <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code>. The RCU implementation
+makes heavy use of this field to push quiescent states up the tree. The
+<code class="docutils literal notranslate"><span class="pre">-&gt;level</span></code> field gives the level in the tree, with the root being at
+level zero, its children at level one, and so on. The <code class="docutils literal notranslate"><span class="pre">-&gt;grpnum</span></code> field
+gives this node’s position within the children of its parent, so this
+number can range between 0 and 31 on 32-bit systems and between 0 and 63
+on 64-bit systems. The <code class="docutils literal notranslate"><span class="pre">-&gt;level</span></code> and <code class="docutils literal notranslate"><span class="pre">-&gt;grpnum</span></code> fields are used only
+during initialization and for tracing. The <code class="docutils literal notranslate"><span class="pre">-&gt;grpmask</span></code> field is the
+bitmask counterpart of <code class="docutils literal notranslate"><span class="pre">-&gt;grpnum</span></code>, and therefore always has exactly
+one bit set. This mask is used to clear the bit corresponding to this
+<code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure in its parent’s bitmasks, which are described
+later. Finally, the <code class="docutils literal notranslate"><span class="pre">-&gt;grplo</span></code> and <code class="docutils literal notranslate"><span class="pre">-&gt;grphi</span></code> fields contain the
+lowest and highest numbered CPU served by this <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure,
+respectively.</p>
+<p>All of these fields are constant, and thus do not require any
+synchronization.</p>
+</div>
+<div class="section" id="synchronization">
+<h4>Synchronization<a class="headerlink" href="#synchronization" title="Permalink to this headline">¶</a></h4>
+<p>This field of the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure is declared as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>1   raw_spinlock_t lock;
+</pre></div>
+</div>
+<p>This field is used to protect the remaining fields in this structure,
+unless otherwise stated. That said, all of the fields in this structure
+can be accessed without locking for tracing purposes. Yes, this can
+result in confusing traces, but better some tracing confusion than to be
+heisenbugged out of existence.</p>
+</div>
+<div class="section" id="grace-period-tracking-1">
+<span id="id1"></span><h4>Grace-Period Tracking<a class="headerlink" href="#grace-period-tracking-1" title="Permalink to this headline">¶</a></h4>
+<p>This portion of the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure is declared as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>1   unsigned long gp_seq;
+2   unsigned long gp_seq_needed;
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structures’ <code class="docutils literal notranslate"><span class="pre">-&gt;gp_seq</span></code> fields are the counterparts of
+the field of the same name in the <code class="docutils literal notranslate"><span class="pre">rcu_state</span></code> structure. They each may
+lag up to one step behind their <code class="docutils literal notranslate"><span class="pre">rcu_state</span></code> counterpart. If the bottom
+two bits of a given <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;gp_seq</span></code> field is zero,
+then this <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure believes that RCU is idle.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">&gt;gp_seq</span></code> field of each <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure is updated at the
+beginning and the end of each grace period.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">-&gt;gp_seq_needed</span></code> fields record the furthest-in-the-future grace
+period request seen by the corresponding <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure. The
+request is considered fulfilled when the value of the <code class="docutils literal notranslate"><span class="pre">-&gt;gp_seq</span></code> field
+equals or exceeds that of the <code class="docutils literal notranslate"><span class="pre">-&gt;gp_seq_needed</span></code> field.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Quick Quiz</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>Suppose that this <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure doesn’t see a request for a
+very long time. Won’t wrapping of the <code class="docutils literal notranslate"><span class="pre">-&gt;gp_seq</span></code> field cause
+problems?</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Answer</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>No, because if the <code class="docutils literal notranslate"><span class="pre">-&gt;gp_seq_needed</span></code> field lags behind the
+<code class="docutils literal notranslate"><span class="pre">-&gt;gp_seq</span></code> field, the <code class="docutils literal notranslate"><span class="pre">-&gt;gp_seq_needed</span></code> field will be updated at
+the end of the grace period. Modulo-arithmetic comparisons therefore
+will always get the correct answer, even with wrapping.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="quiescent-state-tracking">
+<h4>Quiescent-State Tracking<a class="headerlink" href="#quiescent-state-tracking" title="Permalink to this headline">¶</a></h4>
+<p>These fields manage the propagation of quiescent states up the combining
+tree.</p>
+<p>This portion of the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure has fields as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>1   unsigned long qsmask;
+2   unsigned long expmask;
+3   unsigned long qsmaskinit;
+4   unsigned long expmaskinit;
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">-&gt;qsmask</span></code> field tracks which of this <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure’s
+children still need to report quiescent states for the current normal
+grace period. Such children will have a value of 1 in their
+corresponding bit. Note that the leaf <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structures should be
+thought of as having <code class="docutils literal notranslate"><span class="pre">rcu_data</span></code> structures as their children.
+Similarly, the <code class="docutils literal notranslate"><span class="pre">-&gt;expmask</span></code> field tracks which of this <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code>
+structure’s children still need to report quiescent states for the
+current expedited grace period. An expedited grace period has the same
+conceptual properties as a normal grace period, but the expedited
+implementation accepts extreme CPU overhead to obtain much lower
+grace-period latency, for example, consuming a few tens of microseconds
+worth of CPU time to reduce grace-period duration from milliseconds to
+tens of microseconds. The <code class="docutils literal notranslate"><span class="pre">-&gt;qsmaskinit</span></code> field tracks which of this
+<code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure’s children cover for at least one online CPU.
+This mask is used to initialize <code class="docutils literal notranslate"><span class="pre">-&gt;qsmask</span></code>, and <code class="docutils literal notranslate"><span class="pre">-&gt;expmaskinit</span></code> is
+used to initialize <code class="docutils literal notranslate"><span class="pre">-&gt;expmask</span></code> and the beginning of the normal and
+expedited grace periods, respectively.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Quick Quiz</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>Why are these bitmasks protected by locking? Come on, haven’t you
+heard of atomic instructions???</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Answer</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>Lockless grace-period computation! Such a tantalizing possibility!
+But consider the following sequence of events:</p>
+<ol class="arabic simple">
+<li><p>CPU 0 has been in dyntick-idle mode for quite some time. When it
+wakes up, it notices that the current RCU grace period needs it to
+report in, so it sets a flag where the scheduling clock interrupt
+will find it.</p></li>
+<li><p>Meanwhile, CPU 1 is running <code class="docutils literal notranslate"><span class="pre">force_quiescent_state()</span></code>, and
+notices that CPU 0 has been in dyntick idle mode, which qualifies
+as an extended quiescent state.</p></li>
+<li><p>CPU 0’s scheduling clock interrupt fires in the middle of an RCU
+read-side critical section, and notices that the RCU core needs
+something, so commences RCU softirq processing.</p></li>
+<li><p>CPU 0’s softirq handler executes and is just about ready to report
+its quiescent state up the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> tree.</p></li>
+<li><p>But CPU 1 beats it to the punch, completing the current grace
+period and starting a new one.</p></li>
+<li><p>CPU 0 now reports its quiescent state for the wrong grace period.
+That grace period might now end before the RCU read-side critical
+section. If that happens, disaster will ensue.</p></li>
+</ol>
+<p>So the locking is absolutely required in order to coordinate clearing
+of the bits with updating of the grace-period sequence number in
+<code class="docutils literal notranslate"><span class="pre">-&gt;gp_seq</span></code>.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="blocked-task-management">
+<h4>Blocked-Task Management<a class="headerlink" href="#blocked-task-management" title="Permalink to this headline">¶</a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">PREEMPT_RCU</span></code> allows tasks to be preempted in the midst of their RCU
+read-side critical sections, and these tasks must be tracked explicitly.
+The details of exactly why and how they are tracked will be covered in a
+separate article on RCU read-side processing. For now, it is enough to
+know that the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure tracks them.</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>1   struct list_head blkd_tasks;
+2   struct list_head *gp_tasks;
+3   struct list_head *exp_tasks;
+4   bool wait_blkd_tasks;
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">-&gt;blkd_tasks</span></code> field is a list header for the list of blocked and
+preempted tasks. As tasks undergo context switches within RCU read-side
+critical sections, their <code class="docutils literal notranslate"><span class="pre">task_struct</span></code> structures are enqueued (via
+the <code class="docutils literal notranslate"><span class="pre">task_struct</span></code>’s <code class="docutils literal notranslate"><span class="pre">-&gt;rcu_node_entry</span></code> field) onto the head of the
+<code class="docutils literal notranslate"><span class="pre">-&gt;blkd_tasks</span></code> list for the leaf <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure corresponding
+to the CPU on which the outgoing context switch executed. As these tasks
+later exit their RCU read-side critical sections, they remove themselves
+from the list. This list is therefore in reverse time order, so that if
+one of the tasks is blocking the current grace period, all subsequent
+tasks must also be blocking that same grace period. Therefore, a single
+pointer into this list suffices to track all tasks blocking a given
+grace period. That pointer is stored in <code class="docutils literal notranslate"><span class="pre">-&gt;gp_tasks</span></code> for normal grace
+periods and in <code class="docutils literal notranslate"><span class="pre">-&gt;exp_tasks</span></code> for expedited grace periods. These last
+two fields are <code class="docutils literal notranslate"><span class="pre">NULL</span></code> if either there is no grace period in flight or
+if there are no blocked tasks preventing that grace period from
+completing. If either of these two pointers is referencing a task that
+removes itself from the <code class="docutils literal notranslate"><span class="pre">-&gt;blkd_tasks</span></code> list, then that task must
+advance the pointer to the next task on the list, or set the pointer to
+<code class="docutils literal notranslate"><span class="pre">NULL</span></code> if there are no subsequent tasks on the list.</p>
+<p>For example, suppose that tasks T1, T2, and T3 are all hard-affinitied
+to the largest-numbered CPU in the system. Then if task T1 blocked in an
+RCU read-side critical section, then an expedited grace period started,
+then task T2 blocked in an RCU read-side critical section, then a normal
+grace period started, and finally task 3 blocked in an RCU read-side
+critical section, then the state of the last leaf <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code>
+structure’s blocked-task list would be as shown below:</p>
+<div class="figure align-default">
+<img alt="../../../_images/blkd_task.svg" src="../../../_images/blkd_task.svg" /></div>
+<p>Task T1 is blocking both grace periods, task T2 is blocking only the
+normal grace period, and task T3 is blocking neither grace period. Note
+that these tasks will not remove themselves from this list immediately
+upon resuming execution. They will instead remain on the list until they
+execute the outermost <code class="docutils literal notranslate"><span class="pre">rcu_read_unlock()</span></code> that ends their RCU
+read-side critical section.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">-&gt;wait_blkd_tasks</span></code> field indicates whether or not the current
+grace period is waiting on a blocked task.</p>
+</div>
+<div class="section" id="sizing-the-rcu-node-array">
+<h4>Sizing the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> Array<a class="headerlink" href="#sizing-the-rcu-node-array" title="Permalink to this headline">¶</a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> array is sized via a series of C-preprocessor
+expressions as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span> 1 #ifdef CONFIG_RCU_FANOUT
+ 2 #define RCU_FANOUT CONFIG_RCU_FANOUT
+ 3 #else
+ 4 # ifdef CONFIG_64BIT
+ 5 # define RCU_FANOUT 64
+ 6 # else
+ 7 # define RCU_FANOUT 32
+ 8 # endif
+ 9 #endif
+10
+11 #ifdef CONFIG_RCU_FANOUT_LEAF
+12 #define RCU_FANOUT_LEAF CONFIG_RCU_FANOUT_LEAF
+13 #else
+14 # ifdef CONFIG_64BIT
+15 # define RCU_FANOUT_LEAF 64
+16 # else
+17 # define RCU_FANOUT_LEAF 32
+18 # endif
+19 #endif
+20
+21 #define RCU_FANOUT_1        (RCU_FANOUT_LEAF)
+22 #define RCU_FANOUT_2        (RCU_FANOUT_1 * RCU_FANOUT)
+23 #define RCU_FANOUT_3        (RCU_FANOUT_2 * RCU_FANOUT)
+24 #define RCU_FANOUT_4        (RCU_FANOUT_3 * RCU_FANOUT)
+25
+26 #if NR_CPUS &lt;= RCU_FANOUT_1
+27 #  define RCU_NUM_LVLS        1
+28 #  define NUM_RCU_LVL_0        1
+29 #  define NUM_RCU_NODES        NUM_RCU_LVL_0
+30 #  define NUM_RCU_LVL_INIT    { NUM_RCU_LVL_0 }
+31 #  define RCU_NODE_NAME_INIT  { &quot;rcu_node_0&quot; }
+32 #  define RCU_FQS_NAME_INIT   { &quot;rcu_node_fqs_0&quot; }
+33 #  define RCU_EXP_NAME_INIT   { &quot;rcu_node_exp_0&quot; }
+34 #elif NR_CPUS &lt;= RCU_FANOUT_2
+35 #  define RCU_NUM_LVLS        2
+36 #  define NUM_RCU_LVL_0        1
+37 #  define NUM_RCU_LVL_1        DIV_ROUND_UP(NR_CPUS, RCU_FANOUT_1)
+38 #  define NUM_RCU_NODES        (NUM_RCU_LVL_0 + NUM_RCU_LVL_1)
+39 #  define NUM_RCU_LVL_INIT    { NUM_RCU_LVL_0, NUM_RCU_LVL_1 }
+40 #  define RCU_NODE_NAME_INIT  { &quot;rcu_node_0&quot;, &quot;rcu_node_1&quot; }
+41 #  define RCU_FQS_NAME_INIT   { &quot;rcu_node_fqs_0&quot;, &quot;rcu_node_fqs_1&quot; }
+42 #  define RCU_EXP_NAME_INIT   { &quot;rcu_node_exp_0&quot;, &quot;rcu_node_exp_1&quot; }
+43 #elif NR_CPUS &lt;= RCU_FANOUT_3
+44 #  define RCU_NUM_LVLS        3
+45 #  define NUM_RCU_LVL_0        1
+46 #  define NUM_RCU_LVL_1        DIV_ROUND_UP(NR_CPUS, RCU_FANOUT_2)
+47 #  define NUM_RCU_LVL_2        DIV_ROUND_UP(NR_CPUS, RCU_FANOUT_1)
+48 #  define NUM_RCU_NODES        (NUM_RCU_LVL_0 + NUM_RCU_LVL_1 + NUM_RCU_LVL_2)
+49 #  define NUM_RCU_LVL_INIT    { NUM_RCU_LVL_0, NUM_RCU_LVL_1, NUM_RCU_LVL_2 }
+50 #  define RCU_NODE_NAME_INIT  { &quot;rcu_node_0&quot;, &quot;rcu_node_1&quot;, &quot;rcu_node_2&quot; }
+51 #  define RCU_FQS_NAME_INIT   { &quot;rcu_node_fqs_0&quot;, &quot;rcu_node_fqs_1&quot;, &quot;rcu_node_fqs_2&quot; }
+52 #  define RCU_EXP_NAME_INIT   { &quot;rcu_node_exp_0&quot;, &quot;rcu_node_exp_1&quot;, &quot;rcu_node_exp_2&quot; }
+53 #elif NR_CPUS &lt;= RCU_FANOUT_4
+54 #  define RCU_NUM_LVLS        4
+55 #  define NUM_RCU_LVL_0        1
+56 #  define NUM_RCU_LVL_1        DIV_ROUND_UP(NR_CPUS, RCU_FANOUT_3)
+57 #  define NUM_RCU_LVL_2        DIV_ROUND_UP(NR_CPUS, RCU_FANOUT_2)
+58 #  define NUM_RCU_LVL_3        DIV_ROUND_UP(NR_CPUS, RCU_FANOUT_1)
+59 #  define NUM_RCU_NODES        (NUM_RCU_LVL_0 + NUM_RCU_LVL_1 + NUM_RCU_LVL_2 + NUM_RCU_LVL_3)
+60 #  define NUM_RCU_LVL_INIT    { NUM_RCU_LVL_0, NUM_RCU_LVL_1, NUM_RCU_LVL_2, NUM_RCU_LVL_3 }
+61 #  define RCU_NODE_NAME_INIT  { &quot;rcu_node_0&quot;, &quot;rcu_node_1&quot;, &quot;rcu_node_2&quot;, &quot;rcu_node_3&quot; }
+62 #  define RCU_FQS_NAME_INIT   { &quot;rcu_node_fqs_0&quot;, &quot;rcu_node_fqs_1&quot;, &quot;rcu_node_fqs_2&quot;, &quot;rcu_node_fqs_3&quot; }
+63 #  define RCU_EXP_NAME_INIT   { &quot;rcu_node_exp_0&quot;, &quot;rcu_node_exp_1&quot;, &quot;rcu_node_exp_2&quot;, &quot;rcu_node_exp_3&quot; }
+64 #else
+65 # error &quot;CONFIG_RCU_FANOUT insufficient for NR_CPUS&quot;
+66 #endif
+</pre></div>
+</div>
+<p>The maximum number of levels in the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure is currently
+limited to four, as specified by lines 21-24 and the structure of the
+subsequent “if” statement. For 32-bit systems, this allows
+16*32*32*32=524,288 CPUs, which should be sufficient for the next few
+years at least. For 64-bit systems, 16*64*64*64=4,194,304 CPUs is
+allowed, which should see us through the next decade or so. This
+four-level tree also allows kernels built with <code class="docutils literal notranslate"><span class="pre">CONFIG_RCU_FANOUT=8</span></code>
+to support up to 4096 CPUs, which might be useful in very large systems
+having eight CPUs per socket (but please note that no one has yet shown
+any measurable performance degradation due to misaligned socket and
+<code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> boundaries). In addition, building kernels with a full four
+levels of <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> tree permits better testing of RCU’s
+combining-tree code.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">RCU_FANOUT</span></code> symbol controls how many children are permitted at
+each non-leaf level of the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> tree. If the
+<code class="docutils literal notranslate"><span class="pre">CONFIG_RCU_FANOUT</span></code> Kconfig option is not specified, it is set based
+on the word size of the system, which is also the Kconfig default.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">RCU_FANOUT_LEAF</span></code> symbol controls how many CPUs are handled by
+each leaf <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure. Experience has shown that allowing a
+given leaf <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure to handle 64 CPUs, as permitted by the
+number of bits in the <code class="docutils literal notranslate"><span class="pre">-&gt;qsmask</span></code> field on a 64-bit system, results in
+excessive contention for the leaf <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structures’ <code class="docutils literal notranslate"><span class="pre">-&gt;lock</span></code>
+fields. The number of CPUs per leaf <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure is therefore
+limited to 16 given the default value of <code class="docutils literal notranslate"><span class="pre">CONFIG_RCU_FANOUT_LEAF</span></code>. If
+<code class="docutils literal notranslate"><span class="pre">CONFIG_RCU_FANOUT_LEAF</span></code> is unspecified, the value selected is based
+on the word size of the system, just as for <code class="docutils literal notranslate"><span class="pre">CONFIG_RCU_FANOUT</span></code>.
+Lines 11-19 perform this computation.</p>
+<p>Lines 21-24 compute the maximum number of CPUs supported by a
+single-level (which contains a single <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure),
+two-level, three-level, and four-level <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> tree, respectively,
+given the fanout specified by <code class="docutils literal notranslate"><span class="pre">RCU_FANOUT</span></code> and <code class="docutils literal notranslate"><span class="pre">RCU_FANOUT_LEAF</span></code>.
+These numbers of CPUs are retained in the <code class="docutils literal notranslate"><span class="pre">RCU_FANOUT_1</span></code>,
+<code class="docutils literal notranslate"><span class="pre">RCU_FANOUT_2</span></code>, <code class="docutils literal notranslate"><span class="pre">RCU_FANOUT_3</span></code>, and <code class="docutils literal notranslate"><span class="pre">RCU_FANOUT_4</span></code> C-preprocessor
+variables, respectively.</p>
+<p>These variables are used to control the C-preprocessor <code class="docutils literal notranslate"><span class="pre">#if</span></code> statement
+spanning lines 26-66 that computes the number of <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structures
+required for each level of the tree, as well as the number of levels
+required. The number of levels is placed in the <code class="docutils literal notranslate"><span class="pre">NUM_RCU_LVLS</span></code>
+C-preprocessor variable by lines 27, 35, 44, and 54. The number of
+<code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structures for the topmost level of the tree is always
+exactly one, and this value is unconditionally placed into
+<code class="docutils literal notranslate"><span class="pre">NUM_RCU_LVL_0</span></code> by lines 28, 36, 45, and 55. The rest of the levels
+(if any) of the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> tree are computed by dividing the maximum
+number of CPUs by the fanout supported by the number of levels from the
+current level down, rounding up. This computation is performed by
+lines 37, 46-47, and 56-58. Lines 31-33, 40-42, 50-52, and 62-63 create
+initializers for lockdep lock-class names. Finally, lines 64-66 produce
+an error if the maximum number of CPUs is too large for the specified
+fanout.</p>
+</div>
+</div>
+<div class="section" id="the-rcu-segcblist-structure">
+<h3>The <code class="docutils literal notranslate"><span class="pre">rcu_segcblist</span></code> Structure<a class="headerlink" href="#the-rcu-segcblist-structure" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">rcu_segcblist</span></code> structure maintains a segmented list of callbacks
+as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span> 1 #define RCU_DONE_TAIL        0
+ 2 #define RCU_WAIT_TAIL        1
+ 3 #define RCU_NEXT_READY_TAIL  2
+ 4 #define RCU_NEXT_TAIL        3
+ 5 #define RCU_CBLIST_NSEGS     4
+ 6
+ 7 struct rcu_segcblist {
+ 8   struct rcu_head *head;
+ 9   struct rcu_head **tails[RCU_CBLIST_NSEGS];
+10   unsigned long gp_seq[RCU_CBLIST_NSEGS];
+11   long len;
+12   long len_lazy;
+13 };
+</pre></div>
+</div>
+<p>The segments are as follows:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">RCU_DONE_TAIL</span></code>: Callbacks whose grace periods have elapsed. These
+callbacks are ready to be invoked.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RCU_WAIT_TAIL</span></code>: Callbacks that are waiting for the current grace
+period. Note that different CPUs can have different ideas about which
+grace period is current, hence the <code class="docutils literal notranslate"><span class="pre">-&gt;gp_seq</span></code> field.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RCU_NEXT_READY_TAIL</span></code>: Callbacks waiting for the next grace period
+to start.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">RCU_NEXT_TAIL</span></code>: Callbacks that have not yet been associated with a
+grace period.</p></li>
+</ol>
+<p>The <code class="docutils literal notranslate"><span class="pre">-&gt;head</span></code> pointer references the first callback or is <code class="docutils literal notranslate"><span class="pre">NULL</span></code> if
+the list contains no callbacks (which is <em>not</em> the same as being empty).
+Each element of the <code class="docutils literal notranslate"><span class="pre">-&gt;tails[]</span></code> array references the <code class="docutils literal notranslate"><span class="pre">-&gt;next</span></code>
+pointer of the last callback in the corresponding segment of the list,
+or the list’s <code class="docutils literal notranslate"><span class="pre">-&gt;head</span></code> pointer if that segment and all previous
+segments are empty. If the corresponding segment is empty but some
+previous segment is not empty, then the array element is identical to
+its predecessor. Older callbacks are closer to the head of the list, and
+new callbacks are added at the tail. This relationship between the
+<code class="docutils literal notranslate"><span class="pre">-&gt;head</span></code> pointer, the <code class="docutils literal notranslate"><span class="pre">-&gt;tails[]</span></code> array, and the callbacks is shown
+in this diagram:</p>
+<div class="figure align-default">
+<img alt="../../../_images/nxtlist.svg" src="../../../_images/nxtlist.svg" /></div>
+<p>In this figure, the <code class="docutils literal notranslate"><span class="pre">-&gt;head</span></code> pointer references the first RCU callback
+in the list. The <code class="docutils literal notranslate"><span class="pre">-&gt;tails[RCU_DONE_TAIL]</span></code> array element references the
+<code class="docutils literal notranslate"><span class="pre">-&gt;head</span></code> pointer itself, indicating that none of the callbacks is
+ready to invoke. The <code class="docutils literal notranslate"><span class="pre">-&gt;tails[RCU_WAIT_TAIL]</span></code> array element references
+callback CB 2’s <code class="docutils literal notranslate"><span class="pre">-&gt;next</span></code> pointer, which indicates that CB 1 and CB 2
+are both waiting on the current grace period, give or take possible
+disagreements about exactly which grace period is the current one. The
+<code class="docutils literal notranslate"><span class="pre">-&gt;tails[RCU_NEXT_READY_TAIL]</span></code> array element references the same RCU
+callback that <code class="docutils literal notranslate"><span class="pre">-&gt;tails[RCU_WAIT_TAIL]</span></code> does, which indicates that
+there are no callbacks waiting on the next RCU grace period. The
+<code class="docutils literal notranslate"><span class="pre">-&gt;tails[RCU_NEXT_TAIL]</span></code> array element references CB 4’s <code class="docutils literal notranslate"><span class="pre">-&gt;next</span></code>
+pointer, indicating that all the remaining RCU callbacks have not yet
+been assigned to an RCU grace period. Note that the
+<code class="docutils literal notranslate"><span class="pre">-&gt;tails[RCU_NEXT_TAIL]</span></code> array element always references the last RCU
+callback’s <code class="docutils literal notranslate"><span class="pre">-&gt;next</span></code> pointer unless the callback list is empty, in
+which case it references the <code class="docutils literal notranslate"><span class="pre">-&gt;head</span></code> pointer.</p>
+<p>There is one additional important special case for the
+<code class="docutils literal notranslate"><span class="pre">-&gt;tails[RCU_NEXT_TAIL]</span></code> array element: It can be <code class="docutils literal notranslate"><span class="pre">NULL</span></code> when this
+list is <em>disabled</em>. Lists are disabled when the corresponding CPU is
+offline or when the corresponding CPU’s callbacks are offloaded to a
+kthread, both of which are described elsewhere.</p>
+<p>CPUs advance their callbacks from the <code class="docutils literal notranslate"><span class="pre">RCU_NEXT_TAIL</span></code> to the
+<code class="docutils literal notranslate"><span class="pre">RCU_NEXT_READY_TAIL</span></code> to the <code class="docutils literal notranslate"><span class="pre">RCU_WAIT_TAIL</span></code> to the
+<code class="docutils literal notranslate"><span class="pre">RCU_DONE_TAIL</span></code> list segments as grace periods advance.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">-&gt;gp_seq[]</span></code> array records grace-period numbers corresponding to
+the list segments. This is what allows different CPUs to have different
+ideas as to which is the current grace period while still avoiding
+premature invocation of their callbacks. In particular, this allows CPUs
+that go idle for extended periods to determine which of their callbacks
+are ready to be invoked after reawakening.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">-&gt;len</span></code> counter contains the number of callbacks in <code class="docutils literal notranslate"><span class="pre">-&gt;head</span></code>,
+and the <code class="docutils literal notranslate"><span class="pre">-&gt;len_lazy</span></code> contains the number of those callbacks that are
+known to only free memory, and whose invocation can therefore be safely
+deferred.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>It is the <code class="docutils literal notranslate"><span class="pre">-&gt;len</span></code> field that determines whether or
+not there are callbacks associated with this <code class="docutils literal notranslate"><span class="pre">rcu_segcblist</span></code>
+structure, <em>not</em> the <code class="docutils literal notranslate"><span class="pre">-&gt;head</span></code> pointer. The reason for this is that all
+the ready-to-invoke callbacks (that is, those in the <code class="docutils literal notranslate"><span class="pre">RCU_DONE_TAIL</span></code>
+segment) are extracted all at once at callback-invocation time
+(<code class="docutils literal notranslate"><span class="pre">rcu_do_batch</span></code>), due to which <code class="docutils literal notranslate"><span class="pre">-&gt;head</span></code> may be set to NULL if there
+are no not-done callbacks remaining in the <code class="docutils literal notranslate"><span class="pre">rcu_segcblist</span></code>. If
+callback invocation must be postponed, for example, because a
+high-priority process just woke up on this CPU, then the remaining
+callbacks are placed back on the <code class="docutils literal notranslate"><span class="pre">RCU_DONE_TAIL</span></code> segment and
+<code class="docutils literal notranslate"><span class="pre">-&gt;head</span></code> once again points to the start of the segment. In short, the
+head field can briefly be <code class="docutils literal notranslate"><span class="pre">NULL</span></code> even though the CPU has callbacks
+present the entire time. Therefore, it is not appropriate to test the
+<code class="docutils literal notranslate"><span class="pre">-&gt;head</span></code> pointer for <code class="docutils literal notranslate"><span class="pre">NULL</span></code>.</p>
+</div>
+<p>In contrast, the <code class="docutils literal notranslate"><span class="pre">-&gt;len</span></code> and <code class="docutils literal notranslate"><span class="pre">-&gt;len_lazy</span></code> counts are adjusted only
+after the corresponding callbacks have been invoked. This means that the
+<code class="docutils literal notranslate"><span class="pre">-&gt;len</span></code> count is zero only if the <code class="docutils literal notranslate"><span class="pre">rcu_segcblist</span></code> structure really
+is devoid of callbacks. Of course, off-CPU sampling of the <code class="docutils literal notranslate"><span class="pre">-&gt;len</span></code>
+count requires careful use of appropriate synchronization, for example,
+memory barriers. This synchronization can be a bit subtle, particularly
+in the case of <code class="docutils literal notranslate"><span class="pre">rcu_barrier()</span></code>.</p>
+</div>
+<div class="section" id="the-rcu-data-structure">
+<h3>The <code class="docutils literal notranslate"><span class="pre">rcu_data</span></code> Structure<a class="headerlink" href="#the-rcu-data-structure" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">rcu_data</span></code> maintains the per-CPU state for the RCU subsystem. The
+fields in this structure may be accessed only from the corresponding CPU
+(and from tracing) unless otherwise stated. This structure is the focus
+of quiescent-state detection and RCU callback queuing. It also tracks
+its relationship to the corresponding leaf <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure to
+allow more-efficient propagation of quiescent states up the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code>
+combining tree. Like the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure, it provides a local
+copy of the grace-period information to allow for-free synchronized
+access to this information from the corresponding CPU. Finally, this
+structure records past dyntick-idle state for the corresponding CPU and
+also tracks statistics.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">rcu_data</span></code> structure’s fields are discussed, singly and in groups,
+in the following sections.</p>
+<div class="section" id="connection-to-other-data-structures">
+<h4>Connection to Other Data Structures<a class="headerlink" href="#connection-to-other-data-structures" title="Permalink to this headline">¶</a></h4>
+<p>This portion of the <code class="docutils literal notranslate"><span class="pre">rcu_data</span></code> structure is declared as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>1   int cpu;
+2   struct rcu_node *mynode;
+3   unsigned long grpmask;
+4   bool beenonline;
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">-&gt;cpu</span></code> field contains the number of the corresponding CPU and the
+<code class="docutils literal notranslate"><span class="pre">-&gt;mynode</span></code> field references the corresponding <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure.
+The <code class="docutils literal notranslate"><span class="pre">-&gt;mynode</span></code> is used to propagate quiescent states up the combining
+tree. These two fields are constant and therefore do not require
+synchronization.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">-&gt;grpmask</span></code> field indicates the bit in the <code class="docutils literal notranslate"><span class="pre">-&gt;mynode-&gt;qsmask</span></code>
+corresponding to this <code class="docutils literal notranslate"><span class="pre">rcu_data</span></code> structure, and is also used when
+propagating quiescent states. The <code class="docutils literal notranslate"><span class="pre">-&gt;beenonline</span></code> flag is set whenever
+the corresponding CPU comes online, which means that the debugfs tracing
+need not dump out any <code class="docutils literal notranslate"><span class="pre">rcu_data</span></code> structure for which this flag is not
+set.</p>
+</div>
+<div class="section" id="quiescent-state-and-grace-period-tracking">
+<h4>Quiescent-State and Grace-Period Tracking<a class="headerlink" href="#quiescent-state-and-grace-period-tracking" title="Permalink to this headline">¶</a></h4>
+<p>This portion of the <code class="docutils literal notranslate"><span class="pre">rcu_data</span></code> structure is declared as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>1   unsigned long gp_seq;
+2   unsigned long gp_seq_needed;
+3   bool cpu_no_qs;
+4   bool core_needs_qs;
+5   bool gpwrap;
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">-&gt;gp_seq</span></code> field is the counterpart of the field of the same name
+in the <code class="docutils literal notranslate"><span class="pre">rcu_state</span></code> and <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structures. The
+<code class="docutils literal notranslate"><span class="pre">-&gt;gp_seq_needed</span></code> field is the counterpart of the field of the same
+name in the rcu_node structure. They may each lag up to one behind their
+<code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> counterparts, but in <code class="docutils literal notranslate"><span class="pre">CONFIG_NO_HZ_IDLE</span></code> and
+<code class="docutils literal notranslate"><span class="pre">CONFIG_NO_HZ_FULL</span></code> kernels can lag arbitrarily far behind for CPUs in
+dyntick-idle mode (but these counters will catch up upon exit from
+dyntick-idle mode). If the lower two bits of a given <code class="docutils literal notranslate"><span class="pre">rcu_data</span></code>
+structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;gp_seq</span></code> are zero, then this <code class="docutils literal notranslate"><span class="pre">rcu_data</span></code> structure
+believes that RCU is idle.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Quick Quiz</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>All this replication of the grace period numbers can only cause
+massive confusion. Why not just keep a global sequence number and be
+done with it???</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Answer</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>Because if there was only a single global sequence numbers, there
+would need to be a single global lock to allow safely accessing and
+updating it. And if we are not going to have a single global lock, we
+need to carefully manage the numbers on a per-node basis. Recall from
+the answer to a previous Quick Quiz that the consequences of applying
+a previously sampled quiescent state to the wrong grace period are
+quite severe.</p></td>
+</tr>
+</tbody>
+</table>
+<p>The <code class="docutils literal notranslate"><span class="pre">-&gt;cpu_no_qs</span></code> flag indicates that the CPU has not yet passed
+through a quiescent state, while the <code class="docutils literal notranslate"><span class="pre">-&gt;core_needs_qs</span></code> flag indicates
+that the RCU core needs a quiescent state from the corresponding CPU.
+The <code class="docutils literal notranslate"><span class="pre">-&gt;gpwrap</span></code> field indicates that the corresponding CPU has remained
+idle for so long that the <code class="docutils literal notranslate"><span class="pre">gp_seq</span></code> counter is in danger of overflow,
+which will cause the CPU to disregard the values of its counters on its
+next exit from idle.</p>
+</div>
+<div class="section" id="rcu-callback-handling">
+<h4>RCU Callback Handling<a class="headerlink" href="#rcu-callback-handling" title="Permalink to this headline">¶</a></h4>
+<p>In the absence of CPU-hotplug events, RCU callbacks are invoked by the
+same CPU that registered them. This is strictly a cache-locality
+optimization: callbacks can and do get invoked on CPUs other than the
+one that registered them. After all, if the CPU that registered a given
+callback has gone offline before the callback can be invoked, there
+really is no other choice.</p>
+<p>This portion of the <code class="docutils literal notranslate"><span class="pre">rcu_data</span></code> structure is declared as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>1 struct rcu_segcblist cblist;
+2 long qlen_last_fqs_check;
+3 unsigned long n_cbs_invoked;
+4 unsigned long n_nocbs_invoked;
+5 unsigned long n_cbs_orphaned;
+6 unsigned long n_cbs_adopted;
+7 unsigned long n_force_qs_snap;
+8 long blimit;
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">-&gt;cblist</span></code> structure is the segmented callback list described
+earlier. The CPU advances the callbacks in its <code class="docutils literal notranslate"><span class="pre">rcu_data</span></code> structure
+whenever it notices that another RCU grace period has completed. The CPU
+detects the completion of an RCU grace period by noticing that the value
+of its <code class="docutils literal notranslate"><span class="pre">rcu_data</span></code> structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;gp_seq</span></code> field differs from that of
+its leaf <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure. Recall that each <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code>
+structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;gp_seq</span></code> field is updated at the beginnings and ends of
+each grace period.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">-&gt;qlen_last_fqs_check</span></code> and <code class="docutils literal notranslate"><span class="pre">-&gt;n_force_qs_snap</span></code> coordinate the
+forcing of quiescent states from <code class="docutils literal notranslate"><span class="pre">call_rcu()</span></code> and friends when
+callback lists grow excessively long.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">-&gt;n_cbs_invoked</span></code>, <code class="docutils literal notranslate"><span class="pre">-&gt;n_cbs_orphaned</span></code>, and <code class="docutils literal notranslate"><span class="pre">-&gt;n_cbs_adopted</span></code>
+fields count the number of callbacks invoked, sent to other CPUs when
+this CPU goes offline, and received from other CPUs when those other
+CPUs go offline. The <code class="docutils literal notranslate"><span class="pre">-&gt;n_nocbs_invoked</span></code> is used when the CPU’s
+callbacks are offloaded to a kthread.</p>
+<p>Finally, the <code class="docutils literal notranslate"><span class="pre">-&gt;blimit</span></code> counter is the maximum number of RCU callbacks
+that may be invoked at a given time.</p>
+</div>
+<div class="section" id="dyntick-idle-handling">
+<h4>Dyntick-Idle Handling<a class="headerlink" href="#dyntick-idle-handling" title="Permalink to this headline">¶</a></h4>
+<p>This portion of the <code class="docutils literal notranslate"><span class="pre">rcu_data</span></code> structure is declared as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>1   int dynticks_snap;
+2   unsigned long dynticks_fqs;
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">-&gt;dynticks_snap</span></code> field is used to take a snapshot of the
+corresponding CPU’s dyntick-idle state when forcing quiescent states,
+and is therefore accessed from other CPUs. Finally, the
+<code class="docutils literal notranslate"><span class="pre">-&gt;dynticks_fqs</span></code> field is used to count the number of times this CPU
+is determined to be in dyntick-idle state, and is used for tracing and
+debugging purposes.</p>
+<p>This portion of the rcu_data structure is declared as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>1   long dynticks_nesting;
+2   long dynticks_nmi_nesting;
+3   atomic_t dynticks;
+4   bool rcu_need_heavy_qs;
+5   bool rcu_urgent_qs;
+</pre></div>
+</div>
+<p>These fields in the rcu_data structure maintain the per-CPU dyntick-idle
+state for the corresponding CPU. The fields may be accessed only from
+the corresponding CPU (and from tracing) unless otherwise stated.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">-&gt;dynticks_nesting</span></code> field counts the nesting depth of process
+execution, so that in normal circumstances this counter has value zero
+or one. NMIs, irqs, and tracers are counted by the
+<code class="docutils literal notranslate"><span class="pre">-&gt;dynticks_nmi_nesting</span></code> field. Because NMIs cannot be masked, changes
+to this variable have to be undertaken carefully using an algorithm
+provided by Andy Lutomirski. The initial transition from idle adds one,
+and nested transitions add two, so that a nesting level of five is
+represented by a <code class="docutils literal notranslate"><span class="pre">-&gt;dynticks_nmi_nesting</span></code> value of nine. This counter
+can therefore be thought of as counting the number of reasons why this
+CPU cannot be permitted to enter dyntick-idle mode, aside from
+process-level transitions.</p>
+<p>However, it turns out that when running in non-idle kernel context, the
+Linux kernel is fully capable of entering interrupt handlers that never
+exit and perhaps also vice versa. Therefore, whenever the
+<code class="docutils literal notranslate"><span class="pre">-&gt;dynticks_nesting</span></code> field is incremented up from zero, the
+<code class="docutils literal notranslate"><span class="pre">-&gt;dynticks_nmi_nesting</span></code> field is set to a large positive number, and
+whenever the <code class="docutils literal notranslate"><span class="pre">-&gt;dynticks_nesting</span></code> field is decremented down to zero,
+the <code class="docutils literal notranslate"><span class="pre">-&gt;dynticks_nmi_nesting</span></code> field is set to zero. Assuming that
+the number of misnested interrupts is not sufficient to overflow the
+counter, this approach corrects the <code class="docutils literal notranslate"><span class="pre">-&gt;dynticks_nmi_nesting</span></code> field
+every time the corresponding CPU enters the idle loop from process
+context.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">-&gt;dynticks</span></code> field counts the corresponding CPU’s transitions to
+and from either dyntick-idle or user mode, so that this counter has an
+even value when the CPU is in dyntick-idle mode or user mode and an odd
+value otherwise. The transitions to/from user mode need to be counted
+for user mode adaptive-ticks support (see timers/NO_HZ.txt).</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">-&gt;rcu_need_heavy_qs</span></code> field is used to record the fact that the
+RCU core code would really like to see a quiescent state from the
+corresponding CPU, so much so that it is willing to call for
+heavy-weight dyntick-counter operations. This flag is checked by RCU’s
+context-switch and <code class="docutils literal notranslate"><span class="pre">cond_resched()</span></code> code, which provide a momentary
+idle sojourn in response.</p>
+<p>Finally, the <code class="docutils literal notranslate"><span class="pre">-&gt;rcu_urgent_qs</span></code> field is used to record the fact that
+the RCU core code would really like to see a quiescent state from the
+corresponding CPU, with the various other fields indicating just how
+badly RCU wants this quiescent state. This flag is checked by RCU’s
+context-switch path (<code class="docutils literal notranslate"><span class="pre">rcu_note_context_switch</span></code>) and the cond_resched
+code.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Quick Quiz</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>Why not simply combine the <code class="docutils literal notranslate"><span class="pre">-&gt;dynticks_nesting</span></code> and
+<code class="docutils literal notranslate"><span class="pre">-&gt;dynticks_nmi_nesting</span></code> counters into a single counter that just
+counts the number of reasons that the corresponding CPU is non-idle?</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Answer</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>Because this would fail in the presence of interrupts whose handlers
+never return and of handlers that manage to return from a made-up
+interrupt.</p></td>
+</tr>
+</tbody>
+</table>
+<p>Additional fields are present for some special-purpose builds, and are
+discussed separately.</p>
+</div>
+</div>
+<div class="section" id="the-rcu-head-structure">
+<h3>The <code class="docutils literal notranslate"><span class="pre">rcu_head</span></code> Structure<a class="headerlink" href="#the-rcu-head-structure" title="Permalink to this headline">¶</a></h3>
+<p>Each <code class="docutils literal notranslate"><span class="pre">rcu_head</span></code> structure represents an RCU callback. These structures
+are normally embedded within RCU-protected data structures whose
+algorithms use asynchronous grace periods. In contrast, when using
+algorithms that block waiting for RCU grace periods, RCU users need not
+provide <code class="docutils literal notranslate"><span class="pre">rcu_head</span></code> structures.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">rcu_head</span></code> structure has fields as follows:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>1   struct rcu_head *next;
+2   void (*func)(struct rcu_head *head);
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">-&gt;next</span></code> field is used to link the <code class="docutils literal notranslate"><span class="pre">rcu_head</span></code> structures
+together in the lists within the <code class="docutils literal notranslate"><span class="pre">rcu_data</span></code> structures. The <code class="docutils literal notranslate"><span class="pre">-&gt;func</span></code>
+field is a pointer to the function to be called when the callback is
+ready to be invoked, and this function is passed a pointer to the
+<code class="docutils literal notranslate"><span class="pre">rcu_head</span></code> structure. However, <code class="docutils literal notranslate"><span class="pre">kfree_rcu()</span></code> uses the <code class="docutils literal notranslate"><span class="pre">-&gt;func</span></code>
+field to record the offset of the <code class="docutils literal notranslate"><span class="pre">rcu_head</span></code> structure within the
+enclosing RCU-protected data structure.</p>
+<p>Both of these fields are used internally by RCU. From the viewpoint of
+RCU users, this structure is an opaque “cookie”.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Quick Quiz</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>Given that the callback function <code class="docutils literal notranslate"><span class="pre">-&gt;func</span></code> is passed a pointer to
+the <code class="docutils literal notranslate"><span class="pre">rcu_head</span></code> structure, how is that function supposed to find the
+beginning of the enclosing RCU-protected data structure?</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Answer</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>In actual practice, there is a separate callback function per type of
+RCU-protected data structure. The callback function can therefore use
+the <code class="docutils literal notranslate"><span class="pre">container_of()</span></code> macro in the Linux kernel (or other
+pointer-manipulation facilities in other software environments) to
+find the beginning of the enclosing structure.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="rcu-specific-fields-in-the-task-struct-structure">
+<h3>RCU-Specific Fields in the <code class="docutils literal notranslate"><span class="pre">task_struct</span></code> Structure<a class="headerlink" href="#rcu-specific-fields-in-the-task-struct-structure" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">CONFIG_PREEMPT_RCU</span></code> implementation uses some additional fields in
+the <code class="docutils literal notranslate"><span class="pre">task_struct</span></code> structure:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span> 1 #ifdef CONFIG_PREEMPT_RCU
+ 2   int rcu_read_lock_nesting;
+ 3   union rcu_special rcu_read_unlock_special;
+ 4   struct list_head rcu_node_entry;
+ 5   struct rcu_node *rcu_blocked_node;
+ 6 #endif /* #ifdef CONFIG_PREEMPT_RCU */
+ 7 #ifdef CONFIG_TASKS_RCU
+ 8   unsigned long rcu_tasks_nvcsw;
+ 9   bool rcu_tasks_holdout;
+10   struct list_head rcu_tasks_holdout_list;
+11   int rcu_tasks_idle_cpu;
+12 #endif /* #ifdef CONFIG_TASKS_RCU */
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">-&gt;rcu_read_lock_nesting</span></code> field records the nesting level for RCU
+read-side critical sections, and the <code class="docutils literal notranslate"><span class="pre">-&gt;rcu_read_unlock_special</span></code> field
+is a bitmask that records special conditions that require
+<code class="docutils literal notranslate"><span class="pre">rcu_read_unlock()</span></code> to do additional work. The <code class="docutils literal notranslate"><span class="pre">-&gt;rcu_node_entry</span></code>
+field is used to form lists of tasks that have blocked within
+preemptible-RCU read-side critical sections and the
+<code class="docutils literal notranslate"><span class="pre">-&gt;rcu_blocked_node</span></code> field references the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure whose
+list this task is a member of, or <code class="docutils literal notranslate"><span class="pre">NULL</span></code> if it is not blocked within a
+preemptible-RCU read-side critical section.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">-&gt;rcu_tasks_nvcsw</span></code> field tracks the number of voluntary context
+switches that this task had undergone at the beginning of the current
+tasks-RCU grace period, <code class="docutils literal notranslate"><span class="pre">-&gt;rcu_tasks_holdout</span></code> is set if the current
+tasks-RCU grace period is waiting on this task,
+<code class="docutils literal notranslate"><span class="pre">-&gt;rcu_tasks_holdout_list</span></code> is a list element enqueuing this task on
+the holdout list, and <code class="docutils literal notranslate"><span class="pre">-&gt;rcu_tasks_idle_cpu</span></code> tracks which CPU this
+idle task is running, but only if the task is currently running, that
+is, if the CPU is currently idle.</p>
+</div>
+<div class="section" id="accessor-functions">
+<h3>Accessor Functions<a class="headerlink" href="#accessor-functions" title="Permalink to this headline">¶</a></h3>
+<p>The following listing shows the <code class="docutils literal notranslate"><span class="pre">rcu_get_root()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">rcu_for_each_node_breadth_first</span></code> and <code class="docutils literal notranslate"><span class="pre">rcu_for_each_leaf_node()</span></code>
+function and macros:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span> 1 static struct rcu_node *rcu_get_root(struct rcu_state *rsp)
+ 2 {
+ 3   return &amp;rsp-&gt;node[0];
+ 4 }
+ 5
+ 6 #define rcu_for_each_node_breadth_first(rsp, rnp) \
+ 7   for ((rnp) = &amp;(rsp)-&gt;node[0]; \
+ 8        (rnp) &lt; &amp;(rsp)-&gt;node[NUM_RCU_NODES]; (rnp)++)
+ 9
+10 #define rcu_for_each_leaf_node(rsp, rnp) \
+11   for ((rnp) = (rsp)-&gt;level[NUM_RCU_LVLS - 1]; \
+12        (rnp) &lt; &amp;(rsp)-&gt;node[NUM_RCU_NODES]; (rnp)++)
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">rcu_get_root()</span></code> simply returns a pointer to the first element of
+the specified <code class="docutils literal notranslate"><span class="pre">rcu_state</span></code> structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;node[]</span></code> array, which is the
+root <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structure.</p>
+<p>As noted earlier, the <code class="docutils literal notranslate"><span class="pre">rcu_for_each_node_breadth_first()</span></code> macro takes
+advantage of the layout of the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structures in the
+<code class="docutils literal notranslate"><span class="pre">rcu_state</span></code> structure’s <code class="docutils literal notranslate"><span class="pre">-&gt;node[]</span></code> array, performing a breadth-first
+traversal by simply traversing the array in order. Similarly, the
+<code class="docutils literal notranslate"><span class="pre">rcu_for_each_leaf_node()</span></code> macro traverses only the last part of the
+array, thus traversing only the leaf <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> structures.</p>
+<table class="docutils align-default">
+<colgroup>
+<col style="width: 100%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><strong>Quick Quiz</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>What does <code class="docutils literal notranslate"><span class="pre">rcu_for_each_leaf_node()</span></code> do if the <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> tree
+contains only a single node?</p></td>
+</tr>
+<tr class="row-odd"><td><p><strong>Answer</strong>:</p></td>
+</tr>
+<tr class="row-even"><td><p>In the single-node case, <code class="docutils literal notranslate"><span class="pre">rcu_for_each_leaf_node()</span></code> traverses the
+single node.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="summary">
+<h3>Summary<a class="headerlink" href="#summary" title="Permalink to this headline">¶</a></h3>
+<p>So the state of RCU is represented by an <code class="docutils literal notranslate"><span class="pre">rcu_state</span></code> structure, which
+contains a combining tree of <code class="docutils literal notranslate"><span class="pre">rcu_node</span></code> and <code class="docutils literal notranslate"><span class="pre">rcu_data</span></code> structures.
+Finally, in <code class="docutils literal notranslate"><span class="pre">CONFIG_NO_HZ_IDLE</span></code> kernels, each CPU’s dyntick-idle state
+is tracked by dynticks-related fields in the <code class="docutils literal notranslate"><span class="pre">rcu_data</span></code> structure. If
+you made it this far, you are well prepared to read the code
+walkthroughs in the other articles in this series.</p>
+</div>
+<div class="section" id="acknowledgments">
+<h3>Acknowledgments<a class="headerlink" href="#acknowledgments" title="Permalink to this headline">¶</a></h3>
+<p>I owe thanks to Cyrill Gorcunov, Mathieu Desnoyers, Dhaval Giani, Paul
+Turner, Abhishek Srivastava, Matt Kowalczyk, and Serge Hallyn for
+helping me get this document into a more human-readable state.</p>
+</div>
+<div class="section" id="legal-statement">
+<h3>Legal Statement<a class="headerlink" href="#legal-statement" title="Permalink to this headline">¶</a></h3>
+<p>This work represents the view of the author and does not necessarily
+represent the view of IBM.</p>
+<p>Linux is a registered trademark of Linus Torvalds.</p>
+<p>Other company, product, and service names may be trademarks or service
+marks of others.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="../../../core-api/cachetlb.html" class="btn btn-neutral float-right" title="Cache and TLB Flushing Under Linux" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="../Requirements/Requirements.html" class="btn btn-neutral float-left" title="A Tour Through RCU’s Requirements" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright The kernel development community.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

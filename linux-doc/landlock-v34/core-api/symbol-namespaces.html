@@ -1,0 +1,462 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Symbol Namespaces &mdash; The Linux Kernel 5.12.0-rc3+ documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/theme_overrides.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Everything you never wanted to know about kobjects, ksets, and ktypes" href="kobject.html" />
+    <link rel="prev" title="How to get printk format specifiers right" href="printk-formats.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html" class="icon icon-home"> The Linux Kernel
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                5.12.0-rc3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../admin-guide/index.html">The Linux kernel user’s and administrator’s guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kbuild/index.html">Kernel Build System</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../firmware-guide/index.html">The Linux kernel firmware guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../devicetree/index.html">Open Firmware and Device Tree</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../userspace-api/index.html">The Linux kernel user-space API guide</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../process/index.html">Working with the kernel development community</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../dev-tools/index.html">Development tools for the kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../doc-guide/index.html">How to write kernel documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../kernel-hacking/index.html">Kernel Hacking Guides</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../trace/index.html">Linux Tracing Technologies</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../maintainer/index.html">Kernel Maintainer Handbook</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fault-injection/index.html">fault-injection</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../livepatch/index.html">Kernel Livepatching</a></li>
+</ul>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../driver-api/index.html">The Linux driver implementer’s API guide</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">Core API Documentation</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="index.html#core-utilities">Core utilities</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="kernel-api.html">The Linux Kernel API</a></li>
+<li class="toctree-l3"><a class="reference internal" href="workqueue.html">Concurrency Managed Workqueue (cmwq)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="printk-basics.html">Message logging with printk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="printk-formats.html">How to get printk format specifiers right</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">Symbol Namespaces</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#introduction">1. Introduction</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#how-to-define-symbol-namespaces">2. How to define Symbol Namespaces</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#using-the-export-symbol-macros">2.1 Using the EXPORT_SYMBOL macros</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#using-the-default-symbol-namespace-define">2.2 Using the DEFAULT_SYMBOL_NAMESPACE define</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#how-to-use-symbols-exported-in-namespaces">3. How to use Symbols exported in Namespaces</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#loading-modules-that-use-namespaced-symbols">4. Loading Modules that use namespaced Symbols</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#automatically-creating-module-import-ns-statements">5. Automatically creating MODULE_IMPORT_NS statements</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#data-structures-and-low-level-utilities">Data structures and low-level utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#concurrency-primitives">Concurrency primitives</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#low-level-hardware-management">Low-level hardware management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#memory-management">Memory management</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#interfaces-for-kernel-debugging">Interfaces for kernel debugging</a></li>
+<li class="toctree-l2"><a class="reference internal" href="index.html#everything-else">Everything else</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../locking/index.html">locking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../accounting/index.html">Accounting</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../block/index.html">Block</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cdrom/index.html">cdrom</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cpu-freq/index.html">Linux CPUFreq - CPU frequency and voltage scaling code in the Linux(TM) kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ide/index.html">Integrated Drive Electronics (IDE)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fb/index.html">Frame Buffer</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../fpga/index.html">fpga</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hid/index.html">Human Interface Devices (HID)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../i2c/index.html">I2C/SMBus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../iio/index.html">Industrial I/O</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../isdn/index.html">ISDN</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../infiniband/index.html">InfiniBand</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../leds/index.html">LEDs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../netlabel/index.html">NetLabel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../networking/index.html">Linux Networking Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../pcmcia/index.html">pcmcia</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../power/index.html">Power Management</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../target/index.html">TCM Virtual Device</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../timers/index.html">timers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../spi/index.html">Serial Peripheral Interface (SPI)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../w1/index.html">1-Wire Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watchdog/index.html">Linux Watchdog Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../virt/index.html">Linux Virtualization Support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input/index.html">The Linux Input Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../hwmon/index.html">Linux Hardware Monitoring</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../gpu/index.html">Linux GPU Driver Developer’s Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../security/index.html">Security Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sound/index.html">Linux Sound Subsystem Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../crypto/index.html">Linux Kernel Crypto API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../filesystems/index.html">Filesystems in the Linux kernel</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../vm/index.html">Linux Memory Management Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../bpf/index.html">BPF Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usb/index.html">USB support</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../PCI/index.html">Linux PCI Bus Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scsi/index.html">Linux SCSI Subsystem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../misc-devices/index.html">Assorted Miscellaneous Devices Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../scheduler/index.html">Linux Scheduler</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mhi/index.html">MHI</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../asm-annotations.html">Assembler Annotations</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../arm/index.html">ARM Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../arm64/index.html">ARM64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../ia64/index.html">IA-64 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../m68k/index.html">m68k Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../mips/index.html">MIPS-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../nios2/index.html">Nios II Specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../openrisc/index.html">OpenRISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../parisc/index.html">PA-RISC Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../powerpc/index.html">powerpc</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../riscv/index.html">RISC-V architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../s390/index.html">s390 Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sh/index.html">SuperH Interfaces Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../sparc/index.html">Sparc Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../x86/index.html">x86-specific Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../xtensa/index.html">Xtensa Architecture</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html">Unsorted Documentation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-types">Atomic Types</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#atomic-bitops">Atomic bitops</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../staging/index.html#memory-barriers">Memory Barriers</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../watch_queue.html">General notification mechanism</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../translations/index.html">Translations</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">The Linux Kernel</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="index.html">Core API Documentation</a> &raquo;</li>
+        
+      <li>Symbol Namespaces</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="../_sources/core-api/symbol-namespaces.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="symbol-namespaces">
+<h1>Symbol Namespaces<a class="headerlink" href="#symbol-namespaces" title="Permalink to this headline">¶</a></h1>
+<p>The following document describes how to use Symbol Namespaces to structure the
+export surface of in-kernel symbols exported through the family of
+EXPORT_SYMBOL() macros.</p>
+<div class="section" id="introduction">
+<h2>1. Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>Symbol Namespaces have been introduced as a means to structure the export
+surface of the in-kernel API. It allows subsystem maintainers to partition
+their exported symbols into separate namespaces. That is useful for
+documentation purposes (think of the SUBSYSTEM_DEBUG namespace) as well as for
+limiting the availability of a set of symbols for use in other parts of the
+kernel. As of today, modules that make use of symbols exported into namespaces,
+are required to import the namespace. Otherwise the kernel will, depending on
+its configuration, reject loading the module or warn about a missing import.</p>
+</div>
+<div class="section" id="how-to-define-symbol-namespaces">
+<h2>2. How to define Symbol Namespaces<a class="headerlink" href="#how-to-define-symbol-namespaces" title="Permalink to this headline">¶</a></h2>
+<p>Symbols can be exported into namespace using different methods. All of them are
+changing the way EXPORT_SYMBOL and friends are instrumented to create ksymtab
+entries.</p>
+</div>
+<div class="section" id="using-the-export-symbol-macros">
+<h2>2.1 Using the EXPORT_SYMBOL macros<a class="headerlink" href="#using-the-export-symbol-macros" title="Permalink to this headline">¶</a></h2>
+<p>In addition to the macros EXPORT_SYMBOL() and EXPORT_SYMBOL_GPL(), that allow
+exporting of kernel symbols to the kernel symbol table, variants of these are
+available to export symbols into a certain namespace: EXPORT_SYMBOL_NS() and
+EXPORT_SYMBOL_NS_GPL(). They take one additional argument: the namespace.
+Please note that due to macro expansion that argument needs to be a
+preprocessor symbol. E.g. to export the symbol <cite>usb_stor_suspend</cite> into the
+namespace <cite>USB_STORAGE</cite>, use:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>EXPORT_SYMBOL_NS(usb_stor_suspend, USB_STORAGE);
+</pre></div>
+</div>
+<p>The corresponding ksymtab entry struct <cite>kernel_symbol</cite> will have the member
+<cite>namespace</cite> set accordingly. A symbol that is exported without a namespace will
+refer to <cite>NULL</cite>. There is no default namespace if none is defined. <cite>modpost</cite>
+and kernel/module.c make use the namespace at build time or module load time,
+respectively.</p>
+</div>
+<div class="section" id="using-the-default-symbol-namespace-define">
+<h2>2.2 Using the DEFAULT_SYMBOL_NAMESPACE define<a class="headerlink" href="#using-the-default-symbol-namespace-define" title="Permalink to this headline">¶</a></h2>
+<p>Defining namespaces for all symbols of a subsystem can be very verbose and may
+become hard to maintain. Therefore a default define (DEFAULT_SYMBOL_NAMESPACE)
+is been provided, that, if set, will become the default for all EXPORT_SYMBOL()
+and EXPORT_SYMBOL_GPL() macro expansions that do not specify a namespace.</p>
+<p>There are multiple ways of specifying this define and it depends on the
+subsystem and the maintainer’s preference, which one to use. The first option
+is to define the default namespace in the <cite>Makefile</cite> of the subsystem. E.g. to
+export all symbols defined in usb-common into the namespace USB_COMMON, add a
+line like this to drivers/usb/common/Makefile:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>ccflags-y += -DDEFAULT_SYMBOL_NAMESPACE=USB_COMMON
+</pre></div>
+</div>
+<p>That will affect all EXPORT_SYMBOL() and EXPORT_SYMBOL_GPL() statements. A
+symbol exported with EXPORT_SYMBOL_NS() while this definition is present, will
+still be exported into the namespace that is passed as the namespace argument
+as this argument has preference over a default symbol namespace.</p>
+<p>A second option to define the default namespace is directly in the compilation
+unit as preprocessor statement. The above example would then read:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>#undef  DEFAULT_SYMBOL_NAMESPACE
+#define DEFAULT_SYMBOL_NAMESPACE USB_COMMON
+</pre></div>
+</div>
+<p>within the corresponding compilation unit before any EXPORT_SYMBOL macro is
+used.</p>
+</div>
+<div class="section" id="how-to-use-symbols-exported-in-namespaces">
+<h2>3. How to use Symbols exported in Namespaces<a class="headerlink" href="#how-to-use-symbols-exported-in-namespaces" title="Permalink to this headline">¶</a></h2>
+<p>In order to use symbols that are exported into namespaces, kernel modules need
+to explicitly import these namespaces. Otherwise the kernel might reject to
+load the module. The module code is required to use the macro MODULE_IMPORT_NS
+for the namespaces it uses symbols from. E.g. a module using the
+usb_stor_suspend symbol from above, needs to import the namespace USB_STORAGE
+using a statement like:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>MODULE_IMPORT_NS(USB_STORAGE);
+</pre></div>
+</div>
+<p>This will create a <cite>modinfo</cite> tag in the module for each imported namespace.
+This has the side effect, that the imported namespaces of a module can be
+inspected with modinfo:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ modinfo drivers/usb/storage/ums-karma.ko
+[...]
+import_ns:      USB_STORAGE
+[...]
+</pre></div>
+</div>
+<p>It is advisable to add the MODULE_IMPORT_NS() statement close to other module
+metadata definitions like MODULE_AUTHOR() or MODULE_LICENSE(). Refer to section
+5. for a way to create missing import statements automatically.</p>
+</div>
+<div class="section" id="loading-modules-that-use-namespaced-symbols">
+<h2>4. Loading Modules that use namespaced Symbols<a class="headerlink" href="#loading-modules-that-use-namespaced-symbols" title="Permalink to this headline">¶</a></h2>
+<p>At module loading time (e.g. <cite>insmod</cite>), the kernel will check each symbol
+referenced from the module for its availability and whether the namespace it
+might be exported to has been imported by the module. The default behaviour of
+the kernel is to reject loading modules that don’t specify sufficient imports.
+An error will be logged and loading will be failed with EINVAL. In order to
+allow loading of modules that don’t satisfy this precondition, a configuration
+option is available: Setting MODULE_ALLOW_MISSING_NAMESPACE_IMPORTS=y will
+enable loading regardless, but will emit a warning.</p>
+</div>
+<div class="section" id="automatically-creating-module-import-ns-statements">
+<h2>5. Automatically creating MODULE_IMPORT_NS statements<a class="headerlink" href="#automatically-creating-module-import-ns-statements" title="Permalink to this headline">¶</a></h2>
+<p>Missing namespaces imports can easily be detected at build time. In fact,
+modpost will emit a warning if a module uses a symbol from a namespace
+without importing it.
+MODULE_IMPORT_NS() statements will usually be added at a definite location
+(along with other module meta data). To make the life of module authors (and
+subsystem maintainers) easier, a script and make target is available to fixup
+missing imports. Fixing missing imports can be done with:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ make nsdeps
+</pre></div>
+</div>
+<p>A typical scenario for module authors would be:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>- write code that depends on a symbol from a not imported namespace
+- `make`
+- notice the warning of modpost telling about a missing import
+- run `make nsdeps` to add the import to the correct code location
+</pre></div>
+</div>
+<p>For subsystem maintainers introducing a namespace, the steps are very similar.
+Again, <cite>make nsdeps</cite> will eventually add the missing namespace imports for
+in-tree modules:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>- move or add symbols to a namespace (e.g. with EXPORT_SYMBOL_NS())
+- `make` (preferably with an allmodconfig to cover all in-kernel
+  modules)
+- notice the warning of modpost telling about a missing import
+- run `make nsdeps` to add the import to the correct code location
+</pre></div>
+</div>
+<p>You can also run nsdeps for external module builds. A typical usage is:</p>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>$ make -C &lt;path_to_kernel_src&gt; M=$PWD nsdeps
+</pre></div>
+</div>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+        <a href="kobject.html" class="btn btn-neutral float-right" title="Everything you never wanted to know about kobjects, ksets, and ktypes" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="printk-formats.html" class="btn btn-neutral float-left" title="How to get printk format specifiers right" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright The kernel development community.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
