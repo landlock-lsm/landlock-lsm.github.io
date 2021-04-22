@@ -1,0 +1,636 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - landlock.info - mm/pagewalk.c</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">mm</a> - pagewalk.c<span style="font-size: 80%;"> (source / <a href="pagewalk.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">landlock.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">226</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2021-04-22 12:43:58</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">12</td>
+            <td class="headerCovTableEntryLo">0.0 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : // SPDX-License-Identifier: GPL-2.0</a>
+<a name="2"><span class="lineNum">       2 </span>            : #include &lt;linux/pagewalk.h&gt;</a>
+<a name="3"><span class="lineNum">       3 </span>            : #include &lt;linux/highmem.h&gt;</a>
+<a name="4"><span class="lineNum">       4 </span>            : #include &lt;linux/sched.h&gt;</a>
+<a name="5"><span class="lineNum">       5 </span>            : #include &lt;linux/hugetlb.h&gt;</a>
+<a name="6"><span class="lineNum">       6 </span>            : </a>
+<a name="7"><span class="lineNum">       7 </span>            : /*</a>
+<a name="8"><span class="lineNum">       8 </span>            :  * We want to know the real level where a entry is located ignoring any</a>
+<a name="9"><span class="lineNum">       9 </span>            :  * folding of levels which may be happening. For example if p4d is folded then</a>
+<a name="10"><span class="lineNum">      10 </span>            :  * a missing entry found at level 1 (p4d) is actually at level 0 (pgd).</a>
+<a name="11"><span class="lineNum">      11 </span>            :  */</a>
+<a name="12"><span class="lineNum">      12 </span><span class="lineNoCov">          0 : static int real_depth(int depth)</span></a>
+<a name="13"><span class="lineNum">      13 </span>            : {</a>
+<a name="14"><span class="lineNum">      14 </span><span class="lineNoCov">          0 :         if (depth == 3 &amp;&amp; PTRS_PER_PMD == 1)</span></a>
+<a name="15"><span class="lineNum">      15 </span>            :                 depth = 2;</a>
+<a name="16"><span class="lineNum">      16 </span><span class="lineNoCov">          0 :         if (depth == 2 &amp;&amp; PTRS_PER_PUD == 1)</span></a>
+<a name="17"><span class="lineNum">      17 </span>            :                 depth = 1;</a>
+<a name="18"><span class="lineNum">      18 </span><span class="lineNoCov">          0 :         if (depth == 1 &amp;&amp; PTRS_PER_P4D == 1)</span></a>
+<a name="19"><span class="lineNum">      19 </span><span class="lineNoCov">          0 :                 depth = 0;</span></a>
+<a name="20"><span class="lineNum">      20 </span><span class="lineNoCov">          0 :         return depth;</span></a>
+<a name="21"><span class="lineNum">      21 </span>            : }</a>
+<a name="22"><span class="lineNum">      22 </span>            : </a>
+<a name="23"><span class="lineNum">      23 </span><span class="lineNoCov">          0 : static int walk_pte_range_inner(pte_t *pte, unsigned long addr,</span></a>
+<a name="24"><span class="lineNum">      24 </span>            :                                 unsigned long end, struct mm_walk *walk)</a>
+<a name="25"><span class="lineNum">      25 </span>            : {</a>
+<a name="26"><span class="lineNum">      26 </span><span class="lineNoCov">          0 :         const struct mm_walk_ops *ops = walk-&gt;ops;</span></a>
+<a name="27"><span class="lineNum">      27 </span><span class="lineNoCov">          0 :         int err = 0;</span></a>
+<a name="28"><span class="lineNum">      28 </span>            : </a>
+<a name="29"><span class="lineNum">      29 </span><span class="lineNoCov">          0 :         for (;;) {</span></a>
+<a name="30"><span class="lineNum">      30 </span><span class="lineNoCov">          0 :                 err = ops-&gt;pte_entry(pte, addr, addr + PAGE_SIZE, walk);</span></a>
+<a name="31"><span class="lineNum">      31 </span><span class="lineNoCov">          0 :                 if (err)</span></a>
+<a name="32"><span class="lineNum">      32 </span>            :                        break;</a>
+<a name="33"><span class="lineNum">      33 </span><span class="lineNoCov">          0 :                 if (addr &gt;= end - PAGE_SIZE)</span></a>
+<a name="34"><span class="lineNum">      34 </span>            :                         break;</a>
+<a name="35"><span class="lineNum">      35 </span><span class="lineNoCov">          0 :                 addr += PAGE_SIZE;</span></a>
+<a name="36"><span class="lineNum">      36 </span><span class="lineNoCov">          0 :                 pte++;</span></a>
+<a name="37"><span class="lineNum">      37 </span>            :         }</a>
+<a name="38"><span class="lineNum">      38 </span><span class="lineNoCov">          0 :         return err;</span></a>
+<a name="39"><span class="lineNum">      39 </span>            : }</a>
+<a name="40"><span class="lineNum">      40 </span>            : </a>
+<a name="41"><span class="lineNum">      41 </span><span class="lineNoCov">          0 : static int walk_pte_range(pmd_t *pmd, unsigned long addr, unsigned long end,</span></a>
+<a name="42"><span class="lineNum">      42 </span>            :                           struct mm_walk *walk)</a>
+<a name="43"><span class="lineNum">      43 </span>            : {</a>
+<a name="44"><span class="lineNum">      44 </span><span class="lineNoCov">          0 :         pte_t *pte;</span></a>
+<a name="45"><span class="lineNum">      45 </span><span class="lineNoCov">          0 :         int err = 0;</span></a>
+<a name="46"><span class="lineNum">      46 </span><span class="lineNoCov">          0 :         spinlock_t *ptl;</span></a>
+<a name="47"><span class="lineNum">      47 </span>            : </a>
+<a name="48"><span class="lineNum">      48 </span><span class="lineNoCov">          0 :         if (walk-&gt;no_vma) {</span></a>
+<a name="49"><span class="lineNum">      49 </span><span class="lineNoCov">          0 :                 pte = pte_offset_map(pmd, addr);</span></a>
+<a name="50"><span class="lineNum">      50 </span><span class="lineNoCov">          0 :                 err = walk_pte_range_inner(pte, addr, end, walk);</span></a>
+<a name="51"><span class="lineNum">      51 </span><span class="lineNoCov">          0 :                 pte_unmap(pte);</span></a>
+<a name="52"><span class="lineNum">      52 </span>            :         } else {</a>
+<a name="53"><span class="lineNum">      53 </span><span class="lineNoCov">          0 :                 pte = pte_offset_map_lock(walk-&gt;mm, pmd, addr, &amp;ptl);</span></a>
+<a name="54"><span class="lineNum">      54 </span><span class="lineNoCov">          0 :                 err = walk_pte_range_inner(pte, addr, end, walk);</span></a>
+<a name="55"><span class="lineNum">      55 </span><span class="lineNoCov">          0 :                 pte_unmap_unlock(pte, ptl);</span></a>
+<a name="56"><span class="lineNum">      56 </span>            :         }</a>
+<a name="57"><span class="lineNum">      57 </span>            : </a>
+<a name="58"><span class="lineNum">      58 </span><span class="lineNoCov">          0 :         return err;</span></a>
+<a name="59"><span class="lineNum">      59 </span>            : }</a>
+<a name="60"><span class="lineNum">      60 </span>            : </a>
+<a name="61"><span class="lineNum">      61 </span><span class="lineNoCov">          0 : static int walk_pmd_range(pud_t *pud, unsigned long addr, unsigned long end,</span></a>
+<a name="62"><span class="lineNum">      62 </span>            :                           struct mm_walk *walk)</a>
+<a name="63"><span class="lineNum">      63 </span>            : {</a>
+<a name="64"><span class="lineNum">      64 </span><span class="lineNoCov">          0 :         pmd_t *pmd;</span></a>
+<a name="65"><span class="lineNum">      65 </span><span class="lineNoCov">          0 :         unsigned long next;</span></a>
+<a name="66"><span class="lineNum">      66 </span><span class="lineNoCov">          0 :         const struct mm_walk_ops *ops = walk-&gt;ops;</span></a>
+<a name="67"><span class="lineNum">      67 </span><span class="lineNoCov">          0 :         int err = 0;</span></a>
+<a name="68"><span class="lineNum">      68 </span><span class="lineNoCov">          0 :         int depth = real_depth(3);</span></a>
+<a name="69"><span class="lineNum">      69 </span>            : </a>
+<a name="70"><span class="lineNum">      70 </span><span class="lineNoCov">          0 :         pmd = pmd_offset(pud, addr);</span></a>
+<a name="71"><span class="lineNum">      71 </span><span class="lineNoCov">          0 :         do {</span></a>
+<a name="72"><span class="lineNum">      72 </span><span class="lineNoCov">          0 : again:</span></a>
+<a name="73"><span class="lineNum">      73 </span><span class="lineNoCov">          0 :                 next = pmd_addr_end(addr, end);</span></a>
+<a name="74"><span class="lineNum">      74 </span><span class="lineNoCov">          0 :                 if (pmd_none(*pmd) || (!walk-&gt;vma &amp;&amp; !walk-&gt;no_vma)) {</span></a>
+<a name="75"><span class="lineNum">      75 </span><span class="lineNoCov">          0 :                         if (ops-&gt;pte_hole)</span></a>
+<a name="76"><span class="lineNum">      76 </span><span class="lineNoCov">          0 :                                 err = ops-&gt;pte_hole(addr, next, depth, walk);</span></a>
+<a name="77"><span class="lineNum">      77 </span><span class="lineNoCov">          0 :                         if (err)</span></a>
+<a name="78"><span class="lineNum">      78 </span>            :                                 break;</a>
+<a name="79"><span class="lineNum">      79 </span><span class="lineNoCov">          0 :                         continue;</span></a>
+<a name="80"><span class="lineNum">      80 </span>            :                 }</a>
+<a name="81"><span class="lineNum">      81 </span>            : </a>
+<a name="82"><span class="lineNum">      82 </span><span class="lineNoCov">          0 :                 walk-&gt;action = ACTION_SUBTREE;</span></a>
+<a name="83"><span class="lineNum">      83 </span>            : </a>
+<a name="84"><span class="lineNum">      84 </span>            :                 /*</a>
+<a name="85"><span class="lineNum">      85 </span>            :                  * This implies that each -&gt;pmd_entry() handler</a>
+<a name="86"><span class="lineNum">      86 </span>            :                  * needs to know about pmd_trans_huge() pmds</a>
+<a name="87"><span class="lineNum">      87 </span>            :                  */</a>
+<a name="88"><span class="lineNum">      88 </span><span class="lineNoCov">          0 :                 if (ops-&gt;pmd_entry)</span></a>
+<a name="89"><span class="lineNum">      89 </span><span class="lineNoCov">          0 :                         err = ops-&gt;pmd_entry(pmd, addr, next, walk);</span></a>
+<a name="90"><span class="lineNum">      90 </span><span class="lineNoCov">          0 :                 if (err)</span></a>
+<a name="91"><span class="lineNum">      91 </span>            :                         break;</a>
+<a name="92"><span class="lineNum">      92 </span>            : </a>
+<a name="93"><span class="lineNum">      93 </span><span class="lineNoCov">          0 :                 if (walk-&gt;action == ACTION_AGAIN)</span></a>
+<a name="94"><span class="lineNum">      94 </span><span class="lineNoCov">          0 :                         goto again;</span></a>
+<a name="95"><span class="lineNum">      95 </span>            : </a>
+<a name="96"><span class="lineNum">      96 </span>            :                 /*</a>
+<a name="97"><span class="lineNum">      97 </span>            :                  * Check this here so we only break down trans_huge</a>
+<a name="98"><span class="lineNum">      98 </span>            :                  * pages when we _need_ to</a>
+<a name="99"><span class="lineNum">      99 </span>            :                  */</a>
+<a name="100"><span class="lineNum">     100 </span><span class="lineNoCov">          0 :                 if ((!walk-&gt;vma &amp;&amp; (pmd_leaf(*pmd) || !pmd_present(*pmd))) ||</span></a>
+<a name="101"><span class="lineNum">     101 </span><span class="lineNoCov">          0 :                     walk-&gt;action == ACTION_CONTINUE ||</span></a>
+<a name="102"><span class="lineNum">     102 </span><span class="lineNoCov">          0 :                     !(ops-&gt;pte_entry))</span></a>
+<a name="103"><span class="lineNum">     103 </span><span class="lineNoCov">          0 :                         continue;</span></a>
+<a name="104"><span class="lineNum">     104 </span>            : </a>
+<a name="105"><span class="lineNum">     105 </span><span class="lineNoCov">          0 :                 if (walk-&gt;vma) {</span></a>
+<a name="106"><span class="lineNum">     106 </span><span class="lineNoCov">          0 :                         split_huge_pmd(walk-&gt;vma, pmd, addr);</span></a>
+<a name="107"><span class="lineNum">     107 </span><span class="lineNoCov">          0 :                         if (pmd_trans_unstable(pmd))</span></a>
+<a name="108"><span class="lineNum">     108 </span><span class="lineNoCov">          0 :                                 goto again;</span></a>
+<a name="109"><span class="lineNum">     109 </span>            :                 }</a>
+<a name="110"><span class="lineNum">     110 </span>            : </a>
+<a name="111"><span class="lineNum">     111 </span><span class="lineNoCov">          0 :                 err = walk_pte_range(pmd, addr, next, walk);</span></a>
+<a name="112"><span class="lineNum">     112 </span><span class="lineNoCov">          0 :                 if (err)</span></a>
+<a name="113"><span class="lineNum">     113 </span>            :                         break;</a>
+<a name="114"><span class="lineNum">     114 </span><span class="lineNoCov">          0 :         } while (pmd++, addr = next, addr != end);</span></a>
+<a name="115"><span class="lineNum">     115 </span>            : </a>
+<a name="116"><span class="lineNum">     116 </span><span class="lineNoCov">          0 :         return err;</span></a>
+<a name="117"><span class="lineNum">     117 </span>            : }</a>
+<a name="118"><span class="lineNum">     118 </span>            : </a>
+<a name="119"><span class="lineNum">     119 </span><span class="lineNoCov">          0 : static int walk_pud_range(p4d_t *p4d, unsigned long addr, unsigned long end,</span></a>
+<a name="120"><span class="lineNum">     120 </span>            :                           struct mm_walk *walk)</a>
+<a name="121"><span class="lineNum">     121 </span>            : {</a>
+<a name="122"><span class="lineNum">     122 </span><span class="lineNoCov">          0 :         pud_t *pud;</span></a>
+<a name="123"><span class="lineNum">     123 </span><span class="lineNoCov">          0 :         unsigned long next;</span></a>
+<a name="124"><span class="lineNum">     124 </span><span class="lineNoCov">          0 :         const struct mm_walk_ops *ops = walk-&gt;ops;</span></a>
+<a name="125"><span class="lineNum">     125 </span><span class="lineNoCov">          0 :         int err = 0;</span></a>
+<a name="126"><span class="lineNum">     126 </span><span class="lineNoCov">          0 :         int depth = real_depth(2);</span></a>
+<a name="127"><span class="lineNum">     127 </span>            : </a>
+<a name="128"><span class="lineNum">     128 </span><span class="lineNoCov">          0 :         pud = pud_offset(p4d, addr);</span></a>
+<a name="129"><span class="lineNum">     129 </span><span class="lineNoCov">          0 :         do {</span></a>
+<a name="130"><span class="lineNum">     130 </span><span class="lineNoCov">          0 :  again:</span></a>
+<a name="131"><span class="lineNum">     131 </span><span class="lineNoCov">          0 :                 next = pud_addr_end(addr, end);</span></a>
+<a name="132"><span class="lineNum">     132 </span><span class="lineNoCov">          0 :                 if (pud_none(*pud) || (!walk-&gt;vma &amp;&amp; !walk-&gt;no_vma)) {</span></a>
+<a name="133"><span class="lineNum">     133 </span><span class="lineNoCov">          0 :                         if (ops-&gt;pte_hole)</span></a>
+<a name="134"><span class="lineNum">     134 </span><span class="lineNoCov">          0 :                                 err = ops-&gt;pte_hole(addr, next, depth, walk);</span></a>
+<a name="135"><span class="lineNum">     135 </span><span class="lineNoCov">          0 :                         if (err)</span></a>
+<a name="136"><span class="lineNum">     136 </span>            :                                 break;</a>
+<a name="137"><span class="lineNum">     137 </span><span class="lineNoCov">          0 :                         continue;</span></a>
+<a name="138"><span class="lineNum">     138 </span>            :                 }</a>
+<a name="139"><span class="lineNum">     139 </span>            : </a>
+<a name="140"><span class="lineNum">     140 </span><span class="lineNoCov">          0 :                 walk-&gt;action = ACTION_SUBTREE;</span></a>
+<a name="141"><span class="lineNum">     141 </span>            : </a>
+<a name="142"><span class="lineNum">     142 </span><span class="lineNoCov">          0 :                 if (ops-&gt;pud_entry)</span></a>
+<a name="143"><span class="lineNum">     143 </span><span class="lineNoCov">          0 :                         err = ops-&gt;pud_entry(pud, addr, next, walk);</span></a>
+<a name="144"><span class="lineNum">     144 </span><span class="lineNoCov">          0 :                 if (err)</span></a>
+<a name="145"><span class="lineNum">     145 </span>            :                         break;</a>
+<a name="146"><span class="lineNum">     146 </span>            : </a>
+<a name="147"><span class="lineNum">     147 </span><span class="lineNoCov">          0 :                 if (walk-&gt;action == ACTION_AGAIN)</span></a>
+<a name="148"><span class="lineNum">     148 </span><span class="lineNoCov">          0 :                         goto again;</span></a>
+<a name="149"><span class="lineNum">     149 </span>            : </a>
+<a name="150"><span class="lineNum">     150 </span><span class="lineNoCov">          0 :                 if ((!walk-&gt;vma &amp;&amp; (pud_leaf(*pud) || !pud_present(*pud))) ||</span></a>
+<a name="151"><span class="lineNum">     151 </span><span class="lineNoCov">          0 :                     walk-&gt;action == ACTION_CONTINUE ||</span></a>
+<a name="152"><span class="lineNum">     152 </span><span class="lineNoCov">          0 :                     !(ops-&gt;pmd_entry || ops-&gt;pte_entry))</span></a>
+<a name="153"><span class="lineNum">     153 </span><span class="lineNoCov">          0 :                         continue;</span></a>
+<a name="154"><span class="lineNum">     154 </span>            : </a>
+<a name="155"><span class="lineNum">     155 </span><span class="lineNoCov">          0 :                 if (walk-&gt;vma)</span></a>
+<a name="156"><span class="lineNum">     156 </span><span class="lineNoCov">          0 :                         split_huge_pud(walk-&gt;vma, pud, addr);</span></a>
+<a name="157"><span class="lineNum">     157 </span><span class="lineNoCov">          0 :                 if (pud_none(*pud))</span></a>
+<a name="158"><span class="lineNum">     158 </span><span class="lineNoCov">          0 :                         goto again;</span></a>
+<a name="159"><span class="lineNum">     159 </span>            : </a>
+<a name="160"><span class="lineNum">     160 </span><span class="lineNoCov">          0 :                 err = walk_pmd_range(pud, addr, next, walk);</span></a>
+<a name="161"><span class="lineNum">     161 </span><span class="lineNoCov">          0 :                 if (err)</span></a>
+<a name="162"><span class="lineNum">     162 </span>            :                         break;</a>
+<a name="163"><span class="lineNum">     163 </span><span class="lineNoCov">          0 :         } while (pud++, addr = next, addr != end);</span></a>
+<a name="164"><span class="lineNum">     164 </span>            : </a>
+<a name="165"><span class="lineNum">     165 </span><span class="lineNoCov">          0 :         return err;</span></a>
+<a name="166"><span class="lineNum">     166 </span>            : }</a>
+<a name="167"><span class="lineNum">     167 </span>            : </a>
+<a name="168"><span class="lineNum">     168 </span><span class="lineNoCov">          0 : static int walk_p4d_range(pgd_t *pgd, unsigned long addr, unsigned long end,</span></a>
+<a name="169"><span class="lineNum">     169 </span>            :                           struct mm_walk *walk)</a>
+<a name="170"><span class="lineNum">     170 </span>            : {</a>
+<a name="171"><span class="lineNum">     171 </span><span class="lineNoCov">          0 :         p4d_t *p4d;</span></a>
+<a name="172"><span class="lineNum">     172 </span><span class="lineNoCov">          0 :         unsigned long next;</span></a>
+<a name="173"><span class="lineNum">     173 </span><span class="lineNoCov">          0 :         const struct mm_walk_ops *ops = walk-&gt;ops;</span></a>
+<a name="174"><span class="lineNum">     174 </span><span class="lineNoCov">          0 :         int err = 0;</span></a>
+<a name="175"><span class="lineNum">     175 </span><span class="lineNoCov">          0 :         int depth = real_depth(1);</span></a>
+<a name="176"><span class="lineNum">     176 </span>            : </a>
+<a name="177"><span class="lineNum">     177 </span><span class="lineNoCov">          0 :         p4d = p4d_offset(pgd, addr);</span></a>
+<a name="178"><span class="lineNum">     178 </span><span class="lineNoCov">          0 :         do {</span></a>
+<a name="179"><span class="lineNum">     179 </span><span class="lineNoCov">          0 :                 next = p4d_addr_end(addr, end);</span></a>
+<a name="180"><span class="lineNum">     180 </span><span class="lineNoCov">          0 :                 if (p4d_none_or_clear_bad(p4d)) {</span></a>
+<a name="181"><span class="lineNum">     181 </span><span class="lineNoCov">          0 :                         if (ops-&gt;pte_hole)</span></a>
+<a name="182"><span class="lineNum">     182 </span><span class="lineNoCov">          0 :                                 err = ops-&gt;pte_hole(addr, next, depth, walk);</span></a>
+<a name="183"><span class="lineNum">     183 </span><span class="lineNoCov">          0 :                         if (err)</span></a>
+<a name="184"><span class="lineNum">     184 </span>            :                                 break;</a>
+<a name="185"><span class="lineNum">     185 </span><span class="lineNoCov">          0 :                         continue;</span></a>
+<a name="186"><span class="lineNum">     186 </span>            :                 }</a>
+<a name="187"><span class="lineNum">     187 </span><span class="lineNoCov">          0 :                 if (ops-&gt;p4d_entry) {</span></a>
+<a name="188"><span class="lineNum">     188 </span><span class="lineNoCov">          0 :                         err = ops-&gt;p4d_entry(p4d, addr, next, walk);</span></a>
+<a name="189"><span class="lineNum">     189 </span><span class="lineNoCov">          0 :                         if (err)</span></a>
+<a name="190"><span class="lineNum">     190 </span>            :                                 break;</a>
+<a name="191"><span class="lineNum">     191 </span>            :                 }</a>
+<a name="192"><span class="lineNum">     192 </span><span class="lineNoCov">          0 :                 if (ops-&gt;pud_entry || ops-&gt;pmd_entry || ops-&gt;pte_entry)</span></a>
+<a name="193"><span class="lineNum">     193 </span><span class="lineNoCov">          0 :                         err = walk_pud_range(p4d, addr, next, walk);</span></a>
+<a name="194"><span class="lineNum">     194 </span><span class="lineNoCov">          0 :                 if (err)</span></a>
+<a name="195"><span class="lineNum">     195 </span>            :                         break;</a>
+<a name="196"><span class="lineNum">     196 </span><span class="lineNoCov">          0 :         } while (p4d++, addr = next, addr != end);</span></a>
+<a name="197"><span class="lineNum">     197 </span>            : </a>
+<a name="198"><span class="lineNum">     198 </span><span class="lineNoCov">          0 :         return err;</span></a>
+<a name="199"><span class="lineNum">     199 </span>            : }</a>
+<a name="200"><span class="lineNum">     200 </span>            : </a>
+<a name="201"><span class="lineNum">     201 </span><span class="lineNoCov">          0 : static int walk_pgd_range(unsigned long addr, unsigned long end,</span></a>
+<a name="202"><span class="lineNum">     202 </span>            :                           struct mm_walk *walk)</a>
+<a name="203"><span class="lineNum">     203 </span>            : {</a>
+<a name="204"><span class="lineNum">     204 </span><span class="lineNoCov">          0 :         pgd_t *pgd;</span></a>
+<a name="205"><span class="lineNum">     205 </span><span class="lineNoCov">          0 :         unsigned long next;</span></a>
+<a name="206"><span class="lineNum">     206 </span><span class="lineNoCov">          0 :         const struct mm_walk_ops *ops = walk-&gt;ops;</span></a>
+<a name="207"><span class="lineNum">     207 </span><span class="lineNoCov">          0 :         int err = 0;</span></a>
+<a name="208"><span class="lineNum">     208 </span>            : </a>
+<a name="209"><span class="lineNum">     209 </span><span class="lineNoCov">          0 :         if (walk-&gt;pgd)</span></a>
+<a name="210"><span class="lineNum">     210 </span><span class="lineNoCov">          0 :                 pgd = walk-&gt;pgd + pgd_index(addr);</span></a>
+<a name="211"><span class="lineNum">     211 </span>            :         else</a>
+<a name="212"><span class="lineNum">     212 </span><span class="lineNoCov">          0 :                 pgd = pgd_offset(walk-&gt;mm, addr);</span></a>
+<a name="213"><span class="lineNum">     213 </span><span class="lineNoCov">          0 :         do {</span></a>
+<a name="214"><span class="lineNum">     214 </span><span class="lineNoCov">          0 :                 next = pgd_addr_end(addr, end);</span></a>
+<a name="215"><span class="lineNum">     215 </span><span class="lineNoCov">          0 :                 if (pgd_none_or_clear_bad(pgd)) {</span></a>
+<a name="216"><span class="lineNum">     216 </span>            :                         if (ops-&gt;pte_hole)</a>
+<a name="217"><span class="lineNum">     217 </span>            :                                 err = ops-&gt;pte_hole(addr, next, 0, walk);</a>
+<a name="218"><span class="lineNum">     218 </span>            :                         if (err)</a>
+<a name="219"><span class="lineNum">     219 </span>            :                                 break;</a>
+<a name="220"><span class="lineNum">     220 </span>            :                         continue;</a>
+<a name="221"><span class="lineNum">     221 </span>            :                 }</a>
+<a name="222"><span class="lineNum">     222 </span><span class="lineNoCov">          0 :                 if (ops-&gt;pgd_entry) {</span></a>
+<a name="223"><span class="lineNum">     223 </span><span class="lineNoCov">          0 :                         err = ops-&gt;pgd_entry(pgd, addr, next, walk);</span></a>
+<a name="224"><span class="lineNum">     224 </span><span class="lineNoCov">          0 :                         if (err)</span></a>
+<a name="225"><span class="lineNum">     225 </span>            :                                 break;</a>
+<a name="226"><span class="lineNum">     226 </span>            :                 }</a>
+<a name="227"><span class="lineNum">     227 </span><span class="lineNoCov">          0 :                 if (ops-&gt;p4d_entry || ops-&gt;pud_entry || ops-&gt;pmd_entry ||</span></a>
+<a name="228"><span class="lineNum">     228 </span><span class="lineNoCov">          0 :                     ops-&gt;pte_entry)</span></a>
+<a name="229"><span class="lineNum">     229 </span><span class="lineNoCov">          0 :                         err = walk_p4d_range(pgd, addr, next, walk);</span></a>
+<a name="230"><span class="lineNum">     230 </span><span class="lineNoCov">          0 :                 if (err)</span></a>
+<a name="231"><span class="lineNum">     231 </span>            :                         break;</a>
+<a name="232"><span class="lineNum">     232 </span><span class="lineNoCov">          0 :         } while (pgd++, addr = next, addr != end);</span></a>
+<a name="233"><span class="lineNum">     233 </span>            : </a>
+<a name="234"><span class="lineNum">     234 </span><span class="lineNoCov">          0 :         return err;</span></a>
+<a name="235"><span class="lineNum">     235 </span>            : }</a>
+<a name="236"><span class="lineNum">     236 </span>            : </a>
+<a name="237"><span class="lineNum">     237 </span>            : #ifdef CONFIG_HUGETLB_PAGE</a>
+<a name="238"><span class="lineNum">     238 </span>            : static unsigned long hugetlb_entry_end(struct hstate *h, unsigned long addr,</a>
+<a name="239"><span class="lineNum">     239 </span>            :                                        unsigned long end)</a>
+<a name="240"><span class="lineNum">     240 </span>            : {</a>
+<a name="241"><span class="lineNum">     241 </span>            :         unsigned long boundary = (addr &amp; huge_page_mask(h)) + huge_page_size(h);</a>
+<a name="242"><span class="lineNum">     242 </span>            :         return boundary &lt; end ? boundary : end;</a>
+<a name="243"><span class="lineNum">     243 </span>            : }</a>
+<a name="244"><span class="lineNum">     244 </span>            : </a>
+<a name="245"><span class="lineNum">     245 </span>            : static int walk_hugetlb_range(unsigned long addr, unsigned long end,</a>
+<a name="246"><span class="lineNum">     246 </span>            :                               struct mm_walk *walk)</a>
+<a name="247"><span class="lineNum">     247 </span>            : {</a>
+<a name="248"><span class="lineNum">     248 </span>            :         struct vm_area_struct *vma = walk-&gt;vma;</a>
+<a name="249"><span class="lineNum">     249 </span>            :         struct hstate *h = hstate_vma(vma);</a>
+<a name="250"><span class="lineNum">     250 </span>            :         unsigned long next;</a>
+<a name="251"><span class="lineNum">     251 </span>            :         unsigned long hmask = huge_page_mask(h);</a>
+<a name="252"><span class="lineNum">     252 </span>            :         unsigned long sz = huge_page_size(h);</a>
+<a name="253"><span class="lineNum">     253 </span>            :         pte_t *pte;</a>
+<a name="254"><span class="lineNum">     254 </span>            :         const struct mm_walk_ops *ops = walk-&gt;ops;</a>
+<a name="255"><span class="lineNum">     255 </span>            :         int err = 0;</a>
+<a name="256"><span class="lineNum">     256 </span>            : </a>
+<a name="257"><span class="lineNum">     257 </span>            :         do {</a>
+<a name="258"><span class="lineNum">     258 </span>            :                 next = hugetlb_entry_end(h, addr, end);</a>
+<a name="259"><span class="lineNum">     259 </span>            :                 pte = huge_pte_offset(walk-&gt;mm, addr &amp; hmask, sz);</a>
+<a name="260"><span class="lineNum">     260 </span>            : </a>
+<a name="261"><span class="lineNum">     261 </span>            :                 if (pte)</a>
+<a name="262"><span class="lineNum">     262 </span>            :                         err = ops-&gt;hugetlb_entry(pte, hmask, addr, next, walk);</a>
+<a name="263"><span class="lineNum">     263 </span>            :                 else if (ops-&gt;pte_hole)</a>
+<a name="264"><span class="lineNum">     264 </span>            :                         err = ops-&gt;pte_hole(addr, next, -1, walk);</a>
+<a name="265"><span class="lineNum">     265 </span>            : </a>
+<a name="266"><span class="lineNum">     266 </span>            :                 if (err)</a>
+<a name="267"><span class="lineNum">     267 </span>            :                         break;</a>
+<a name="268"><span class="lineNum">     268 </span>            :         } while (addr = next, addr != end);</a>
+<a name="269"><span class="lineNum">     269 </span>            : </a>
+<a name="270"><span class="lineNum">     270 </span>            :         return err;</a>
+<a name="271"><span class="lineNum">     271 </span>            : }</a>
+<a name="272"><span class="lineNum">     272 </span>            : </a>
+<a name="273"><span class="lineNum">     273 </span>            : #else /* CONFIG_HUGETLB_PAGE */</a>
+<a name="274"><span class="lineNum">     274 </span>            : static int walk_hugetlb_range(unsigned long addr, unsigned long end,</a>
+<a name="275"><span class="lineNum">     275 </span>            :                               struct mm_walk *walk)</a>
+<a name="276"><span class="lineNum">     276 </span>            : {</a>
+<a name="277"><span class="lineNum">     277 </span>            :         return 0;</a>
+<a name="278"><span class="lineNum">     278 </span>            : }</a>
+<a name="279"><span class="lineNum">     279 </span>            : </a>
+<a name="280"><span class="lineNum">     280 </span>            : #endif /* CONFIG_HUGETLB_PAGE */</a>
+<a name="281"><span class="lineNum">     281 </span>            : </a>
+<a name="282"><span class="lineNum">     282 </span>            : /*</a>
+<a name="283"><span class="lineNum">     283 </span>            :  * Decide whether we really walk over the current vma on [@start, @end)</a>
+<a name="284"><span class="lineNum">     284 </span>            :  * or skip it via the returned value. Return 0 if we do walk over the</a>
+<a name="285"><span class="lineNum">     285 </span>            :  * current vma, and return 1 if we skip the vma. Negative values means</a>
+<a name="286"><span class="lineNum">     286 </span>            :  * error, where we abort the current walk.</a>
+<a name="287"><span class="lineNum">     287 </span>            :  */</a>
+<a name="288"><span class="lineNum">     288 </span><span class="lineNoCov">          0 : static int walk_page_test(unsigned long start, unsigned long end,</span></a>
+<a name="289"><span class="lineNum">     289 </span>            :                         struct mm_walk *walk)</a>
+<a name="290"><span class="lineNum">     290 </span>            : {</a>
+<a name="291"><span class="lineNum">     291 </span><span class="lineNoCov">          0 :         struct vm_area_struct *vma = walk-&gt;vma;</span></a>
+<a name="292"><span class="lineNum">     292 </span><span class="lineNoCov">          0 :         const struct mm_walk_ops *ops = walk-&gt;ops;</span></a>
+<a name="293"><span class="lineNum">     293 </span>            : </a>
+<a name="294"><span class="lineNum">     294 </span><span class="lineNoCov">          0 :         if (ops-&gt;test_walk)</span></a>
+<a name="295"><span class="lineNum">     295 </span><span class="lineNoCov">          0 :                 return ops-&gt;test_walk(start, end, walk);</span></a>
+<a name="296"><span class="lineNum">     296 </span>            : </a>
+<a name="297"><span class="lineNum">     297 </span>            :         /*</a>
+<a name="298"><span class="lineNum">     298 </span>            :          * vma(VM_PFNMAP) doesn't have any valid struct pages behind VM_PFNMAP</a>
+<a name="299"><span class="lineNum">     299 </span>            :          * range, so we don't walk over it as we do for normal vmas. However,</a>
+<a name="300"><span class="lineNum">     300 </span>            :          * Some callers are interested in handling hole range and they don't</a>
+<a name="301"><span class="lineNum">     301 </span>            :          * want to just ignore any single address range. Such users certainly</a>
+<a name="302"><span class="lineNum">     302 </span>            :          * define their -&gt;pte_hole() callbacks, so let's delegate them to handle</a>
+<a name="303"><span class="lineNum">     303 </span>            :          * vma(VM_PFNMAP).</a>
+<a name="304"><span class="lineNum">     304 </span>            :          */</a>
+<a name="305"><span class="lineNum">     305 </span><span class="lineNoCov">          0 :         if (vma-&gt;vm_flags &amp; VM_PFNMAP) {</span></a>
+<a name="306"><span class="lineNum">     306 </span><span class="lineNoCov">          0 :                 int err = 1;</span></a>
+<a name="307"><span class="lineNum">     307 </span><span class="lineNoCov">          0 :                 if (ops-&gt;pte_hole)</span></a>
+<a name="308"><span class="lineNum">     308 </span><span class="lineNoCov">          0 :                         err = ops-&gt;pte_hole(start, end, -1, walk);</span></a>
+<a name="309"><span class="lineNum">     309 </span><span class="lineNoCov">          0 :                 return err ? err : 1;</span></a>
+<a name="310"><span class="lineNum">     310 </span>            :         }</a>
+<a name="311"><span class="lineNum">     311 </span>            :         return 0;</a>
+<a name="312"><span class="lineNum">     312 </span>            : }</a>
+<a name="313"><span class="lineNum">     313 </span>            : </a>
+<a name="314"><span class="lineNum">     314 </span><span class="lineNoCov">          0 : static int __walk_page_range(unsigned long start, unsigned long end,</span></a>
+<a name="315"><span class="lineNum">     315 </span>            :                         struct mm_walk *walk)</a>
+<a name="316"><span class="lineNum">     316 </span>            : {</a>
+<a name="317"><span class="lineNum">     317 </span><span class="lineNoCov">          0 :         int err = 0;</span></a>
+<a name="318"><span class="lineNum">     318 </span><span class="lineNoCov">          0 :         struct vm_area_struct *vma = walk-&gt;vma;</span></a>
+<a name="319"><span class="lineNum">     319 </span><span class="lineNoCov">          0 :         const struct mm_walk_ops *ops = walk-&gt;ops;</span></a>
+<a name="320"><span class="lineNum">     320 </span>            : </a>
+<a name="321"><span class="lineNum">     321 </span><span class="lineNoCov">          0 :         if (vma &amp;&amp; ops-&gt;pre_vma) {</span></a>
+<a name="322"><span class="lineNum">     322 </span><span class="lineNoCov">          0 :                 err = ops-&gt;pre_vma(start, end, walk);</span></a>
+<a name="323"><span class="lineNum">     323 </span><span class="lineNoCov">          0 :                 if (err)</span></a>
+<a name="324"><span class="lineNum">     324 </span>            :                         return err;</a>
+<a name="325"><span class="lineNum">     325 </span>            :         }</a>
+<a name="326"><span class="lineNum">     326 </span>            : </a>
+<a name="327"><span class="lineNum">     327 </span><span class="lineNoCov">          0 :         if (vma &amp;&amp; is_vm_hugetlb_page(vma)) {</span></a>
+<a name="328"><span class="lineNum">     328 </span>            :                 if (ops-&gt;hugetlb_entry)</a>
+<a name="329"><span class="lineNum">     329 </span>            :                         err = walk_hugetlb_range(start, end, walk);</a>
+<a name="330"><span class="lineNum">     330 </span>            :         } else</a>
+<a name="331"><span class="lineNum">     331 </span><span class="lineNoCov">          0 :                 err = walk_pgd_range(start, end, walk);</span></a>
+<a name="332"><span class="lineNum">     332 </span>            : </a>
+<a name="333"><span class="lineNum">     333 </span><span class="lineNoCov">          0 :         if (vma &amp;&amp; ops-&gt;post_vma)</span></a>
+<a name="334"><span class="lineNum">     334 </span><span class="lineNoCov">          0 :                 ops-&gt;post_vma(walk);</span></a>
+<a name="335"><span class="lineNum">     335 </span>            : </a>
+<a name="336"><span class="lineNum">     336 </span>            :         return err;</a>
+<a name="337"><span class="lineNum">     337 </span>            : }</a>
+<a name="338"><span class="lineNum">     338 </span>            : </a>
+<a name="339"><span class="lineNum">     339 </span>            : /**</a>
+<a name="340"><span class="lineNum">     340 </span>            :  * walk_page_range - walk page table with caller specific callbacks</a>
+<a name="341"><span class="lineNum">     341 </span>            :  * @mm:         mm_struct representing the target process of page table walk</a>
+<a name="342"><span class="lineNum">     342 </span>            :  * @start:      start address of the virtual address range</a>
+<a name="343"><span class="lineNum">     343 </span>            :  * @end:        end address of the virtual address range</a>
+<a name="344"><span class="lineNum">     344 </span>            :  * @ops:        operation to call during the walk</a>
+<a name="345"><span class="lineNum">     345 </span>            :  * @private:    private data for callbacks' usage</a>
+<a name="346"><span class="lineNum">     346 </span>            :  *</a>
+<a name="347"><span class="lineNum">     347 </span>            :  * Recursively walk the page table tree of the process represented by @mm</a>
+<a name="348"><span class="lineNum">     348 </span>            :  * within the virtual address range [@start, @end). During walking, we can do</a>
+<a name="349"><span class="lineNum">     349 </span>            :  * some caller-specific works for each entry, by setting up pmd_entry(),</a>
+<a name="350"><span class="lineNum">     350 </span>            :  * pte_entry(), and/or hugetlb_entry(). If you don't set up for some of these</a>
+<a name="351"><span class="lineNum">     351 </span>            :  * callbacks, the associated entries/pages are just ignored.</a>
+<a name="352"><span class="lineNum">     352 </span>            :  * The return values of these callbacks are commonly defined like below:</a>
+<a name="353"><span class="lineNum">     353 </span>            :  *</a>
+<a name="354"><span class="lineNum">     354 </span>            :  *  - 0  : succeeded to handle the current entry, and if you don't reach the</a>
+<a name="355"><span class="lineNum">     355 </span>            :  *         end address yet, continue to walk.</a>
+<a name="356"><span class="lineNum">     356 </span>            :  *  - &gt;0 : succeeded to handle the current entry, and return to the caller</a>
+<a name="357"><span class="lineNum">     357 </span>            :  *         with caller specific value.</a>
+<a name="358"><span class="lineNum">     358 </span>            :  *  - &lt;0 : failed to handle the current entry, and return to the caller</a>
+<a name="359"><span class="lineNum">     359 </span>            :  *         with error code.</a>
+<a name="360"><span class="lineNum">     360 </span>            :  *</a>
+<a name="361"><span class="lineNum">     361 </span>            :  * Before starting to walk page table, some callers want to check whether</a>
+<a name="362"><span class="lineNum">     362 </span>            :  * they really want to walk over the current vma, typically by checking</a>
+<a name="363"><span class="lineNum">     363 </span>            :  * its vm_flags. walk_page_test() and @ops-&gt;test_walk() are used for this</a>
+<a name="364"><span class="lineNum">     364 </span>            :  * purpose.</a>
+<a name="365"><span class="lineNum">     365 </span>            :  *</a>
+<a name="366"><span class="lineNum">     366 </span>            :  * If operations need to be staged before and committed after a vma is walked,</a>
+<a name="367"><span class="lineNum">     367 </span>            :  * there are two callbacks, pre_vma() and post_vma(). Note that post_vma(),</a>
+<a name="368"><span class="lineNum">     368 </span>            :  * since it is intended to handle commit-type operations, can't return any</a>
+<a name="369"><span class="lineNum">     369 </span>            :  * errors.</a>
+<a name="370"><span class="lineNum">     370 </span>            :  *</a>
+<a name="371"><span class="lineNum">     371 </span>            :  * struct mm_walk keeps current values of some common data like vma and pmd,</a>
+<a name="372"><span class="lineNum">     372 </span>            :  * which are useful for the access from callbacks. If you want to pass some</a>
+<a name="373"><span class="lineNum">     373 </span>            :  * caller-specific data to callbacks, @private should be helpful.</a>
+<a name="374"><span class="lineNum">     374 </span>            :  *</a>
+<a name="375"><span class="lineNum">     375 </span>            :  * Locking:</a>
+<a name="376"><span class="lineNum">     376 </span>            :  *   Callers of walk_page_range() and walk_page_vma() should hold @mm-&gt;mmap_lock,</a>
+<a name="377"><span class="lineNum">     377 </span>            :  *   because these function traverse vma list and/or access to vma's data.</a>
+<a name="378"><span class="lineNum">     378 </span>            :  */</a>
+<a name="379"><span class="lineNum">     379 </span><span class="lineNoCov">          0 : int walk_page_range(struct mm_struct *mm, unsigned long start,</span></a>
+<a name="380"><span class="lineNum">     380 </span>            :                 unsigned long end, const struct mm_walk_ops *ops,</a>
+<a name="381"><span class="lineNum">     381 </span>            :                 void *private)</a>
+<a name="382"><span class="lineNum">     382 </span>            : {</a>
+<a name="383"><span class="lineNum">     383 </span><span class="lineNoCov">          0 :         int err = 0;</span></a>
+<a name="384"><span class="lineNum">     384 </span><span class="lineNoCov">          0 :         unsigned long next;</span></a>
+<a name="385"><span class="lineNum">     385 </span><span class="lineNoCov">          0 :         struct vm_area_struct *vma;</span></a>
+<a name="386"><span class="lineNum">     386 </span><span class="lineNoCov">          0 :         struct mm_walk walk = {</span></a>
+<a name="387"><span class="lineNum">     387 </span>            :                 .ops            = ops,</a>
+<a name="388"><span class="lineNum">     388 </span>            :                 .mm             = mm,</a>
+<a name="389"><span class="lineNum">     389 </span>            :                 .private        = private,</a>
+<a name="390"><span class="lineNum">     390 </span>            :         };</a>
+<a name="391"><span class="lineNum">     391 </span>            : </a>
+<a name="392"><span class="lineNum">     392 </span><span class="lineNoCov">          0 :         if (start &gt;= end)</span></a>
+<a name="393"><span class="lineNum">     393 </span>            :                 return -EINVAL;</a>
+<a name="394"><span class="lineNum">     394 </span>            : </a>
+<a name="395"><span class="lineNum">     395 </span><span class="lineNoCov">          0 :         if (!walk.mm)</span></a>
+<a name="396"><span class="lineNum">     396 </span>            :                 return -EINVAL;</a>
+<a name="397"><span class="lineNum">     397 </span>            : </a>
+<a name="398"><span class="lineNum">     398 </span><span class="lineNoCov">          0 :         mmap_assert_locked(walk.mm);</span></a>
+<a name="399"><span class="lineNum">     399 </span>            : </a>
+<a name="400"><span class="lineNum">     400 </span><span class="lineNoCov">          0 :         vma = find_vma(walk.mm, start);</span></a>
+<a name="401"><span class="lineNum">     401 </span><span class="lineNoCov">          0 :         do {</span></a>
+<a name="402"><span class="lineNum">     402 </span><span class="lineNoCov">          0 :                 if (!vma) { /* after the last vma */</span></a>
+<a name="403"><span class="lineNum">     403 </span><span class="lineNoCov">          0 :                         walk.vma = NULL;</span></a>
+<a name="404"><span class="lineNum">     404 </span><span class="lineNoCov">          0 :                         next = end;</span></a>
+<a name="405"><span class="lineNum">     405 </span><span class="lineNoCov">          0 :                 } else if (start &lt; vma-&gt;vm_start) { /* outside vma */</span></a>
+<a name="406"><span class="lineNum">     406 </span><span class="lineNoCov">          0 :                         walk.vma = NULL;</span></a>
+<a name="407"><span class="lineNum">     407 </span><span class="lineNoCov">          0 :                         next = min(end, vma-&gt;vm_start);</span></a>
+<a name="408"><span class="lineNum">     408 </span>            :                 } else { /* inside vma */</a>
+<a name="409"><span class="lineNum">     409 </span><span class="lineNoCov">          0 :                         walk.vma = vma;</span></a>
+<a name="410"><span class="lineNum">     410 </span><span class="lineNoCov">          0 :                         next = min(end, vma-&gt;vm_end);</span></a>
+<a name="411"><span class="lineNum">     411 </span><span class="lineNoCov">          0 :                         vma = vma-&gt;vm_next;</span></a>
+<a name="412"><span class="lineNum">     412 </span>            : </a>
+<a name="413"><span class="lineNum">     413 </span><span class="lineNoCov">          0 :                         err = walk_page_test(start, next, &amp;walk);</span></a>
+<a name="414"><span class="lineNum">     414 </span><span class="lineNoCov">          0 :                         if (err &gt; 0) {</span></a>
+<a name="415"><span class="lineNum">     415 </span>            :                                 /*</a>
+<a name="416"><span class="lineNum">     416 </span>            :                                  * positive return values are purely for</a>
+<a name="417"><span class="lineNum">     417 </span>            :                                  * controlling the pagewalk, so should never</a>
+<a name="418"><span class="lineNum">     418 </span>            :                                  * be passed to the callers.</a>
+<a name="419"><span class="lineNum">     419 </span>            :                                  */</a>
+<a name="420"><span class="lineNum">     420 </span><span class="lineNoCov">          0 :                                 err = 0;</span></a>
+<a name="421"><span class="lineNum">     421 </span><span class="lineNoCov">          0 :                                 continue;</span></a>
+<a name="422"><span class="lineNum">     422 </span>            :                         }</a>
+<a name="423"><span class="lineNum">     423 </span><span class="lineNoCov">          0 :                         if (err &lt; 0)</span></a>
+<a name="424"><span class="lineNum">     424 </span>            :                                 break;</a>
+<a name="425"><span class="lineNum">     425 </span>            :                 }</a>
+<a name="426"><span class="lineNum">     426 </span><span class="lineNoCov">          0 :                 if (walk.vma || walk.ops-&gt;pte_hole)</span></a>
+<a name="427"><span class="lineNum">     427 </span><span class="lineNoCov">          0 :                         err = __walk_page_range(start, next, &amp;walk);</span></a>
+<a name="428"><span class="lineNum">     428 </span><span class="lineNoCov">          0 :                 if (err)</span></a>
+<a name="429"><span class="lineNum">     429 </span>            :                         break;</a>
+<a name="430"><span class="lineNum">     430 </span><span class="lineNoCov">          0 :         } while (start = next, start &lt; end);</span></a>
+<a name="431"><span class="lineNum">     431 </span>            :         return err;</a>
+<a name="432"><span class="lineNum">     432 </span>            : }</a>
+<a name="433"><span class="lineNum">     433 </span>            : </a>
+<a name="434"><span class="lineNum">     434 </span>            : /*</a>
+<a name="435"><span class="lineNum">     435 </span>            :  * Similar to walk_page_range() but can walk any page tables even if they are</a>
+<a name="436"><span class="lineNum">     436 </span>            :  * not backed by VMAs. Because 'unusual' entries may be walked this function</a>
+<a name="437"><span class="lineNum">     437 </span>            :  * will also not lock the PTEs for the pte_entry() callback. This is useful for</a>
+<a name="438"><span class="lineNum">     438 </span>            :  * walking the kernel pages tables or page tables for firmware.</a>
+<a name="439"><span class="lineNum">     439 </span>            :  */</a>
+<a name="440"><span class="lineNum">     440 </span><span class="lineNoCov">          0 : int walk_page_range_novma(struct mm_struct *mm, unsigned long start,</span></a>
+<a name="441"><span class="lineNum">     441 </span>            :                           unsigned long end, const struct mm_walk_ops *ops,</a>
+<a name="442"><span class="lineNum">     442 </span>            :                           pgd_t *pgd,</a>
+<a name="443"><span class="lineNum">     443 </span>            :                           void *private)</a>
+<a name="444"><span class="lineNum">     444 </span>            : {</a>
+<a name="445"><span class="lineNum">     445 </span><span class="lineNoCov">          0 :         struct mm_walk walk = {</span></a>
+<a name="446"><span class="lineNum">     446 </span>            :                 .ops            = ops,</a>
+<a name="447"><span class="lineNum">     447 </span>            :                 .mm             = mm,</a>
+<a name="448"><span class="lineNum">     448 </span>            :                 .pgd            = pgd,</a>
+<a name="449"><span class="lineNum">     449 </span>            :                 .private        = private,</a>
+<a name="450"><span class="lineNum">     450 </span>            :                 .no_vma         = true</a>
+<a name="451"><span class="lineNum">     451 </span>            :         };</a>
+<a name="452"><span class="lineNum">     452 </span>            : </a>
+<a name="453"><span class="lineNum">     453 </span><span class="lineNoCov">          0 :         if (start &gt;= end || !walk.mm)</span></a>
+<a name="454"><span class="lineNum">     454 </span>            :                 return -EINVAL;</a>
+<a name="455"><span class="lineNum">     455 </span>            : </a>
+<a name="456"><span class="lineNum">     456 </span><span class="lineNoCov">          0 :         mmap_assert_locked(walk.mm);</span></a>
+<a name="457"><span class="lineNum">     457 </span>            : </a>
+<a name="458"><span class="lineNum">     458 </span><span class="lineNoCov">          0 :         return __walk_page_range(start, end, &amp;walk);</span></a>
+<a name="459"><span class="lineNum">     459 </span>            : }</a>
+<a name="460"><span class="lineNum">     460 </span>            : </a>
+<a name="461"><span class="lineNum">     461 </span><span class="lineNoCov">          0 : int walk_page_vma(struct vm_area_struct *vma, const struct mm_walk_ops *ops,</span></a>
+<a name="462"><span class="lineNum">     462 </span>            :                 void *private)</a>
+<a name="463"><span class="lineNum">     463 </span>            : {</a>
+<a name="464"><span class="lineNum">     464 </span><span class="lineNoCov">          0 :         struct mm_walk walk = {</span></a>
+<a name="465"><span class="lineNum">     465 </span>            :                 .ops            = ops,</a>
+<a name="466"><span class="lineNum">     466 </span><span class="lineNoCov">          0 :                 .mm             = vma-&gt;vm_mm,</span></a>
+<a name="467"><span class="lineNum">     467 </span>            :                 .vma            = vma,</a>
+<a name="468"><span class="lineNum">     468 </span>            :                 .private        = private,</a>
+<a name="469"><span class="lineNum">     469 </span>            :         };</a>
+<a name="470"><span class="lineNum">     470 </span><span class="lineNoCov">          0 :         int err;</span></a>
+<a name="471"><span class="lineNum">     471 </span>            : </a>
+<a name="472"><span class="lineNum">     472 </span><span class="lineNoCov">          0 :         if (!walk.mm)</span></a>
+<a name="473"><span class="lineNum">     473 </span>            :                 return -EINVAL;</a>
+<a name="474"><span class="lineNum">     474 </span>            : </a>
+<a name="475"><span class="lineNum">     475 </span><span class="lineNoCov">          0 :         mmap_assert_locked(walk.mm);</span></a>
+<a name="476"><span class="lineNum">     476 </span>            : </a>
+<a name="477"><span class="lineNum">     477 </span><span class="lineNoCov">          0 :         err = walk_page_test(vma-&gt;vm_start, vma-&gt;vm_end, &amp;walk);</span></a>
+<a name="478"><span class="lineNum">     478 </span><span class="lineNoCov">          0 :         if (err &gt; 0)</span></a>
+<a name="479"><span class="lineNum">     479 </span>            :                 return 0;</a>
+<a name="480"><span class="lineNum">     480 </span><span class="lineNoCov">          0 :         if (err &lt; 0)</span></a>
+<a name="481"><span class="lineNum">     481 </span>            :                 return err;</a>
+<a name="482"><span class="lineNum">     482 </span><span class="lineNoCov">          0 :         return __walk_page_range(vma-&gt;vm_start, vma-&gt;vm_end, &amp;walk);</span></a>
+<a name="483"><span class="lineNum">     483 </span>            : }</a>
+<a name="484"><span class="lineNum">     484 </span>            : </a>
+<a name="485"><span class="lineNum">     485 </span>            : /**</a>
+<a name="486"><span class="lineNum">     486 </span>            :  * walk_page_mapping - walk all memory areas mapped into a struct address_space.</a>
+<a name="487"><span class="lineNum">     487 </span>            :  * @mapping: Pointer to the struct address_space</a>
+<a name="488"><span class="lineNum">     488 </span>            :  * @first_index: First page offset in the address_space</a>
+<a name="489"><span class="lineNum">     489 </span>            :  * @nr: Number of incremental page offsets to cover</a>
+<a name="490"><span class="lineNum">     490 </span>            :  * @ops:        operation to call during the walk</a>
+<a name="491"><span class="lineNum">     491 </span>            :  * @private:    private data for callbacks' usage</a>
+<a name="492"><span class="lineNum">     492 </span>            :  *</a>
+<a name="493"><span class="lineNum">     493 </span>            :  * This function walks all memory areas mapped into a struct address_space.</a>
+<a name="494"><span class="lineNum">     494 </span>            :  * The walk is limited to only the given page-size index range, but if</a>
+<a name="495"><span class="lineNum">     495 </span>            :  * the index boundaries cross a huge page-table entry, that entry will be</a>
+<a name="496"><span class="lineNum">     496 </span>            :  * included.</a>
+<a name="497"><span class="lineNum">     497 </span>            :  *</a>
+<a name="498"><span class="lineNum">     498 </span>            :  * Also see walk_page_range() for additional information.</a>
+<a name="499"><span class="lineNum">     499 </span>            :  *</a>
+<a name="500"><span class="lineNum">     500 </span>            :  * Locking:</a>
+<a name="501"><span class="lineNum">     501 </span>            :  *   This function can't require that the struct mm_struct::mmap_lock is held,</a>
+<a name="502"><span class="lineNum">     502 </span>            :  *   since @mapping may be mapped by multiple processes. Instead</a>
+<a name="503"><span class="lineNum">     503 </span>            :  *   @mapping-&gt;i_mmap_rwsem must be held. This might have implications in the</a>
+<a name="504"><span class="lineNum">     504 </span>            :  *   callbacks, and it's up tho the caller to ensure that the</a>
+<a name="505"><span class="lineNum">     505 </span>            :  *   struct mm_struct::mmap_lock is not needed.</a>
+<a name="506"><span class="lineNum">     506 </span>            :  *</a>
+<a name="507"><span class="lineNum">     507 </span>            :  *   Also this means that a caller can't rely on the struct</a>
+<a name="508"><span class="lineNum">     508 </span>            :  *   vm_area_struct::vm_flags to be constant across a call,</a>
+<a name="509"><span class="lineNum">     509 </span>            :  *   except for immutable flags. Callers requiring this shouldn't use</a>
+<a name="510"><span class="lineNum">     510 </span>            :  *   this function.</a>
+<a name="511"><span class="lineNum">     511 </span>            :  *</a>
+<a name="512"><span class="lineNum">     512 </span>            :  * Return: 0 on success, negative error code on failure, positive number on</a>
+<a name="513"><span class="lineNum">     513 </span>            :  * caller defined premature termination.</a>
+<a name="514"><span class="lineNum">     514 </span>            :  */</a>
+<a name="515"><span class="lineNum">     515 </span><span class="lineNoCov">          0 : int walk_page_mapping(struct address_space *mapping, pgoff_t first_index,</span></a>
+<a name="516"><span class="lineNum">     516 </span>            :                       pgoff_t nr, const struct mm_walk_ops *ops,</a>
+<a name="517"><span class="lineNum">     517 </span>            :                       void *private)</a>
+<a name="518"><span class="lineNum">     518 </span>            : {</a>
+<a name="519"><span class="lineNum">     519 </span><span class="lineNoCov">          0 :         struct mm_walk walk = {</span></a>
+<a name="520"><span class="lineNum">     520 </span>            :                 .ops            = ops,</a>
+<a name="521"><span class="lineNum">     521 </span>            :                 .private        = private,</a>
+<a name="522"><span class="lineNum">     522 </span>            :         };</a>
+<a name="523"><span class="lineNum">     523 </span><span class="lineNoCov">          0 :         struct vm_area_struct *vma;</span></a>
+<a name="524"><span class="lineNum">     524 </span><span class="lineNoCov">          0 :         pgoff_t vba, vea, cba, cea;</span></a>
+<a name="525"><span class="lineNum">     525 </span><span class="lineNoCov">          0 :         unsigned long start_addr, end_addr;</span></a>
+<a name="526"><span class="lineNum">     526 </span><span class="lineNoCov">          0 :         int err = 0;</span></a>
+<a name="527"><span class="lineNum">     527 </span>            : </a>
+<a name="528"><span class="lineNum">     528 </span><span class="lineNoCov">          0 :         lockdep_assert_held(&amp;mapping-&gt;i_mmap_rwsem);</span></a>
+<a name="529"><span class="lineNum">     529 </span><span class="lineNoCov">          0 :         vma_interval_tree_foreach(vma, &amp;mapping-&gt;i_mmap, first_index,</span></a>
+<a name="530"><span class="lineNum">     530 </span>            :                                   first_index + nr - 1) {</a>
+<a name="531"><span class="lineNum">     531 </span>            :                 /* Clip to the vma */</a>
+<a name="532"><span class="lineNum">     532 </span><span class="lineNoCov">          0 :                 vba = vma-&gt;vm_pgoff;</span></a>
+<a name="533"><span class="lineNum">     533 </span><span class="lineNoCov">          0 :                 vea = vba + vma_pages(vma);</span></a>
+<a name="534"><span class="lineNum">     534 </span><span class="lineNoCov">          0 :                 cba = first_index;</span></a>
+<a name="535"><span class="lineNum">     535 </span><span class="lineNoCov">          0 :                 cba = max(cba, vba);</span></a>
+<a name="536"><span class="lineNum">     536 </span><span class="lineNoCov">          0 :                 cea = first_index + nr;</span></a>
+<a name="537"><span class="lineNum">     537 </span><span class="lineNoCov">          0 :                 cea = min(cea, vea);</span></a>
+<a name="538"><span class="lineNum">     538 </span>            : </a>
+<a name="539"><span class="lineNum">     539 </span><span class="lineNoCov">          0 :                 start_addr = ((cba - vba) &lt;&lt; PAGE_SHIFT) + vma-&gt;vm_start;</span></a>
+<a name="540"><span class="lineNum">     540 </span><span class="lineNoCov">          0 :                 end_addr = ((cea - vba) &lt;&lt; PAGE_SHIFT) + vma-&gt;vm_start;</span></a>
+<a name="541"><span class="lineNum">     541 </span><span class="lineNoCov">          0 :                 if (start_addr &gt;= end_addr)</span></a>
+<a name="542"><span class="lineNum">     542 </span><span class="lineNoCov">          0 :                         continue;</span></a>
+<a name="543"><span class="lineNum">     543 </span>            : </a>
+<a name="544"><span class="lineNum">     544 </span><span class="lineNoCov">          0 :                 walk.vma = vma;</span></a>
+<a name="545"><span class="lineNum">     545 </span><span class="lineNoCov">          0 :                 walk.mm = vma-&gt;vm_mm;</span></a>
+<a name="546"><span class="lineNum">     546 </span>            : </a>
+<a name="547"><span class="lineNum">     547 </span><span class="lineNoCov">          0 :                 err = walk_page_test(vma-&gt;vm_start, vma-&gt;vm_end, &amp;walk);</span></a>
+<a name="548"><span class="lineNum">     548 </span><span class="lineNoCov">          0 :                 if (err &gt; 0) {</span></a>
+<a name="549"><span class="lineNum">     549 </span>            :                         err = 0;</a>
+<a name="550"><span class="lineNum">     550 </span>            :                         break;</a>
+<a name="551"><span class="lineNum">     551 </span><span class="lineNoCov">          0 :                 } else if (err &lt; 0)</span></a>
+<a name="552"><span class="lineNum">     552 </span>            :                         break;</a>
+<a name="553"><span class="lineNum">     553 </span>            : </a>
+<a name="554"><span class="lineNum">     554 </span><span class="lineNoCov">          0 :                 err = __walk_page_range(start_addr, end_addr, &amp;walk);</span></a>
+<a name="555"><span class="lineNum">     555 </span><span class="lineNoCov">          0 :                 if (err)</span></a>
+<a name="556"><span class="lineNum">     556 </span>            :                         break;</a>
+<a name="557"><span class="lineNum">     557 </span>            :         }</a>
+<a name="558"><span class="lineNum">     558 </span>            : </a>
+<a name="559"><span class="lineNum">     559 </span><span class="lineNoCov">          0 :         return err;</span></a>
+<a name="560"><span class="lineNum">     560 </span>            : }</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

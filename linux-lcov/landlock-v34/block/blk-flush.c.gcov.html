@@ -1,0 +1,588 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - landlock.info - block/blk-flush.c</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">block</a> - blk-flush.c<span style="font-size: 80%;"> (source / <a href="blk-flush.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">landlock.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">142</td>
+            <td class="headerCovTableEntry">169</td>
+            <td class="headerCovTableEntryMed">84.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2021-04-22 12:43:58</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">9</td>
+            <td class="headerCovTableEntry">11</td>
+            <td class="headerCovTableEntryMed">81.8 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : // SPDX-License-Identifier: GPL-2.0</a>
+<a name="2"><span class="lineNum">       2 </span>            : /*</a>
+<a name="3"><span class="lineNum">       3 </span>            :  * Functions to sequence PREFLUSH and FUA writes.</a>
+<a name="4"><span class="lineNum">       4 </span>            :  *</a>
+<a name="5"><span class="lineNum">       5 </span>            :  * Copyright (C) 2011           Max Planck Institute for Gravitational Physics</a>
+<a name="6"><span class="lineNum">       6 </span>            :  * Copyright (C) 2011           Tejun Heo &lt;tj@kernel.org&gt;</a>
+<a name="7"><span class="lineNum">       7 </span>            :  *</a>
+<a name="8"><span class="lineNum">       8 </span>            :  * REQ_{PREFLUSH|FUA} requests are decomposed to sequences consisted of three</a>
+<a name="9"><span class="lineNum">       9 </span>            :  * optional steps - PREFLUSH, DATA and POSTFLUSH - according to the request</a>
+<a name="10"><span class="lineNum">      10 </span>            :  * properties and hardware capability.</a>
+<a name="11"><span class="lineNum">      11 </span>            :  *</a>
+<a name="12"><span class="lineNum">      12 </span>            :  * If a request doesn't have data, only REQ_PREFLUSH makes sense, which</a>
+<a name="13"><span class="lineNum">      13 </span>            :  * indicates a simple flush request.  If there is data, REQ_PREFLUSH indicates</a>
+<a name="14"><span class="lineNum">      14 </span>            :  * that the device cache should be flushed before the data is executed, and</a>
+<a name="15"><span class="lineNum">      15 </span>            :  * REQ_FUA means that the data must be on non-volatile media on request</a>
+<a name="16"><span class="lineNum">      16 </span>            :  * completion.</a>
+<a name="17"><span class="lineNum">      17 </span>            :  *</a>
+<a name="18"><span class="lineNum">      18 </span>            :  * If the device doesn't have writeback cache, PREFLUSH and FUA don't make any</a>
+<a name="19"><span class="lineNum">      19 </span>            :  * difference.  The requests are either completed immediately if there's no data</a>
+<a name="20"><span class="lineNum">      20 </span>            :  * or executed as normal requests otherwise.</a>
+<a name="21"><span class="lineNum">      21 </span>            :  *</a>
+<a name="22"><span class="lineNum">      22 </span>            :  * If the device has writeback cache and supports FUA, REQ_PREFLUSH is</a>
+<a name="23"><span class="lineNum">      23 </span>            :  * translated to PREFLUSH but REQ_FUA is passed down directly with DATA.</a>
+<a name="24"><span class="lineNum">      24 </span>            :  *</a>
+<a name="25"><span class="lineNum">      25 </span>            :  * If the device has writeback cache and doesn't support FUA, REQ_PREFLUSH</a>
+<a name="26"><span class="lineNum">      26 </span>            :  * is translated to PREFLUSH and REQ_FUA to POSTFLUSH.</a>
+<a name="27"><span class="lineNum">      27 </span>            :  *</a>
+<a name="28"><span class="lineNum">      28 </span>            :  * The actual execution of flush is double buffered.  Whenever a request</a>
+<a name="29"><span class="lineNum">      29 </span>            :  * needs to execute PRE or POSTFLUSH, it queues at</a>
+<a name="30"><span class="lineNum">      30 </span>            :  * fq-&gt;flush_queue[fq-&gt;flush_pending_idx].  Once certain criteria are met, a</a>
+<a name="31"><span class="lineNum">      31 </span>            :  * REQ_OP_FLUSH is issued and the pending_idx is toggled.  When the flush</a>
+<a name="32"><span class="lineNum">      32 </span>            :  * completes, all the requests which were pending are proceeded to the next</a>
+<a name="33"><span class="lineNum">      33 </span>            :  * step.  This allows arbitrary merging of different types of PREFLUSH/FUA</a>
+<a name="34"><span class="lineNum">      34 </span>            :  * requests.</a>
+<a name="35"><span class="lineNum">      35 </span>            :  *</a>
+<a name="36"><span class="lineNum">      36 </span>            :  * Currently, the following conditions are used to determine when to issue</a>
+<a name="37"><span class="lineNum">      37 </span>            :  * flush.</a>
+<a name="38"><span class="lineNum">      38 </span>            :  *</a>
+<a name="39"><span class="lineNum">      39 </span>            :  * C1. At any given time, only one flush shall be in progress.  This makes</a>
+<a name="40"><span class="lineNum">      40 </span>            :  *     double buffering sufficient.</a>
+<a name="41"><span class="lineNum">      41 </span>            :  *</a>
+<a name="42"><span class="lineNum">      42 </span>            :  * C2. Flush is deferred if any request is executing DATA of its sequence.</a>
+<a name="43"><span class="lineNum">      43 </span>            :  *     This avoids issuing separate POSTFLUSHes for requests which shared</a>
+<a name="44"><span class="lineNum">      44 </span>            :  *     PREFLUSH.</a>
+<a name="45"><span class="lineNum">      45 </span>            :  *</a>
+<a name="46"><span class="lineNum">      46 </span>            :  * C3. The second condition is ignored if there is a request which has</a>
+<a name="47"><span class="lineNum">      47 </span>            :  *     waited longer than FLUSH_PENDING_TIMEOUT.  This is to avoid</a>
+<a name="48"><span class="lineNum">      48 </span>            :  *     starvation in the unlikely case where there are continuous stream of</a>
+<a name="49"><span class="lineNum">      49 </span>            :  *     FUA (without PREFLUSH) requests.</a>
+<a name="50"><span class="lineNum">      50 </span>            :  *</a>
+<a name="51"><span class="lineNum">      51 </span>            :  * For devices which support FUA, it isn't clear whether C2 (and thus C3)</a>
+<a name="52"><span class="lineNum">      52 </span>            :  * is beneficial.</a>
+<a name="53"><span class="lineNum">      53 </span>            :  *</a>
+<a name="54"><span class="lineNum">      54 </span>            :  * Note that a sequenced PREFLUSH/FUA request with DATA is completed twice.</a>
+<a name="55"><span class="lineNum">      55 </span>            :  * Once while executing DATA and again after the whole sequence is</a>
+<a name="56"><span class="lineNum">      56 </span>            :  * complete.  The first completion updates the contained bio but doesn't</a>
+<a name="57"><span class="lineNum">      57 </span>            :  * finish it so that the bio submitter is notified only after the whole</a>
+<a name="58"><span class="lineNum">      58 </span>            :  * sequence is complete.  This is implemented by testing RQF_FLUSH_SEQ in</a>
+<a name="59"><span class="lineNum">      59 </span>            :  * req_bio_endio().</a>
+<a name="60"><span class="lineNum">      60 </span>            :  *</a>
+<a name="61"><span class="lineNum">      61 </span>            :  * The above peculiarity requires that each PREFLUSH/FUA request has only one</a>
+<a name="62"><span class="lineNum">      62 </span>            :  * bio attached to it, which is guaranteed as they aren't allowed to be</a>
+<a name="63"><span class="lineNum">      63 </span>            :  * merged in the usual way.</a>
+<a name="64"><span class="lineNum">      64 </span>            :  */</a>
+<a name="65"><span class="lineNum">      65 </span>            : </a>
+<a name="66"><span class="lineNum">      66 </span>            : #include &lt;linux/kernel.h&gt;</a>
+<a name="67"><span class="lineNum">      67 </span>            : #include &lt;linux/module.h&gt;</a>
+<a name="68"><span class="lineNum">      68 </span>            : #include &lt;linux/bio.h&gt;</a>
+<a name="69"><span class="lineNum">      69 </span>            : #include &lt;linux/blkdev.h&gt;</a>
+<a name="70"><span class="lineNum">      70 </span>            : #include &lt;linux/gfp.h&gt;</a>
+<a name="71"><span class="lineNum">      71 </span>            : #include &lt;linux/blk-mq.h&gt;</a>
+<a name="72"><span class="lineNum">      72 </span>            : </a>
+<a name="73"><span class="lineNum">      73 </span>            : #include &quot;blk.h&quot;</a>
+<a name="74"><span class="lineNum">      74 </span>            : #include &quot;blk-mq.h&quot;</a>
+<a name="75"><span class="lineNum">      75 </span>            : #include &quot;blk-mq-tag.h&quot;</a>
+<a name="76"><span class="lineNum">      76 </span>            : #include &quot;blk-mq-sched.h&quot;</a>
+<a name="77"><span class="lineNum">      77 </span>            : </a>
+<a name="78"><span class="lineNum">      78 </span>            : /* PREFLUSH/FUA sequences */</a>
+<a name="79"><span class="lineNum">      79 </span>            : enum {</a>
+<a name="80"><span class="lineNum">      80 </span>            :         REQ_FSEQ_PREFLUSH       = (1 &lt;&lt; 0), /* pre-flushing in progress */</a>
+<a name="81"><span class="lineNum">      81 </span>            :         REQ_FSEQ_DATA           = (1 &lt;&lt; 1), /* data write in progress */</a>
+<a name="82"><span class="lineNum">      82 </span>            :         REQ_FSEQ_POSTFLUSH      = (1 &lt;&lt; 2), /* post-flushing in progress */</a>
+<a name="83"><span class="lineNum">      83 </span>            :         REQ_FSEQ_DONE           = (1 &lt;&lt; 3),</a>
+<a name="84"><span class="lineNum">      84 </span>            : </a>
+<a name="85"><span class="lineNum">      85 </span>            :         REQ_FSEQ_ACTIONS        = REQ_FSEQ_PREFLUSH | REQ_FSEQ_DATA |</a>
+<a name="86"><span class="lineNum">      86 </span>            :                                   REQ_FSEQ_POSTFLUSH,</a>
+<a name="87"><span class="lineNum">      87 </span>            : </a>
+<a name="88"><span class="lineNum">      88 </span>            :         /*</a>
+<a name="89"><span class="lineNum">      89 </span>            :          * If flush has been pending longer than the following timeout,</a>
+<a name="90"><span class="lineNum">      90 </span>            :          * it's issued even if flush_data requests are still in flight.</a>
+<a name="91"><span class="lineNum">      91 </span>            :          */</a>
+<a name="92"><span class="lineNum">      92 </span>            :         FLUSH_PENDING_TIMEOUT   = 5 * HZ,</a>
+<a name="93"><span class="lineNum">      93 </span>            : };</a>
+<a name="94"><span class="lineNum">      94 </span>            : </a>
+<a name="95"><span class="lineNum">      95 </span>            : static void blk_kick_flush(struct request_queue *q,</a>
+<a name="96"><span class="lineNum">      96 </span>            :                            struct blk_flush_queue *fq, unsigned int flags);</a>
+<a name="97"><span class="lineNum">      97 </span>            : </a>
+<a name="98"><span class="lineNum">      98 </span><span class="lineCov">        132 : static unsigned int blk_flush_policy(unsigned long fflags, struct request *rq)</span></a>
+<a name="99"><span class="lineNum">      99 </span>            : {</a>
+<a name="100"><span class="lineNum">     100 </span><span class="lineCov">        132 :         unsigned int policy = 0;</span></a>
+<a name="101"><span class="lineNum">     101 </span>            : </a>
+<a name="102"><span class="lineNum">     102 </span><span class="lineCov">        132 :         if (blk_rq_sectors(rq))</span></a>
+<a name="103"><span class="lineNum">     103 </span><span class="lineCov">         60 :                 policy |= REQ_FSEQ_DATA;</span></a>
+<a name="104"><span class="lineNum">     104 </span>            : </a>
+<a name="105"><span class="lineNum">     105 </span><span class="lineCov">        132 :         if (fflags &amp; (1UL &lt;&lt; QUEUE_FLAG_WC)) {</span></a>
+<a name="106"><span class="lineNum">     106 </span><span class="lineCov">        132 :                 if (rq-&gt;cmd_flags &amp; REQ_PREFLUSH)</span></a>
+<a name="107"><span class="lineNum">     107 </span><span class="lineCov">        131 :                         policy |= REQ_FSEQ_PREFLUSH;</span></a>
+<a name="108"><span class="lineNum">     108 </span><span class="lineCov">        132 :                 if (!(fflags &amp; (1UL &lt;&lt; QUEUE_FLAG_FUA)) &amp;&amp;</span></a>
+<a name="109"><span class="lineNum">     109 </span>            :                     (rq-&gt;cmd_flags &amp; REQ_FUA))</a>
+<a name="110"><span class="lineNum">     110 </span><span class="lineCov">         60 :                         policy |= REQ_FSEQ_POSTFLUSH;</span></a>
+<a name="111"><span class="lineNum">     111 </span>            :         }</a>
+<a name="112"><span class="lineNum">     112 </span><span class="lineCov">        132 :         return policy;</span></a>
+<a name="113"><span class="lineNum">     113 </span>            : }</a>
+<a name="114"><span class="lineNum">     114 </span>            : </a>
+<a name="115"><span class="lineNum">     115 </span><span class="lineCov">        574 : static unsigned int blk_flush_cur_seq(struct request *rq)</span></a>
+<a name="116"><span class="lineNum">     116 </span>            : {</a>
+<a name="117"><span class="lineNum">     117 </span><span class="lineCov">        574 :         return 1 &lt;&lt; ffz(rq-&gt;flush.seq);</span></a>
+<a name="118"><span class="lineNum">     118 </span>            : }</a>
+<a name="119"><span class="lineNum">     119 </span>            : </a>
+<a name="120"><span class="lineNum">     120 </span><span class="lineCov">        132 : static void blk_flush_restore_request(struct request *rq)</span></a>
+<a name="121"><span class="lineNum">     121 </span>            : {</a>
+<a name="122"><span class="lineNum">     122 </span>            :         /*</a>
+<a name="123"><span class="lineNum">     123 </span>            :          * After flush data completion, @rq-&gt;bio is %NULL but we need to</a>
+<a name="124"><span class="lineNum">     124 </span>            :          * complete the bio again.  @rq-&gt;biotail is guaranteed to equal the</a>
+<a name="125"><span class="lineNum">     125 </span>            :          * original @rq-&gt;bio.  Restore it.</a>
+<a name="126"><span class="lineNum">     126 </span>            :          */</a>
+<a name="127"><span class="lineNum">     127 </span><span class="lineCov">        132 :         rq-&gt;bio = rq-&gt;biotail;</span></a>
+<a name="128"><span class="lineNum">     128 </span>            : </a>
+<a name="129"><span class="lineNum">     129 </span>            :         /* make @rq a normal request */</a>
+<a name="130"><span class="lineNum">     130 </span><span class="lineCov">        132 :         rq-&gt;rq_flags &amp;= ~RQF_FLUSH_SEQ;</span></a>
+<a name="131"><span class="lineNum">     131 </span><span class="lineCov">        132 :         rq-&gt;end_io = rq-&gt;flush.saved_end_io;</span></a>
+<a name="132"><span class="lineNum">     132 </span>            : }</a>
+<a name="133"><span class="lineNum">     133 </span>            : </a>
+<a name="134"><span class="lineNum">     134 </span><span class="lineCov">        251 : static void blk_flush_queue_rq(struct request *rq, bool add_front)</span></a>
+<a name="135"><span class="lineNum">     135 </span>            : {</a>
+<a name="136"><span class="lineNum">     136 </span><span class="lineCov">        251 :         blk_mq_add_to_requeue_list(rq, add_front, true);</span></a>
+<a name="137"><span class="lineNum">     137 </span><span class="lineCov">        251 : }</span></a>
+<a name="138"><span class="lineNum">     138 </span>            : </a>
+<a name="139"><span class="lineNum">     139 </span><span class="lineCov">        191 : static void blk_account_io_flush(struct request *rq)</span></a>
+<a name="140"><span class="lineNum">     140 </span>            : {</a>
+<a name="141"><span class="lineNum">     141 </span><span class="lineCov">        191 :         struct block_device *part = rq-&gt;rq_disk-&gt;part0;</span></a>
+<a name="142"><span class="lineNum">     142 </span>            : </a>
+<a name="143"><span class="lineNum">     143 </span><span class="lineCov">        191 :         part_stat_lock();</span></a>
+<a name="144"><span class="lineNum">     144 </span><span class="lineCov">        191 :         part_stat_inc(part, ios[STAT_FLUSH]);</span></a>
+<a name="145"><span class="lineNum">     145 </span><span class="lineCov">        191 :         part_stat_add(part, nsecs[STAT_FLUSH],</span></a>
+<a name="146"><span class="lineNum">     146 </span>            :                       ktime_get_ns() - rq-&gt;start_time_ns);</a>
+<a name="147"><span class="lineNum">     147 </span><span class="lineCov">        191 :         part_stat_unlock();</span></a>
+<a name="148"><span class="lineNum">     148 </span><span class="lineCov">        191 : }</span></a>
+<a name="149"><span class="lineNum">     149 </span>            : </a>
+<a name="150"><span class="lineNum">     150 </span>            : /**</a>
+<a name="151"><span class="lineNum">     151 </span>            :  * blk_flush_complete_seq - complete flush sequence</a>
+<a name="152"><span class="lineNum">     152 </span>            :  * @rq: PREFLUSH/FUA request being sequenced</a>
+<a name="153"><span class="lineNum">     153 </span>            :  * @fq: flush queue</a>
+<a name="154"><span class="lineNum">     154 </span>            :  * @seq: sequences to complete (mask of %REQ_FSEQ_*, can be zero)</a>
+<a name="155"><span class="lineNum">     155 </span>            :  * @error: whether an error occurred</a>
+<a name="156"><span class="lineNum">     156 </span>            :  *</a>
+<a name="157"><span class="lineNum">     157 </span>            :  * @rq just completed @seq part of its flush sequence, record the</a>
+<a name="158"><span class="lineNum">     158 </span>            :  * completion and trigger the next step.</a>
+<a name="159"><span class="lineNum">     159 </span>            :  *</a>
+<a name="160"><span class="lineNum">     160 </span>            :  * CONTEXT:</a>
+<a name="161"><span class="lineNum">     161 </span>            :  * spin_lock_irq(fq-&gt;mq_flush_lock)</a>
+<a name="162"><span class="lineNum">     162 </span>            :  */</a>
+<a name="163"><span class="lineNum">     163 </span><span class="lineCov">        383 : static void blk_flush_complete_seq(struct request *rq,</span></a>
+<a name="164"><span class="lineNum">     164 </span>            :                                    struct blk_flush_queue *fq,</a>
+<a name="165"><span class="lineNum">     165 </span>            :                                    unsigned int seq, blk_status_t error)</a>
+<a name="166"><span class="lineNum">     166 </span>            : {</a>
+<a name="167"><span class="lineNum">     167 </span><span class="lineCov">        383 :         struct request_queue *q = rq-&gt;q;</span></a>
+<a name="168"><span class="lineNum">     168 </span><span class="lineCov">        383 :         struct list_head *pending = &amp;fq-&gt;flush_queue[fq-&gt;flush_pending_idx];</span></a>
+<a name="169"><span class="lineNum">     169 </span><span class="lineCov">        383 :         unsigned int cmd_flags;</span></a>
+<a name="170"><span class="lineNum">     170 </span>            : </a>
+<a name="171"><span class="lineNum">     171 </span><span class="lineCov">        383 :         BUG_ON(rq-&gt;flush.seq &amp; seq);</span></a>
+<a name="172"><span class="lineNum">     172 </span><span class="lineCov">        383 :         rq-&gt;flush.seq |= seq;</span></a>
+<a name="173"><span class="lineNum">     173 </span><span class="lineCov">        383 :         cmd_flags = rq-&gt;cmd_flags;</span></a>
+<a name="174"><span class="lineNum">     174 </span>            : </a>
+<a name="175"><span class="lineNum">     175 </span><span class="lineCov">        383 :         if (likely(!error))</span></a>
+<a name="176"><span class="lineNum">     176 </span><span class="lineCov">        383 :                 seq = blk_flush_cur_seq(rq);</span></a>
+<a name="177"><span class="lineNum">     177 </span>            :         else</a>
+<a name="178"><span class="lineNum">     178 </span>            :                 seq = REQ_FSEQ_DONE;</a>
+<a name="179"><span class="lineNum">     179 </span>            : </a>
+<a name="180"><span class="lineNum">     180 </span><span class="lineCov">        383 :         switch (seq) {</span></a>
+<a name="181"><span class="lineNum">     181 </span>            :         case REQ_FSEQ_PREFLUSH:</a>
+<a name="182"><span class="lineNum">     182 </span>            :         case REQ_FSEQ_POSTFLUSH:</a>
+<a name="183"><span class="lineNum">     183 </span>            :                 /* queue for flush */</a>
+<a name="184"><span class="lineNum">     184 </span><span class="lineCov">        191 :                 if (list_empty(pending))</span></a>
+<a name="185"><span class="lineNum">     185 </span><span class="lineCov">        191 :                         fq-&gt;flush_pending_since = jiffies;</span></a>
+<a name="186"><span class="lineNum">     186 </span><span class="lineCov">        191 :                 list_move_tail(&amp;rq-&gt;flush.list, pending);</span></a>
+<a name="187"><span class="lineNum">     187 </span>            :                 break;</a>
+<a name="188"><span class="lineNum">     188 </span>            : </a>
+<a name="189"><span class="lineNum">     189 </span><span class="lineCov">         60 :         case REQ_FSEQ_DATA:</span></a>
+<a name="190"><span class="lineNum">     190 </span><span class="lineCov">         60 :                 list_move_tail(&amp;rq-&gt;flush.list, &amp;fq-&gt;flush_data_in_flight);</span></a>
+<a name="191"><span class="lineNum">     191 </span><span class="lineCov">         60 :                 blk_flush_queue_rq(rq, true);</span></a>
+<a name="192"><span class="lineNum">     192 </span>            :                 break;</a>
+<a name="193"><span class="lineNum">     193 </span>            : </a>
+<a name="194"><span class="lineNum">     194 </span><span class="lineCov">        132 :         case REQ_FSEQ_DONE:</span></a>
+<a name="195"><span class="lineNum">     195 </span>            :                 /*</a>
+<a name="196"><span class="lineNum">     196 </span>            :                  * @rq was previously adjusted by blk_insert_flush() for</a>
+<a name="197"><span class="lineNum">     197 </span>            :                  * flush sequencing and may already have gone through the</a>
+<a name="198"><span class="lineNum">     198 </span>            :                  * flush data request completion path.  Restore @rq for</a>
+<a name="199"><span class="lineNum">     199 </span>            :                  * normal completion and end it.</a>
+<a name="200"><span class="lineNum">     200 </span>            :                  */</a>
+<a name="201"><span class="lineNum">     201 </span><span class="lineCov">        132 :                 BUG_ON(!list_empty(&amp;rq-&gt;queuelist));</span></a>
+<a name="202"><span class="lineNum">     202 </span><span class="lineCov">        132 :                 list_del_init(&amp;rq-&gt;flush.list);</span></a>
+<a name="203"><span class="lineNum">     203 </span><span class="lineCov">        132 :                 blk_flush_restore_request(rq);</span></a>
+<a name="204"><span class="lineNum">     204 </span><span class="lineCov">        132 :                 blk_mq_end_request(rq, error);</span></a>
+<a name="205"><span class="lineNum">     205 </span><span class="lineCov">        132 :                 break;</span></a>
+<a name="206"><span class="lineNum">     206 </span>            : </a>
+<a name="207"><span class="lineNum">     207 </span><span class="lineNoCov">          0 :         default:</span></a>
+<a name="208"><span class="lineNum">     208 </span><span class="lineNoCov">          0 :                 BUG();</span></a>
+<a name="209"><span class="lineNum">     209 </span>            :         }</a>
+<a name="210"><span class="lineNum">     210 </span>            : </a>
+<a name="211"><span class="lineNum">     211 </span><span class="lineCov">        383 :         blk_kick_flush(q, fq, cmd_flags);</span></a>
+<a name="212"><span class="lineNum">     212 </span><span class="lineCov">        383 : }</span></a>
+<a name="213"><span class="lineNum">     213 </span>            : </a>
+<a name="214"><span class="lineNum">     214 </span><span class="lineCov">        191 : static void flush_end_io(struct request *flush_rq, blk_status_t error)</span></a>
+<a name="215"><span class="lineNum">     215 </span>            : {</a>
+<a name="216"><span class="lineNum">     216 </span><span class="lineCov">        191 :         struct request_queue *q = flush_rq-&gt;q;</span></a>
+<a name="217"><span class="lineNum">     217 </span><span class="lineCov">        191 :         struct list_head *running;</span></a>
+<a name="218"><span class="lineNum">     218 </span><span class="lineCov">        191 :         struct request *rq, *n;</span></a>
+<a name="219"><span class="lineNum">     219 </span><span class="lineCov">        191 :         unsigned long flags = 0;</span></a>
+<a name="220"><span class="lineNum">     220 </span><span class="lineCov">        191 :         struct blk_flush_queue *fq = blk_get_flush_queue(q, flush_rq-&gt;mq_ctx);</span></a>
+<a name="221"><span class="lineNum">     221 </span>            : </a>
+<a name="222"><span class="lineNum">     222 </span><span class="lineCov">        191 :         blk_account_io_flush(flush_rq);</span></a>
+<a name="223"><span class="lineNum">     223 </span>            : </a>
+<a name="224"><span class="lineNum">     224 </span>            :         /* release the tag's ownership to the req cloned from */</a>
+<a name="225"><span class="lineNum">     225 </span><span class="lineCov">        191 :         spin_lock_irqsave(&amp;fq-&gt;mq_flush_lock, flags);</span></a>
+<a name="226"><span class="lineNum">     226 </span>            : </a>
+<a name="227"><span class="lineNum">     227 </span><span class="lineCov">        191 :         if (!refcount_dec_and_test(&amp;flush_rq-&gt;ref)) {</span></a>
+<a name="228"><span class="lineNum">     228 </span><span class="lineNoCov">          0 :                 fq-&gt;rq_status = error;</span></a>
+<a name="229"><span class="lineNum">     229 </span><span class="lineNoCov">          0 :                 spin_unlock_irqrestore(&amp;fq-&gt;mq_flush_lock, flags);</span></a>
+<a name="230"><span class="lineNum">     230 </span><span class="lineNoCov">          0 :                 return;</span></a>
+<a name="231"><span class="lineNum">     231 </span>            :         }</a>
+<a name="232"><span class="lineNum">     232 </span>            : </a>
+<a name="233"><span class="lineNum">     233 </span>            :         /*</a>
+<a name="234"><span class="lineNum">     234 </span>            :          * Flush request has to be marked as IDLE when it is really ended</a>
+<a name="235"><span class="lineNum">     235 </span>            :          * because its .end_io() is called from timeout code path too for</a>
+<a name="236"><span class="lineNum">     236 </span>            :          * avoiding use-after-free.</a>
+<a name="237"><span class="lineNum">     237 </span>            :          */</a>
+<a name="238"><span class="lineNum">     238 </span><span class="lineCov">        191 :         WRITE_ONCE(flush_rq-&gt;state, MQ_RQ_IDLE);</span></a>
+<a name="239"><span class="lineNum">     239 </span><span class="lineCov">        191 :         if (fq-&gt;rq_status != BLK_STS_OK)</span></a>
+<a name="240"><span class="lineNum">     240 </span><span class="lineNoCov">          0 :                 error = fq-&gt;rq_status;</span></a>
+<a name="241"><span class="lineNum">     241 </span>            : </a>
+<a name="242"><span class="lineNum">     242 </span><span class="lineCov">        191 :         if (!q-&gt;elevator) {</span></a>
+<a name="243"><span class="lineNum">     243 </span><span class="lineCov">        191 :                 flush_rq-&gt;tag = BLK_MQ_NO_TAG;</span></a>
+<a name="244"><span class="lineNum">     244 </span>            :         } else {</a>
+<a name="245"><span class="lineNum">     245 </span><span class="lineNoCov">          0 :                 blk_mq_put_driver_tag(flush_rq);</span></a>
+<a name="246"><span class="lineNum">     246 </span><span class="lineNoCov">          0 :                 flush_rq-&gt;internal_tag = BLK_MQ_NO_TAG;</span></a>
+<a name="247"><span class="lineNum">     247 </span>            :         }</a>
+<a name="248"><span class="lineNum">     248 </span>            : </a>
+<a name="249"><span class="lineNum">     249 </span><span class="lineCov">        191 :         running = &amp;fq-&gt;flush_queue[fq-&gt;flush_running_idx];</span></a>
+<a name="250"><span class="lineNum">     250 </span><span class="lineCov">        191 :         BUG_ON(fq-&gt;flush_pending_idx == fq-&gt;flush_running_idx);</span></a>
+<a name="251"><span class="lineNum">     251 </span>            : </a>
+<a name="252"><span class="lineNum">     252 </span>            :         /* account completion of the flush request */</a>
+<a name="253"><span class="lineNum">     253 </span><span class="lineCov">        191 :         fq-&gt;flush_running_idx ^= 1;</span></a>
+<a name="254"><span class="lineNum">     254 </span>            : </a>
+<a name="255"><span class="lineNum">     255 </span>            :         /* and push the waiting requests to the next stage */</a>
+<a name="256"><span class="lineNum">     256 </span><span class="lineCov">        382 :         list_for_each_entry_safe(rq, n, running, flush.list) {</span></a>
+<a name="257"><span class="lineNum">     257 </span><span class="lineCov">        191 :                 unsigned int seq = blk_flush_cur_seq(rq);</span></a>
+<a name="258"><span class="lineNum">     258 </span>            : </a>
+<a name="259"><span class="lineNum">     259 </span><span class="lineCov">        191 :                 BUG_ON(seq != REQ_FSEQ_PREFLUSH &amp;&amp; seq != REQ_FSEQ_POSTFLUSH);</span></a>
+<a name="260"><span class="lineNum">     260 </span><span class="lineCov">        191 :                 blk_flush_complete_seq(rq, fq, seq, error);</span></a>
+<a name="261"><span class="lineNum">     261 </span>            :         }</a>
+<a name="262"><span class="lineNum">     262 </span>            : </a>
+<a name="263"><span class="lineNum">     263 </span><span class="lineCov">        191 :         spin_unlock_irqrestore(&amp;fq-&gt;mq_flush_lock, flags);</span></a>
+<a name="264"><span class="lineNum">     264 </span>            : }</a>
+<a name="265"><span class="lineNum">     265 </span>            : </a>
+<a name="266"><span class="lineNum">     266 </span>            : /**</a>
+<a name="267"><span class="lineNum">     267 </span>            :  * blk_kick_flush - consider issuing flush request</a>
+<a name="268"><span class="lineNum">     268 </span>            :  * @q: request_queue being kicked</a>
+<a name="269"><span class="lineNum">     269 </span>            :  * @fq: flush queue</a>
+<a name="270"><span class="lineNum">     270 </span>            :  * @flags: cmd_flags of the original request</a>
+<a name="271"><span class="lineNum">     271 </span>            :  *</a>
+<a name="272"><span class="lineNum">     272 </span>            :  * Flush related states of @q have changed, consider issuing flush request.</a>
+<a name="273"><span class="lineNum">     273 </span>            :  * Please read the comment at the top of this file for more info.</a>
+<a name="274"><span class="lineNum">     274 </span>            :  *</a>
+<a name="275"><span class="lineNum">     275 </span>            :  * CONTEXT:</a>
+<a name="276"><span class="lineNum">     276 </span>            :  * spin_lock_irq(fq-&gt;mq_flush_lock)</a>
+<a name="277"><span class="lineNum">     277 </span>            :  *</a>
+<a name="278"><span class="lineNum">     278 </span>            :  */</a>
+<a name="279"><span class="lineNum">     279 </span><span class="lineCov">        383 : static void blk_kick_flush(struct request_queue *q, struct blk_flush_queue *fq,</span></a>
+<a name="280"><span class="lineNum">     280 </span>            :                            unsigned int flags)</a>
+<a name="281"><span class="lineNum">     281 </span>            : {</a>
+<a name="282"><span class="lineNum">     282 </span><span class="lineCov">        383 :         struct list_head *pending = &amp;fq-&gt;flush_queue[fq-&gt;flush_pending_idx];</span></a>
+<a name="283"><span class="lineNum">     283 </span><span class="lineCov">        383 :         struct request *first_rq =</span></a>
+<a name="284"><span class="lineNum">     284 </span><span class="lineCov">        383 :                 list_first_entry(pending, struct request, flush.list);</span></a>
+<a name="285"><span class="lineNum">     285 </span><span class="lineCov">        383 :         struct request *flush_rq = fq-&gt;flush_rq;</span></a>
+<a name="286"><span class="lineNum">     286 </span>            : </a>
+<a name="287"><span class="lineNum">     287 </span>            :         /* C1 described at the top of this file */</a>
+<a name="288"><span class="lineNum">     288 </span><span class="lineCov">        383 :         if (fq-&gt;flush_pending_idx != fq-&gt;flush_running_idx || list_empty(pending))</span></a>
+<a name="289"><span class="lineNum">     289 </span>            :                 return;</a>
+<a name="290"><span class="lineNum">     290 </span>            : </a>
+<a name="291"><span class="lineNum">     291 </span>            :         /* C2 and C3 */</a>
+<a name="292"><span class="lineNum">     292 </span><span class="lineCov">        191 :         if (!list_empty(&amp;fq-&gt;flush_data_in_flight) &amp;&amp;</span></a>
+<a name="293"><span class="lineNum">     293 </span><span class="lineNoCov">          0 :             time_before(jiffies,</span></a>
+<a name="294"><span class="lineNum">     294 </span>            :                         fq-&gt;flush_pending_since + FLUSH_PENDING_TIMEOUT))</a>
+<a name="295"><span class="lineNum">     295 </span>            :                 return;</a>
+<a name="296"><span class="lineNum">     296 </span>            : </a>
+<a name="297"><span class="lineNum">     297 </span>            :         /*</a>
+<a name="298"><span class="lineNum">     298 </span>            :          * Issue flush and toggle pending_idx.  This makes pending_idx</a>
+<a name="299"><span class="lineNum">     299 </span>            :          * different from running_idx, which means flush is in flight.</a>
+<a name="300"><span class="lineNum">     300 </span>            :          */</a>
+<a name="301"><span class="lineNum">     301 </span><span class="lineCov">        191 :         fq-&gt;flush_pending_idx ^= 1;</span></a>
+<a name="302"><span class="lineNum">     302 </span>            : </a>
+<a name="303"><span class="lineNum">     303 </span><span class="lineCov">        191 :         blk_rq_init(q, flush_rq);</span></a>
+<a name="304"><span class="lineNum">     304 </span>            : </a>
+<a name="305"><span class="lineNum">     305 </span>            :         /*</a>
+<a name="306"><span class="lineNum">     306 </span>            :          * In case of none scheduler, borrow tag from the first request</a>
+<a name="307"><span class="lineNum">     307 </span>            :          * since they can't be in flight at the same time. And acquire</a>
+<a name="308"><span class="lineNum">     308 </span>            :          * the tag's ownership for flush req.</a>
+<a name="309"><span class="lineNum">     309 </span>            :          *</a>
+<a name="310"><span class="lineNum">     310 </span>            :          * In case of IO scheduler, flush rq need to borrow scheduler tag</a>
+<a name="311"><span class="lineNum">     311 </span>            :          * just for cheating put/get driver tag.</a>
+<a name="312"><span class="lineNum">     312 </span>            :          */</a>
+<a name="313"><span class="lineNum">     313 </span><span class="lineCov">        191 :         flush_rq-&gt;mq_ctx = first_rq-&gt;mq_ctx;</span></a>
+<a name="314"><span class="lineNum">     314 </span><span class="lineCov">        191 :         flush_rq-&gt;mq_hctx = first_rq-&gt;mq_hctx;</span></a>
+<a name="315"><span class="lineNum">     315 </span>            : </a>
+<a name="316"><span class="lineNum">     316 </span><span class="lineCov">        191 :         if (!q-&gt;elevator) {</span></a>
+<a name="317"><span class="lineNum">     317 </span><span class="lineCov">        191 :                 flush_rq-&gt;tag = first_rq-&gt;tag;</span></a>
+<a name="318"><span class="lineNum">     318 </span>            : </a>
+<a name="319"><span class="lineNum">     319 </span>            :                 /*</a>
+<a name="320"><span class="lineNum">     320 </span>            :                  * We borrow data request's driver tag, so have to mark</a>
+<a name="321"><span class="lineNum">     321 </span>            :                  * this flush request as INFLIGHT for avoiding double</a>
+<a name="322"><span class="lineNum">     322 </span>            :                  * account of this driver tag</a>
+<a name="323"><span class="lineNum">     323 </span>            :                  */</a>
+<a name="324"><span class="lineNum">     324 </span><span class="lineCov">        191 :                 flush_rq-&gt;rq_flags |= RQF_MQ_INFLIGHT;</span></a>
+<a name="325"><span class="lineNum">     325 </span>            :         } else</a>
+<a name="326"><span class="lineNum">     326 </span><span class="lineNoCov">          0 :                 flush_rq-&gt;internal_tag = first_rq-&gt;internal_tag;</span></a>
+<a name="327"><span class="lineNum">     327 </span>            : </a>
+<a name="328"><span class="lineNum">     328 </span><span class="lineCov">        191 :         flush_rq-&gt;cmd_flags = REQ_OP_FLUSH | REQ_PREFLUSH;</span></a>
+<a name="329"><span class="lineNum">     329 </span><span class="lineCov">        191 :         flush_rq-&gt;cmd_flags |= (flags &amp; REQ_DRV) | (flags &amp; REQ_FAILFAST_MASK);</span></a>
+<a name="330"><span class="lineNum">     330 </span><span class="lineCov">        191 :         flush_rq-&gt;rq_flags |= RQF_FLUSH_SEQ;</span></a>
+<a name="331"><span class="lineNum">     331 </span><span class="lineCov">        191 :         flush_rq-&gt;rq_disk = first_rq-&gt;rq_disk;</span></a>
+<a name="332"><span class="lineNum">     332 </span><span class="lineCov">        191 :         flush_rq-&gt;end_io = flush_end_io;</span></a>
+<a name="333"><span class="lineNum">     333 </span>            : </a>
+<a name="334"><span class="lineNum">     334 </span><span class="lineCov">        191 :         blk_flush_queue_rq(flush_rq, false);</span></a>
+<a name="335"><span class="lineNum">     335 </span>            : }</a>
+<a name="336"><span class="lineNum">     336 </span>            : </a>
+<a name="337"><span class="lineNum">     337 </span><span class="lineCov">         60 : static void mq_flush_data_end_io(struct request *rq, blk_status_t error)</span></a>
+<a name="338"><span class="lineNum">     338 </span>            : {</a>
+<a name="339"><span class="lineNum">     339 </span><span class="lineCov">         60 :         struct request_queue *q = rq-&gt;q;</span></a>
+<a name="340"><span class="lineNum">     340 </span><span class="lineCov">         60 :         struct blk_mq_hw_ctx *hctx = rq-&gt;mq_hctx;</span></a>
+<a name="341"><span class="lineNum">     341 </span><span class="lineCov">         60 :         struct blk_mq_ctx *ctx = rq-&gt;mq_ctx;</span></a>
+<a name="342"><span class="lineNum">     342 </span><span class="lineCov">         60 :         unsigned long flags;</span></a>
+<a name="343"><span class="lineNum">     343 </span><span class="lineCov">         60 :         struct blk_flush_queue *fq = blk_get_flush_queue(q, ctx);</span></a>
+<a name="344"><span class="lineNum">     344 </span>            : </a>
+<a name="345"><span class="lineNum">     345 </span><span class="lineCov">         60 :         if (q-&gt;elevator) {</span></a>
+<a name="346"><span class="lineNum">     346 </span><span class="lineNoCov">          0 :                 WARN_ON(rq-&gt;tag &lt; 0);</span></a>
+<a name="347"><span class="lineNum">     347 </span><span class="lineNoCov">          0 :                 blk_mq_put_driver_tag(rq);</span></a>
+<a name="348"><span class="lineNum">     348 </span>            :         }</a>
+<a name="349"><span class="lineNum">     349 </span>            : </a>
+<a name="350"><span class="lineNum">     350 </span>            :         /*</a>
+<a name="351"><span class="lineNum">     351 </span>            :          * After populating an empty queue, kick it to avoid stall.  Read</a>
+<a name="352"><span class="lineNum">     352 </span>            :          * the comment in flush_end_io().</a>
+<a name="353"><span class="lineNum">     353 </span>            :          */</a>
+<a name="354"><span class="lineNum">     354 </span><span class="lineCov">         60 :         spin_lock_irqsave(&amp;fq-&gt;mq_flush_lock, flags);</span></a>
+<a name="355"><span class="lineNum">     355 </span><span class="lineCov">         60 :         blk_flush_complete_seq(rq, fq, REQ_FSEQ_DATA, error);</span></a>
+<a name="356"><span class="lineNum">     356 </span><span class="lineCov">         60 :         spin_unlock_irqrestore(&amp;fq-&gt;mq_flush_lock, flags);</span></a>
+<a name="357"><span class="lineNum">     357 </span>            : </a>
+<a name="358"><span class="lineNum">     358 </span><span class="lineCov">         60 :         blk_mq_sched_restart(hctx);</span></a>
+<a name="359"><span class="lineNum">     359 </span><span class="lineCov">         60 : }</span></a>
+<a name="360"><span class="lineNum">     360 </span>            : </a>
+<a name="361"><span class="lineNum">     361 </span>            : /**</a>
+<a name="362"><span class="lineNum">     362 </span>            :  * blk_insert_flush - insert a new PREFLUSH/FUA request</a>
+<a name="363"><span class="lineNum">     363 </span>            :  * @rq: request to insert</a>
+<a name="364"><span class="lineNum">     364 </span>            :  *</a>
+<a name="365"><span class="lineNum">     365 </span>            :  * To be called from __elv_add_request() for %ELEVATOR_INSERT_FLUSH insertions.</a>
+<a name="366"><span class="lineNum">     366 </span>            :  * or __blk_mq_run_hw_queue() to dispatch request.</a>
+<a name="367"><span class="lineNum">     367 </span>            :  * @rq is being submitted.  Analyze what needs to be done and put it on the</a>
+<a name="368"><span class="lineNum">     368 </span>            :  * right queue.</a>
+<a name="369"><span class="lineNum">     369 </span>            :  */</a>
+<a name="370"><span class="lineNum">     370 </span><span class="lineCov">        132 : void blk_insert_flush(struct request *rq)</span></a>
+<a name="371"><span class="lineNum">     371 </span>            : {</a>
+<a name="372"><span class="lineNum">     372 </span><span class="lineCov">        132 :         struct request_queue *q = rq-&gt;q;</span></a>
+<a name="373"><span class="lineNum">     373 </span><span class="lineCov">        132 :         unsigned long fflags = q-&gt;queue_flags;       /* may change, cache */</span></a>
+<a name="374"><span class="lineNum">     374 </span><span class="lineCov">        132 :         unsigned int policy = blk_flush_policy(fflags, rq);</span></a>
+<a name="375"><span class="lineNum">     375 </span><span class="lineCov">        132 :         struct blk_flush_queue *fq = blk_get_flush_queue(q, rq-&gt;mq_ctx);</span></a>
+<a name="376"><span class="lineNum">     376 </span>            : </a>
+<a name="377"><span class="lineNum">     377 </span>            :         /*</a>
+<a name="378"><span class="lineNum">     378 </span>            :          * @policy now records what operations need to be done.  Adjust</a>
+<a name="379"><span class="lineNum">     379 </span>            :          * REQ_PREFLUSH and FUA for the driver.</a>
+<a name="380"><span class="lineNum">     380 </span>            :          */</a>
+<a name="381"><span class="lineNum">     381 </span><span class="lineCov">        132 :         rq-&gt;cmd_flags &amp;= ~REQ_PREFLUSH;</span></a>
+<a name="382"><span class="lineNum">     382 </span><span class="lineCov">        132 :         if (!(fflags &amp; (1UL &lt;&lt; QUEUE_FLAG_FUA)))</span></a>
+<a name="383"><span class="lineNum">     383 </span><span class="lineCov">        132 :                 rq-&gt;cmd_flags &amp;= ~REQ_FUA;</span></a>
+<a name="384"><span class="lineNum">     384 </span>            : </a>
+<a name="385"><span class="lineNum">     385 </span>            :         /*</a>
+<a name="386"><span class="lineNum">     386 </span>            :          * REQ_PREFLUSH|REQ_FUA implies REQ_SYNC, so if we clear any</a>
+<a name="387"><span class="lineNum">     387 </span>            :          * of those flags, we have to set REQ_SYNC to avoid skewing</a>
+<a name="388"><span class="lineNum">     388 </span>            :          * the request accounting.</a>
+<a name="389"><span class="lineNum">     389 </span>            :          */</a>
+<a name="390"><span class="lineNum">     390 </span><span class="lineCov">        132 :         rq-&gt;cmd_flags |= REQ_SYNC;</span></a>
+<a name="391"><span class="lineNum">     391 </span>            : </a>
+<a name="392"><span class="lineNum">     392 </span>            :         /*</a>
+<a name="393"><span class="lineNum">     393 </span>            :          * An empty flush handed down from a stacking driver may</a>
+<a name="394"><span class="lineNum">     394 </span>            :          * translate into nothing if the underlying device does not</a>
+<a name="395"><span class="lineNum">     395 </span>            :          * advertise a write-back cache.  In this case, simply</a>
+<a name="396"><span class="lineNum">     396 </span>            :          * complete the request.</a>
+<a name="397"><span class="lineNum">     397 </span>            :          */</a>
+<a name="398"><span class="lineNum">     398 </span><span class="lineCov">        132 :         if (!policy) {</span></a>
+<a name="399"><span class="lineNum">     399 </span><span class="lineNoCov">          0 :                 blk_mq_end_request(rq, 0);</span></a>
+<a name="400"><span class="lineNum">     400 </span><span class="lineNoCov">          0 :                 return;</span></a>
+<a name="401"><span class="lineNum">     401 </span>            :         }</a>
+<a name="402"><span class="lineNum">     402 </span>            : </a>
+<a name="403"><span class="lineNum">     403 </span><span class="lineCov">        132 :         BUG_ON(rq-&gt;bio != rq-&gt;biotail); /*assumes zero or single bio rq */</span></a>
+<a name="404"><span class="lineNum">     404 </span>            : </a>
+<a name="405"><span class="lineNum">     405 </span>            :         /*</a>
+<a name="406"><span class="lineNum">     406 </span>            :          * If there's data but flush is not necessary, the request can be</a>
+<a name="407"><span class="lineNum">     407 </span>            :          * processed directly without going through flush machinery.  Queue</a>
+<a name="408"><span class="lineNum">     408 </span>            :          * for normal execution.</a>
+<a name="409"><span class="lineNum">     409 </span>            :          */</a>
+<a name="410"><span class="lineNum">     410 </span><span class="lineCov">        132 :         if ((policy &amp; REQ_FSEQ_DATA) &amp;&amp;</span></a>
+<a name="411"><span class="lineNum">     411 </span>            :             !(policy &amp; (REQ_FSEQ_PREFLUSH | REQ_FSEQ_POSTFLUSH))) {</a>
+<a name="412"><span class="lineNum">     412 </span><span class="lineNoCov">          0 :                 blk_mq_request_bypass_insert(rq, false, false);</span></a>
+<a name="413"><span class="lineNum">     413 </span><span class="lineNoCov">          0 :                 return;</span></a>
+<a name="414"><span class="lineNum">     414 </span>            :         }</a>
+<a name="415"><span class="lineNum">     415 </span>            : </a>
+<a name="416"><span class="lineNum">     416 </span>            :         /*</a>
+<a name="417"><span class="lineNum">     417 </span>            :          * @rq should go through flush machinery.  Mark it part of flush</a>
+<a name="418"><span class="lineNum">     418 </span>            :          * sequence and submit for further processing.</a>
+<a name="419"><span class="lineNum">     419 </span>            :          */</a>
+<a name="420"><span class="lineNum">     420 </span><span class="lineCov">        132 :         memset(&amp;rq-&gt;flush, 0, sizeof(rq-&gt;flush));</span></a>
+<a name="421"><span class="lineNum">     421 </span><span class="lineCov">        132 :         INIT_LIST_HEAD(&amp;rq-&gt;flush.list);</span></a>
+<a name="422"><span class="lineNum">     422 </span><span class="lineCov">        132 :         rq-&gt;rq_flags |= RQF_FLUSH_SEQ;</span></a>
+<a name="423"><span class="lineNum">     423 </span><span class="lineCov">        132 :         rq-&gt;flush.saved_end_io = rq-&gt;end_io; /* Usually NULL */</span></a>
+<a name="424"><span class="lineNum">     424 </span>            : </a>
+<a name="425"><span class="lineNum">     425 </span><span class="lineCov">        132 :         rq-&gt;end_io = mq_flush_data_end_io;</span></a>
+<a name="426"><span class="lineNum">     426 </span>            : </a>
+<a name="427"><span class="lineNum">     427 </span><span class="lineCov">        132 :         spin_lock_irq(&amp;fq-&gt;mq_flush_lock);</span></a>
+<a name="428"><span class="lineNum">     428 </span><span class="lineCov">        132 :         blk_flush_complete_seq(rq, fq, REQ_FSEQ_ACTIONS &amp; ~policy, 0);</span></a>
+<a name="429"><span class="lineNum">     429 </span><span class="lineCov">        132 :         spin_unlock_irq(&amp;fq-&gt;mq_flush_lock);</span></a>
+<a name="430"><span class="lineNum">     430 </span>            : }</a>
+<a name="431"><span class="lineNum">     431 </span>            : </a>
+<a name="432"><span class="lineNum">     432 </span>            : /**</a>
+<a name="433"><span class="lineNum">     433 </span>            :  * blkdev_issue_flush - queue a flush</a>
+<a name="434"><span class="lineNum">     434 </span>            :  * @bdev:       blockdev to issue flush for</a>
+<a name="435"><span class="lineNum">     435 </span>            :  *</a>
+<a name="436"><span class="lineNum">     436 </span>            :  * Description:</a>
+<a name="437"><span class="lineNum">     437 </span>            :  *    Issue a flush for the block device in question.</a>
+<a name="438"><span class="lineNum">     438 </span>            :  */</a>
+<a name="439"><span class="lineNum">     439 </span><span class="lineCov">         72 : int blkdev_issue_flush(struct block_device *bdev)</span></a>
+<a name="440"><span class="lineNum">     440 </span>            : {</a>
+<a name="441"><span class="lineNum">     441 </span><span class="lineCov">         72 :         struct bio bio;</span></a>
+<a name="442"><span class="lineNum">     442 </span>            : </a>
+<a name="443"><span class="lineNum">     443 </span><span class="lineCov">         72 :         bio_init(&amp;bio, NULL, 0);</span></a>
+<a name="444"><span class="lineNum">     444 </span><span class="lineCov">         72 :         bio_set_dev(&amp;bio, bdev);</span></a>
+<a name="445"><span class="lineNum">     445 </span><span class="lineCov">         72 :         bio.bi_opf = REQ_OP_WRITE | REQ_PREFLUSH;</span></a>
+<a name="446"><span class="lineNum">     446 </span><span class="lineCov">         72 :         return submit_bio_wait(&amp;bio);</span></a>
+<a name="447"><span class="lineNum">     447 </span>            : }</a>
+<a name="448"><span class="lineNum">     448 </span>            : EXPORT_SYMBOL(blkdev_issue_flush);</a>
+<a name="449"><span class="lineNum">     449 </span>            : </a>
+<a name="450"><span class="lineNum">     450 </span><span class="lineCov">          9 : struct blk_flush_queue *blk_alloc_flush_queue(int node, int cmd_size,</span></a>
+<a name="451"><span class="lineNum">     451 </span>            :                                               gfp_t flags)</a>
+<a name="452"><span class="lineNum">     452 </span>            : {</a>
+<a name="453"><span class="lineNum">     453 </span><span class="lineCov">          9 :         struct blk_flush_queue *fq;</span></a>
+<a name="454"><span class="lineNum">     454 </span><span class="lineCov">          9 :         int rq_sz = sizeof(struct request);</span></a>
+<a name="455"><span class="lineNum">     455 </span>            : </a>
+<a name="456"><span class="lineNum">     456 </span><span class="lineCov">          9 :         fq = kzalloc_node(sizeof(*fq), flags, node);</span></a>
+<a name="457"><span class="lineNum">     457 </span><span class="lineCov">          9 :         if (!fq)</span></a>
+<a name="458"><span class="lineNum">     458 </span><span class="lineNoCov">          0 :                 goto fail;</span></a>
+<a name="459"><span class="lineNum">     459 </span>            : </a>
+<a name="460"><span class="lineNum">     460 </span><span class="lineCov">          9 :         spin_lock_init(&amp;fq-&gt;mq_flush_lock);</span></a>
+<a name="461"><span class="lineNum">     461 </span>            : </a>
+<a name="462"><span class="lineNum">     462 </span><span class="lineCov">          9 :         rq_sz = round_up(rq_sz + cmd_size, cache_line_size());</span></a>
+<a name="463"><span class="lineNum">     463 </span><span class="lineCov">          9 :         fq-&gt;flush_rq = kzalloc_node(rq_sz, flags, node);</span></a>
+<a name="464"><span class="lineNum">     464 </span><span class="lineCov">          9 :         if (!fq-&gt;flush_rq)</span></a>
+<a name="465"><span class="lineNum">     465 </span><span class="lineNoCov">          0 :                 goto fail_rq;</span></a>
+<a name="466"><span class="lineNum">     466 </span>            : </a>
+<a name="467"><span class="lineNum">     467 </span><span class="lineCov">          9 :         INIT_LIST_HEAD(&amp;fq-&gt;flush_queue[0]);</span></a>
+<a name="468"><span class="lineNum">     468 </span><span class="lineCov">          9 :         INIT_LIST_HEAD(&amp;fq-&gt;flush_queue[1]);</span></a>
+<a name="469"><span class="lineNum">     469 </span><span class="lineCov">          9 :         INIT_LIST_HEAD(&amp;fq-&gt;flush_data_in_flight);</span></a>
+<a name="470"><span class="lineNum">     470 </span>            : </a>
+<a name="471"><span class="lineNum">     471 </span><span class="lineCov">          9 :         return fq;</span></a>
+<a name="472"><span class="lineNum">     472 </span>            : </a>
+<a name="473"><span class="lineNum">     473 </span><span class="lineNoCov">          0 :  fail_rq:</span></a>
+<a name="474"><span class="lineNum">     474 </span><span class="lineNoCov">          0 :         kfree(fq);</span></a>
+<a name="475"><span class="lineNum">     475 </span>            :  fail:</a>
+<a name="476"><span class="lineNum">     476 </span>            :         return NULL;</a>
+<a name="477"><span class="lineNum">     477 </span>            : }</a>
+<a name="478"><span class="lineNum">     478 </span>            : </a>
+<a name="479"><span class="lineNum">     479 </span><span class="lineNoCov">          0 : void blk_free_flush_queue(struct blk_flush_queue *fq)</span></a>
+<a name="480"><span class="lineNum">     480 </span>            : {</a>
+<a name="481"><span class="lineNum">     481 </span>            :         /* bio based request queue hasn't flush queue */</a>
+<a name="482"><span class="lineNum">     482 </span><span class="lineNoCov">          0 :         if (!fq)</span></a>
+<a name="483"><span class="lineNum">     483 </span>            :                 return;</a>
+<a name="484"><span class="lineNum">     484 </span>            : </a>
+<a name="485"><span class="lineNum">     485 </span><span class="lineNoCov">          0 :         kfree(fq-&gt;flush_rq);</span></a>
+<a name="486"><span class="lineNum">     486 </span><span class="lineNoCov">          0 :         kfree(fq);</span></a>
+<a name="487"><span class="lineNum">     487 </span>            : }</a>
+<a name="488"><span class="lineNum">     488 </span>            : </a>
+<a name="489"><span class="lineNum">     489 </span>            : /*</a>
+<a name="490"><span class="lineNum">     490 </span>            :  * Allow driver to set its own lock class to fq-&gt;mq_flush_lock for</a>
+<a name="491"><span class="lineNum">     491 </span>            :  * avoiding lockdep complaint.</a>
+<a name="492"><span class="lineNum">     492 </span>            :  *</a>
+<a name="493"><span class="lineNum">     493 </span>            :  * flush_end_io() may be called recursively from some driver, such as</a>
+<a name="494"><span class="lineNum">     494 </span>            :  * nvme-loop, so lockdep may complain 'possible recursive locking' because</a>
+<a name="495"><span class="lineNum">     495 </span>            :  * all 'struct blk_flush_queue' instance share same mq_flush_lock lock class</a>
+<a name="496"><span class="lineNum">     496 </span>            :  * key. We need to assign different lock class for these driver's</a>
+<a name="497"><span class="lineNum">     497 </span>            :  * fq-&gt;mq_flush_lock for avoiding the lockdep warning.</a>
+<a name="498"><span class="lineNum">     498 </span>            :  *</a>
+<a name="499"><span class="lineNum">     499 </span>            :  * Use dynamically allocated lock class key for each 'blk_flush_queue'</a>
+<a name="500"><span class="lineNum">     500 </span>            :  * instance is over-kill, and more worse it introduces horrible boot delay</a>
+<a name="501"><span class="lineNum">     501 </span>            :  * issue because synchronize_rcu() is implied in lockdep_unregister_key which</a>
+<a name="502"><span class="lineNum">     502 </span>            :  * is called for each hctx release. SCSI probing may synchronously create and</a>
+<a name="503"><span class="lineNum">     503 </span>            :  * destroy lots of MQ request_queues for non-existent devices, and some robot</a>
+<a name="504"><span class="lineNum">     504 </span>            :  * test kernel always enable lockdep option. It is observed that more than half</a>
+<a name="505"><span class="lineNum">     505 </span>            :  * an hour is taken during SCSI MQ probe with per-fq lock class.</a>
+<a name="506"><span class="lineNum">     506 </span>            :  */</a>
+<a name="507"><span class="lineNum">     507 </span><span class="lineNoCov">          0 : void blk_mq_hctx_set_fq_lock_class(struct blk_mq_hw_ctx *hctx,</span></a>
+<a name="508"><span class="lineNum">     508 </span>            :                 struct lock_class_key *key)</a>
+<a name="509"><span class="lineNum">     509 </span>            : {</a>
+<a name="510"><span class="lineNum">     510 </span><span class="lineNoCov">          0 :         lockdep_set_class(&amp;hctx-&gt;fq-&gt;mq_flush_lock, key);</span></a>
+<a name="511"><span class="lineNum">     511 </span><span class="lineNoCov">          0 : }</span></a>
+<a name="512"><span class="lineNum">     512 </span>            : EXPORT_SYMBOL_GPL(blk_mq_hctx_set_fq_lock_class);</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

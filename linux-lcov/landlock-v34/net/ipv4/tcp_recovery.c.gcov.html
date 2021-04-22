@@ -1,0 +1,315 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - landlock.info - net/ipv4/tcp_recovery.c</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">net/ipv4</a> - tcp_recovery.c<span style="font-size: 80%;"> (source / <a href="tcp_recovery.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">landlock.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">8</td>
+            <td class="headerCovTableEntry">90</td>
+            <td class="headerCovTableEntryLo">8.9 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2021-04-22 12:43:58</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntry">8</td>
+            <td class="headerCovTableEntryLo">12.5 %</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : // SPDX-License-Identifier: GPL-2.0</a>
+<a name="2"><span class="lineNum">       2 </span>            : #include &lt;linux/tcp.h&gt;</a>
+<a name="3"><span class="lineNum">       3 </span>            : #include &lt;net/tcp.h&gt;</a>
+<a name="4"><span class="lineNum">       4 </span>            : </a>
+<a name="5"><span class="lineNum">       5 </span><span class="lineNoCov">          0 : static bool tcp_rack_sent_after(u64 t1, u64 t2, u32 seq1, u32 seq2)</span></a>
+<a name="6"><span class="lineNum">       6 </span>            : {</a>
+<a name="7"><span class="lineNum">       7 </span><span class="lineNoCov">          0 :         return t1 &gt; t2 || (t1 == t2 &amp;&amp; after(seq1, seq2));</span></a>
+<a name="8"><span class="lineNum">       8 </span>            : }</a>
+<a name="9"><span class="lineNum">       9 </span>            : </a>
+<a name="10"><span class="lineNum">      10 </span><span class="lineNoCov">          0 : static u32 tcp_rack_reo_wnd(const struct sock *sk)</span></a>
+<a name="11"><span class="lineNum">      11 </span>            : {</a>
+<a name="12"><span class="lineNum">      12 </span><span class="lineNoCov">          0 :         struct tcp_sock *tp = tcp_sk(sk);</span></a>
+<a name="13"><span class="lineNum">      13 </span>            : </a>
+<a name="14"><span class="lineNum">      14 </span><span class="lineNoCov">          0 :         if (!tp-&gt;reord_seen) {</span></a>
+<a name="15"><span class="lineNum">      15 </span>            :                 /* If reordering has not been observed, be aggressive during</a>
+<a name="16"><span class="lineNum">      16 </span>            :                  * the recovery or starting the recovery by DUPACK threshold.</a>
+<a name="17"><span class="lineNum">      17 </span>            :                  */</a>
+<a name="18"><span class="lineNum">      18 </span><span class="lineNoCov">          0 :                 if (inet_csk(sk)-&gt;icsk_ca_state &gt;= TCP_CA_Recovery)</span></a>
+<a name="19"><span class="lineNum">      19 </span>            :                         return 0;</a>
+<a name="20"><span class="lineNum">      20 </span>            : </a>
+<a name="21"><span class="lineNum">      21 </span><span class="lineNoCov">          0 :                 if (tp-&gt;sacked_out &gt;= tp-&gt;reordering &amp;&amp;</span></a>
+<a name="22"><span class="lineNum">      22 </span><span class="lineNoCov">          0 :                     !(sock_net(sk)-&gt;ipv4.sysctl_tcp_recovery &amp; TCP_RACK_NO_DUPTHRESH))</span></a>
+<a name="23"><span class="lineNum">      23 </span>            :                         return 0;</a>
+<a name="24"><span class="lineNum">      24 </span>            :         }</a>
+<a name="25"><span class="lineNum">      25 </span>            : </a>
+<a name="26"><span class="lineNum">      26 </span>            :         /* To be more reordering resilient, allow min_rtt/4 settling delay.</a>
+<a name="27"><span class="lineNum">      27 </span>            :          * Use min_rtt instead of the smoothed RTT because reordering is</a>
+<a name="28"><span class="lineNum">      28 </span>            :          * often a path property and less related to queuing or delayed ACKs.</a>
+<a name="29"><span class="lineNum">      29 </span>            :          * Upon receiving DSACKs, linearly increase the window up to the</a>
+<a name="30"><span class="lineNum">      30 </span>            :          * smoothed RTT.</a>
+<a name="31"><span class="lineNum">      31 </span>            :          */</a>
+<a name="32"><span class="lineNum">      32 </span><span class="lineNoCov">          0 :         return min((tcp_min_rtt(tp) &gt;&gt; 2) * tp-&gt;rack.reo_wnd_steps,</span></a>
+<a name="33"><span class="lineNum">      33 </span>            :                    tp-&gt;srtt_us &gt;&gt; 3);</a>
+<a name="34"><span class="lineNum">      34 </span>            : }</a>
+<a name="35"><span class="lineNum">      35 </span>            : </a>
+<a name="36"><span class="lineNum">      36 </span><span class="lineNoCov">          0 : s32 tcp_rack_skb_timeout(struct tcp_sock *tp, struct sk_buff *skb, u32 reo_wnd)</span></a>
+<a name="37"><span class="lineNum">      37 </span>            : {</a>
+<a name="38"><span class="lineNum">      38 </span><span class="lineNoCov">          0 :         return tp-&gt;rack.rtt_us + reo_wnd -</span></a>
+<a name="39"><span class="lineNum">      39 </span><span class="lineNoCov">          0 :                tcp_stamp_us_delta(tp-&gt;tcp_mstamp, tcp_skb_timestamp_us(skb));</span></a>
+<a name="40"><span class="lineNum">      40 </span>            : }</a>
+<a name="41"><span class="lineNum">      41 </span>            : </a>
+<a name="42"><span class="lineNum">      42 </span>            : /* RACK loss detection (IETF draft draft-ietf-tcpm-rack-01):</a>
+<a name="43"><span class="lineNum">      43 </span>            :  *</a>
+<a name="44"><span class="lineNum">      44 </span>            :  * Marks a packet lost, if some packet sent later has been (s)acked.</a>
+<a name="45"><span class="lineNum">      45 </span>            :  * The underlying idea is similar to the traditional dupthresh and FACK</a>
+<a name="46"><span class="lineNum">      46 </span>            :  * but they look at different metrics:</a>
+<a name="47"><span class="lineNum">      47 </span>            :  *</a>
+<a name="48"><span class="lineNum">      48 </span>            :  * dupthresh: 3 OOO packets delivered (packet count)</a>
+<a name="49"><span class="lineNum">      49 </span>            :  * FACK: sequence delta to highest sacked sequence (sequence space)</a>
+<a name="50"><span class="lineNum">      50 </span>            :  * RACK: sent time delta to the latest delivered packet (time domain)</a>
+<a name="51"><span class="lineNum">      51 </span>            :  *</a>
+<a name="52"><span class="lineNum">      52 </span>            :  * The advantage of RACK is it applies to both original and retransmitted</a>
+<a name="53"><span class="lineNum">      53 </span>            :  * packet and therefore is robust against tail losses. Another advantage</a>
+<a name="54"><span class="lineNum">      54 </span>            :  * is being more resilient to reordering by simply allowing some</a>
+<a name="55"><span class="lineNum">      55 </span>            :  * &quot;settling delay&quot;, instead of tweaking the dupthresh.</a>
+<a name="56"><span class="lineNum">      56 </span>            :  *</a>
+<a name="57"><span class="lineNum">      57 </span>            :  * When tcp_rack_detect_loss() detects some packets are lost and we</a>
+<a name="58"><span class="lineNum">      58 </span>            :  * are not already in the CA_Recovery state, either tcp_rack_reo_timeout()</a>
+<a name="59"><span class="lineNum">      59 </span>            :  * or tcp_time_to_recover()'s &quot;Trick#1: the loss is proven&quot; code path will</a>
+<a name="60"><span class="lineNum">      60 </span>            :  * make us enter the CA_Recovery state.</a>
+<a name="61"><span class="lineNum">      61 </span>            :  */</a>
+<a name="62"><span class="lineNum">      62 </span><span class="lineNoCov">          0 : static void tcp_rack_detect_loss(struct sock *sk, u32 *reo_timeout)</span></a>
+<a name="63"><span class="lineNum">      63 </span>            : {</a>
+<a name="64"><span class="lineNum">      64 </span><span class="lineNoCov">          0 :         struct tcp_sock *tp = tcp_sk(sk);</span></a>
+<a name="65"><span class="lineNum">      65 </span><span class="lineNoCov">          0 :         struct sk_buff *skb, *n;</span></a>
+<a name="66"><span class="lineNum">      66 </span><span class="lineNoCov">          0 :         u32 reo_wnd;</span></a>
+<a name="67"><span class="lineNum">      67 </span>            : </a>
+<a name="68"><span class="lineNum">      68 </span><span class="lineNoCov">          0 :         *reo_timeout = 0;</span></a>
+<a name="69"><span class="lineNum">      69 </span><span class="lineNoCov">          0 :         reo_wnd = tcp_rack_reo_wnd(sk);</span></a>
+<a name="70"><span class="lineNum">      70 </span><span class="lineNoCov">          0 :         list_for_each_entry_safe(skb, n, &amp;tp-&gt;tsorted_sent_queue,</span></a>
+<a name="71"><span class="lineNum">      71 </span>            :                                  tcp_tsorted_anchor) {</a>
+<a name="72"><span class="lineNum">      72 </span><span class="lineNoCov">          0 :                 struct tcp_skb_cb *scb = TCP_SKB_CB(skb);</span></a>
+<a name="73"><span class="lineNum">      73 </span><span class="lineNoCov">          0 :                 s32 remaining;</span></a>
+<a name="74"><span class="lineNum">      74 </span>            : </a>
+<a name="75"><span class="lineNum">      75 </span>            :                 /* Skip ones marked lost but not yet retransmitted */</a>
+<a name="76"><span class="lineNum">      76 </span><span class="lineNoCov">          0 :                 if ((scb-&gt;sacked &amp; TCPCB_LOST) &amp;&amp;</span></a>
+<a name="77"><span class="lineNum">      77 </span>            :                     !(scb-&gt;sacked &amp; TCPCB_SACKED_RETRANS))</a>
+<a name="78"><span class="lineNum">      78 </span><span class="lineNoCov">          0 :                         continue;</span></a>
+<a name="79"><span class="lineNum">      79 </span>            : </a>
+<a name="80"><span class="lineNum">      80 </span><span class="lineNoCov">          0 :                 if (!tcp_rack_sent_after(tp-&gt;rack.mstamp,</span></a>
+<a name="81"><span class="lineNum">      81 </span>            :                                          tcp_skb_timestamp_us(skb),</a>
+<a name="82"><span class="lineNum">      82 </span>            :                                          tp-&gt;rack.end_seq, scb-&gt;end_seq))</a>
+<a name="83"><span class="lineNum">      83 </span>            :                         break;</a>
+<a name="84"><span class="lineNum">      84 </span>            : </a>
+<a name="85"><span class="lineNum">      85 </span>            :                 /* A packet is lost if it has not been s/acked beyond</a>
+<a name="86"><span class="lineNum">      86 </span>            :                  * the recent RTT plus the reordering window.</a>
+<a name="87"><span class="lineNum">      87 </span>            :                  */</a>
+<a name="88"><span class="lineNum">      88 </span><span class="lineNoCov">          0 :                 remaining = tcp_rack_skb_timeout(tp, skb, reo_wnd);</span></a>
+<a name="89"><span class="lineNum">      89 </span><span class="lineNoCov">          0 :                 if (remaining &lt;= 0) {</span></a>
+<a name="90"><span class="lineNum">      90 </span><span class="lineNoCov">          0 :                         tcp_mark_skb_lost(sk, skb);</span></a>
+<a name="91"><span class="lineNum">      91 </span><span class="lineNoCov">          0 :                         list_del_init(&amp;skb-&gt;tcp_tsorted_anchor);</span></a>
+<a name="92"><span class="lineNum">      92 </span>            :                 } else {</a>
+<a name="93"><span class="lineNum">      93 </span>            :                         /* Record maximum wait time */</a>
+<a name="94"><span class="lineNum">      94 </span><span class="lineNoCov">          0 :                         *reo_timeout = max_t(u32, *reo_timeout, remaining);</span></a>
+<a name="95"><span class="lineNum">      95 </span>            :                 }</a>
+<a name="96"><span class="lineNum">      96 </span>            :         }</a>
+<a name="97"><span class="lineNum">      97 </span><span class="lineNoCov">          0 : }</span></a>
+<a name="98"><span class="lineNum">      98 </span>            : </a>
+<a name="99"><span class="lineNum">      99 </span><span class="lineNoCov">          0 : bool tcp_rack_mark_lost(struct sock *sk)</span></a>
+<a name="100"><span class="lineNum">     100 </span>            : {</a>
+<a name="101"><span class="lineNum">     101 </span><span class="lineNoCov">          0 :         struct tcp_sock *tp = tcp_sk(sk);</span></a>
+<a name="102"><span class="lineNum">     102 </span><span class="lineNoCov">          0 :         u32 timeout;</span></a>
+<a name="103"><span class="lineNum">     103 </span>            : </a>
+<a name="104"><span class="lineNum">     104 </span><span class="lineNoCov">          0 :         if (!tp-&gt;rack.advanced)</span></a>
+<a name="105"><span class="lineNum">     105 </span>            :                 return false;</a>
+<a name="106"><span class="lineNum">     106 </span>            : </a>
+<a name="107"><span class="lineNum">     107 </span>            :         /* Reset the advanced flag to avoid unnecessary queue scanning */</a>
+<a name="108"><span class="lineNum">     108 </span><span class="lineNoCov">          0 :         tp-&gt;rack.advanced = 0;</span></a>
+<a name="109"><span class="lineNum">     109 </span><span class="lineNoCov">          0 :         tcp_rack_detect_loss(sk, &amp;timeout);</span></a>
+<a name="110"><span class="lineNum">     110 </span><span class="lineNoCov">          0 :         if (timeout) {</span></a>
+<a name="111"><span class="lineNum">     111 </span><span class="lineNoCov">          0 :                 timeout = usecs_to_jiffies(timeout) + TCP_TIMEOUT_MIN;</span></a>
+<a name="112"><span class="lineNum">     112 </span><span class="lineNoCov">          0 :                 inet_csk_reset_xmit_timer(sk, ICSK_TIME_REO_TIMEOUT,</span></a>
+<a name="113"><span class="lineNum">     113 </span><span class="lineNoCov">          0 :                                           timeout, inet_csk(sk)-&gt;icsk_rto);</span></a>
+<a name="114"><span class="lineNum">     114 </span>            :         }</a>
+<a name="115"><span class="lineNum">     115 </span><span class="lineNoCov">          0 :         return !!timeout;</span></a>
+<a name="116"><span class="lineNum">     116 </span>            : }</a>
+<a name="117"><span class="lineNum">     117 </span>            : </a>
+<a name="118"><span class="lineNum">     118 </span>            : /* Record the most recently (re)sent time among the (s)acked packets</a>
+<a name="119"><span class="lineNum">     119 </span>            :  * This is &quot;Step 3: Advance RACK.xmit_time and update RACK.RTT&quot; from</a>
+<a name="120"><span class="lineNum">     120 </span>            :  * draft-cheng-tcpm-rack-00.txt</a>
+<a name="121"><span class="lineNum">     121 </span>            :  */</a>
+<a name="122"><span class="lineNum">     122 </span><span class="lineNoCov">          0 : void tcp_rack_advance(struct tcp_sock *tp, u8 sacked, u32 end_seq,</span></a>
+<a name="123"><span class="lineNum">     123 </span>            :                       u64 xmit_time)</a>
+<a name="124"><span class="lineNum">     124 </span>            : {</a>
+<a name="125"><span class="lineNum">     125 </span><span class="lineNoCov">          0 :         u32 rtt_us;</span></a>
+<a name="126"><span class="lineNum">     126 </span>            : </a>
+<a name="127"><span class="lineNum">     127 </span><span class="lineNoCov">          0 :         rtt_us = tcp_stamp_us_delta(tp-&gt;tcp_mstamp, xmit_time);</span></a>
+<a name="128"><span class="lineNum">     128 </span><span class="lineNoCov">          0 :         if (rtt_us &lt; tcp_min_rtt(tp) &amp;&amp; (sacked &amp; TCPCB_RETRANS)) {</span></a>
+<a name="129"><span class="lineNum">     129 </span>            :                 /* If the sacked packet was retransmitted, it's ambiguous</a>
+<a name="130"><span class="lineNum">     130 </span>            :                  * whether the retransmission or the original (or the prior</a>
+<a name="131"><span class="lineNum">     131 </span>            :                  * retransmission) was sacked.</a>
+<a name="132"><span class="lineNum">     132 </span>            :                  *</a>
+<a name="133"><span class="lineNum">     133 </span>            :                  * If the original is lost, there is no ambiguity. Otherwise</a>
+<a name="134"><span class="lineNum">     134 </span>            :                  * we assume the original can be delayed up to aRTT + min_rtt.</a>
+<a name="135"><span class="lineNum">     135 </span>            :                  * the aRTT term is bounded by the fast recovery or timeout,</a>
+<a name="136"><span class="lineNum">     136 </span>            :                  * so it's at least one RTT (i.e., retransmission is at least</a>
+<a name="137"><span class="lineNum">     137 </span>            :                  * an RTT later).</a>
+<a name="138"><span class="lineNum">     138 </span>            :                  */</a>
+<a name="139"><span class="lineNum">     139 </span>            :                 return;</a>
+<a name="140"><span class="lineNum">     140 </span>            :         }</a>
+<a name="141"><span class="lineNum">     141 </span><span class="lineNoCov">          0 :         tp-&gt;rack.advanced = 1;</span></a>
+<a name="142"><span class="lineNum">     142 </span><span class="lineNoCov">          0 :         tp-&gt;rack.rtt_us = rtt_us;</span></a>
+<a name="143"><span class="lineNum">     143 </span><span class="lineNoCov">          0 :         if (tcp_rack_sent_after(xmit_time, tp-&gt;rack.mstamp,</span></a>
+<a name="144"><span class="lineNum">     144 </span>            :                                 end_seq, tp-&gt;rack.end_seq)) {</a>
+<a name="145"><span class="lineNum">     145 </span><span class="lineNoCov">          0 :                 tp-&gt;rack.mstamp = xmit_time;</span></a>
+<a name="146"><span class="lineNum">     146 </span><span class="lineNoCov">          0 :                 tp-&gt;rack.end_seq = end_seq;</span></a>
+<a name="147"><span class="lineNum">     147 </span>            :         }</a>
+<a name="148"><span class="lineNum">     148 </span>            : }</a>
+<a name="149"><span class="lineNum">     149 </span>            : </a>
+<a name="150"><span class="lineNum">     150 </span>            : /* We have waited long enough to accommodate reordering. Mark the expired</a>
+<a name="151"><span class="lineNum">     151 </span>            :  * packets lost and retransmit them.</a>
+<a name="152"><span class="lineNum">     152 </span>            :  */</a>
+<a name="153"><span class="lineNum">     153 </span><span class="lineNoCov">          0 : void tcp_rack_reo_timeout(struct sock *sk)</span></a>
+<a name="154"><span class="lineNum">     154 </span>            : {</a>
+<a name="155"><span class="lineNum">     155 </span><span class="lineNoCov">          0 :         struct tcp_sock *tp = tcp_sk(sk);</span></a>
+<a name="156"><span class="lineNum">     156 </span><span class="lineNoCov">          0 :         u32 timeout, prior_inflight;</span></a>
+<a name="157"><span class="lineNum">     157 </span><span class="lineNoCov">          0 :         u32 lost = tp-&gt;lost;</span></a>
+<a name="158"><span class="lineNum">     158 </span>            : </a>
+<a name="159"><span class="lineNum">     159 </span><span class="lineNoCov">          0 :         prior_inflight = tcp_packets_in_flight(tp);</span></a>
+<a name="160"><span class="lineNum">     160 </span><span class="lineNoCov">          0 :         tcp_rack_detect_loss(sk, &amp;timeout);</span></a>
+<a name="161"><span class="lineNum">     161 </span><span class="lineNoCov">          0 :         if (prior_inflight != tcp_packets_in_flight(tp)) {</span></a>
+<a name="162"><span class="lineNum">     162 </span><span class="lineNoCov">          0 :                 if (inet_csk(sk)-&gt;icsk_ca_state != TCP_CA_Recovery) {</span></a>
+<a name="163"><span class="lineNum">     163 </span><span class="lineNoCov">          0 :                         tcp_enter_recovery(sk, false);</span></a>
+<a name="164"><span class="lineNum">     164 </span><span class="lineNoCov">          0 :                         if (!inet_csk(sk)-&gt;icsk_ca_ops-&gt;cong_control)</span></a>
+<a name="165"><span class="lineNum">     165 </span><span class="lineNoCov">          0 :                                 tcp_cwnd_reduction(sk, 1, tp-&gt;lost - lost, 0);</span></a>
+<a name="166"><span class="lineNum">     166 </span>            :                 }</a>
+<a name="167"><span class="lineNum">     167 </span><span class="lineNoCov">          0 :                 tcp_xmit_retransmit_queue(sk);</span></a>
+<a name="168"><span class="lineNum">     168 </span>            :         }</a>
+<a name="169"><span class="lineNum">     169 </span><span class="lineNoCov">          0 :         if (inet_csk(sk)-&gt;icsk_pending != ICSK_TIME_RETRANS)</span></a>
+<a name="170"><span class="lineNum">     170 </span><span class="lineNoCov">          0 :                 tcp_rearm_rto(sk);</span></a>
+<a name="171"><span class="lineNum">     171 </span><span class="lineNoCov">          0 : }</span></a>
+<a name="172"><span class="lineNum">     172 </span>            : </a>
+<a name="173"><span class="lineNum">     173 </span>            : /* Updates the RACK's reo_wnd based on DSACK and no. of recoveries.</a>
+<a name="174"><span class="lineNum">     174 </span>            :  *</a>
+<a name="175"><span class="lineNum">     175 </span>            :  * If DSACK is received, increment reo_wnd by min_rtt/4 (upper bounded</a>
+<a name="176"><span class="lineNum">     176 </span>            :  * by srtt), since there is possibility that spurious retransmission was</a>
+<a name="177"><span class="lineNum">     177 </span>            :  * due to reordering delay longer than reo_wnd.</a>
+<a name="178"><span class="lineNum">     178 </span>            :  *</a>
+<a name="179"><span class="lineNum">     179 </span>            :  * Persist the current reo_wnd value for TCP_RACK_RECOVERY_THRESH (16)</a>
+<a name="180"><span class="lineNum">     180 </span>            :  * no. of successful recoveries (accounts for full DSACK-based loss</a>
+<a name="181"><span class="lineNum">     181 </span>            :  * recovery undo). After that, reset it to default (min_rtt/4).</a>
+<a name="182"><span class="lineNum">     182 </span>            :  *</a>
+<a name="183"><span class="lineNum">     183 </span>            :  * At max, reo_wnd is incremented only once per rtt. So that the new</a>
+<a name="184"><span class="lineNum">     184 </span>            :  * DSACK on which we are reacting, is due to the spurious retx (approx)</a>
+<a name="185"><span class="lineNum">     185 </span>            :  * after the reo_wnd has been updated last time.</a>
+<a name="186"><span class="lineNum">     186 </span>            :  *</a>
+<a name="187"><span class="lineNum">     187 </span>            :  * reo_wnd is tracked in terms of steps (of min_rtt/4), rather than</a>
+<a name="188"><span class="lineNum">     188 </span>            :  * absolute value to account for change in rtt.</a>
+<a name="189"><span class="lineNum">     189 </span>            :  */</a>
+<a name="190"><span class="lineNum">     190 </span><span class="lineCov">        351 : void tcp_rack_update_reo_wnd(struct sock *sk, struct rate_sample *rs)</span></a>
+<a name="191"><span class="lineNum">     191 </span>            : {</a>
+<a name="192"><span class="lineNum">     192 </span><span class="lineCov">        351 :         struct tcp_sock *tp = tcp_sk(sk);</span></a>
+<a name="193"><span class="lineNum">     193 </span>            : </a>
+<a name="194"><span class="lineNum">     194 </span><span class="lineCov">        351 :         if (sock_net(sk)-&gt;ipv4.sysctl_tcp_recovery &amp; TCP_RACK_STATIC_REO_WND ||</span></a>
+<a name="195"><span class="lineNum">     195 </span><span class="lineCov">        351 :             !rs-&gt;prior_delivered)</span></a>
+<a name="196"><span class="lineNum">     196 </span>            :                 return;</a>
+<a name="197"><span class="lineNum">     197 </span>            : </a>
+<a name="198"><span class="lineNum">     198 </span>            :         /* Disregard DSACK if a rtt has not passed since we adjusted reo_wnd */</a>
+<a name="199"><span class="lineNum">     199 </span><span class="lineCov">        351 :         if (before(rs-&gt;prior_delivered, tp-&gt;rack.last_delivered))</span></a>
+<a name="200"><span class="lineNum">     200 </span><span class="lineNoCov">          0 :                 tp-&gt;rack.dsack_seen = 0;</span></a>
+<a name="201"><span class="lineNum">     201 </span>            : </a>
+<a name="202"><span class="lineNum">     202 </span>            :         /* Adjust the reo_wnd if update is pending */</a>
+<a name="203"><span class="lineNum">     203 </span><span class="lineCov">        351 :         if (tp-&gt;rack.dsack_seen) {</span></a>
+<a name="204"><span class="lineNum">     204 </span><span class="lineNoCov">          0 :                 tp-&gt;rack.reo_wnd_steps = min_t(u32, 0xFF,</span></a>
+<a name="205"><span class="lineNum">     205 </span>            :                                                tp-&gt;rack.reo_wnd_steps + 1);</a>
+<a name="206"><span class="lineNum">     206 </span><span class="lineNoCov">          0 :                 tp-&gt;rack.dsack_seen = 0;</span></a>
+<a name="207"><span class="lineNum">     207 </span><span class="lineNoCov">          0 :                 tp-&gt;rack.last_delivered = tp-&gt;delivered;</span></a>
+<a name="208"><span class="lineNum">     208 </span><span class="lineNoCov">          0 :                 tp-&gt;rack.reo_wnd_persist = TCP_RACK_RECOVERY_THRESH;</span></a>
+<a name="209"><span class="lineNum">     209 </span><span class="lineCov">        351 :         } else if (!tp-&gt;rack.reo_wnd_persist) {</span></a>
+<a name="210"><span class="lineNum">     210 </span><span class="lineCov">        351 :                 tp-&gt;rack.reo_wnd_steps = 1;</span></a>
+<a name="211"><span class="lineNum">     211 </span>            :         }</a>
+<a name="212"><span class="lineNum">     212 </span>            : }</a>
+<a name="213"><span class="lineNum">     213 </span>            : </a>
+<a name="214"><span class="lineNum">     214 </span>            : /* RFC6582 NewReno recovery for non-SACK connection. It simply retransmits</a>
+<a name="215"><span class="lineNum">     215 </span>            :  * the next unacked packet upon receiving</a>
+<a name="216"><span class="lineNum">     216 </span>            :  * a) three or more DUPACKs to start the fast recovery</a>
+<a name="217"><span class="lineNum">     217 </span>            :  * b) an ACK acknowledging new data during the fast recovery.</a>
+<a name="218"><span class="lineNum">     218 </span>            :  */</a>
+<a name="219"><span class="lineNum">     219 </span><span class="lineNoCov">          0 : void tcp_newreno_mark_lost(struct sock *sk, bool snd_una_advanced)</span></a>
+<a name="220"><span class="lineNum">     220 </span>            : {</a>
+<a name="221"><span class="lineNum">     221 </span><span class="lineNoCov">          0 :         const u8 state = inet_csk(sk)-&gt;icsk_ca_state;</span></a>
+<a name="222"><span class="lineNum">     222 </span><span class="lineNoCov">          0 :         struct tcp_sock *tp = tcp_sk(sk);</span></a>
+<a name="223"><span class="lineNum">     223 </span>            : </a>
+<a name="224"><span class="lineNum">     224 </span><span class="lineNoCov">          0 :         if ((state &lt; TCP_CA_Recovery &amp;&amp; tp-&gt;sacked_out &gt;= tp-&gt;reordering) ||</span></a>
+<a name="225"><span class="lineNum">     225 </span><span class="lineNoCov">          0 :             (state == TCP_CA_Recovery &amp;&amp; snd_una_advanced)) {</span></a>
+<a name="226"><span class="lineNum">     226 </span><span class="lineNoCov">          0 :                 struct sk_buff *skb = tcp_rtx_queue_head(sk);</span></a>
+<a name="227"><span class="lineNum">     227 </span><span class="lineNoCov">          0 :                 u32 mss;</span></a>
+<a name="228"><span class="lineNum">     228 </span>            : </a>
+<a name="229"><span class="lineNum">     229 </span><span class="lineNoCov">          0 :                 if (TCP_SKB_CB(skb)-&gt;sacked &amp; TCPCB_LOST)</span></a>
+<a name="230"><span class="lineNum">     230 </span>            :                         return;</a>
+<a name="231"><span class="lineNum">     231 </span>            : </a>
+<a name="232"><span class="lineNum">     232 </span><span class="lineNoCov">          0 :                 mss = tcp_skb_mss(skb);</span></a>
+<a name="233"><span class="lineNum">     233 </span><span class="lineNoCov">          0 :                 if (tcp_skb_pcount(skb) &gt; 1 &amp;&amp; skb-&gt;len &gt; mss)</span></a>
+<a name="234"><span class="lineNum">     234 </span><span class="lineNoCov">          0 :                         tcp_fragment(sk, TCP_FRAG_IN_RTX_QUEUE, skb,</span></a>
+<a name="235"><span class="lineNum">     235 </span>            :                                      mss, mss, GFP_ATOMIC);</a>
+<a name="236"><span class="lineNum">     236 </span>            : </a>
+<a name="237"><span class="lineNum">     237 </span><span class="lineNoCov">          0 :                 tcp_mark_skb_lost(sk, skb);</span></a>
+<a name="238"><span class="lineNum">     238 </span>            :         }</a>
+<a name="239"><span class="lineNum">     239 </span>            : }</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

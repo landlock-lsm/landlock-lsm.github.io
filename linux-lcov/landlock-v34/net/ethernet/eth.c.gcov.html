@@ -1,0 +1,636 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - landlock.info - net/ethernet/eth.c</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">net/ethernet</a> - eth.c<span style="font-size: 80%;"> (source / <a href="eth.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">landlock.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">64</td>
+            <td class="headerCovTableEntry">169</td>
+            <td class="headerCovTableEntryLo">37.9 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2021-04-22 12:43:58</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">10</td>
+            <td class="headerCovTableEntry">20</td>
+            <td class="headerCovTableEntryLo">50.0 %</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : // SPDX-License-Identifier: GPL-2.0-or-later</a>
+<a name="2"><span class="lineNum">       2 </span>            : /*</a>
+<a name="3"><span class="lineNum">       3 </span>            :  * INET         An implementation of the TCP/IP protocol suite for the LINUX</a>
+<a name="4"><span class="lineNum">       4 </span>            :  *              operating system.  INET is implemented using the  BSD Socket</a>
+<a name="5"><span class="lineNum">       5 </span>            :  *              interface as the means of communication with the user level.</a>
+<a name="6"><span class="lineNum">       6 </span>            :  *</a>
+<a name="7"><span class="lineNum">       7 </span>            :  *              Ethernet-type device handling.</a>
+<a name="8"><span class="lineNum">       8 </span>            :  *</a>
+<a name="9"><span class="lineNum">       9 </span>            :  * Version:     @(#)eth.c       1.0.7   05/25/93</a>
+<a name="10"><span class="lineNum">      10 </span>            :  *</a>
+<a name="11"><span class="lineNum">      11 </span>            :  * Authors:     Ross Biro</a>
+<a name="12"><span class="lineNum">      12 </span>            :  *              Fred N. van Kempen, &lt;waltje@uWalt.NL.Mugnet.ORG&gt;</a>
+<a name="13"><span class="lineNum">      13 </span>            :  *              Mark Evans, &lt;evansmp@uhura.aston.ac.uk&gt;</a>
+<a name="14"><span class="lineNum">      14 </span>            :  *              Florian  La Roche, &lt;rzsfl@rz.uni-sb.de&gt;</a>
+<a name="15"><span class="lineNum">      15 </span>            :  *              Alan Cox, &lt;gw4pts@gw4pts.ampr.org&gt;</a>
+<a name="16"><span class="lineNum">      16 </span>            :  *</a>
+<a name="17"><span class="lineNum">      17 </span>            :  * Fixes:</a>
+<a name="18"><span class="lineNum">      18 </span>            :  *              Mr Linux        : Arp problems</a>
+<a name="19"><span class="lineNum">      19 </span>            :  *              Alan Cox        : Generic queue tidyup (very tiny here)</a>
+<a name="20"><span class="lineNum">      20 </span>            :  *              Alan Cox        : eth_header ntohs should be htons</a>
+<a name="21"><span class="lineNum">      21 </span>            :  *              Alan Cox        : eth_rebuild_header missing an htons and</a>
+<a name="22"><span class="lineNum">      22 </span>            :  *                                minor other things.</a>
+<a name="23"><span class="lineNum">      23 </span>            :  *              Tegge           : Arp bug fixes.</a>
+<a name="24"><span class="lineNum">      24 </span>            :  *              Florian         : Removed many unnecessary functions, code cleanup</a>
+<a name="25"><span class="lineNum">      25 </span>            :  *                                and changes for new arp and skbuff.</a>
+<a name="26"><span class="lineNum">      26 </span>            :  *              Alan Cox        : Redid header building to reflect new format.</a>
+<a name="27"><span class="lineNum">      27 </span>            :  *              Alan Cox        : ARP only when compiled with CONFIG_INET</a>
+<a name="28"><span class="lineNum">      28 </span>            :  *              Greg Page       : 802.2 and SNAP stuff.</a>
+<a name="29"><span class="lineNum">      29 </span>            :  *              Alan Cox        : MAC layer pointers/new format.</a>
+<a name="30"><span class="lineNum">      30 </span>            :  *              Paul Gortmaker  : eth_copy_and_sum shouldn't csum padding.</a>
+<a name="31"><span class="lineNum">      31 </span>            :  *              Alan Cox        : Protect against forwarding explosions with</a>
+<a name="32"><span class="lineNum">      32 </span>            :  *                                older network drivers and IFF_ALLMULTI.</a>
+<a name="33"><span class="lineNum">      33 </span>            :  *      Christer Weinigel       : Better rebuild header message.</a>
+<a name="34"><span class="lineNum">      34 </span>            :  *             Andrew Morton    : 26Feb01: kill ether_setup() - use netdev_boot_setup().</a>
+<a name="35"><span class="lineNum">      35 </span>            :  */</a>
+<a name="36"><span class="lineNum">      36 </span>            : #include &lt;linux/module.h&gt;</a>
+<a name="37"><span class="lineNum">      37 </span>            : #include &lt;linux/types.h&gt;</a>
+<a name="38"><span class="lineNum">      38 </span>            : #include &lt;linux/kernel.h&gt;</a>
+<a name="39"><span class="lineNum">      39 </span>            : #include &lt;linux/string.h&gt;</a>
+<a name="40"><span class="lineNum">      40 </span>            : #include &lt;linux/mm.h&gt;</a>
+<a name="41"><span class="lineNum">      41 </span>            : #include &lt;linux/socket.h&gt;</a>
+<a name="42"><span class="lineNum">      42 </span>            : #include &lt;linux/in.h&gt;</a>
+<a name="43"><span class="lineNum">      43 </span>            : #include &lt;linux/inet.h&gt;</a>
+<a name="44"><span class="lineNum">      44 </span>            : #include &lt;linux/ip.h&gt;</a>
+<a name="45"><span class="lineNum">      45 </span>            : #include &lt;linux/netdevice.h&gt;</a>
+<a name="46"><span class="lineNum">      46 </span>            : #include &lt;linux/nvmem-consumer.h&gt;</a>
+<a name="47"><span class="lineNum">      47 </span>            : #include &lt;linux/etherdevice.h&gt;</a>
+<a name="48"><span class="lineNum">      48 </span>            : #include &lt;linux/skbuff.h&gt;</a>
+<a name="49"><span class="lineNum">      49 </span>            : #include &lt;linux/errno.h&gt;</a>
+<a name="50"><span class="lineNum">      50 </span>            : #include &lt;linux/init.h&gt;</a>
+<a name="51"><span class="lineNum">      51 </span>            : #include &lt;linux/if_ether.h&gt;</a>
+<a name="52"><span class="lineNum">      52 </span>            : #include &lt;linux/of_net.h&gt;</a>
+<a name="53"><span class="lineNum">      53 </span>            : #include &lt;linux/pci.h&gt;</a>
+<a name="54"><span class="lineNum">      54 </span>            : #include &lt;net/dst.h&gt;</a>
+<a name="55"><span class="lineNum">      55 </span>            : #include &lt;net/arp.h&gt;</a>
+<a name="56"><span class="lineNum">      56 </span>            : #include &lt;net/sock.h&gt;</a>
+<a name="57"><span class="lineNum">      57 </span>            : #include &lt;net/ipv6.h&gt;</a>
+<a name="58"><span class="lineNum">      58 </span>            : #include &lt;net/ip.h&gt;</a>
+<a name="59"><span class="lineNum">      59 </span>            : #include &lt;net/dsa.h&gt;</a>
+<a name="60"><span class="lineNum">      60 </span>            : #include &lt;net/flow_dissector.h&gt;</a>
+<a name="61"><span class="lineNum">      61 </span>            : #include &lt;linux/uaccess.h&gt;</a>
+<a name="62"><span class="lineNum">      62 </span>            : #include &lt;net/pkt_sched.h&gt;</a>
+<a name="63"><span class="lineNum">      63 </span>            : </a>
+<a name="64"><span class="lineNum">      64 </span>            : __setup(&quot;ether=&quot;, netdev_boot_setup);</a>
+<a name="65"><span class="lineNum">      65 </span>            : </a>
+<a name="66"><span class="lineNum">      66 </span>            : /**</a>
+<a name="67"><span class="lineNum">      67 </span>            :  * eth_header - create the Ethernet header</a>
+<a name="68"><span class="lineNum">      68 </span>            :  * @skb:        buffer to alter</a>
+<a name="69"><span class="lineNum">      69 </span>            :  * @dev:        source device</a>
+<a name="70"><span class="lineNum">      70 </span>            :  * @type:       Ethernet type field</a>
+<a name="71"><span class="lineNum">      71 </span>            :  * @daddr: destination address (NULL leave destination address)</a>
+<a name="72"><span class="lineNum">      72 </span>            :  * @saddr: source address (NULL use device source address)</a>
+<a name="73"><span class="lineNum">      73 </span>            :  * @len:   packet length (&lt;= skb-&gt;len)</a>
+<a name="74"><span class="lineNum">      74 </span>            :  *</a>
+<a name="75"><span class="lineNum">      75 </span>            :  *</a>
+<a name="76"><span class="lineNum">      76 </span>            :  * Set the protocol type. For a packet of type ETH_P_802_3/2 we put the length</a>
+<a name="77"><span class="lineNum">      77 </span>            :  * in here instead.</a>
+<a name="78"><span class="lineNum">      78 </span>            :  */</a>
+<a name="79"><span class="lineNum">      79 </span><span class="lineCov">          9 : int eth_header(struct sk_buff *skb, struct net_device *dev,</span></a>
+<a name="80"><span class="lineNum">      80 </span>            :                unsigned short type,</a>
+<a name="81"><span class="lineNum">      81 </span>            :                const void *daddr, const void *saddr, unsigned int len)</a>
+<a name="82"><span class="lineNum">      82 </span>            : {</a>
+<a name="83"><span class="lineNum">      83 </span><span class="lineCov">          9 :         struct ethhdr *eth = skb_push(skb, ETH_HLEN);</span></a>
+<a name="84"><span class="lineNum">      84 </span>            : </a>
+<a name="85"><span class="lineNum">      85 </span><span class="lineCov">          9 :         if (type != ETH_P_802_3 &amp;&amp; type != ETH_P_802_2)</span></a>
+<a name="86"><span class="lineNum">      86 </span><span class="lineCov">          9 :                 eth-&gt;h_proto = htons(type);</span></a>
+<a name="87"><span class="lineNum">      87 </span>            :         else</a>
+<a name="88"><span class="lineNum">      88 </span><span class="lineNoCov">          0 :                 eth-&gt;h_proto = htons(len);</span></a>
+<a name="89"><span class="lineNum">      89 </span>            : </a>
+<a name="90"><span class="lineNum">      90 </span>            :         /*</a>
+<a name="91"><span class="lineNum">      91 </span>            :          *      Set the source hardware address.</a>
+<a name="92"><span class="lineNum">      92 </span>            :          */</a>
+<a name="93"><span class="lineNum">      93 </span>            : </a>
+<a name="94"><span class="lineNum">      94 </span><span class="lineCov">          9 :         if (!saddr)</span></a>
+<a name="95"><span class="lineNum">      95 </span><span class="lineCov">          6 :                 saddr = dev-&gt;dev_addr;</span></a>
+<a name="96"><span class="lineNum">      96 </span><span class="lineCov">          9 :         memcpy(eth-&gt;h_source, saddr, ETH_ALEN);</span></a>
+<a name="97"><span class="lineNum">      97 </span>            : </a>
+<a name="98"><span class="lineNum">      98 </span><span class="lineCov">          9 :         if (daddr) {</span></a>
+<a name="99"><span class="lineNum">      99 </span><span class="lineCov">          9 :                 memcpy(eth-&gt;h_dest, daddr, ETH_ALEN);</span></a>
+<a name="100"><span class="lineNum">     100 </span><span class="lineCov">          9 :                 return ETH_HLEN;</span></a>
+<a name="101"><span class="lineNum">     101 </span>            :         }</a>
+<a name="102"><span class="lineNum">     102 </span>            : </a>
+<a name="103"><span class="lineNum">     103 </span>            :         /*</a>
+<a name="104"><span class="lineNum">     104 </span>            :          *      Anyway, the loopback-device should never use this function...</a>
+<a name="105"><span class="lineNum">     105 </span>            :          */</a>
+<a name="106"><span class="lineNum">     106 </span>            : </a>
+<a name="107"><span class="lineNum">     107 </span><span class="lineNoCov">          0 :         if (dev-&gt;flags &amp; (IFF_LOOPBACK | IFF_NOARP)) {</span></a>
+<a name="108"><span class="lineNum">     108 </span><span class="lineNoCov">          0 :                 eth_zero_addr(eth-&gt;h_dest);</span></a>
+<a name="109"><span class="lineNum">     109 </span><span class="lineNoCov">          0 :                 return ETH_HLEN;</span></a>
+<a name="110"><span class="lineNum">     110 </span>            :         }</a>
+<a name="111"><span class="lineNum">     111 </span>            : </a>
+<a name="112"><span class="lineNum">     112 </span>            :         return -ETH_HLEN;</a>
+<a name="113"><span class="lineNum">     113 </span>            : }</a>
+<a name="114"><span class="lineNum">     114 </span>            : EXPORT_SYMBOL(eth_header);</a>
+<a name="115"><span class="lineNum">     115 </span>            : </a>
+<a name="116"><span class="lineNum">     116 </span>            : /**</a>
+<a name="117"><span class="lineNum">     117 </span>            :  * eth_get_headlen - determine the length of header for an ethernet frame</a>
+<a name="118"><span class="lineNum">     118 </span>            :  * @dev: pointer to network device</a>
+<a name="119"><span class="lineNum">     119 </span>            :  * @data: pointer to start of frame</a>
+<a name="120"><span class="lineNum">     120 </span>            :  * @len: total length of frame</a>
+<a name="121"><span class="lineNum">     121 </span>            :  *</a>
+<a name="122"><span class="lineNum">     122 </span>            :  * Make a best effort attempt to pull the length for all of the headers for</a>
+<a name="123"><span class="lineNum">     123 </span>            :  * a given frame in a linear buffer.</a>
+<a name="124"><span class="lineNum">     124 </span>            :  */</a>
+<a name="125"><span class="lineNum">     125 </span><span class="lineNoCov">          0 : u32 eth_get_headlen(const struct net_device *dev, void *data, unsigned int len)</span></a>
+<a name="126"><span class="lineNum">     126 </span>            : {</a>
+<a name="127"><span class="lineNum">     127 </span><span class="lineNoCov">          0 :         const unsigned int flags = FLOW_DISSECTOR_F_PARSE_1ST_FRAG;</span></a>
+<a name="128"><span class="lineNum">     128 </span><span class="lineNoCov">          0 :         const struct ethhdr *eth = (const struct ethhdr *)data;</span></a>
+<a name="129"><span class="lineNum">     129 </span><span class="lineNoCov">          0 :         struct flow_keys_basic keys;</span></a>
+<a name="130"><span class="lineNum">     130 </span>            : </a>
+<a name="131"><span class="lineNum">     131 </span>            :         /* this should never happen, but better safe than sorry */</a>
+<a name="132"><span class="lineNum">     132 </span><span class="lineNoCov">          0 :         if (unlikely(len &lt; sizeof(*eth)))</span></a>
+<a name="133"><span class="lineNum">     133 </span>            :                 return len;</a>
+<a name="134"><span class="lineNum">     134 </span>            : </a>
+<a name="135"><span class="lineNum">     135 </span>            :         /* parse any remaining L2/L3 headers, check for L4 */</a>
+<a name="136"><span class="lineNum">     136 </span><span class="lineNoCov">          0 :         if (!skb_flow_dissect_flow_keys_basic(dev_net(dev), NULL, &amp;keys, data,</span></a>
+<a name="137"><span class="lineNum">     137 </span><span class="lineNoCov">          0 :                                               eth-&gt;h_proto, sizeof(*eth),</span></a>
+<a name="138"><span class="lineNum">     138 </span>            :                                               len, flags))</a>
+<a name="139"><span class="lineNum">     139 </span><span class="lineNoCov">          0 :                 return max_t(u32, keys.control.thoff, sizeof(*eth));</span></a>
+<a name="140"><span class="lineNum">     140 </span>            : </a>
+<a name="141"><span class="lineNum">     141 </span>            :         /* parse for any L4 headers */</a>
+<a name="142"><span class="lineNum">     142 </span><span class="lineNoCov">          0 :         return min_t(u32, __skb_get_poff(NULL, data, &amp;keys, len), len);</span></a>
+<a name="143"><span class="lineNum">     143 </span>            : }</a>
+<a name="144"><span class="lineNum">     144 </span>            : EXPORT_SYMBOL(eth_get_headlen);</a>
+<a name="145"><span class="lineNum">     145 </span>            : </a>
+<a name="146"><span class="lineNum">     146 </span>            : /**</a>
+<a name="147"><span class="lineNum">     147 </span>            :  * eth_type_trans - determine the packet's protocol ID.</a>
+<a name="148"><span class="lineNum">     148 </span>            :  * @skb: received socket data</a>
+<a name="149"><span class="lineNum">     149 </span>            :  * @dev: receiving network device</a>
+<a name="150"><span class="lineNum">     150 </span>            :  *</a>
+<a name="151"><span class="lineNum">     151 </span>            :  * The rule here is that we</a>
+<a name="152"><span class="lineNum">     152 </span>            :  * assume 802.3 if the type field is short enough to be a length.</a>
+<a name="153"><span class="lineNum">     153 </span>            :  * This is normal practice and works for any 'now in use' protocol.</a>
+<a name="154"><span class="lineNum">     154 </span>            :  */</a>
+<a name="155"><span class="lineNum">     155 </span><span class="lineCov">        723 : __be16 eth_type_trans(struct sk_buff *skb, struct net_device *dev)</span></a>
+<a name="156"><span class="lineNum">     156 </span>            : {</a>
+<a name="157"><span class="lineNum">     157 </span><span class="lineCov">        723 :         unsigned short _service_access_point;</span></a>
+<a name="158"><span class="lineNum">     158 </span><span class="lineCov">        723 :         const unsigned short *sap;</span></a>
+<a name="159"><span class="lineNum">     159 </span><span class="lineCov">        723 :         const struct ethhdr *eth;</span></a>
+<a name="160"><span class="lineNum">     160 </span>            : </a>
+<a name="161"><span class="lineNum">     161 </span><span class="lineCov">        723 :         skb-&gt;dev = dev;</span></a>
+<a name="162"><span class="lineNum">     162 </span><span class="lineCov">        723 :         skb_reset_mac_header(skb);</span></a>
+<a name="163"><span class="lineNum">     163 </span>            : </a>
+<a name="164"><span class="lineNum">     164 </span><span class="lineCov">        723 :         eth = (struct ethhdr *)skb-&gt;data;</span></a>
+<a name="165"><span class="lineNum">     165 </span><span class="lineCov">        723 :         skb_pull_inline(skb, ETH_HLEN);</span></a>
+<a name="166"><span class="lineNum">     166 </span>            : </a>
+<a name="167"><span class="lineNum">     167 </span><span class="lineCov">        723 :         if (unlikely(!ether_addr_equal_64bits(eth-&gt;h_dest,</span></a>
+<a name="168"><span class="lineNum">     168 </span>            :                                               dev-&gt;dev_addr))) {</a>
+<a name="169"><span class="lineNum">     169 </span><span class="lineCov">          2 :                 if (unlikely(is_multicast_ether_addr_64bits(eth-&gt;h_dest))) {</span></a>
+<a name="170"><span class="lineNum">     170 </span><span class="lineCov">          2 :                         if (ether_addr_equal_64bits(eth-&gt;h_dest, dev-&gt;broadcast))</span></a>
+<a name="171"><span class="lineNum">     171 </span><span class="lineCov">          2 :                                 skb-&gt;pkt_type = PACKET_BROADCAST;</span></a>
+<a name="172"><span class="lineNum">     172 </span>            :                         else</a>
+<a name="173"><span class="lineNum">     173 </span><span class="lineNoCov">          0 :                                 skb-&gt;pkt_type = PACKET_MULTICAST;</span></a>
+<a name="174"><span class="lineNum">     174 </span>            :                 } else {</a>
+<a name="175"><span class="lineNum">     175 </span><span class="lineNoCov">          0 :                         skb-&gt;pkt_type = PACKET_OTHERHOST;</span></a>
+<a name="176"><span class="lineNum">     176 </span>            :                 }</a>
+<a name="177"><span class="lineNum">     177 </span>            :         }</a>
+<a name="178"><span class="lineNum">     178 </span>            : </a>
+<a name="179"><span class="lineNum">     179 </span>            :         /*</a>
+<a name="180"><span class="lineNum">     180 </span>            :          * Some variants of DSA tagging don't have an ethertype field</a>
+<a name="181"><span class="lineNum">     181 </span>            :          * at all, so we check here whether one of those tagging</a>
+<a name="182"><span class="lineNum">     182 </span>            :          * variants has been configured on the receiving interface,</a>
+<a name="183"><span class="lineNum">     183 </span>            :          * and if so, set skb-&gt;protocol without looking at the packet.</a>
+<a name="184"><span class="lineNum">     184 </span>            :          * The DSA tagging protocol may be able to decode some but not all</a>
+<a name="185"><span class="lineNum">     185 </span>            :          * traffic (for example only for management). In that case give it the</a>
+<a name="186"><span class="lineNum">     186 </span>            :          * option to filter the packets from which it can decode source port</a>
+<a name="187"><span class="lineNum">     187 </span>            :          * information.</a>
+<a name="188"><span class="lineNum">     188 </span>            :          */</a>
+<a name="189"><span class="lineNum">     189 </span><span class="lineCov">        723 :         if (unlikely(netdev_uses_dsa(dev)) &amp;&amp; dsa_can_decode(skb, dev))</span></a>
+<a name="190"><span class="lineNum">     190 </span>            :                 return htons(ETH_P_XDSA);</a>
+<a name="191"><span class="lineNum">     191 </span>            : </a>
+<a name="192"><span class="lineNum">     192 </span><span class="lineCov">        723 :         if (likely(eth_proto_is_802_3(eth-&gt;h_proto)))</span></a>
+<a name="193"><span class="lineNum">     193 </span>            :                 return eth-&gt;h_proto;</a>
+<a name="194"><span class="lineNum">     194 </span>            : </a>
+<a name="195"><span class="lineNum">     195 </span>            :         /*</a>
+<a name="196"><span class="lineNum">     196 </span>            :          *      This is a magic hack to spot IPX packets. Older Novell breaks</a>
+<a name="197"><span class="lineNum">     197 </span>            :          *      the protocol design and runs IPX over 802.3 without an 802.2 LLC</a>
+<a name="198"><span class="lineNum">     198 </span>            :          *      layer. We look for FFFF which isn't a used 802.2 SSAP/DSAP. This</a>
+<a name="199"><span class="lineNum">     199 </span>            :          *      won't work for fault tolerant netware but does for the rest.</a>
+<a name="200"><span class="lineNum">     200 </span>            :          */</a>
+<a name="201"><span class="lineNum">     201 </span><span class="lineNoCov">          0 :         sap = skb_header_pointer(skb, 0, sizeof(*sap), &amp;_service_access_point);</span></a>
+<a name="202"><span class="lineNum">     202 </span><span class="lineNoCov">          0 :         if (sap &amp;&amp; *sap == 0xFFFF)</span></a>
+<a name="203"><span class="lineNum">     203 </span><span class="lineNoCov">          0 :                 return htons(ETH_P_802_3);</span></a>
+<a name="204"><span class="lineNum">     204 </span>            : </a>
+<a name="205"><span class="lineNum">     205 </span>            :         /*</a>
+<a name="206"><span class="lineNum">     206 </span>            :          *      Real 802.2 LLC</a>
+<a name="207"><span class="lineNum">     207 </span>            :          */</a>
+<a name="208"><span class="lineNum">     208 </span>            :         return htons(ETH_P_802_2);</a>
+<a name="209"><span class="lineNum">     209 </span>            : }</a>
+<a name="210"><span class="lineNum">     210 </span>            : EXPORT_SYMBOL(eth_type_trans);</a>
+<a name="211"><span class="lineNum">     211 </span>            : </a>
+<a name="212"><span class="lineNum">     212 </span>            : /**</a>
+<a name="213"><span class="lineNum">     213 </span>            :  * eth_header_parse - extract hardware address from packet</a>
+<a name="214"><span class="lineNum">     214 </span>            :  * @skb: packet to extract header from</a>
+<a name="215"><span class="lineNum">     215 </span>            :  * @haddr: destination buffer</a>
+<a name="216"><span class="lineNum">     216 </span>            :  */</a>
+<a name="217"><span class="lineNum">     217 </span><span class="lineCov">          2 : int eth_header_parse(const struct sk_buff *skb, unsigned char *haddr)</span></a>
+<a name="218"><span class="lineNum">     218 </span>            : {</a>
+<a name="219"><span class="lineNum">     219 </span><span class="lineCov">          2 :         const struct ethhdr *eth = eth_hdr(skb);</span></a>
+<a name="220"><span class="lineNum">     220 </span><span class="lineCov">          2 :         memcpy(haddr, eth-&gt;h_source, ETH_ALEN);</span></a>
+<a name="221"><span class="lineNum">     221 </span><span class="lineCov">          2 :         return ETH_ALEN;</span></a>
+<a name="222"><span class="lineNum">     222 </span>            : }</a>
+<a name="223"><span class="lineNum">     223 </span>            : EXPORT_SYMBOL(eth_header_parse);</a>
+<a name="224"><span class="lineNum">     224 </span>            : </a>
+<a name="225"><span class="lineNum">     225 </span>            : /**</a>
+<a name="226"><span class="lineNum">     226 </span>            :  * eth_header_cache - fill cache entry from neighbour</a>
+<a name="227"><span class="lineNum">     227 </span>            :  * @neigh: source neighbour</a>
+<a name="228"><span class="lineNum">     228 </span>            :  * @hh: destination cache entry</a>
+<a name="229"><span class="lineNum">     229 </span>            :  * @type: Ethernet type field</a>
+<a name="230"><span class="lineNum">     230 </span>            :  *</a>
+<a name="231"><span class="lineNum">     231 </span>            :  * Create an Ethernet header template from the neighbour.</a>
+<a name="232"><span class="lineNum">     232 </span>            :  */</a>
+<a name="233"><span class="lineNum">     233 </span><span class="lineCov">          2 : int eth_header_cache(const struct neighbour *neigh, struct hh_cache *hh, __be16 type)</span></a>
+<a name="234"><span class="lineNum">     234 </span>            : {</a>
+<a name="235"><span class="lineNum">     235 </span><span class="lineCov">          2 :         struct ethhdr *eth;</span></a>
+<a name="236"><span class="lineNum">     236 </span><span class="lineCov">          2 :         const struct net_device *dev = neigh-&gt;dev;</span></a>
+<a name="237"><span class="lineNum">     237 </span>            : </a>
+<a name="238"><span class="lineNum">     238 </span><span class="lineCov">          2 :         eth = (struct ethhdr *)</span></a>
+<a name="239"><span class="lineNum">     239 </span>            :             (((u8 *) hh-&gt;hh_data) + (HH_DATA_OFF(sizeof(*eth))));</a>
+<a name="240"><span class="lineNum">     240 </span>            : </a>
+<a name="241"><span class="lineNum">     241 </span><span class="lineCov">          2 :         if (type == htons(ETH_P_802_3))</span></a>
+<a name="242"><span class="lineNum">     242 </span>            :                 return -1;</a>
+<a name="243"><span class="lineNum">     243 </span>            : </a>
+<a name="244"><span class="lineNum">     244 </span><span class="lineCov">          2 :         eth-&gt;h_proto = type;</span></a>
+<a name="245"><span class="lineNum">     245 </span><span class="lineCov">          2 :         memcpy(eth-&gt;h_source, dev-&gt;dev_addr, ETH_ALEN);</span></a>
+<a name="246"><span class="lineNum">     246 </span><span class="lineCov">          2 :         memcpy(eth-&gt;h_dest, neigh-&gt;ha, ETH_ALEN);</span></a>
+<a name="247"><span class="lineNum">     247 </span>            : </a>
+<a name="248"><span class="lineNum">     248 </span>            :         /* Pairs with READ_ONCE() in neigh_resolve_output(),</a>
+<a name="249"><span class="lineNum">     249 </span>            :          * neigh_hh_output() and neigh_update_hhs().</a>
+<a name="250"><span class="lineNum">     250 </span>            :          */</a>
+<a name="251"><span class="lineNum">     251 </span><span class="lineCov">          2 :         smp_store_release(&amp;hh-&gt;hh_len, ETH_HLEN);</span></a>
+<a name="252"><span class="lineNum">     252 </span>            : </a>
+<a name="253"><span class="lineNum">     253 </span><span class="lineCov">          2 :         return 0;</span></a>
+<a name="254"><span class="lineNum">     254 </span>            : }</a>
+<a name="255"><span class="lineNum">     255 </span>            : EXPORT_SYMBOL(eth_header_cache);</a>
+<a name="256"><span class="lineNum">     256 </span>            : </a>
+<a name="257"><span class="lineNum">     257 </span>            : /**</a>
+<a name="258"><span class="lineNum">     258 </span>            :  * eth_header_cache_update - update cache entry</a>
+<a name="259"><span class="lineNum">     259 </span>            :  * @hh: destination cache entry</a>
+<a name="260"><span class="lineNum">     260 </span>            :  * @dev: network device</a>
+<a name="261"><span class="lineNum">     261 </span>            :  * @haddr: new hardware address</a>
+<a name="262"><span class="lineNum">     262 </span>            :  *</a>
+<a name="263"><span class="lineNum">     263 </span>            :  * Called by Address Resolution module to notify changes in address.</a>
+<a name="264"><span class="lineNum">     264 </span>            :  */</a>
+<a name="265"><span class="lineNum">     265 </span><span class="lineNoCov">          0 : void eth_header_cache_update(struct hh_cache *hh,</span></a>
+<a name="266"><span class="lineNum">     266 </span>            :                              const struct net_device *dev,</a>
+<a name="267"><span class="lineNum">     267 </span>            :                              const unsigned char *haddr)</a>
+<a name="268"><span class="lineNum">     268 </span>            : {</a>
+<a name="269"><span class="lineNum">     269 </span><span class="lineNoCov">          0 :         memcpy(((u8 *) hh-&gt;hh_data) + HH_DATA_OFF(sizeof(struct ethhdr)),</span></a>
+<a name="270"><span class="lineNum">     270 </span>            :                haddr, ETH_ALEN);</a>
+<a name="271"><span class="lineNum">     271 </span><span class="lineNoCov">          0 : }</span></a>
+<a name="272"><span class="lineNum">     272 </span>            : EXPORT_SYMBOL(eth_header_cache_update);</a>
+<a name="273"><span class="lineNum">     273 </span>            : </a>
+<a name="274"><span class="lineNum">     274 </span>            : /**</a>
+<a name="275"><span class="lineNum">     275 </span>            :  * eth_header_parse_protocol - extract protocol from L2 header</a>
+<a name="276"><span class="lineNum">     276 </span>            :  * @skb: packet to extract protocol from</a>
+<a name="277"><span class="lineNum">     277 </span>            :  */</a>
+<a name="278"><span class="lineNum">     278 </span><span class="lineCov">          2 : __be16 eth_header_parse_protocol(const struct sk_buff *skb)</span></a>
+<a name="279"><span class="lineNum">     279 </span>            : {</a>
+<a name="280"><span class="lineNum">     280 </span><span class="lineCov">          2 :         const struct ethhdr *eth = eth_hdr(skb);</span></a>
+<a name="281"><span class="lineNum">     281 </span>            : </a>
+<a name="282"><span class="lineNum">     282 </span><span class="lineCov">          2 :         return eth-&gt;h_proto;</span></a>
+<a name="283"><span class="lineNum">     283 </span>            : }</a>
+<a name="284"><span class="lineNum">     284 </span>            : EXPORT_SYMBOL(eth_header_parse_protocol);</a>
+<a name="285"><span class="lineNum">     285 </span>            : </a>
+<a name="286"><span class="lineNum">     286 </span>            : /**</a>
+<a name="287"><span class="lineNum">     287 </span>            :  * eth_prepare_mac_addr_change - prepare for mac change</a>
+<a name="288"><span class="lineNum">     288 </span>            :  * @dev: network device</a>
+<a name="289"><span class="lineNum">     289 </span>            :  * @p: socket address</a>
+<a name="290"><span class="lineNum">     290 </span>            :  */</a>
+<a name="291"><span class="lineNum">     291 </span><span class="lineNoCov">          0 : int eth_prepare_mac_addr_change(struct net_device *dev, void *p)</span></a>
+<a name="292"><span class="lineNum">     292 </span>            : {</a>
+<a name="293"><span class="lineNum">     293 </span><span class="lineNoCov">          0 :         struct sockaddr *addr = p;</span></a>
+<a name="294"><span class="lineNum">     294 </span>            : </a>
+<a name="295"><span class="lineNum">     295 </span><span class="lineNoCov">          0 :         if (!(dev-&gt;priv_flags &amp; IFF_LIVE_ADDR_CHANGE) &amp;&amp; netif_running(dev))</span></a>
+<a name="296"><span class="lineNum">     296 </span>            :                 return -EBUSY;</a>
+<a name="297"><span class="lineNum">     297 </span><span class="lineNoCov">          0 :         if (!is_valid_ether_addr(addr-&gt;sa_data))</span></a>
+<a name="298"><span class="lineNum">     298 </span><span class="lineNoCov">          0 :                 return -EADDRNOTAVAIL;</span></a>
+<a name="299"><span class="lineNum">     299 </span>            :         return 0;</a>
+<a name="300"><span class="lineNum">     300 </span>            : }</a>
+<a name="301"><span class="lineNum">     301 </span>            : EXPORT_SYMBOL(eth_prepare_mac_addr_change);</a>
+<a name="302"><span class="lineNum">     302 </span>            : </a>
+<a name="303"><span class="lineNum">     303 </span>            : /**</a>
+<a name="304"><span class="lineNum">     304 </span>            :  * eth_commit_mac_addr_change - commit mac change</a>
+<a name="305"><span class="lineNum">     305 </span>            :  * @dev: network device</a>
+<a name="306"><span class="lineNum">     306 </span>            :  * @p: socket address</a>
+<a name="307"><span class="lineNum">     307 </span>            :  */</a>
+<a name="308"><span class="lineNum">     308 </span><span class="lineNoCov">          0 : void eth_commit_mac_addr_change(struct net_device *dev, void *p)</span></a>
+<a name="309"><span class="lineNum">     309 </span>            : {</a>
+<a name="310"><span class="lineNum">     310 </span><span class="lineNoCov">          0 :         struct sockaddr *addr = p;</span></a>
+<a name="311"><span class="lineNum">     311 </span>            : </a>
+<a name="312"><span class="lineNum">     312 </span><span class="lineNoCov">          0 :         memcpy(dev-&gt;dev_addr, addr-&gt;sa_data, ETH_ALEN);</span></a>
+<a name="313"><span class="lineNum">     313 </span><span class="lineNoCov">          0 : }</span></a>
+<a name="314"><span class="lineNum">     314 </span>            : EXPORT_SYMBOL(eth_commit_mac_addr_change);</a>
+<a name="315"><span class="lineNum">     315 </span>            : </a>
+<a name="316"><span class="lineNum">     316 </span>            : /**</a>
+<a name="317"><span class="lineNum">     317 </span>            :  * eth_mac_addr - set new Ethernet hardware address</a>
+<a name="318"><span class="lineNum">     318 </span>            :  * @dev: network device</a>
+<a name="319"><span class="lineNum">     319 </span>            :  * @p: socket address</a>
+<a name="320"><span class="lineNum">     320 </span>            :  *</a>
+<a name="321"><span class="lineNum">     321 </span>            :  * Change hardware address of device.</a>
+<a name="322"><span class="lineNum">     322 </span>            :  *</a>
+<a name="323"><span class="lineNum">     323 </span>            :  * This doesn't change hardware matching, so needs to be overridden</a>
+<a name="324"><span class="lineNum">     324 </span>            :  * for most real devices.</a>
+<a name="325"><span class="lineNum">     325 </span>            :  */</a>
+<a name="326"><span class="lineNum">     326 </span><span class="lineNoCov">          0 : int eth_mac_addr(struct net_device *dev, void *p)</span></a>
+<a name="327"><span class="lineNum">     327 </span>            : {</a>
+<a name="328"><span class="lineNum">     328 </span><span class="lineNoCov">          0 :         int ret;</span></a>
+<a name="329"><span class="lineNum">     329 </span>            : </a>
+<a name="330"><span class="lineNum">     330 </span><span class="lineNoCov">          0 :         ret = eth_prepare_mac_addr_change(dev, p);</span></a>
+<a name="331"><span class="lineNum">     331 </span><span class="lineNoCov">          0 :         if (ret &lt; 0)</span></a>
+<a name="332"><span class="lineNum">     332 </span>            :                 return ret;</a>
+<a name="333"><span class="lineNum">     333 </span><span class="lineNoCov">          0 :         eth_commit_mac_addr_change(dev, p);</span></a>
+<a name="334"><span class="lineNum">     334 </span><span class="lineNoCov">          0 :         return 0;</span></a>
+<a name="335"><span class="lineNum">     335 </span>            : }</a>
+<a name="336"><span class="lineNum">     336 </span>            : EXPORT_SYMBOL(eth_mac_addr);</a>
+<a name="337"><span class="lineNum">     337 </span>            : </a>
+<a name="338"><span class="lineNum">     338 </span><span class="lineCov">          1 : int eth_validate_addr(struct net_device *dev)</span></a>
+<a name="339"><span class="lineNum">     339 </span>            : {</a>
+<a name="340"><span class="lineNum">     340 </span><span class="lineCov">          2 :         if (!is_valid_ether_addr(dev-&gt;dev_addr))</span></a>
+<a name="341"><span class="lineNum">     341 </span><span class="lineNoCov">          0 :                 return -EADDRNOTAVAIL;</span></a>
+<a name="342"><span class="lineNum">     342 </span>            : </a>
+<a name="343"><span class="lineNum">     343 </span>            :         return 0;</a>
+<a name="344"><span class="lineNum">     344 </span>            : }</a>
+<a name="345"><span class="lineNum">     345 </span>            : EXPORT_SYMBOL(eth_validate_addr);</a>
+<a name="346"><span class="lineNum">     346 </span>            : </a>
+<a name="347"><span class="lineNum">     347 </span>            : const struct header_ops eth_header_ops ____cacheline_aligned = {</a>
+<a name="348"><span class="lineNum">     348 </span>            :         .create         = eth_header,</a>
+<a name="349"><span class="lineNum">     349 </span>            :         .parse          = eth_header_parse,</a>
+<a name="350"><span class="lineNum">     350 </span>            :         .cache          = eth_header_cache,</a>
+<a name="351"><span class="lineNum">     351 </span>            :         .cache_update   = eth_header_cache_update,</a>
+<a name="352"><span class="lineNum">     352 </span>            :         .parse_protocol = eth_header_parse_protocol,</a>
+<a name="353"><span class="lineNum">     353 </span>            : };</a>
+<a name="354"><span class="lineNum">     354 </span>            : </a>
+<a name="355"><span class="lineNum">     355 </span>            : /**</a>
+<a name="356"><span class="lineNum">     356 </span>            :  * ether_setup - setup Ethernet network device</a>
+<a name="357"><span class="lineNum">     357 </span>            :  * @dev: network device</a>
+<a name="358"><span class="lineNum">     358 </span>            :  *</a>
+<a name="359"><span class="lineNum">     359 </span>            :  * Fill in the fields of the device structure with Ethernet-generic values.</a>
+<a name="360"><span class="lineNum">     360 </span>            :  */</a>
+<a name="361"><span class="lineNum">     361 </span><span class="lineCov">          1 : void ether_setup(struct net_device *dev)</span></a>
+<a name="362"><span class="lineNum">     362 </span>            : {</a>
+<a name="363"><span class="lineNum">     363 </span><span class="lineCov">          1 :         dev-&gt;header_ops              = &amp;eth_header_ops;</span></a>
+<a name="364"><span class="lineNum">     364 </span><span class="lineCov">          1 :         dev-&gt;type            = ARPHRD_ETHER;</span></a>
+<a name="365"><span class="lineNum">     365 </span><span class="lineCov">          1 :         dev-&gt;hard_header_len         = ETH_HLEN;</span></a>
+<a name="366"><span class="lineNum">     366 </span><span class="lineCov">          1 :         dev-&gt;min_header_len  = ETH_HLEN;</span></a>
+<a name="367"><span class="lineNum">     367 </span><span class="lineCov">          1 :         dev-&gt;mtu             = ETH_DATA_LEN;</span></a>
+<a name="368"><span class="lineNum">     368 </span><span class="lineCov">          1 :         dev-&gt;min_mtu         = ETH_MIN_MTU;</span></a>
+<a name="369"><span class="lineNum">     369 </span><span class="lineCov">          1 :         dev-&gt;max_mtu         = ETH_DATA_LEN;</span></a>
+<a name="370"><span class="lineNum">     370 </span><span class="lineCov">          1 :         dev-&gt;addr_len                = ETH_ALEN;</span></a>
+<a name="371"><span class="lineNum">     371 </span><span class="lineCov">          1 :         dev-&gt;tx_queue_len    = DEFAULT_TX_QUEUE_LEN;</span></a>
+<a name="372"><span class="lineNum">     372 </span><span class="lineCov">          1 :         dev-&gt;flags           = IFF_BROADCAST|IFF_MULTICAST;</span></a>
+<a name="373"><span class="lineNum">     373 </span><span class="lineCov">          1 :         dev-&gt;priv_flags              |= IFF_TX_SKB_SHARING;</span></a>
+<a name="374"><span class="lineNum">     374 </span>            : </a>
+<a name="375"><span class="lineNum">     375 </span><span class="lineCov">          1 :         eth_broadcast_addr(dev-&gt;broadcast);</span></a>
+<a name="376"><span class="lineNum">     376 </span>            : </a>
+<a name="377"><span class="lineNum">     377 </span><span class="lineCov">          1 : }</span></a>
+<a name="378"><span class="lineNum">     378 </span>            : EXPORT_SYMBOL(ether_setup);</a>
+<a name="379"><span class="lineNum">     379 </span>            : </a>
+<a name="380"><span class="lineNum">     380 </span>            : /**</a>
+<a name="381"><span class="lineNum">     381 </span>            :  * alloc_etherdev_mqs - Allocates and sets up an Ethernet device</a>
+<a name="382"><span class="lineNum">     382 </span>            :  * @sizeof_priv: Size of additional driver-private structure to be allocated</a>
+<a name="383"><span class="lineNum">     383 </span>            :  *      for this Ethernet device</a>
+<a name="384"><span class="lineNum">     384 </span>            :  * @txqs: The number of TX queues this device has.</a>
+<a name="385"><span class="lineNum">     385 </span>            :  * @rxqs: The number of RX queues this device has.</a>
+<a name="386"><span class="lineNum">     386 </span>            :  *</a>
+<a name="387"><span class="lineNum">     387 </span>            :  * Fill in the fields of the device structure with Ethernet-generic</a>
+<a name="388"><span class="lineNum">     388 </span>            :  * values. Basically does everything except registering the device.</a>
+<a name="389"><span class="lineNum">     389 </span>            :  *</a>
+<a name="390"><span class="lineNum">     390 </span>            :  * Constructs a new net device, complete with a private data area of</a>
+<a name="391"><span class="lineNum">     391 </span>            :  * size (sizeof_priv).  A 32-byte (not bit) alignment is enforced for</a>
+<a name="392"><span class="lineNum">     392 </span>            :  * this private data area.</a>
+<a name="393"><span class="lineNum">     393 </span>            :  */</a>
+<a name="394"><span class="lineNum">     394 </span>            : </a>
+<a name="395"><span class="lineNum">     395 </span><span class="lineCov">          1 : struct net_device *alloc_etherdev_mqs(int sizeof_priv, unsigned int txqs,</span></a>
+<a name="396"><span class="lineNum">     396 </span>            :                                       unsigned int rxqs)</a>
+<a name="397"><span class="lineNum">     397 </span>            : {</a>
+<a name="398"><span class="lineNum">     398 </span><span class="lineCov">          1 :         return alloc_netdev_mqs(sizeof_priv, &quot;eth%d&quot;, NET_NAME_UNKNOWN,</span></a>
+<a name="399"><span class="lineNum">     399 </span>            :                                 ether_setup, txqs, rxqs);</a>
+<a name="400"><span class="lineNum">     400 </span>            : }</a>
+<a name="401"><span class="lineNum">     401 </span>            : EXPORT_SYMBOL(alloc_etherdev_mqs);</a>
+<a name="402"><span class="lineNum">     402 </span>            : </a>
+<a name="403"><span class="lineNum">     403 </span><span class="lineCov">          2 : ssize_t sysfs_format_mac(char *buf, const unsigned char *addr, int len)</span></a>
+<a name="404"><span class="lineNum">     404 </span>            : {</a>
+<a name="405"><span class="lineNum">     405 </span><span class="lineCov">          2 :         return scnprintf(buf, PAGE_SIZE, &quot;%*phC\n&quot;, len, addr);</span></a>
+<a name="406"><span class="lineNum">     406 </span>            : }</a>
+<a name="407"><span class="lineNum">     407 </span>            : EXPORT_SYMBOL(sysfs_format_mac);</a>
+<a name="408"><span class="lineNum">     408 </span>            : </a>
+<a name="409"><span class="lineNum">     409 </span><span class="lineNoCov">          0 : struct sk_buff *eth_gro_receive(struct list_head *head, struct sk_buff *skb)</span></a>
+<a name="410"><span class="lineNum">     410 </span>            : {</a>
+<a name="411"><span class="lineNum">     411 </span><span class="lineNoCov">          0 :         const struct packet_offload *ptype;</span></a>
+<a name="412"><span class="lineNum">     412 </span><span class="lineNoCov">          0 :         unsigned int hlen, off_eth;</span></a>
+<a name="413"><span class="lineNum">     413 </span><span class="lineNoCov">          0 :         struct sk_buff *pp = NULL;</span></a>
+<a name="414"><span class="lineNum">     414 </span><span class="lineNoCov">          0 :         struct ethhdr *eh, *eh2;</span></a>
+<a name="415"><span class="lineNum">     415 </span><span class="lineNoCov">          0 :         struct sk_buff *p;</span></a>
+<a name="416"><span class="lineNum">     416 </span><span class="lineNoCov">          0 :         __be16 type;</span></a>
+<a name="417"><span class="lineNum">     417 </span><span class="lineNoCov">          0 :         int flush = 1;</span></a>
+<a name="418"><span class="lineNum">     418 </span>            : </a>
+<a name="419"><span class="lineNum">     419 </span><span class="lineNoCov">          0 :         off_eth = skb_gro_offset(skb);</span></a>
+<a name="420"><span class="lineNum">     420 </span><span class="lineNoCov">          0 :         hlen = off_eth + sizeof(*eh);</span></a>
+<a name="421"><span class="lineNum">     421 </span><span class="lineNoCov">          0 :         eh = skb_gro_header_fast(skb, off_eth);</span></a>
+<a name="422"><span class="lineNum">     422 </span><span class="lineNoCov">          0 :         if (skb_gro_header_hard(skb, hlen)) {</span></a>
+<a name="423"><span class="lineNum">     423 </span><span class="lineNoCov">          0 :                 eh = skb_gro_header_slow(skb, hlen, off_eth);</span></a>
+<a name="424"><span class="lineNum">     424 </span><span class="lineNoCov">          0 :                 if (unlikely(!eh))</span></a>
+<a name="425"><span class="lineNum">     425 </span><span class="lineNoCov">          0 :                         goto out;</span></a>
+<a name="426"><span class="lineNum">     426 </span>            :         }</a>
+<a name="427"><span class="lineNum">     427 </span>            : </a>
+<a name="428"><span class="lineNum">     428 </span><span class="lineNoCov">          0 :         flush = 0;</span></a>
+<a name="429"><span class="lineNum">     429 </span>            : </a>
+<a name="430"><span class="lineNum">     430 </span><span class="lineNoCov">          0 :         list_for_each_entry(p, head, list) {</span></a>
+<a name="431"><span class="lineNum">     431 </span><span class="lineNoCov">          0 :                 if (!NAPI_GRO_CB(p)-&gt;same_flow)</span></a>
+<a name="432"><span class="lineNum">     432 </span><span class="lineNoCov">          0 :                         continue;</span></a>
+<a name="433"><span class="lineNum">     433 </span>            : </a>
+<a name="434"><span class="lineNum">     434 </span><span class="lineNoCov">          0 :                 eh2 = (struct ethhdr *)(p-&gt;data + off_eth);</span></a>
+<a name="435"><span class="lineNum">     435 </span><span class="lineNoCov">          0 :                 if (compare_ether_header(eh, eh2)) {</span></a>
+<a name="436"><span class="lineNum">     436 </span><span class="lineNoCov">          0 :                         NAPI_GRO_CB(p)-&gt;same_flow = 0;</span></a>
+<a name="437"><span class="lineNum">     437 </span><span class="lineNoCov">          0 :                         continue;</span></a>
+<a name="438"><span class="lineNum">     438 </span>            :                 }</a>
+<a name="439"><span class="lineNum">     439 </span>            :         }</a>
+<a name="440"><span class="lineNum">     440 </span>            : </a>
+<a name="441"><span class="lineNum">     441 </span><span class="lineNoCov">          0 :         type = eh-&gt;h_proto;</span></a>
+<a name="442"><span class="lineNum">     442 </span>            : </a>
+<a name="443"><span class="lineNum">     443 </span><span class="lineNoCov">          0 :         rcu_read_lock();</span></a>
+<a name="444"><span class="lineNum">     444 </span><span class="lineNoCov">          0 :         ptype = gro_find_receive_by_type(type);</span></a>
+<a name="445"><span class="lineNum">     445 </span><span class="lineNoCov">          0 :         if (ptype == NULL) {</span></a>
+<a name="446"><span class="lineNum">     446 </span><span class="lineNoCov">          0 :                 flush = 1;</span></a>
+<a name="447"><span class="lineNum">     447 </span><span class="lineNoCov">          0 :                 goto out_unlock;</span></a>
+<a name="448"><span class="lineNum">     448 </span>            :         }</a>
+<a name="449"><span class="lineNum">     449 </span>            : </a>
+<a name="450"><span class="lineNum">     450 </span><span class="lineNoCov">          0 :         skb_gro_pull(skb, sizeof(*eh));</span></a>
+<a name="451"><span class="lineNum">     451 </span><span class="lineNoCov">          0 :         skb_gro_postpull_rcsum(skb, eh, sizeof(*eh));</span></a>
+<a name="452"><span class="lineNum">     452 </span><span class="lineNoCov">          0 :         pp = call_gro_receive(ptype-&gt;callbacks.gro_receive, head, skb);</span></a>
+<a name="453"><span class="lineNum">     453 </span>            : </a>
+<a name="454"><span class="lineNum">     454 </span><span class="lineNoCov">          0 : out_unlock:</span></a>
+<a name="455"><span class="lineNum">     455 </span><span class="lineNoCov">          0 :         rcu_read_unlock();</span></a>
+<a name="456"><span class="lineNum">     456 </span><span class="lineNoCov">          0 : out:</span></a>
+<a name="457"><span class="lineNum">     457 </span><span class="lineNoCov">          0 :         skb_gro_flush_final(skb, pp, flush);</span></a>
+<a name="458"><span class="lineNum">     458 </span>            : </a>
+<a name="459"><span class="lineNum">     459 </span><span class="lineNoCov">          0 :         return pp;</span></a>
+<a name="460"><span class="lineNum">     460 </span>            : }</a>
+<a name="461"><span class="lineNum">     461 </span>            : EXPORT_SYMBOL(eth_gro_receive);</a>
+<a name="462"><span class="lineNum">     462 </span>            : </a>
+<a name="463"><span class="lineNum">     463 </span><span class="lineNoCov">          0 : int eth_gro_complete(struct sk_buff *skb, int nhoff)</span></a>
+<a name="464"><span class="lineNum">     464 </span>            : {</a>
+<a name="465"><span class="lineNum">     465 </span><span class="lineNoCov">          0 :         struct ethhdr *eh = (struct ethhdr *)(skb-&gt;data + nhoff);</span></a>
+<a name="466"><span class="lineNum">     466 </span><span class="lineNoCov">          0 :         __be16 type = eh-&gt;h_proto;</span></a>
+<a name="467"><span class="lineNum">     467 </span><span class="lineNoCov">          0 :         struct packet_offload *ptype;</span></a>
+<a name="468"><span class="lineNum">     468 </span><span class="lineNoCov">          0 :         int err = -ENOSYS;</span></a>
+<a name="469"><span class="lineNum">     469 </span>            : </a>
+<a name="470"><span class="lineNum">     470 </span><span class="lineNoCov">          0 :         if (skb-&gt;encapsulation)</span></a>
+<a name="471"><span class="lineNum">     471 </span><span class="lineNoCov">          0 :                 skb_set_inner_mac_header(skb, nhoff);</span></a>
+<a name="472"><span class="lineNum">     472 </span>            : </a>
+<a name="473"><span class="lineNum">     473 </span><span class="lineNoCov">          0 :         rcu_read_lock();</span></a>
+<a name="474"><span class="lineNum">     474 </span><span class="lineNoCov">          0 :         ptype = gro_find_complete_by_type(type);</span></a>
+<a name="475"><span class="lineNum">     475 </span><span class="lineNoCov">          0 :         if (ptype != NULL)</span></a>
+<a name="476"><span class="lineNum">     476 </span><span class="lineNoCov">          0 :                 err = ptype-&gt;callbacks.gro_complete(skb, nhoff +</span></a>
+<a name="477"><span class="lineNum">     477 </span>            :                                                     sizeof(struct ethhdr));</a>
+<a name="478"><span class="lineNum">     478 </span>            : </a>
+<a name="479"><span class="lineNum">     479 </span><span class="lineNoCov">          0 :         rcu_read_unlock();</span></a>
+<a name="480"><span class="lineNum">     480 </span><span class="lineNoCov">          0 :         return err;</span></a>
+<a name="481"><span class="lineNum">     481 </span>            : }</a>
+<a name="482"><span class="lineNum">     482 </span>            : EXPORT_SYMBOL(eth_gro_complete);</a>
+<a name="483"><span class="lineNum">     483 </span>            : </a>
+<a name="484"><span class="lineNum">     484 </span>            : static struct packet_offload eth_packet_offload __read_mostly = {</a>
+<a name="485"><span class="lineNum">     485 </span>            :         .type = cpu_to_be16(ETH_P_TEB),</a>
+<a name="486"><span class="lineNum">     486 </span>            :         .priority = 10,</a>
+<a name="487"><span class="lineNum">     487 </span>            :         .callbacks = {</a>
+<a name="488"><span class="lineNum">     488 </span>            :                 .gro_receive = eth_gro_receive,</a>
+<a name="489"><span class="lineNum">     489 </span>            :                 .gro_complete = eth_gro_complete,</a>
+<a name="490"><span class="lineNum">     490 </span>            :         },</a>
+<a name="491"><span class="lineNum">     491 </span>            : };</a>
+<a name="492"><span class="lineNum">     492 </span>            : </a>
+<a name="493"><span class="lineNum">     493 </span><span class="lineCov">          1 : static int __init eth_offload_init(void)</span></a>
+<a name="494"><span class="lineNum">     494 </span>            : {</a>
+<a name="495"><span class="lineNum">     495 </span><span class="lineCov">          1 :         dev_add_offload(&amp;eth_packet_offload);</span></a>
+<a name="496"><span class="lineNum">     496 </span>            : </a>
+<a name="497"><span class="lineNum">     497 </span><span class="lineCov">          1 :         return 0;</span></a>
+<a name="498"><span class="lineNum">     498 </span>            : }</a>
+<a name="499"><span class="lineNum">     499 </span>            : </a>
+<a name="500"><span class="lineNum">     500 </span>            : fs_initcall(eth_offload_init);</a>
+<a name="501"><span class="lineNum">     501 </span>            : </a>
+<a name="502"><span class="lineNum">     502 </span><span class="lineNoCov">          0 : unsigned char * __weak arch_get_platform_mac_address(void)</span></a>
+<a name="503"><span class="lineNum">     503 </span>            : {</a>
+<a name="504"><span class="lineNum">     504 </span><span class="lineNoCov">          0 :         return NULL;</span></a>
+<a name="505"><span class="lineNum">     505 </span>            : }</a>
+<a name="506"><span class="lineNum">     506 </span>            : </a>
+<a name="507"><span class="lineNum">     507 </span><span class="lineNoCov">          0 : int eth_platform_get_mac_address(struct device *dev, u8 *mac_addr)</span></a>
+<a name="508"><span class="lineNum">     508 </span>            : {</a>
+<a name="509"><span class="lineNum">     509 </span><span class="lineNoCov">          0 :         const unsigned char *addr = NULL;</span></a>
+<a name="510"><span class="lineNum">     510 </span>            : </a>
+<a name="511"><span class="lineNum">     511 </span><span class="lineNoCov">          0 :         if (dev-&gt;of_node)</span></a>
+<a name="512"><span class="lineNum">     512 </span><span class="lineNoCov">          0 :                 addr = of_get_mac_address(dev-&gt;of_node);</span></a>
+<a name="513"><span class="lineNum">     513 </span><span class="lineNoCov">          0 :         if (IS_ERR_OR_NULL(addr))</span></a>
+<a name="514"><span class="lineNum">     514 </span><span class="lineNoCov">          0 :                 addr = arch_get_platform_mac_address();</span></a>
+<a name="515"><span class="lineNum">     515 </span>            : </a>
+<a name="516"><span class="lineNum">     516 </span><span class="lineNoCov">          0 :         if (!addr)</span></a>
+<a name="517"><span class="lineNum">     517 </span>            :                 return -ENODEV;</a>
+<a name="518"><span class="lineNum">     518 </span>            : </a>
+<a name="519"><span class="lineNum">     519 </span><span class="lineNoCov">          0 :         ether_addr_copy(mac_addr, addr);</span></a>
+<a name="520"><span class="lineNum">     520 </span>            : </a>
+<a name="521"><span class="lineNum">     521 </span><span class="lineNoCov">          0 :         return 0;</span></a>
+<a name="522"><span class="lineNum">     522 </span>            : }</a>
+<a name="523"><span class="lineNum">     523 </span>            : EXPORT_SYMBOL(eth_platform_get_mac_address);</a>
+<a name="524"><span class="lineNum">     524 </span>            : </a>
+<a name="525"><span class="lineNum">     525 </span>            : /**</a>
+<a name="526"><span class="lineNum">     526 </span>            :  * nvmem_get_mac_address - Obtain the MAC address from an nvmem cell named</a>
+<a name="527"><span class="lineNum">     527 </span>            :  * 'mac-address' associated with given device.</a>
+<a name="528"><span class="lineNum">     528 </span>            :  *</a>
+<a name="529"><span class="lineNum">     529 </span>            :  * @dev:        Device with which the mac-address cell is associated.</a>
+<a name="530"><span class="lineNum">     530 </span>            :  * @addrbuf:    Buffer to which the MAC address will be copied on success.</a>
+<a name="531"><span class="lineNum">     531 </span>            :  *</a>
+<a name="532"><span class="lineNum">     532 </span>            :  * Returns 0 on success or a negative error number on failure.</a>
+<a name="533"><span class="lineNum">     533 </span>            :  */</a>
+<a name="534"><span class="lineNum">     534 </span><span class="lineNoCov">          0 : int nvmem_get_mac_address(struct device *dev, void *addrbuf)</span></a>
+<a name="535"><span class="lineNum">     535 </span>            : {</a>
+<a name="536"><span class="lineNum">     536 </span><span class="lineNoCov">          0 :         struct nvmem_cell *cell;</span></a>
+<a name="537"><span class="lineNum">     537 </span><span class="lineNoCov">          0 :         const void *mac;</span></a>
+<a name="538"><span class="lineNum">     538 </span><span class="lineNoCov">          0 :         size_t len;</span></a>
+<a name="539"><span class="lineNum">     539 </span>            : </a>
+<a name="540"><span class="lineNum">     540 </span><span class="lineNoCov">          0 :         cell = nvmem_cell_get(dev, &quot;mac-address&quot;);</span></a>
+<a name="541"><span class="lineNum">     541 </span><span class="lineNoCov">          0 :         if (IS_ERR(cell))</span></a>
+<a name="542"><span class="lineNum">     542 </span><span class="lineNoCov">          0 :                 return PTR_ERR(cell);</span></a>
+<a name="543"><span class="lineNum">     543 </span>            : </a>
+<a name="544"><span class="lineNum">     544 </span>            :         mac = nvmem_cell_read(cell, &amp;len);</a>
+<a name="545"><span class="lineNum">     545 </span>            :         nvmem_cell_put(cell);</a>
+<a name="546"><span class="lineNum">     546 </span>            : </a>
+<a name="547"><span class="lineNum">     547 </span>            :         if (IS_ERR(mac))</a>
+<a name="548"><span class="lineNum">     548 </span>            :                 return PTR_ERR(mac);</a>
+<a name="549"><span class="lineNum">     549 </span>            : </a>
+<a name="550"><span class="lineNum">     550 </span>            :         if (len != ETH_ALEN || !is_valid_ether_addr(mac)) {</a>
+<a name="551"><span class="lineNum">     551 </span>            :                 kfree(mac);</a>
+<a name="552"><span class="lineNum">     552 </span>            :                 return -EINVAL;</a>
+<a name="553"><span class="lineNum">     553 </span>            :         }</a>
+<a name="554"><span class="lineNum">     554 </span>            : </a>
+<a name="555"><span class="lineNum">     555 </span>            :         ether_addr_copy(addrbuf, mac);</a>
+<a name="556"><span class="lineNum">     556 </span>            :         kfree(mac);</a>
+<a name="557"><span class="lineNum">     557 </span>            : </a>
+<a name="558"><span class="lineNum">     558 </span>            :         return 0;</a>
+<a name="559"><span class="lineNum">     559 </span>            : }</a>
+<a name="560"><span class="lineNum">     560 </span>            : EXPORT_SYMBOL(nvmem_get_mac_address);</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

@@ -1,0 +1,208 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - landlock.info - net/core/request_sock.c</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">net/core</a> - request_sock.c<span style="font-size: 80%;"> (source / <a href="request_sock.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">landlock.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">8</td>
+            <td class="headerCovTableEntry">31</td>
+            <td class="headerCovTableEntryLo">25.8 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2021-04-22 12:43:58</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">1</td>
+            <td class="headerCovTableEntry">2</td>
+            <td class="headerCovTableEntryLo">50.0 %</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : // SPDX-License-Identifier: GPL-2.0-or-later</a>
+<a name="2"><span class="lineNum">       2 </span>            : /*</a>
+<a name="3"><span class="lineNum">       3 </span>            :  * NET          Generic infrastructure for Network protocols.</a>
+<a name="4"><span class="lineNum">       4 </span>            :  *</a>
+<a name="5"><span class="lineNum">       5 </span>            :  * Authors:     Arnaldo Carvalho de Melo &lt;acme@conectiva.com.br&gt;</a>
+<a name="6"><span class="lineNum">       6 </span>            :  *</a>
+<a name="7"><span class="lineNum">       7 </span>            :  *              From code originally in include/net/tcp.h</a>
+<a name="8"><span class="lineNum">       8 </span>            :  */</a>
+<a name="9"><span class="lineNum">       9 </span>            : </a>
+<a name="10"><span class="lineNum">      10 </span>            : #include &lt;linux/module.h&gt;</a>
+<a name="11"><span class="lineNum">      11 </span>            : #include &lt;linux/random.h&gt;</a>
+<a name="12"><span class="lineNum">      12 </span>            : #include &lt;linux/slab.h&gt;</a>
+<a name="13"><span class="lineNum">      13 </span>            : #include &lt;linux/string.h&gt;</a>
+<a name="14"><span class="lineNum">      14 </span>            : #include &lt;linux/tcp.h&gt;</a>
+<a name="15"><span class="lineNum">      15 </span>            : #include &lt;linux/vmalloc.h&gt;</a>
+<a name="16"><span class="lineNum">      16 </span>            : </a>
+<a name="17"><span class="lineNum">      17 </span>            : #include &lt;net/request_sock.h&gt;</a>
+<a name="18"><span class="lineNum">      18 </span>            : </a>
+<a name="19"><span class="lineNum">      19 </span>            : /*</a>
+<a name="20"><span class="lineNum">      20 </span>            :  * Maximum number of SYN_RECV sockets in queue per LISTEN socket.</a>
+<a name="21"><span class="lineNum">      21 </span>            :  * One SYN_RECV socket costs about 80bytes on a 32bit machine.</a>
+<a name="22"><span class="lineNum">      22 </span>            :  * It would be better to replace it with a global counter for all sockets</a>
+<a name="23"><span class="lineNum">      23 </span>            :  * but then some measure against one socket starving all other sockets</a>
+<a name="24"><span class="lineNum">      24 </span>            :  * would be needed.</a>
+<a name="25"><span class="lineNum">      25 </span>            :  *</a>
+<a name="26"><span class="lineNum">      26 </span>            :  * The minimum value of it is 128. Experiments with real servers show that</a>
+<a name="27"><span class="lineNum">      27 </span>            :  * it is absolutely not enough even at 100conn/sec. 256 cures most</a>
+<a name="28"><span class="lineNum">      28 </span>            :  * of problems.</a>
+<a name="29"><span class="lineNum">      29 </span>            :  * This value is adjusted to 128 for low memory machines,</a>
+<a name="30"><span class="lineNum">      30 </span>            :  * and it will increase in proportion to the memory of machine.</a>
+<a name="31"><span class="lineNum">      31 </span>            :  * Note : Dont forget somaxconn that may limit backlog too.</a>
+<a name="32"><span class="lineNum">      32 </span>            :  */</a>
+<a name="33"><span class="lineNum">      33 </span>            : </a>
+<a name="34"><span class="lineNum">      34 </span><span class="lineCov">          3 : void reqsk_queue_alloc(struct request_sock_queue *queue)</span></a>
+<a name="35"><span class="lineNum">      35 </span>            : {</a>
+<a name="36"><span class="lineNum">      36 </span><span class="lineCov">          3 :         spin_lock_init(&amp;queue-&gt;rskq_lock);</span></a>
+<a name="37"><span class="lineNum">      37 </span>            : </a>
+<a name="38"><span class="lineNum">      38 </span><span class="lineCov">          3 :         spin_lock_init(&amp;queue-&gt;fastopenq.lock);</span></a>
+<a name="39"><span class="lineNum">      39 </span><span class="lineCov">          3 :         queue-&gt;fastopenq.rskq_rst_head = NULL;</span></a>
+<a name="40"><span class="lineNum">      40 </span><span class="lineCov">          3 :         queue-&gt;fastopenq.rskq_rst_tail = NULL;</span></a>
+<a name="41"><span class="lineNum">      41 </span><span class="lineCov">          3 :         queue-&gt;fastopenq.qlen = 0;</span></a>
+<a name="42"><span class="lineNum">      42 </span>            : </a>
+<a name="43"><span class="lineNum">      43 </span><span class="lineCov">          3 :         queue-&gt;rskq_accept_head = NULL;</span></a>
+<a name="44"><span class="lineNum">      44 </span><span class="lineCov">          3 : }</span></a>
+<a name="45"><span class="lineNum">      45 </span>            : </a>
+<a name="46"><span class="lineNum">      46 </span>            : /*</a>
+<a name="47"><span class="lineNum">      47 </span>            :  * This function is called to set a Fast Open socket's &quot;fastopen_rsk&quot; field</a>
+<a name="48"><span class="lineNum">      48 </span>            :  * to NULL when a TFO socket no longer needs to access the request_sock.</a>
+<a name="49"><span class="lineNum">      49 </span>            :  * This happens only after 3WHS has been either completed or aborted (e.g.,</a>
+<a name="50"><span class="lineNum">      50 </span>            :  * RST is received).</a>
+<a name="51"><span class="lineNum">      51 </span>            :  *</a>
+<a name="52"><span class="lineNum">      52 </span>            :  * Before TFO, a child socket is created only after 3WHS is completed,</a>
+<a name="53"><span class="lineNum">      53 </span>            :  * hence it never needs to access the request_sock. things get a lot more</a>
+<a name="54"><span class="lineNum">      54 </span>            :  * complex with TFO. A child socket, accepted or not, has to access its</a>
+<a name="55"><span class="lineNum">      55 </span>            :  * request_sock for 3WHS processing, e.g., to retransmit SYN-ACK pkts,</a>
+<a name="56"><span class="lineNum">      56 </span>            :  * until 3WHS is either completed or aborted. Afterwards the req will stay</a>
+<a name="57"><span class="lineNum">      57 </span>            :  * until either the child socket is accepted, or in the rare case when the</a>
+<a name="58"><span class="lineNum">      58 </span>            :  * listener is closed before the child is accepted.</a>
+<a name="59"><span class="lineNum">      59 </span>            :  *</a>
+<a name="60"><span class="lineNum">      60 </span>            :  * In short, a request socket is only freed after BOTH 3WHS has completed</a>
+<a name="61"><span class="lineNum">      61 </span>            :  * (or aborted) and the child socket has been accepted (or listener closed).</a>
+<a name="62"><span class="lineNum">      62 </span>            :  * When a child socket is accepted, its corresponding req-&gt;sk is set to</a>
+<a name="63"><span class="lineNum">      63 </span>            :  * NULL since it's no longer needed. More importantly, &quot;req-&gt;sk == NULL&quot;</a>
+<a name="64"><span class="lineNum">      64 </span>            :  * will be used by the code below to determine if a child socket has been</a>
+<a name="65"><span class="lineNum">      65 </span>            :  * accepted or not, and the check is protected by the fastopenq-&gt;lock</a>
+<a name="66"><span class="lineNum">      66 </span>            :  * described below.</a>
+<a name="67"><span class="lineNum">      67 </span>            :  *</a>
+<a name="68"><span class="lineNum">      68 </span>            :  * Note that fastopen_rsk is only accessed from the child socket's context</a>
+<a name="69"><span class="lineNum">      69 </span>            :  * with its socket lock held. But a request_sock (req) can be accessed by</a>
+<a name="70"><span class="lineNum">      70 </span>            :  * both its child socket through fastopen_rsk, and a listener socket through</a>
+<a name="71"><span class="lineNum">      71 </span>            :  * icsk_accept_queue.rskq_accept_head. To protect the access a simple spin</a>
+<a name="72"><span class="lineNum">      72 </span>            :  * lock per listener &quot;icsk-&gt;icsk_accept_queue.fastopenq-&gt;lock&quot; is created.</a>
+<a name="73"><span class="lineNum">      73 </span>            :  * only in the rare case when both the listener and the child locks are held,</a>
+<a name="74"><span class="lineNum">      74 </span>            :  * e.g., in inet_csk_listen_stop() do we not need to acquire the lock.</a>
+<a name="75"><span class="lineNum">      75 </span>            :  * The lock also protects other fields such as fastopenq-&gt;qlen, which is</a>
+<a name="76"><span class="lineNum">      76 </span>            :  * decremented by this function when fastopen_rsk is no longer needed.</a>
+<a name="77"><span class="lineNum">      77 </span>            :  *</a>
+<a name="78"><span class="lineNum">      78 </span>            :  * Note that another solution was to simply use the existing socket lock</a>
+<a name="79"><span class="lineNum">      79 </span>            :  * from the listener. But first socket lock is difficult to use. It is not</a>
+<a name="80"><span class="lineNum">      80 </span>            :  * a simple spin lock - one must consider sock_owned_by_user() and arrange</a>
+<a name="81"><span class="lineNum">      81 </span>            :  * to use sk_add_backlog() stuff. But what really makes it infeasible is the</a>
+<a name="82"><span class="lineNum">      82 </span>            :  * locking hierarchy violation. E.g., inet_csk_listen_stop() may try to</a>
+<a name="83"><span class="lineNum">      83 </span>            :  * acquire a child's lock while holding listener's socket lock. A corner</a>
+<a name="84"><span class="lineNum">      84 </span>            :  * case might also exist in tcp_v4_hnd_req() that will trigger this locking</a>
+<a name="85"><span class="lineNum">      85 </span>            :  * order.</a>
+<a name="86"><span class="lineNum">      86 </span>            :  *</a>
+<a name="87"><span class="lineNum">      87 </span>            :  * This function also sets &quot;treq-&gt;tfo_listener&quot; to false.</a>
+<a name="88"><span class="lineNum">      88 </span>            :  * treq-&gt;tfo_listener is used by the listener so it is protected by the</a>
+<a name="89"><span class="lineNum">      89 </span>            :  * fastopenq-&gt;lock in this function.</a>
+<a name="90"><span class="lineNum">      90 </span>            :  */</a>
+<a name="91"><span class="lineNum">      91 </span><span class="lineNoCov">          0 : void reqsk_fastopen_remove(struct sock *sk, struct request_sock *req,</span></a>
+<a name="92"><span class="lineNum">      92 </span>            :                            bool reset)</a>
+<a name="93"><span class="lineNum">      93 </span>            : {</a>
+<a name="94"><span class="lineNum">      94 </span><span class="lineNoCov">          0 :         struct sock *lsk = req-&gt;rsk_listener;</span></a>
+<a name="95"><span class="lineNum">      95 </span><span class="lineNoCov">          0 :         struct fastopen_queue *fastopenq;</span></a>
+<a name="96"><span class="lineNum">      96 </span>            : </a>
+<a name="97"><span class="lineNum">      97 </span><span class="lineNoCov">          0 :         fastopenq = &amp;inet_csk(lsk)-&gt;icsk_accept_queue.fastopenq;</span></a>
+<a name="98"><span class="lineNum">      98 </span>            : </a>
+<a name="99"><span class="lineNum">      99 </span><span class="lineNoCov">          0 :         RCU_INIT_POINTER(tcp_sk(sk)-&gt;fastopen_rsk, NULL);</span></a>
+<a name="100"><span class="lineNum">     100 </span><span class="lineNoCov">          0 :         spin_lock_bh(&amp;fastopenq-&gt;lock);</span></a>
+<a name="101"><span class="lineNum">     101 </span><span class="lineNoCov">          0 :         fastopenq-&gt;qlen--;</span></a>
+<a name="102"><span class="lineNum">     102 </span><span class="lineNoCov">          0 :         tcp_rsk(req)-&gt;tfo_listener = false;</span></a>
+<a name="103"><span class="lineNum">     103 </span><span class="lineNoCov">          0 :         if (req-&gt;sk) /* the child socket hasn't been accepted yet */</span></a>
+<a name="104"><span class="lineNum">     104 </span><span class="lineNoCov">          0 :                 goto out;</span></a>
+<a name="105"><span class="lineNum">     105 </span>            : </a>
+<a name="106"><span class="lineNum">     106 </span><span class="lineNoCov">          0 :         if (!reset || lsk-&gt;sk_state != TCP_LISTEN) {</span></a>
+<a name="107"><span class="lineNum">     107 </span>            :                 /* If the listener has been closed don't bother with the</a>
+<a name="108"><span class="lineNum">     108 </span>            :                  * special RST handling below.</a>
+<a name="109"><span class="lineNum">     109 </span>            :                  */</a>
+<a name="110"><span class="lineNum">     110 </span><span class="lineNoCov">          0 :                 spin_unlock_bh(&amp;fastopenq-&gt;lock);</span></a>
+<a name="111"><span class="lineNum">     111 </span><span class="lineNoCov">          0 :                 reqsk_put(req);</span></a>
+<a name="112"><span class="lineNum">     112 </span><span class="lineNoCov">          0 :                 return;</span></a>
+<a name="113"><span class="lineNum">     113 </span>            :         }</a>
+<a name="114"><span class="lineNum">     114 </span>            :         /* Wait for 60secs before removing a req that has triggered RST.</a>
+<a name="115"><span class="lineNum">     115 </span>            :          * This is a simple defense against TFO spoofing attack - by</a>
+<a name="116"><span class="lineNum">     116 </span>            :          * counting the req against fastopen.max_qlen, and disabling</a>
+<a name="117"><span class="lineNum">     117 </span>            :          * TFO when the qlen exceeds max_qlen.</a>
+<a name="118"><span class="lineNum">     118 </span>            :          *</a>
+<a name="119"><span class="lineNum">     119 </span>            :          * For more details see CoNext'11 &quot;TCP Fast Open&quot; paper.</a>
+<a name="120"><span class="lineNum">     120 </span>            :          */</a>
+<a name="121"><span class="lineNum">     121 </span><span class="lineNoCov">          0 :         req-&gt;rsk_timer.expires = jiffies + 60*HZ;</span></a>
+<a name="122"><span class="lineNum">     122 </span><span class="lineNoCov">          0 :         if (fastopenq-&gt;rskq_rst_head == NULL)</span></a>
+<a name="123"><span class="lineNum">     123 </span><span class="lineNoCov">          0 :                 fastopenq-&gt;rskq_rst_head = req;</span></a>
+<a name="124"><span class="lineNum">     124 </span>            :         else</a>
+<a name="125"><span class="lineNum">     125 </span><span class="lineNoCov">          0 :                 fastopenq-&gt;rskq_rst_tail-&gt;dl_next = req;</span></a>
+<a name="126"><span class="lineNum">     126 </span>            : </a>
+<a name="127"><span class="lineNum">     127 </span><span class="lineNoCov">          0 :         req-&gt;dl_next = NULL;</span></a>
+<a name="128"><span class="lineNum">     128 </span><span class="lineNoCov">          0 :         fastopenq-&gt;rskq_rst_tail = req;</span></a>
+<a name="129"><span class="lineNum">     129 </span><span class="lineNoCov">          0 :         fastopenq-&gt;qlen++;</span></a>
+<a name="130"><span class="lineNum">     130 </span><span class="lineNoCov">          0 : out:</span></a>
+<a name="131"><span class="lineNum">     131 </span><span class="lineNoCov">          0 :         spin_unlock_bh(&amp;fastopenq-&gt;lock);</span></a>
+<a name="132"><span class="lineNum">     132 </span>            : }</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

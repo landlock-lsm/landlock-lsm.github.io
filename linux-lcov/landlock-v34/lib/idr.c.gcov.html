@@ -1,0 +1,674 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - landlock.info - lib/idr.c</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">lib</a> - idr.c<span style="font-size: 80%;"> (source / <a href="idr.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">landlock.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">139</td>
+            <td class="headerCovTableEntry">201</td>
+            <td class="headerCovTableEntryLo">69.2 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2021-04-22 12:43:58</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">11</td>
+            <td class="headerCovTableEntry">12</td>
+            <td class="headerCovTableEntryHi">91.7 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : // SPDX-License-Identifier: GPL-2.0-only</a>
+<a name="2"><span class="lineNum">       2 </span>            : #include &lt;linux/bitmap.h&gt;</a>
+<a name="3"><span class="lineNum">       3 </span>            : #include &lt;linux/bug.h&gt;</a>
+<a name="4"><span class="lineNum">       4 </span>            : #include &lt;linux/export.h&gt;</a>
+<a name="5"><span class="lineNum">       5 </span>            : #include &lt;linux/idr.h&gt;</a>
+<a name="6"><span class="lineNum">       6 </span>            : #include &lt;linux/slab.h&gt;</a>
+<a name="7"><span class="lineNum">       7 </span>            : #include &lt;linux/spinlock.h&gt;</a>
+<a name="8"><span class="lineNum">       8 </span>            : #include &lt;linux/xarray.h&gt;</a>
+<a name="9"><span class="lineNum">       9 </span>            : </a>
+<a name="10"><span class="lineNum">      10 </span>            : /**</a>
+<a name="11"><span class="lineNum">      11 </span>            :  * idr_alloc_u32() - Allocate an ID.</a>
+<a name="12"><span class="lineNum">      12 </span>            :  * @idr: IDR handle.</a>
+<a name="13"><span class="lineNum">      13 </span>            :  * @ptr: Pointer to be associated with the new ID.</a>
+<a name="14"><span class="lineNum">      14 </span>            :  * @nextid: Pointer to an ID.</a>
+<a name="15"><span class="lineNum">      15 </span>            :  * @max: The maximum ID to allocate (inclusive).</a>
+<a name="16"><span class="lineNum">      16 </span>            :  * @gfp: Memory allocation flags.</a>
+<a name="17"><span class="lineNum">      17 </span>            :  *</a>
+<a name="18"><span class="lineNum">      18 </span>            :  * Allocates an unused ID in the range specified by @nextid and @max.</a>
+<a name="19"><span class="lineNum">      19 </span>            :  * Note that @max is inclusive whereas the @end parameter to idr_alloc()</a>
+<a name="20"><span class="lineNum">      20 </span>            :  * is exclusive.  The new ID is assigned to @nextid before the pointer</a>
+<a name="21"><span class="lineNum">      21 </span>            :  * is inserted into the IDR, so if @nextid points into the object pointed</a>
+<a name="22"><span class="lineNum">      22 </span>            :  * to by @ptr, a concurrent lookup will not find an uninitialised ID.</a>
+<a name="23"><span class="lineNum">      23 </span>            :  *</a>
+<a name="24"><span class="lineNum">      24 </span>            :  * The caller should provide their own locking to ensure that two</a>
+<a name="25"><span class="lineNum">      25 </span>            :  * concurrent modifications to the IDR are not possible.  Read-only</a>
+<a name="26"><span class="lineNum">      26 </span>            :  * accesses to the IDR may be done under the RCU read lock or may</a>
+<a name="27"><span class="lineNum">      27 </span>            :  * exclude simultaneous writers.</a>
+<a name="28"><span class="lineNum">      28 </span>            :  *</a>
+<a name="29"><span class="lineNum">      29 </span>            :  * Return: 0 if an ID was allocated, -ENOMEM if memory allocation failed,</a>
+<a name="30"><span class="lineNum">      30 </span>            :  * or -ENOSPC if no free IDs could be found.  If an error occurred,</a>
+<a name="31"><span class="lineNum">      31 </span>            :  * @nextid is unchanged.</a>
+<a name="32"><span class="lineNum">      32 </span>            :  */</a>
+<a name="33"><span class="lineNum">      33 </span><span class="lineCov">      11083 : int idr_alloc_u32(struct idr *idr, void *ptr, u32 *nextid,</span></a>
+<a name="34"><span class="lineNum">      34 </span>            :                         unsigned long max, gfp_t gfp)</a>
+<a name="35"><span class="lineNum">      35 </span>            : {</a>
+<a name="36"><span class="lineNum">      36 </span><span class="lineCov">      11083 :         struct radix_tree_iter iter;</span></a>
+<a name="37"><span class="lineNum">      37 </span><span class="lineCov">      11083 :         void __rcu **slot;</span></a>
+<a name="38"><span class="lineNum">      38 </span><span class="lineCov">      11083 :         unsigned int base = idr-&gt;idr_base;</span></a>
+<a name="39"><span class="lineNum">      39 </span><span class="lineCov">      11083 :         unsigned int id = *nextid;</span></a>
+<a name="40"><span class="lineNum">      40 </span>            : </a>
+<a name="41"><span class="lineNum">      41 </span><span class="lineCov">      11083 :         if (WARN_ON_ONCE(!(idr-&gt;idr_rt.xa_flags &amp; ROOT_IS_IDR)))</span></a>
+<a name="42"><span class="lineNum">      42 </span><span class="lineNoCov">          0 :                 idr-&gt;idr_rt.xa_flags |= IDR_RT_MARKER;</span></a>
+<a name="43"><span class="lineNum">      43 </span>            : </a>
+<a name="44"><span class="lineNum">      44 </span><span class="lineCov">      11083 :         id = (id &lt; base) ? 0 : id - base;</span></a>
+<a name="45"><span class="lineNum">      45 </span><span class="lineCov">      11083 :         radix_tree_iter_init(&amp;iter, id);</span></a>
+<a name="46"><span class="lineNum">      46 </span><span class="lineCov">      11083 :         slot = idr_get_free(&amp;idr-&gt;idr_rt, &amp;iter, gfp, max - base);</span></a>
+<a name="47"><span class="lineNum">      47 </span><span class="lineCov">      11083 :         if (IS_ERR(slot))</span></a>
+<a name="48"><span class="lineNum">      48 </span><span class="lineNoCov">          0 :                 return PTR_ERR(slot);</span></a>
+<a name="49"><span class="lineNum">      49 </span>            : </a>
+<a name="50"><span class="lineNum">      50 </span><span class="lineCov">      11083 :         *nextid = iter.index + base;</span></a>
+<a name="51"><span class="lineNum">      51 </span>            :         /* there is a memory barrier inside radix_tree_iter_replace() */</a>
+<a name="52"><span class="lineNum">      52 </span><span class="lineCov">      11083 :         radix_tree_iter_replace(&amp;idr-&gt;idr_rt, &amp;iter, slot, ptr);</span></a>
+<a name="53"><span class="lineNum">      53 </span><span class="lineCov">      11083 :         radix_tree_iter_tag_clear(&amp;idr-&gt;idr_rt, &amp;iter, IDR_FREE);</span></a>
+<a name="54"><span class="lineNum">      54 </span>            : </a>
+<a name="55"><span class="lineNum">      55 </span><span class="lineCov">      11083 :         return 0;</span></a>
+<a name="56"><span class="lineNum">      56 </span>            : }</a>
+<a name="57"><span class="lineNum">      57 </span>            : EXPORT_SYMBOL_GPL(idr_alloc_u32);</a>
+<a name="58"><span class="lineNum">      58 </span>            : </a>
+<a name="59"><span class="lineNum">      59 </span>            : /**</a>
+<a name="60"><span class="lineNum">      60 </span>            :  * idr_alloc() - Allocate an ID.</a>
+<a name="61"><span class="lineNum">      61 </span>            :  * @idr: IDR handle.</a>
+<a name="62"><span class="lineNum">      62 </span>            :  * @ptr: Pointer to be associated with the new ID.</a>
+<a name="63"><span class="lineNum">      63 </span>            :  * @start: The minimum ID (inclusive).</a>
+<a name="64"><span class="lineNum">      64 </span>            :  * @end: The maximum ID (exclusive).</a>
+<a name="65"><span class="lineNum">      65 </span>            :  * @gfp: Memory allocation flags.</a>
+<a name="66"><span class="lineNum">      66 </span>            :  *</a>
+<a name="67"><span class="lineNum">      67 </span>            :  * Allocates an unused ID in the range specified by @start and @end.  If</a>
+<a name="68"><span class="lineNum">      68 </span>            :  * @end is &lt;= 0, it is treated as one larger than %INT_MAX.  This allows</a>
+<a name="69"><span class="lineNum">      69 </span>            :  * callers to use @start + N as @end as long as N is within integer range.</a>
+<a name="70"><span class="lineNum">      70 </span>            :  *</a>
+<a name="71"><span class="lineNum">      71 </span>            :  * The caller should provide their own locking to ensure that two</a>
+<a name="72"><span class="lineNum">      72 </span>            :  * concurrent modifications to the IDR are not possible.  Read-only</a>
+<a name="73"><span class="lineNum">      73 </span>            :  * accesses to the IDR may be done under the RCU read lock or may</a>
+<a name="74"><span class="lineNum">      74 </span>            :  * exclude simultaneous writers.</a>
+<a name="75"><span class="lineNum">      75 </span>            :  *</a>
+<a name="76"><span class="lineNum">      76 </span>            :  * Return: The newly allocated ID, -ENOMEM if memory allocation failed,</a>
+<a name="77"><span class="lineNum">      77 </span>            :  * or -ENOSPC if no free IDs could be found.</a>
+<a name="78"><span class="lineNum">      78 </span>            :  */</a>
+<a name="79"><span class="lineNum">      79 </span><span class="lineCov">         21 : int idr_alloc(struct idr *idr, void *ptr, int start, int end, gfp_t gfp)</span></a>
+<a name="80"><span class="lineNum">      80 </span>            : {</a>
+<a name="81"><span class="lineNum">      81 </span><span class="lineCov">         21 :         u32 id = start;</span></a>
+<a name="82"><span class="lineNum">      82 </span><span class="lineCov">         21 :         int ret;</span></a>
+<a name="83"><span class="lineNum">      83 </span>            : </a>
+<a name="84"><span class="lineNum">      84 </span><span class="lineCov">         21 :         if (WARN_ON_ONCE(start &lt; 0))</span></a>
+<a name="85"><span class="lineNum">      85 </span>            :                 return -EINVAL;</a>
+<a name="86"><span class="lineNum">      86 </span>            : </a>
+<a name="87"><span class="lineNum">      87 </span><span class="lineCov">         21 :         ret = idr_alloc_u32(idr, ptr, &amp;id, end &gt; 0 ? end - 1 : INT_MAX, gfp);</span></a>
+<a name="88"><span class="lineNum">      88 </span><span class="lineCov">         21 :         if (ret)</span></a>
+<a name="89"><span class="lineNum">      89 </span>            :                 return ret;</a>
+<a name="90"><span class="lineNum">      90 </span>            : </a>
+<a name="91"><span class="lineNum">      91 </span><span class="lineCov">         21 :         return id;</span></a>
+<a name="92"><span class="lineNum">      92 </span>            : }</a>
+<a name="93"><span class="lineNum">      93 </span>            : EXPORT_SYMBOL_GPL(idr_alloc);</a>
+<a name="94"><span class="lineNum">      94 </span>            : </a>
+<a name="95"><span class="lineNum">      95 </span>            : /**</a>
+<a name="96"><span class="lineNum">      96 </span>            :  * idr_alloc_cyclic() - Allocate an ID cyclically.</a>
+<a name="97"><span class="lineNum">      97 </span>            :  * @idr: IDR handle.</a>
+<a name="98"><span class="lineNum">      98 </span>            :  * @ptr: Pointer to be associated with the new ID.</a>
+<a name="99"><span class="lineNum">      99 </span>            :  * @start: The minimum ID (inclusive).</a>
+<a name="100"><span class="lineNum">     100 </span>            :  * @end: The maximum ID (exclusive).</a>
+<a name="101"><span class="lineNum">     101 </span>            :  * @gfp: Memory allocation flags.</a>
+<a name="102"><span class="lineNum">     102 </span>            :  *</a>
+<a name="103"><span class="lineNum">     103 </span>            :  * Allocates an unused ID in the range specified by @nextid and @end.  If</a>
+<a name="104"><span class="lineNum">     104 </span>            :  * @end is &lt;= 0, it is treated as one larger than %INT_MAX.  This allows</a>
+<a name="105"><span class="lineNum">     105 </span>            :  * callers to use @start + N as @end as long as N is within integer range.</a>
+<a name="106"><span class="lineNum">     106 </span>            :  * The search for an unused ID will start at the last ID allocated and will</a>
+<a name="107"><span class="lineNum">     107 </span>            :  * wrap around to @start if no free IDs are found before reaching @end.</a>
+<a name="108"><span class="lineNum">     108 </span>            :  *</a>
+<a name="109"><span class="lineNum">     109 </span>            :  * The caller should provide their own locking to ensure that two</a>
+<a name="110"><span class="lineNum">     110 </span>            :  * concurrent modifications to the IDR are not possible.  Read-only</a>
+<a name="111"><span class="lineNum">     111 </span>            :  * accesses to the IDR may be done under the RCU read lock or may</a>
+<a name="112"><span class="lineNum">     112 </span>            :  * exclude simultaneous writers.</a>
+<a name="113"><span class="lineNum">     113 </span>            :  *</a>
+<a name="114"><span class="lineNum">     114 </span>            :  * Return: The newly allocated ID, -ENOMEM if memory allocation failed,</a>
+<a name="115"><span class="lineNum">     115 </span>            :  * or -ENOSPC if no free IDs could be found.</a>
+<a name="116"><span class="lineNum">     116 </span>            :  */</a>
+<a name="117"><span class="lineNum">     117 </span><span class="lineCov">      11062 : int idr_alloc_cyclic(struct idr *idr, void *ptr, int start, int end, gfp_t gfp)</span></a>
+<a name="118"><span class="lineNum">     118 </span>            : {</a>
+<a name="119"><span class="lineNum">     119 </span><span class="lineCov">      11062 :         u32 id = idr-&gt;idr_next;</span></a>
+<a name="120"><span class="lineNum">     120 </span><span class="lineCov">      11062 :         int err, max = end &gt; 0 ? end - 1 : INT_MAX;</span></a>
+<a name="121"><span class="lineNum">     121 </span>            : </a>
+<a name="122"><span class="lineNum">     122 </span><span class="lineCov">      11062 :         if ((int)id &lt; start)</span></a>
+<a name="123"><span class="lineNum">     123 </span><span class="lineCov">         25 :                 id = start;</span></a>
+<a name="124"><span class="lineNum">     124 </span>            : </a>
+<a name="125"><span class="lineNum">     125 </span><span class="lineCov">      11062 :         err = idr_alloc_u32(idr, ptr, &amp;id, max, gfp);</span></a>
+<a name="126"><span class="lineNum">     126 </span><span class="lineCov">      11062 :         if ((err == -ENOSPC) &amp;&amp; (id &gt; start)) {</span></a>
+<a name="127"><span class="lineNum">     127 </span><span class="lineNoCov">          0 :                 id = start;</span></a>
+<a name="128"><span class="lineNum">     128 </span><span class="lineNoCov">          0 :                 err = idr_alloc_u32(idr, ptr, &amp;id, max, gfp);</span></a>
+<a name="129"><span class="lineNum">     129 </span>            :         }</a>
+<a name="130"><span class="lineNum">     130 </span><span class="lineCov">      11062 :         if (err)</span></a>
+<a name="131"><span class="lineNum">     131 </span>            :                 return err;</a>
+<a name="132"><span class="lineNum">     132 </span>            : </a>
+<a name="133"><span class="lineNum">     133 </span><span class="lineCov">      11062 :         idr-&gt;idr_next = id + 1;</span></a>
+<a name="134"><span class="lineNum">     134 </span><span class="lineCov">      11062 :         return id;</span></a>
+<a name="135"><span class="lineNum">     135 </span>            : }</a>
+<a name="136"><span class="lineNum">     136 </span>            : EXPORT_SYMBOL(idr_alloc_cyclic);</a>
+<a name="137"><span class="lineNum">     137 </span>            : </a>
+<a name="138"><span class="lineNum">     138 </span>            : /**</a>
+<a name="139"><span class="lineNum">     139 </span>            :  * idr_remove() - Remove an ID from the IDR.</a>
+<a name="140"><span class="lineNum">     140 </span>            :  * @idr: IDR handle.</a>
+<a name="141"><span class="lineNum">     141 </span>            :  * @id: Pointer ID.</a>
+<a name="142"><span class="lineNum">     142 </span>            :  *</a>
+<a name="143"><span class="lineNum">     143 </span>            :  * Removes this ID from the IDR.  If the ID was not previously in the IDR,</a>
+<a name="144"><span class="lineNum">     144 </span>            :  * this function returns %NULL.</a>
+<a name="145"><span class="lineNum">     145 </span>            :  *</a>
+<a name="146"><span class="lineNum">     146 </span>            :  * Since this function modifies the IDR, the caller should provide their</a>
+<a name="147"><span class="lineNum">     147 </span>            :  * own locking to ensure that concurrent modification of the same IDR is</a>
+<a name="148"><span class="lineNum">     148 </span>            :  * not possible.</a>
+<a name="149"><span class="lineNum">     149 </span>            :  *</a>
+<a name="150"><span class="lineNum">     150 </span>            :  * Return: The pointer formerly associated with this ID.</a>
+<a name="151"><span class="lineNum">     151 </span>            :  */</a>
+<a name="152"><span class="lineNum">     152 </span><span class="lineCov">       3393 : void *idr_remove(struct idr *idr, unsigned long id)</span></a>
+<a name="153"><span class="lineNum">     153 </span>            : {</a>
+<a name="154"><span class="lineNum">     154 </span><span class="lineCov">       3393 :         return radix_tree_delete_item(&amp;idr-&gt;idr_rt, id - idr-&gt;idr_base, NULL);</span></a>
+<a name="155"><span class="lineNum">     155 </span>            : }</a>
+<a name="156"><span class="lineNum">     156 </span>            : EXPORT_SYMBOL_GPL(idr_remove);</a>
+<a name="157"><span class="lineNum">     157 </span>            : </a>
+<a name="158"><span class="lineNum">     158 </span>            : /**</a>
+<a name="159"><span class="lineNum">     159 </span>            :  * idr_find() - Return pointer for given ID.</a>
+<a name="160"><span class="lineNum">     160 </span>            :  * @idr: IDR handle.</a>
+<a name="161"><span class="lineNum">     161 </span>            :  * @id: Pointer ID.</a>
+<a name="162"><span class="lineNum">     162 </span>            :  *</a>
+<a name="163"><span class="lineNum">     163 </span>            :  * Looks up the pointer associated with this ID.  A %NULL pointer may</a>
+<a name="164"><span class="lineNum">     164 </span>            :  * indicate that @id is not allocated or that the %NULL pointer was</a>
+<a name="165"><span class="lineNum">     165 </span>            :  * associated with this ID.</a>
+<a name="166"><span class="lineNum">     166 </span>            :  *</a>
+<a name="167"><span class="lineNum">     167 </span>            :  * This function can be called under rcu_read_lock(), given that the leaf</a>
+<a name="168"><span class="lineNum">     168 </span>            :  * pointers lifetimes are correctly managed.</a>
+<a name="169"><span class="lineNum">     169 </span>            :  *</a>
+<a name="170"><span class="lineNum">     170 </span>            :  * Return: The pointer associated with this ID.</a>
+<a name="171"><span class="lineNum">     171 </span>            :  */</a>
+<a name="172"><span class="lineNum">     172 </span><span class="lineCov">       3971 : void *idr_find(const struct idr *idr, unsigned long id)</span></a>
+<a name="173"><span class="lineNum">     173 </span>            : {</a>
+<a name="174"><span class="lineNum">     174 </span><span class="lineCov">       3971 :         return radix_tree_lookup(&amp;idr-&gt;idr_rt, id - idr-&gt;idr_base);</span></a>
+<a name="175"><span class="lineNum">     175 </span>            : }</a>
+<a name="176"><span class="lineNum">     176 </span>            : EXPORT_SYMBOL_GPL(idr_find);</a>
+<a name="177"><span class="lineNum">     177 </span>            : </a>
+<a name="178"><span class="lineNum">     178 </span>            : /**</a>
+<a name="179"><span class="lineNum">     179 </span>            :  * idr_for_each() - Iterate through all stored pointers.</a>
+<a name="180"><span class="lineNum">     180 </span>            :  * @idr: IDR handle.</a>
+<a name="181"><span class="lineNum">     181 </span>            :  * @fn: Function to be called for each pointer.</a>
+<a name="182"><span class="lineNum">     182 </span>            :  * @data: Data passed to callback function.</a>
+<a name="183"><span class="lineNum">     183 </span>            :  *</a>
+<a name="184"><span class="lineNum">     184 </span>            :  * The callback function will be called for each entry in @idr, passing</a>
+<a name="185"><span class="lineNum">     185 </span>            :  * the ID, the entry and @data.</a>
+<a name="186"><span class="lineNum">     186 </span>            :  *</a>
+<a name="187"><span class="lineNum">     187 </span>            :  * If @fn returns anything other than %0, the iteration stops and that</a>
+<a name="188"><span class="lineNum">     188 </span>            :  * value is returned from this function.</a>
+<a name="189"><span class="lineNum">     189 </span>            :  *</a>
+<a name="190"><span class="lineNum">     190 </span>            :  * idr_for_each() can be called concurrently with idr_alloc() and</a>
+<a name="191"><span class="lineNum">     191 </span>            :  * idr_remove() if protected by RCU.  Newly added entries may not be</a>
+<a name="192"><span class="lineNum">     192 </span>            :  * seen and deleted entries may be seen, but adding and removing entries</a>
+<a name="193"><span class="lineNum">     193 </span>            :  * will not cause other entries to be skipped, nor spurious ones to be seen.</a>
+<a name="194"><span class="lineNum">     194 </span>            :  */</a>
+<a name="195"><span class="lineNum">     195 </span><span class="lineCov">        208 : int idr_for_each(const struct idr *idr,</span></a>
+<a name="196"><span class="lineNum">     196 </span>            :                 int (*fn)(int id, void *p, void *data), void *data)</a>
+<a name="197"><span class="lineNum">     197 </span>            : {</a>
+<a name="198"><span class="lineNum">     198 </span><span class="lineCov">        208 :         struct radix_tree_iter iter;</span></a>
+<a name="199"><span class="lineNum">     199 </span><span class="lineCov">        208 :         void __rcu **slot;</span></a>
+<a name="200"><span class="lineNum">     200 </span><span class="lineCov">        208 :         int base = idr-&gt;idr_base;</span></a>
+<a name="201"><span class="lineNum">     201 </span>            : </a>
+<a name="202"><span class="lineNum">     202 </span><span class="lineCov">        416 :         radix_tree_for_each_slot(slot, &amp;idr-&gt;idr_rt, &amp;iter, 0) {</span></a>
+<a name="203"><span class="lineNum">     203 </span><span class="lineNoCov">          0 :                 int ret;</span></a>
+<a name="204"><span class="lineNum">     204 </span><span class="lineNoCov">          0 :                 unsigned long id = iter.index + base;</span></a>
+<a name="205"><span class="lineNum">     205 </span>            : </a>
+<a name="206"><span class="lineNum">     206 </span><span class="lineNoCov">          0 :                 if (WARN_ON_ONCE(id &gt; INT_MAX))</span></a>
+<a name="207"><span class="lineNum">     207 </span>            :                         break;</a>
+<a name="208"><span class="lineNum">     208 </span><span class="lineNoCov">          0 :                 ret = fn(id, rcu_dereference_raw(*slot), data);</span></a>
+<a name="209"><span class="lineNum">     209 </span><span class="lineNoCov">          0 :                 if (ret)</span></a>
+<a name="210"><span class="lineNum">     210 </span><span class="lineNoCov">          0 :                         return ret;</span></a>
+<a name="211"><span class="lineNum">     211 </span>            :         }</a>
+<a name="212"><span class="lineNum">     212 </span>            : </a>
+<a name="213"><span class="lineNum">     213 </span>            :         return 0;</a>
+<a name="214"><span class="lineNum">     214 </span>            : }</a>
+<a name="215"><span class="lineNum">     215 </span>            : EXPORT_SYMBOL(idr_for_each);</a>
+<a name="216"><span class="lineNum">     216 </span>            : </a>
+<a name="217"><span class="lineNum">     217 </span>            : /**</a>
+<a name="218"><span class="lineNum">     218 </span>            :  * idr_get_next_ul() - Find next populated entry.</a>
+<a name="219"><span class="lineNum">     219 </span>            :  * @idr: IDR handle.</a>
+<a name="220"><span class="lineNum">     220 </span>            :  * @nextid: Pointer to an ID.</a>
+<a name="221"><span class="lineNum">     221 </span>            :  *</a>
+<a name="222"><span class="lineNum">     222 </span>            :  * Returns the next populated entry in the tree with an ID greater than</a>
+<a name="223"><span class="lineNum">     223 </span>            :  * or equal to the value pointed to by @nextid.  On exit, @nextid is updated</a>
+<a name="224"><span class="lineNum">     224 </span>            :  * to the ID of the found value.  To use in a loop, the value pointed to by</a>
+<a name="225"><span class="lineNum">     225 </span>            :  * nextid must be incremented by the user.</a>
+<a name="226"><span class="lineNum">     226 </span>            :  */</a>
+<a name="227"><span class="lineNum">     227 </span><span class="lineCov">         36 : void *idr_get_next_ul(struct idr *idr, unsigned long *nextid)</span></a>
+<a name="228"><span class="lineNum">     228 </span>            : {</a>
+<a name="229"><span class="lineNum">     229 </span><span class="lineCov">         36 :         struct radix_tree_iter iter;</span></a>
+<a name="230"><span class="lineNum">     230 </span><span class="lineCov">         36 :         void __rcu **slot;</span></a>
+<a name="231"><span class="lineNum">     231 </span><span class="lineCov">         36 :         void *entry = NULL;</span></a>
+<a name="232"><span class="lineNum">     232 </span><span class="lineCov">         36 :         unsigned long base = idr-&gt;idr_base;</span></a>
+<a name="233"><span class="lineNum">     233 </span><span class="lineCov">         36 :         unsigned long id = *nextid;</span></a>
+<a name="234"><span class="lineNum">     234 </span>            : </a>
+<a name="235"><span class="lineNum">     235 </span><span class="lineCov">         36 :         id = (id &lt; base) ? 0 : id - base;</span></a>
+<a name="236"><span class="lineNum">     236 </span><span class="lineCov">         36 :         radix_tree_for_each_slot(slot, &amp;idr-&gt;idr_rt, &amp;iter, id) {</span></a>
+<a name="237"><span class="lineNum">     237 </span><span class="lineCov">         30 :                 entry = rcu_dereference_raw(*slot);</span></a>
+<a name="238"><span class="lineNum">     238 </span><span class="lineCov">         30 :                 if (!entry)</span></a>
+<a name="239"><span class="lineNum">     239 </span><span class="lineNoCov">          0 :                         continue;</span></a>
+<a name="240"><span class="lineNum">     240 </span><span class="lineCov">         30 :                 if (!xa_is_internal(entry))</span></a>
+<a name="241"><span class="lineNum">     241 </span>            :                         break;</a>
+<a name="242"><span class="lineNum">     242 </span><span class="lineNoCov">          0 :                 if (slot != &amp;idr-&gt;idr_rt.xa_head &amp;&amp; !xa_is_retry(entry))</span></a>
+<a name="243"><span class="lineNum">     243 </span>            :                         break;</a>
+<a name="244"><span class="lineNum">     244 </span><span class="lineNoCov">          0 :                 slot = radix_tree_iter_retry(&amp;iter);</span></a>
+<a name="245"><span class="lineNum">     245 </span>            :         }</a>
+<a name="246"><span class="lineNum">     246 </span><span class="lineCov">         36 :         if (!slot)</span></a>
+<a name="247"><span class="lineNum">     247 </span>            :                 return NULL;</a>
+<a name="248"><span class="lineNum">     248 </span>            : </a>
+<a name="249"><span class="lineNum">     249 </span><span class="lineCov">         30 :         *nextid = iter.index + base;</span></a>
+<a name="250"><span class="lineNum">     250 </span><span class="lineCov">         30 :         return entry;</span></a>
+<a name="251"><span class="lineNum">     251 </span>            : }</a>
+<a name="252"><span class="lineNum">     252 </span>            : EXPORT_SYMBOL(idr_get_next_ul);</a>
+<a name="253"><span class="lineNum">     253 </span>            : </a>
+<a name="254"><span class="lineNum">     254 </span>            : /**</a>
+<a name="255"><span class="lineNum">     255 </span>            :  * idr_get_next() - Find next populated entry.</a>
+<a name="256"><span class="lineNum">     256 </span>            :  * @idr: IDR handle.</a>
+<a name="257"><span class="lineNum">     257 </span>            :  * @nextid: Pointer to an ID.</a>
+<a name="258"><span class="lineNum">     258 </span>            :  *</a>
+<a name="259"><span class="lineNum">     259 </span>            :  * Returns the next populated entry in the tree with an ID greater than</a>
+<a name="260"><span class="lineNum">     260 </span>            :  * or equal to the value pointed to by @nextid.  On exit, @nextid is updated</a>
+<a name="261"><span class="lineNum">     261 </span>            :  * to the ID of the found value.  To use in a loop, the value pointed to by</a>
+<a name="262"><span class="lineNum">     262 </span>            :  * nextid must be incremented by the user.</a>
+<a name="263"><span class="lineNum">     263 </span>            :  */</a>
+<a name="264"><span class="lineNum">     264 </span><span class="lineCov">         36 : void *idr_get_next(struct idr *idr, int *nextid)</span></a>
+<a name="265"><span class="lineNum">     265 </span>            : {</a>
+<a name="266"><span class="lineNum">     266 </span><span class="lineCov">         36 :         unsigned long id = *nextid;</span></a>
+<a name="267"><span class="lineNum">     267 </span><span class="lineCov">         36 :         void *entry = idr_get_next_ul(idr, &amp;id);</span></a>
+<a name="268"><span class="lineNum">     268 </span>            : </a>
+<a name="269"><span class="lineNum">     269 </span><span class="lineCov">         36 :         if (WARN_ON_ONCE(id &gt; INT_MAX))</span></a>
+<a name="270"><span class="lineNum">     270 </span>            :                 return NULL;</a>
+<a name="271"><span class="lineNum">     271 </span><span class="lineCov">         36 :         *nextid = id;</span></a>
+<a name="272"><span class="lineNum">     272 </span><span class="lineCov">         36 :         return entry;</span></a>
+<a name="273"><span class="lineNum">     273 </span>            : }</a>
+<a name="274"><span class="lineNum">     274 </span>            : EXPORT_SYMBOL(idr_get_next);</a>
+<a name="275"><span class="lineNum">     275 </span>            : </a>
+<a name="276"><span class="lineNum">     276 </span>            : /**</a>
+<a name="277"><span class="lineNum">     277 </span>            :  * idr_replace() - replace pointer for given ID.</a>
+<a name="278"><span class="lineNum">     278 </span>            :  * @idr: IDR handle.</a>
+<a name="279"><span class="lineNum">     279 </span>            :  * @ptr: New pointer to associate with the ID.</a>
+<a name="280"><span class="lineNum">     280 </span>            :  * @id: ID to change.</a>
+<a name="281"><span class="lineNum">     281 </span>            :  *</a>
+<a name="282"><span class="lineNum">     282 </span>            :  * Replace the pointer registered with an ID and return the old value.</a>
+<a name="283"><span class="lineNum">     283 </span>            :  * This function can be called under the RCU read lock concurrently with</a>
+<a name="284"><span class="lineNum">     284 </span>            :  * idr_alloc() and idr_remove() (as long as the ID being removed is not</a>
+<a name="285"><span class="lineNum">     285 </span>            :  * the one being replaced!).</a>
+<a name="286"><span class="lineNum">     286 </span>            :  *</a>
+<a name="287"><span class="lineNum">     287 </span>            :  * Returns: the old value on success.  %-ENOENT indicates that @id was not</a>
+<a name="288"><span class="lineNum">     288 </span>            :  * found.  %-EINVAL indicates that @ptr was not valid.</a>
+<a name="289"><span class="lineNum">     289 </span>            :  */</a>
+<a name="290"><span class="lineNum">     290 </span><span class="lineCov">       2459 : void *idr_replace(struct idr *idr, void *ptr, unsigned long id)</span></a>
+<a name="291"><span class="lineNum">     291 </span>            : {</a>
+<a name="292"><span class="lineNum">     292 </span><span class="lineCov">       2459 :         struct radix_tree_node *node;</span></a>
+<a name="293"><span class="lineNum">     293 </span><span class="lineCov">       2459 :         void __rcu **slot = NULL;</span></a>
+<a name="294"><span class="lineNum">     294 </span><span class="lineCov">       2459 :         void *entry;</span></a>
+<a name="295"><span class="lineNum">     295 </span>            : </a>
+<a name="296"><span class="lineNum">     296 </span><span class="lineCov">       2459 :         id -= idr-&gt;idr_base;</span></a>
+<a name="297"><span class="lineNum">     297 </span>            : </a>
+<a name="298"><span class="lineNum">     298 </span><span class="lineCov">       2459 :         entry = __radix_tree_lookup(&amp;idr-&gt;idr_rt, id, &amp;node, &amp;slot);</span></a>
+<a name="299"><span class="lineNum">     299 </span><span class="lineCov">       2459 :         if (!slot || radix_tree_tag_get(&amp;idr-&gt;idr_rt, id, IDR_FREE))</span></a>
+<a name="300"><span class="lineNum">     300 </span><span class="lineNoCov">          0 :                 return ERR_PTR(-ENOENT);</span></a>
+<a name="301"><span class="lineNum">     301 </span>            : </a>
+<a name="302"><span class="lineNum">     302 </span><span class="lineCov">       2459 :         __radix_tree_replace(&amp;idr-&gt;idr_rt, node, slot, ptr);</span></a>
+<a name="303"><span class="lineNum">     303 </span>            : </a>
+<a name="304"><span class="lineNum">     304 </span><span class="lineCov">       2459 :         return entry;</span></a>
+<a name="305"><span class="lineNum">     305 </span>            : }</a>
+<a name="306"><span class="lineNum">     306 </span>            : EXPORT_SYMBOL(idr_replace);</a>
+<a name="307"><span class="lineNum">     307 </span>            : </a>
+<a name="308"><span class="lineNum">     308 </span>            : /**</a>
+<a name="309"><span class="lineNum">     309 </span>            :  * DOC: IDA description</a>
+<a name="310"><span class="lineNum">     310 </span>            :  *</a>
+<a name="311"><span class="lineNum">     311 </span>            :  * The IDA is an ID allocator which does not provide the ability to</a>
+<a name="312"><span class="lineNum">     312 </span>            :  * associate an ID with a pointer.  As such, it only needs to store one</a>
+<a name="313"><span class="lineNum">     313 </span>            :  * bit per ID, and so is more space efficient than an IDR.  To use an IDA,</a>
+<a name="314"><span class="lineNum">     314 </span>            :  * define it using DEFINE_IDA() (or embed a &amp;struct ida in a data structure,</a>
+<a name="315"><span class="lineNum">     315 </span>            :  * then initialise it using ida_init()).  To allocate a new ID, call</a>
+<a name="316"><span class="lineNum">     316 </span>            :  * ida_alloc(), ida_alloc_min(), ida_alloc_max() or ida_alloc_range().</a>
+<a name="317"><span class="lineNum">     317 </span>            :  * To free an ID, call ida_free().</a>
+<a name="318"><span class="lineNum">     318 </span>            :  *</a>
+<a name="319"><span class="lineNum">     319 </span>            :  * ida_destroy() can be used to dispose of an IDA without needing to</a>
+<a name="320"><span class="lineNum">     320 </span>            :  * free the individual IDs in it.  You can use ida_is_empty() to find</a>
+<a name="321"><span class="lineNum">     321 </span>            :  * out whether the IDA has any IDs currently allocated.</a>
+<a name="322"><span class="lineNum">     322 </span>            :  *</a>
+<a name="323"><span class="lineNum">     323 </span>            :  * The IDA handles its own locking.  It is safe to call any of the IDA</a>
+<a name="324"><span class="lineNum">     324 </span>            :  * functions without synchronisation in your code.</a>
+<a name="325"><span class="lineNum">     325 </span>            :  *</a>
+<a name="326"><span class="lineNum">     326 </span>            :  * IDs are currently limited to the range [0-INT_MAX].  If this is an awkward</a>
+<a name="327"><span class="lineNum">     327 </span>            :  * limitation, it should be quite straightforward to raise the maximum.</a>
+<a name="328"><span class="lineNum">     328 </span>            :  */</a>
+<a name="329"><span class="lineNum">     329 </span>            : </a>
+<a name="330"><span class="lineNum">     330 </span>            : /*</a>
+<a name="331"><span class="lineNum">     331 </span>            :  * Developer's notes:</a>
+<a name="332"><span class="lineNum">     332 </span>            :  *</a>
+<a name="333"><span class="lineNum">     333 </span>            :  * The IDA uses the functionality provided by the XArray to store bitmaps in</a>
+<a name="334"><span class="lineNum">     334 </span>            :  * each entry.  The XA_FREE_MARK is only cleared when all bits in the bitmap</a>
+<a name="335"><span class="lineNum">     335 </span>            :  * have been set.</a>
+<a name="336"><span class="lineNum">     336 </span>            :  *</a>
+<a name="337"><span class="lineNum">     337 </span>            :  * I considered telling the XArray that each slot is an order-10 node</a>
+<a name="338"><span class="lineNum">     338 </span>            :  * and indexing by bit number, but the XArray can't allow a single multi-index</a>
+<a name="339"><span class="lineNum">     339 </span>            :  * entry in the head, which would significantly increase memory consumption</a>
+<a name="340"><span class="lineNum">     340 </span>            :  * for the IDA.  So instead we divide the index by the number of bits in the</a>
+<a name="341"><span class="lineNum">     341 </span>            :  * leaf bitmap before doing a radix tree lookup.</a>
+<a name="342"><span class="lineNum">     342 </span>            :  *</a>
+<a name="343"><span class="lineNum">     343 </span>            :  * As an optimisation, if there are only a few low bits set in any given</a>
+<a name="344"><span class="lineNum">     344 </span>            :  * leaf, instead of allocating a 128-byte bitmap, we store the bits</a>
+<a name="345"><span class="lineNum">     345 </span>            :  * as a value entry.  Value entries never have the XA_FREE_MARK cleared</a>
+<a name="346"><span class="lineNum">     346 </span>            :  * because we can always convert them into a bitmap entry.</a>
+<a name="347"><span class="lineNum">     347 </span>            :  *</a>
+<a name="348"><span class="lineNum">     348 </span>            :  * It would be possible to optimise further; once we've run out of a</a>
+<a name="349"><span class="lineNum">     349 </span>            :  * single 128-byte bitmap, we currently switch to a 576-byte node, put</a>
+<a name="350"><span class="lineNum">     350 </span>            :  * the 128-byte bitmap in the first entry and then start allocating extra</a>
+<a name="351"><span class="lineNum">     351 </span>            :  * 128-byte entries.  We could instead use the 512 bytes of the node's</a>
+<a name="352"><span class="lineNum">     352 </span>            :  * data as a bitmap before moving to that scheme.  I do not believe this</a>
+<a name="353"><span class="lineNum">     353 </span>            :  * is a worthwhile optimisation; Rasmus Villemoes surveyed the current</a>
+<a name="354"><span class="lineNum">     354 </span>            :  * users of the IDA and almost none of them use more than 1024 entries.</a>
+<a name="355"><span class="lineNum">     355 </span>            :  * Those that do use more than the 8192 IDs that the 512 bytes would</a>
+<a name="356"><span class="lineNum">     356 </span>            :  * provide.</a>
+<a name="357"><span class="lineNum">     357 </span>            :  *</a>
+<a name="358"><span class="lineNum">     358 </span>            :  * The IDA always uses a lock to alloc/free.  If we add a 'test_bit'</a>
+<a name="359"><span class="lineNum">     359 </span>            :  * equivalent, it will still need locking.  Going to RCU lookup would require</a>
+<a name="360"><span class="lineNum">     360 </span>            :  * using RCU to free bitmaps, and that's not trivial without embedding an</a>
+<a name="361"><span class="lineNum">     361 </span>            :  * RCU head in the bitmap, which adds a 2-pointer overhead to each 128-byte</a>
+<a name="362"><span class="lineNum">     362 </span>            :  * bitmap, which is excessive.</a>
+<a name="363"><span class="lineNum">     363 </span>            :  */</a>
+<a name="364"><span class="lineNum">     364 </span>            : </a>
+<a name="365"><span class="lineNum">     365 </span>            : /**</a>
+<a name="366"><span class="lineNum">     366 </span>            :  * ida_alloc_range() - Allocate an unused ID.</a>
+<a name="367"><span class="lineNum">     367 </span>            :  * @ida: IDA handle.</a>
+<a name="368"><span class="lineNum">     368 </span>            :  * @min: Lowest ID to allocate.</a>
+<a name="369"><span class="lineNum">     369 </span>            :  * @max: Highest ID to allocate.</a>
+<a name="370"><span class="lineNum">     370 </span>            :  * @gfp: Memory allocation flags.</a>
+<a name="371"><span class="lineNum">     371 </span>            :  *</a>
+<a name="372"><span class="lineNum">     372 </span>            :  * Allocate an ID between @min and @max, inclusive.  The allocated ID will</a>
+<a name="373"><span class="lineNum">     373 </span>            :  * not exceed %INT_MAX, even if @max is larger.</a>
+<a name="374"><span class="lineNum">     374 </span>            :  *</a>
+<a name="375"><span class="lineNum">     375 </span>            :  * Context: Any context. It is safe to call this function without</a>
+<a name="376"><span class="lineNum">     376 </span>            :  * locking in your code.</a>
+<a name="377"><span class="lineNum">     377 </span>            :  * Return: The allocated ID, or %-ENOMEM if memory could not be allocated,</a>
+<a name="378"><span class="lineNum">     378 </span>            :  * or %-ENOSPC if there are no free IDs.</a>
+<a name="379"><span class="lineNum">     379 </span>            :  */</a>
+<a name="380"><span class="lineNum">     380 </span><span class="lineCov">       1830 : int ida_alloc_range(struct ida *ida, unsigned int min, unsigned int max,</span></a>
+<a name="381"><span class="lineNum">     381 </span>            :                         gfp_t gfp)</a>
+<a name="382"><span class="lineNum">     382 </span>            : {</a>
+<a name="383"><span class="lineNum">     383 </span><span class="lineCov">       1830 :         XA_STATE(xas, &amp;ida-&gt;xa, min / IDA_BITMAP_BITS);</span></a>
+<a name="384"><span class="lineNum">     384 </span><span class="lineCov">       1830 :         unsigned bit = min % IDA_BITMAP_BITS;</span></a>
+<a name="385"><span class="lineNum">     385 </span><span class="lineCov">       1830 :         unsigned long flags;</span></a>
+<a name="386"><span class="lineNum">     386 </span><span class="lineCov">       1830 :         struct ida_bitmap *bitmap, *alloc = NULL;</span></a>
+<a name="387"><span class="lineNum">     387 </span>            : </a>
+<a name="388"><span class="lineNum">     388 </span><span class="lineCov">       1830 :         if ((int)min &lt; 0)</span></a>
+<a name="389"><span class="lineNum">     389 </span>            :                 return -ENOSPC;</a>
+<a name="390"><span class="lineNum">     390 </span>            : </a>
+<a name="391"><span class="lineNum">     391 </span><span class="lineCov">       1830 :         if ((int)max &lt; 0)</span></a>
+<a name="392"><span class="lineNum">     392 </span><span class="lineCov">       1427 :                 max = INT_MAX;</span></a>
+<a name="393"><span class="lineNum">     393 </span>            : </a>
+<a name="394"><span class="lineNum">     394 </span><span class="lineCov">       1830 : retry:</span></a>
+<a name="395"><span class="lineNum">     395 </span><span class="lineCov">       1830 :         xas_lock_irqsave(&amp;xas, flags);</span></a>
+<a name="396"><span class="lineNum">     396 </span><span class="lineCov">       1830 : next:</span></a>
+<a name="397"><span class="lineNum">     397 </span><span class="lineCov">       1830 :         bitmap = xas_find_marked(&amp;xas, max / IDA_BITMAP_BITS, XA_FREE_MARK);</span></a>
+<a name="398"><span class="lineNum">     398 </span><span class="lineCov">       1830 :         if (xas.xa_index &gt; min / IDA_BITMAP_BITS)</span></a>
+<a name="399"><span class="lineNum">     399 </span><span class="lineNoCov">          0 :                 bit = 0;</span></a>
+<a name="400"><span class="lineNum">     400 </span><span class="lineCov">       1830 :         if (xas.xa_index * IDA_BITMAP_BITS + bit &gt; max)</span></a>
+<a name="401"><span class="lineNum">     401 </span><span class="lineNoCov">          0 :                 goto nospc;</span></a>
+<a name="402"><span class="lineNum">     402 </span>            : </a>
+<a name="403"><span class="lineNum">     403 </span><span class="lineCov">       1830 :         if (xa_is_value(bitmap)) {</span></a>
+<a name="404"><span class="lineNum">     404 </span><span class="lineCov">        337 :                 unsigned long tmp = xa_to_value(bitmap);</span></a>
+<a name="405"><span class="lineNum">     405 </span>            : </a>
+<a name="406"><span class="lineNum">     406 </span><span class="lineCov">        337 :                 if (bit &lt; BITS_PER_XA_VALUE) {</span></a>
+<a name="407"><span class="lineNum">     407 </span><span class="lineCov">        337 :                         bit = find_next_zero_bit(&amp;tmp, BITS_PER_XA_VALUE, bit);</span></a>
+<a name="408"><span class="lineNum">     408 </span><span class="lineCov">        337 :                         if (xas.xa_index * IDA_BITMAP_BITS + bit &gt; max)</span></a>
+<a name="409"><span class="lineNum">     409 </span><span class="lineNoCov">          0 :                                 goto nospc;</span></a>
+<a name="410"><span class="lineNum">     410 </span><span class="lineCov">        337 :                         if (bit &lt; BITS_PER_XA_VALUE) {</span></a>
+<a name="411"><span class="lineNum">     411 </span><span class="lineCov">        334 :                                 tmp |= 1UL &lt;&lt; bit;</span></a>
+<a name="412"><span class="lineNum">     412 </span><span class="lineCov">        334 :                                 xas_store(&amp;xas, xa_mk_value(tmp));</span></a>
+<a name="413"><span class="lineNum">     413 </span><span class="lineCov">        334 :                                 goto out;</span></a>
+<a name="414"><span class="lineNum">     414 </span>            :                         }</a>
+<a name="415"><span class="lineNum">     415 </span>            :                 }</a>
+<a name="416"><span class="lineNum">     416 </span><span class="lineCov">          3 :                 bitmap = alloc;</span></a>
+<a name="417"><span class="lineNum">     417 </span><span class="lineCov">          3 :                 if (!bitmap)</span></a>
+<a name="418"><span class="lineNum">     418 </span><span class="lineCov">          3 :                         bitmap = kzalloc(sizeof(*bitmap), GFP_NOWAIT);</span></a>
+<a name="419"><span class="lineNum">     419 </span><span class="lineCov">          3 :                 if (!bitmap)</span></a>
+<a name="420"><span class="lineNum">     420 </span><span class="lineNoCov">          0 :                         goto alloc;</span></a>
+<a name="421"><span class="lineNum">     421 </span><span class="lineCov">          3 :                 bitmap-&gt;bitmap[0] = tmp;</span></a>
+<a name="422"><span class="lineNum">     422 </span><span class="lineCov">          3 :                 xas_store(&amp;xas, bitmap);</span></a>
+<a name="423"><span class="lineNum">     423 </span><span class="lineCov">          6 :                 if (xas_error(&amp;xas)) {</span></a>
+<a name="424"><span class="lineNum">     424 </span><span class="lineNoCov">          0 :                         bitmap-&gt;bitmap[0] = 0;</span></a>
+<a name="425"><span class="lineNum">     425 </span><span class="lineNoCov">          0 :                         goto out;</span></a>
+<a name="426"><span class="lineNum">     426 </span>            :                 }</a>
+<a name="427"><span class="lineNum">     427 </span>            :         }</a>
+<a name="428"><span class="lineNum">     428 </span>            : </a>
+<a name="429"><span class="lineNum">     429 </span><span class="lineCov">       1496 :         if (bitmap) {</span></a>
+<a name="430"><span class="lineNum">     430 </span><span class="lineCov">       1477 :                 bit = find_next_zero_bit(bitmap-&gt;bitmap, IDA_BITMAP_BITS, bit);</span></a>
+<a name="431"><span class="lineNum">     431 </span><span class="lineCov">       1477 :                 if (xas.xa_index * IDA_BITMAP_BITS + bit &gt; max)</span></a>
+<a name="432"><span class="lineNum">     432 </span><span class="lineNoCov">          0 :                         goto nospc;</span></a>
+<a name="433"><span class="lineNum">     433 </span><span class="lineCov">       1477 :                 if (bit == IDA_BITMAP_BITS)</span></a>
+<a name="434"><span class="lineNum">     434 </span><span class="lineNoCov">          0 :                         goto next;</span></a>
+<a name="435"><span class="lineNum">     435 </span>            : </a>
+<a name="436"><span class="lineNum">     436 </span><span class="lineCov">       1477 :                 __set_bit(bit, bitmap-&gt;bitmap);</span></a>
+<a name="437"><span class="lineNum">     437 </span><span class="lineCov">       1477 :                 if (bitmap_full(bitmap-&gt;bitmap, IDA_BITMAP_BITS))</span></a>
+<a name="438"><span class="lineNum">     438 </span><span class="lineNoCov">          0 :                         xas_clear_mark(&amp;xas, XA_FREE_MARK);</span></a>
+<a name="439"><span class="lineNum">     439 </span>            :         } else {</a>
+<a name="440"><span class="lineNum">     440 </span><span class="lineCov">         19 :                 if (bit &lt; BITS_PER_XA_VALUE) {</span></a>
+<a name="441"><span class="lineNum">     441 </span><span class="lineCov">         19 :                         bitmap = xa_mk_value(1UL &lt;&lt; bit);</span></a>
+<a name="442"><span class="lineNum">     442 </span>            :                 } else {</a>
+<a name="443"><span class="lineNum">     443 </span><span class="lineNoCov">          0 :                         bitmap = alloc;</span></a>
+<a name="444"><span class="lineNum">     444 </span><span class="lineNoCov">          0 :                         if (!bitmap)</span></a>
+<a name="445"><span class="lineNum">     445 </span><span class="lineNoCov">          0 :                                 bitmap = kzalloc(sizeof(*bitmap), GFP_NOWAIT);</span></a>
+<a name="446"><span class="lineNum">     446 </span><span class="lineNoCov">          0 :                         if (!bitmap)</span></a>
+<a name="447"><span class="lineNum">     447 </span><span class="lineNoCov">          0 :                                 goto alloc;</span></a>
+<a name="448"><span class="lineNum">     448 </span><span class="lineNoCov">          0 :                         __set_bit(bit, bitmap-&gt;bitmap);</span></a>
+<a name="449"><span class="lineNum">     449 </span>            :                 }</a>
+<a name="450"><span class="lineNum">     450 </span><span class="lineCov">         19 :                 xas_store(&amp;xas, bitmap);</span></a>
+<a name="451"><span class="lineNum">     451 </span>            :         }</a>
+<a name="452"><span class="lineNum">     452 </span><span class="lineCov">       1830 : out:</span></a>
+<a name="453"><span class="lineNum">     453 </span><span class="lineCov">       1830 :         xas_unlock_irqrestore(&amp;xas, flags);</span></a>
+<a name="454"><span class="lineNum">     454 </span><span class="lineCov">       1830 :         if (xas_nomem(&amp;xas, gfp)) {</span></a>
+<a name="455"><span class="lineNum">     455 </span><span class="lineNoCov">          0 :                 xas.xa_index = min / IDA_BITMAP_BITS;</span></a>
+<a name="456"><span class="lineNum">     456 </span><span class="lineNoCov">          0 :                 bit = min % IDA_BITMAP_BITS;</span></a>
+<a name="457"><span class="lineNum">     457 </span><span class="lineNoCov">          0 :                 goto retry;</span></a>
+<a name="458"><span class="lineNum">     458 </span>            :         }</a>
+<a name="459"><span class="lineNum">     459 </span><span class="lineCov">       1830 :         if (bitmap != alloc)</span></a>
+<a name="460"><span class="lineNum">     460 </span><span class="lineCov">       1830 :                 kfree(alloc);</span></a>
+<a name="461"><span class="lineNum">     461 </span><span class="lineCov">       1830 :         if (xas_error(&amp;xas))</span></a>
+<a name="462"><span class="lineNum">     462 </span><span class="lineNoCov">          0 :                 return xas_error(&amp;xas);</span></a>
+<a name="463"><span class="lineNum">     463 </span><span class="lineCov">       1830 :         return xas.xa_index * IDA_BITMAP_BITS + bit;</span></a>
+<a name="464"><span class="lineNum">     464 </span><span class="lineNoCov">          0 : alloc:</span></a>
+<a name="465"><span class="lineNum">     465 </span><span class="lineNoCov">          0 :         xas_unlock_irqrestore(&amp;xas, flags);</span></a>
+<a name="466"><span class="lineNum">     466 </span><span class="lineNoCov">          0 :         alloc = kzalloc(sizeof(*bitmap), gfp);</span></a>
+<a name="467"><span class="lineNum">     467 </span><span class="lineNoCov">          0 :         if (!alloc)</span></a>
+<a name="468"><span class="lineNum">     468 </span>            :                 return -ENOMEM;</a>
+<a name="469"><span class="lineNum">     469 </span><span class="lineNoCov">          0 :         xas_set(&amp;xas, min / IDA_BITMAP_BITS);</span></a>
+<a name="470"><span class="lineNum">     470 </span><span class="lineNoCov">          0 :         bit = min % IDA_BITMAP_BITS;</span></a>
+<a name="471"><span class="lineNum">     471 </span><span class="lineNoCov">          0 :         goto retry;</span></a>
+<a name="472"><span class="lineNum">     472 </span><span class="lineNoCov">          0 : nospc:</span></a>
+<a name="473"><span class="lineNum">     473 </span><span class="lineNoCov">          0 :         xas_unlock_irqrestore(&amp;xas, flags);</span></a>
+<a name="474"><span class="lineNum">     474 </span><span class="lineNoCov">          0 :         kfree(alloc);</span></a>
+<a name="475"><span class="lineNum">     475 </span><span class="lineNoCov">          0 :         return -ENOSPC;</span></a>
+<a name="476"><span class="lineNum">     476 </span>            : }</a>
+<a name="477"><span class="lineNum">     477 </span>            : EXPORT_SYMBOL(ida_alloc_range);</a>
+<a name="478"><span class="lineNum">     478 </span>            : </a>
+<a name="479"><span class="lineNum">     479 </span>            : /**</a>
+<a name="480"><span class="lineNum">     480 </span>            :  * ida_free() - Release an allocated ID.</a>
+<a name="481"><span class="lineNum">     481 </span>            :  * @ida: IDA handle.</a>
+<a name="482"><span class="lineNum">     482 </span>            :  * @id: Previously allocated ID.</a>
+<a name="483"><span class="lineNum">     483 </span>            :  *</a>
+<a name="484"><span class="lineNum">     484 </span>            :  * Context: Any context. It is safe to call this function without</a>
+<a name="485"><span class="lineNum">     485 </span>            :  * locking in your code.</a>
+<a name="486"><span class="lineNum">     486 </span>            :  */</a>
+<a name="487"><span class="lineNum">     487 </span><span class="lineCov">       1380 : void ida_free(struct ida *ida, unsigned int id)</span></a>
+<a name="488"><span class="lineNum">     488 </span>            : {</a>
+<a name="489"><span class="lineNum">     489 </span><span class="lineCov">       1380 :         XA_STATE(xas, &amp;ida-&gt;xa, id / IDA_BITMAP_BITS);</span></a>
+<a name="490"><span class="lineNum">     490 </span><span class="lineCov">       1380 :         unsigned bit = id % IDA_BITMAP_BITS;</span></a>
+<a name="491"><span class="lineNum">     491 </span><span class="lineCov">       1380 :         struct ida_bitmap *bitmap;</span></a>
+<a name="492"><span class="lineNum">     492 </span><span class="lineCov">       1380 :         unsigned long flags;</span></a>
+<a name="493"><span class="lineNum">     493 </span>            : </a>
+<a name="494"><span class="lineNum">     494 </span><span class="lineCov">       1380 :         BUG_ON((int)id &lt; 0);</span></a>
+<a name="495"><span class="lineNum">     495 </span>            : </a>
+<a name="496"><span class="lineNum">     496 </span><span class="lineCov">       1380 :         xas_lock_irqsave(&amp;xas, flags);</span></a>
+<a name="497"><span class="lineNum">     497 </span><span class="lineCov">       1380 :         bitmap = xas_load(&amp;xas);</span></a>
+<a name="498"><span class="lineNum">     498 </span>            : </a>
+<a name="499"><span class="lineNum">     499 </span><span class="lineCov">       1380 :         if (xa_is_value(bitmap)) {</span></a>
+<a name="500"><span class="lineNum">     500 </span><span class="lineCov">        105 :                 unsigned long v = xa_to_value(bitmap);</span></a>
+<a name="501"><span class="lineNum">     501 </span><span class="lineCov">        105 :                 if (bit &gt;= BITS_PER_XA_VALUE)</span></a>
+<a name="502"><span class="lineNum">     502 </span><span class="lineNoCov">          0 :                         goto err;</span></a>
+<a name="503"><span class="lineNum">     503 </span><span class="lineCov">        105 :                 if (!(v &amp; (1UL &lt;&lt; bit)))</span></a>
+<a name="504"><span class="lineNum">     504 </span><span class="lineNoCov">          0 :                         goto err;</span></a>
+<a name="505"><span class="lineNum">     505 </span><span class="lineCov">        105 :                 v &amp;= ~(1UL &lt;&lt; bit);</span></a>
+<a name="506"><span class="lineNum">     506 </span><span class="lineCov">        105 :                 if (!v)</span></a>
+<a name="507"><span class="lineNum">     507 </span><span class="lineCov">          1 :                         goto delete;</span></a>
+<a name="508"><span class="lineNum">     508 </span><span class="lineCov">        104 :                 xas_store(&amp;xas, xa_mk_value(v));</span></a>
+<a name="509"><span class="lineNum">     509 </span>            :         } else {</a>
+<a name="510"><span class="lineNum">     510 </span><span class="lineCov">       1275 :                 if (!test_bit(bit, bitmap-&gt;bitmap))</span></a>
+<a name="511"><span class="lineNum">     511 </span><span class="lineNoCov">          0 :                         goto err;</span></a>
+<a name="512"><span class="lineNum">     512 </span><span class="lineCov">       1275 :                 __clear_bit(bit, bitmap-&gt;bitmap);</span></a>
+<a name="513"><span class="lineNum">     513 </span><span class="lineCov">       1275 :                 xas_set_mark(&amp;xas, XA_FREE_MARK);</span></a>
+<a name="514"><span class="lineNum">     514 </span><span class="lineCov">       1275 :                 if (bitmap_empty(bitmap-&gt;bitmap, IDA_BITMAP_BITS)) {</span></a>
+<a name="515"><span class="lineNum">     515 </span><span class="lineNoCov">          0 :                         kfree(bitmap);</span></a>
+<a name="516"><span class="lineNum">     516 </span><span class="lineCov">          1 : delete:</span></a>
+<a name="517"><span class="lineNum">     517 </span><span class="lineCov">          1 :                         xas_store(&amp;xas, NULL);</span></a>
+<a name="518"><span class="lineNum">     518 </span>            :                 }</a>
+<a name="519"><span class="lineNum">     519 </span>            :         }</a>
+<a name="520"><span class="lineNum">     520 </span><span class="lineCov">       1380 :         xas_unlock_irqrestore(&amp;xas, flags);</span></a>
+<a name="521"><span class="lineNum">     521 </span><span class="lineCov">       1380 :         return;</span></a>
+<a name="522"><span class="lineNum">     522 </span><span class="lineNoCov">          0 :  err:</span></a>
+<a name="523"><span class="lineNum">     523 </span><span class="lineNoCov">          0 :         xas_unlock_irqrestore(&amp;xas, flags);</span></a>
+<a name="524"><span class="lineNum">     524 </span><span class="lineNoCov">          0 :         WARN(1, &quot;ida_free called for id=%d which is not allocated.\n&quot;, id);</span></a>
+<a name="525"><span class="lineNum">     525 </span>            : }</a>
+<a name="526"><span class="lineNum">     526 </span>            : EXPORT_SYMBOL(ida_free);</a>
+<a name="527"><span class="lineNum">     527 </span>            : </a>
+<a name="528"><span class="lineNum">     528 </span>            : /**</a>
+<a name="529"><span class="lineNum">     529 </span>            :  * ida_destroy() - Free all IDs.</a>
+<a name="530"><span class="lineNum">     530 </span>            :  * @ida: IDA handle.</a>
+<a name="531"><span class="lineNum">     531 </span>            :  *</a>
+<a name="532"><span class="lineNum">     532 </span>            :  * Calling this function frees all IDs and releases all resources used</a>
+<a name="533"><span class="lineNum">     533 </span>            :  * by an IDA.  When this call returns, the IDA is empty and can be reused</a>
+<a name="534"><span class="lineNum">     534 </span>            :  * or freed.  If the IDA is already empty, there is no need to call this</a>
+<a name="535"><span class="lineNum">     535 </span>            :  * function.</a>
+<a name="536"><span class="lineNum">     536 </span>            :  *</a>
+<a name="537"><span class="lineNum">     537 </span>            :  * Context: Any context. It is safe to call this function without</a>
+<a name="538"><span class="lineNum">     538 </span>            :  * locking in your code.</a>
+<a name="539"><span class="lineNum">     539 </span>            :  */</a>
+<a name="540"><span class="lineNum">     540 </span><span class="lineNoCov">          0 : void ida_destroy(struct ida *ida)</span></a>
+<a name="541"><span class="lineNum">     541 </span>            : {</a>
+<a name="542"><span class="lineNum">     542 </span><span class="lineNoCov">          0 :         XA_STATE(xas, &amp;ida-&gt;xa, 0);</span></a>
+<a name="543"><span class="lineNum">     543 </span><span class="lineNoCov">          0 :         struct ida_bitmap *bitmap;</span></a>
+<a name="544"><span class="lineNum">     544 </span><span class="lineNoCov">          0 :         unsigned long flags;</span></a>
+<a name="545"><span class="lineNum">     545 </span>            : </a>
+<a name="546"><span class="lineNum">     546 </span><span class="lineNoCov">          0 :         xas_lock_irqsave(&amp;xas, flags);</span></a>
+<a name="547"><span class="lineNum">     547 </span><span class="lineNoCov">          0 :         xas_for_each(&amp;xas, bitmap, ULONG_MAX) {</span></a>
+<a name="548"><span class="lineNum">     548 </span><span class="lineNoCov">          0 :                 if (!xa_is_value(bitmap))</span></a>
+<a name="549"><span class="lineNum">     549 </span><span class="lineNoCov">          0 :                         kfree(bitmap);</span></a>
+<a name="550"><span class="lineNum">     550 </span><span class="lineNoCov">          0 :                 xas_store(&amp;xas, NULL);</span></a>
+<a name="551"><span class="lineNum">     551 </span>            :         }</a>
+<a name="552"><span class="lineNum">     552 </span><span class="lineNoCov">          0 :         xas_unlock_irqrestore(&amp;xas, flags);</span></a>
+<a name="553"><span class="lineNum">     553 </span><span class="lineNoCov">          0 : }</span></a>
+<a name="554"><span class="lineNum">     554 </span>            : EXPORT_SYMBOL(ida_destroy);</a>
+<a name="555"><span class="lineNum">     555 </span>            : </a>
+<a name="556"><span class="lineNum">     556 </span>            : #ifndef __KERNEL__</a>
+<a name="557"><span class="lineNum">     557 </span>            : extern void xa_dump_index(unsigned long index, unsigned int shift);</a>
+<a name="558"><span class="lineNum">     558 </span>            : #define IDA_CHUNK_SHIFT         ilog2(IDA_BITMAP_BITS)</a>
+<a name="559"><span class="lineNum">     559 </span>            : </a>
+<a name="560"><span class="lineNum">     560 </span>            : static void ida_dump_entry(void *entry, unsigned long index)</a>
+<a name="561"><span class="lineNum">     561 </span>            : {</a>
+<a name="562"><span class="lineNum">     562 </span>            :         unsigned long i;</a>
+<a name="563"><span class="lineNum">     563 </span>            : </a>
+<a name="564"><span class="lineNum">     564 </span>            :         if (!entry)</a>
+<a name="565"><span class="lineNum">     565 </span>            :                 return;</a>
+<a name="566"><span class="lineNum">     566 </span>            : </a>
+<a name="567"><span class="lineNum">     567 </span>            :         if (xa_is_node(entry)) {</a>
+<a name="568"><span class="lineNum">     568 </span>            :                 struct xa_node *node = xa_to_node(entry);</a>
+<a name="569"><span class="lineNum">     569 </span>            :                 unsigned int shift = node-&gt;shift + IDA_CHUNK_SHIFT +</a>
+<a name="570"><span class="lineNum">     570 </span>            :                         XA_CHUNK_SHIFT;</a>
+<a name="571"><span class="lineNum">     571 </span>            : </a>
+<a name="572"><span class="lineNum">     572 </span>            :                 xa_dump_index(index * IDA_BITMAP_BITS, shift);</a>
+<a name="573"><span class="lineNum">     573 </span>            :                 xa_dump_node(node);</a>
+<a name="574"><span class="lineNum">     574 </span>            :                 for (i = 0; i &lt; XA_CHUNK_SIZE; i++)</a>
+<a name="575"><span class="lineNum">     575 </span>            :                         ida_dump_entry(node-&gt;slots[i],</a>
+<a name="576"><span class="lineNum">     576 </span>            :                                         index | (i &lt;&lt; node-&gt;shift));</a>
+<a name="577"><span class="lineNum">     577 </span>            :         } else if (xa_is_value(entry)) {</a>
+<a name="578"><span class="lineNum">     578 </span>            :                 xa_dump_index(index * IDA_BITMAP_BITS, ilog2(BITS_PER_LONG));</a>
+<a name="579"><span class="lineNum">     579 </span>            :                 pr_cont(&quot;value: data %lx [%px]\n&quot;, xa_to_value(entry), entry);</a>
+<a name="580"><span class="lineNum">     580 </span>            :         } else {</a>
+<a name="581"><span class="lineNum">     581 </span>            :                 struct ida_bitmap *bitmap = entry;</a>
+<a name="582"><span class="lineNum">     582 </span>            : </a>
+<a name="583"><span class="lineNum">     583 </span>            :                 xa_dump_index(index * IDA_BITMAP_BITS, IDA_CHUNK_SHIFT);</a>
+<a name="584"><span class="lineNum">     584 </span>            :                 pr_cont(&quot;bitmap: %p data&quot;, bitmap);</a>
+<a name="585"><span class="lineNum">     585 </span>            :                 for (i = 0; i &lt; IDA_BITMAP_LONGS; i++)</a>
+<a name="586"><span class="lineNum">     586 </span>            :                         pr_cont(&quot; %lx&quot;, bitmap-&gt;bitmap[i]);</a>
+<a name="587"><span class="lineNum">     587 </span>            :                 pr_cont(&quot;\n&quot;);</a>
+<a name="588"><span class="lineNum">     588 </span>            :         }</a>
+<a name="589"><span class="lineNum">     589 </span>            : }</a>
+<a name="590"><span class="lineNum">     590 </span>            : </a>
+<a name="591"><span class="lineNum">     591 </span>            : static void ida_dump(struct ida *ida)</a>
+<a name="592"><span class="lineNum">     592 </span>            : {</a>
+<a name="593"><span class="lineNum">     593 </span>            :         struct xarray *xa = &amp;ida-&gt;xa;</a>
+<a name="594"><span class="lineNum">     594 </span>            :         pr_debug(&quot;ida: %p node %p free %d\n&quot;, ida, xa-&gt;xa_head,</a>
+<a name="595"><span class="lineNum">     595 </span>            :                                 xa-&gt;xa_flags &gt;&gt; ROOT_TAG_SHIFT);</a>
+<a name="596"><span class="lineNum">     596 </span>            :         ida_dump_entry(xa-&gt;xa_head, 0);</a>
+<a name="597"><span class="lineNum">     597 </span>            : }</a>
+<a name="598"><span class="lineNum">     598 </span>            : #endif</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

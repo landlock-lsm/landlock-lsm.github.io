@@ -1,0 +1,784 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - landlock.info - arch/x86/kernel/unwind_orc.c</title>
+  <link rel="stylesheet" type="text/css" href="../../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../../index.html">top level</a> - <a href="index.html">arch/x86/kernel</a> - unwind_orc.c<span style="font-size: 80%;"> (source / <a href="unwind_orc.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">landlock.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">181</td>
+            <td class="headerCovTableEntry">253</td>
+            <td class="headerCovTableEntryLo">71.5 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2021-04-22 12:43:58</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">11</td>
+            <td class="headerCovTableEntry">12</td>
+            <td class="headerCovTableEntryHi">91.7 %</td>
+          </tr>
+          <tr><td><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : // SPDX-License-Identifier: GPL-2.0-only</a>
+<a name="2"><span class="lineNum">       2 </span>            : #include &lt;linux/objtool.h&gt;</a>
+<a name="3"><span class="lineNum">       3 </span>            : #include &lt;linux/module.h&gt;</a>
+<a name="4"><span class="lineNum">       4 </span>            : #include &lt;linux/sort.h&gt;</a>
+<a name="5"><span class="lineNum">       5 </span>            : #include &lt;asm/ptrace.h&gt;</a>
+<a name="6"><span class="lineNum">       6 </span>            : #include &lt;asm/stacktrace.h&gt;</a>
+<a name="7"><span class="lineNum">       7 </span>            : #include &lt;asm/unwind.h&gt;</a>
+<a name="8"><span class="lineNum">       8 </span>            : #include &lt;asm/orc_types.h&gt;</a>
+<a name="9"><span class="lineNum">       9 </span>            : #include &lt;asm/orc_lookup.h&gt;</a>
+<a name="10"><span class="lineNum">      10 </span>            : </a>
+<a name="11"><span class="lineNum">      11 </span>            : #define orc_warn(fmt, ...) \</a>
+<a name="12"><span class="lineNum">      12 </span>            :         printk_deferred_once(KERN_WARNING &quot;WARNING: &quot; fmt, ##__VA_ARGS__)</a>
+<a name="13"><span class="lineNum">      13 </span>            : </a>
+<a name="14"><span class="lineNum">      14 </span>            : #define orc_warn_current(args...)                                       \</a>
+<a name="15"><span class="lineNum">      15 </span>            : ({                                                                      \</a>
+<a name="16"><span class="lineNum">      16 </span>            :         if (state-&gt;task == current &amp;&amp; !state-&gt;error)                      \</a>
+<a name="17"><span class="lineNum">      17 </span>            :                 orc_warn(args);                                         \</a>
+<a name="18"><span class="lineNum">      18 </span>            : })</a>
+<a name="19"><span class="lineNum">      19 </span>            : </a>
+<a name="20"><span class="lineNum">      20 </span>            : extern int __start_orc_unwind_ip[];</a>
+<a name="21"><span class="lineNum">      21 </span>            : extern int __stop_orc_unwind_ip[];</a>
+<a name="22"><span class="lineNum">      22 </span>            : extern struct orc_entry __start_orc_unwind[];</a>
+<a name="23"><span class="lineNum">      23 </span>            : extern struct orc_entry __stop_orc_unwind[];</a>
+<a name="24"><span class="lineNum">      24 </span>            : </a>
+<a name="25"><span class="lineNum">      25 </span>            : static bool orc_init __ro_after_init;</a>
+<a name="26"><span class="lineNum">      26 </span>            : static unsigned int lookup_num_blocks __ro_after_init;</a>
+<a name="27"><span class="lineNum">      27 </span>            : </a>
+<a name="28"><span class="lineNum">      28 </span><span class="lineCov">  432627535 : static inline unsigned long orc_ip(const int *ip)</span></a>
+<a name="29"><span class="lineNum">      29 </span>            : {</a>
+<a name="30"><span class="lineNum">      30 </span><span class="lineCov">  432627535 :         return (unsigned long)ip + *ip;</span></a>
+<a name="31"><span class="lineNum">      31 </span>            : }</a>
+<a name="32"><span class="lineNum">      32 </span>            : </a>
+<a name="33"><span class="lineNum">      33 </span><span class="lineCov">  139654669 : static struct orc_entry *__orc_find(int *ip_table, struct orc_entry *u_table,</span></a>
+<a name="34"><span class="lineNum">      34 </span>            :                                     unsigned int num_entries, unsigned long ip)</a>
+<a name="35"><span class="lineNum">      35 </span>            : {</a>
+<a name="36"><span class="lineNum">      36 </span><span class="lineCov">  139654669 :         int *first = ip_table;</span></a>
+<a name="37"><span class="lineNum">      37 </span><span class="lineCov">  139654669 :         int *last = ip_table + num_entries - 1;</span></a>
+<a name="38"><span class="lineNum">      38 </span><span class="lineCov">  139654669 :         int *mid = first, *found = first;</span></a>
+<a name="39"><span class="lineNum">      39 </span>            : </a>
+<a name="40"><span class="lineNum">      40 </span><span class="lineCov">  139654669 :         if (!num_entries)</span></a>
+<a name="41"><span class="lineNum">      41 </span>            :                 return NULL;</a>
+<a name="42"><span class="lineNum">      42 </span>            : </a>
+<a name="43"><span class="lineNum">      43 </span>            :         /*</a>
+<a name="44"><span class="lineNum">      44 </span>            :          * Do a binary range search to find the rightmost duplicate of a given</a>
+<a name="45"><span class="lineNum">      45 </span>            :          * starting address.  Some entries are section terminators which are</a>
+<a name="46"><span class="lineNum">      46 </span>            :          * &quot;weak&quot; entries for ensuring there are no gaps.  They should be</a>
+<a name="47"><span class="lineNum">      47 </span>            :          * ignored when they conflict with a real entry.</a>
+<a name="48"><span class="lineNum">      48 </span>            :          */</a>
+<a name="49"><span class="lineNum">      49 </span><span class="lineCov">  572282204 :         while (first &lt;= last) {</span></a>
+<a name="50"><span class="lineNum">      50 </span><span class="lineCov">  432627535 :                 mid = first + ((last - first) / 2);</span></a>
+<a name="51"><span class="lineNum">      51 </span>            : </a>
+<a name="52"><span class="lineNum">      52 </span><span class="lineCov">  432627535 :                 if (orc_ip(mid) &lt;= ip) {</span></a>
+<a name="53"><span class="lineNum">      53 </span><span class="lineCov">  259673671 :                         found = mid;</span></a>
+<a name="54"><span class="lineNum">      54 </span><span class="lineCov">  259673671 :                         first = mid + 1;</span></a>
+<a name="55"><span class="lineNum">      55 </span>            :                 } else</a>
+<a name="56"><span class="lineNum">      56 </span><span class="lineCov">  172953864 :                         last = mid - 1;</span></a>
+<a name="57"><span class="lineNum">      57 </span>            :         }</a>
+<a name="58"><span class="lineNum">      58 </span>            : </a>
+<a name="59"><span class="lineNum">      59 </span><span class="lineCov">  139654669 :         return u_table + (found - ip_table);</span></a>
+<a name="60"><span class="lineNum">      60 </span>            : }</a>
+<a name="61"><span class="lineNum">      61 </span>            : </a>
+<a name="62"><span class="lineNum">      62 </span>            : #ifdef CONFIG_MODULES</a>
+<a name="63"><span class="lineNum">      63 </span>            : static struct orc_entry *orc_module_find(unsigned long ip)</a>
+<a name="64"><span class="lineNum">      64 </span>            : {</a>
+<a name="65"><span class="lineNum">      65 </span>            :         struct module *mod;</a>
+<a name="66"><span class="lineNum">      66 </span>            : </a>
+<a name="67"><span class="lineNum">      67 </span>            :         mod = __module_address(ip);</a>
+<a name="68"><span class="lineNum">      68 </span>            :         if (!mod || !mod-&gt;arch.orc_unwind || !mod-&gt;arch.orc_unwind_ip)</a>
+<a name="69"><span class="lineNum">      69 </span>            :                 return NULL;</a>
+<a name="70"><span class="lineNum">      70 </span>            :         return __orc_find(mod-&gt;arch.orc_unwind_ip, mod-&gt;arch.orc_unwind,</a>
+<a name="71"><span class="lineNum">      71 </span>            :                           mod-&gt;arch.num_orcs, ip);</a>
+<a name="72"><span class="lineNum">      72 </span>            : }</a>
+<a name="73"><span class="lineNum">      73 </span>            : #else</a>
+<a name="74"><span class="lineNum">      74 </span><span class="lineNoCov">          0 : static struct orc_entry *orc_module_find(unsigned long ip)</span></a>
+<a name="75"><span class="lineNum">      75 </span>            : {</a>
+<a name="76"><span class="lineNum">      76 </span><span class="lineNoCov">          0 :         return NULL;</span></a>
+<a name="77"><span class="lineNum">      77 </span>            : }</a>
+<a name="78"><span class="lineNum">      78 </span>            : #endif</a>
+<a name="79"><span class="lineNum">      79 </span>            : </a>
+<a name="80"><span class="lineNum">      80 </span>            : #ifdef CONFIG_DYNAMIC_FTRACE</a>
+<a name="81"><span class="lineNum">      81 </span>            : static struct orc_entry *orc_find(unsigned long ip);</a>
+<a name="82"><span class="lineNum">      82 </span>            : </a>
+<a name="83"><span class="lineNum">      83 </span>            : /*</a>
+<a name="84"><span class="lineNum">      84 </span>            :  * Ftrace dynamic trampolines do not have orc entries of their own.</a>
+<a name="85"><span class="lineNum">      85 </span>            :  * But they are copies of the ftrace entries that are static and</a>
+<a name="86"><span class="lineNum">      86 </span>            :  * defined in ftrace_*.S, which do have orc entries.</a>
+<a name="87"><span class="lineNum">      87 </span>            :  *</a>
+<a name="88"><span class="lineNum">      88 </span>            :  * If the unwinder comes across a ftrace trampoline, then find the</a>
+<a name="89"><span class="lineNum">      89 </span>            :  * ftrace function that was used to create it, and use that ftrace</a>
+<a name="90"><span class="lineNum">      90 </span>            :  * function's orc entry, as the placement of the return code in</a>
+<a name="91"><span class="lineNum">      91 </span>            :  * the stack will be identical.</a>
+<a name="92"><span class="lineNum">      92 </span>            :  */</a>
+<a name="93"><span class="lineNum">      93 </span>            : static struct orc_entry *orc_ftrace_find(unsigned long ip)</a>
+<a name="94"><span class="lineNum">      94 </span>            : {</a>
+<a name="95"><span class="lineNum">      95 </span>            :         struct ftrace_ops *ops;</a>
+<a name="96"><span class="lineNum">      96 </span>            :         unsigned long caller;</a>
+<a name="97"><span class="lineNum">      97 </span>            : </a>
+<a name="98"><span class="lineNum">      98 </span>            :         ops = ftrace_ops_trampoline(ip);</a>
+<a name="99"><span class="lineNum">      99 </span>            :         if (!ops)</a>
+<a name="100"><span class="lineNum">     100 </span>            :                 return NULL;</a>
+<a name="101"><span class="lineNum">     101 </span>            : </a>
+<a name="102"><span class="lineNum">     102 </span>            :         if (ops-&gt;flags &amp; FTRACE_OPS_FL_SAVE_REGS)</a>
+<a name="103"><span class="lineNum">     103 </span>            :                 caller = (unsigned long)ftrace_regs_call;</a>
+<a name="104"><span class="lineNum">     104 </span>            :         else</a>
+<a name="105"><span class="lineNum">     105 </span>            :                 caller = (unsigned long)ftrace_call;</a>
+<a name="106"><span class="lineNum">     106 </span>            : </a>
+<a name="107"><span class="lineNum">     107 </span>            :         /* Prevent unlikely recursion */</a>
+<a name="108"><span class="lineNum">     108 </span>            :         if (ip == caller)</a>
+<a name="109"><span class="lineNum">     109 </span>            :                 return NULL;</a>
+<a name="110"><span class="lineNum">     110 </span>            : </a>
+<a name="111"><span class="lineNum">     111 </span>            :         return orc_find(caller);</a>
+<a name="112"><span class="lineNum">     112 </span>            : }</a>
+<a name="113"><span class="lineNum">     113 </span>            : #else</a>
+<a name="114"><span class="lineNum">     114 </span>            : static struct orc_entry *orc_ftrace_find(unsigned long ip)</a>
+<a name="115"><span class="lineNum">     115 </span>            : {</a>
+<a name="116"><span class="lineNum">     116 </span>            :         return NULL;</a>
+<a name="117"><span class="lineNum">     117 </span>            : }</a>
+<a name="118"><span class="lineNum">     118 </span>            : #endif</a>
+<a name="119"><span class="lineNum">     119 </span>            : </a>
+<a name="120"><span class="lineNum">     120 </span>            : /*</a>
+<a name="121"><span class="lineNum">     121 </span>            :  * If we crash with IP==0, the last successfully executed instruction</a>
+<a name="122"><span class="lineNum">     122 </span>            :  * was probably an indirect function call with a NULL function pointer,</a>
+<a name="123"><span class="lineNum">     123 </span>            :  * and we don't have unwind information for NULL.</a>
+<a name="124"><span class="lineNum">     124 </span>            :  * This hardcoded ORC entry for IP==0 allows us to unwind from a NULL function</a>
+<a name="125"><span class="lineNum">     125 </span>            :  * pointer into its parent and then continue normally from there.</a>
+<a name="126"><span class="lineNum">     126 </span>            :  */</a>
+<a name="127"><span class="lineNum">     127 </span>            : static struct orc_entry null_orc_entry = {</a>
+<a name="128"><span class="lineNum">     128 </span>            :         .sp_offset = sizeof(long),</a>
+<a name="129"><span class="lineNum">     129 </span>            :         .sp_reg = ORC_REG_SP,</a>
+<a name="130"><span class="lineNum">     130 </span>            :         .bp_reg = ORC_REG_UNDEFINED,</a>
+<a name="131"><span class="lineNum">     131 </span>            :         .type = UNWIND_HINT_TYPE_CALL</a>
+<a name="132"><span class="lineNum">     132 </span>            : };</a>
+<a name="133"><span class="lineNum">     133 </span>            : </a>
+<a name="134"><span class="lineNum">     134 </span>            : /* Fake frame pointer entry -- used as a fallback for generated code */</a>
+<a name="135"><span class="lineNum">     135 </span>            : static struct orc_entry orc_fp_entry = {</a>
+<a name="136"><span class="lineNum">     136 </span>            :         .type           = UNWIND_HINT_TYPE_CALL,</a>
+<a name="137"><span class="lineNum">     137 </span>            :         .sp_reg         = ORC_REG_BP,</a>
+<a name="138"><span class="lineNum">     138 </span>            :         .sp_offset      = 16,</a>
+<a name="139"><span class="lineNum">     139 </span>            :         .bp_reg         = ORC_REG_PREV_SP,</a>
+<a name="140"><span class="lineNum">     140 </span>            :         .bp_offset      = -16,</a>
+<a name="141"><span class="lineNum">     141 </span>            :         .end            = 0,</a>
+<a name="142"><span class="lineNum">     142 </span>            : };</a>
+<a name="143"><span class="lineNum">     143 </span>            : </a>
+<a name="144"><span class="lineNum">     144 </span><span class="lineCov">  138432498 : static struct orc_entry *orc_find(unsigned long ip)</span></a>
+<a name="145"><span class="lineNum">     145 </span>            : {</a>
+<a name="146"><span class="lineNum">     146 </span><span class="lineCov">  138432498 :         static struct orc_entry *orc;</span></a>
+<a name="147"><span class="lineNum">     147 </span>            : </a>
+<a name="148"><span class="lineNum">     148 </span><span class="lineCov">  138432498 :         if (ip == 0)</span></a>
+<a name="149"><span class="lineNum">     149 </span>            :                 return &amp;null_orc_entry;</a>
+<a name="150"><span class="lineNum">     150 </span>            : </a>
+<a name="151"><span class="lineNum">     151 </span>            :         /* For non-init vmlinux addresses, use the fast lookup table: */</a>
+<a name="152"><span class="lineNum">     152 </span><span class="lineCov">  138432498 :         if (ip &gt;= LOOKUP_START_IP &amp;&amp; ip &lt; LOOKUP_STOP_IP) {</span></a>
+<a name="153"><span class="lineNum">     153 </span><span class="lineCov">  137599867 :                 unsigned int idx, start, stop;</span></a>
+<a name="154"><span class="lineNum">     154 </span>            : </a>
+<a name="155"><span class="lineNum">     155 </span><span class="lineCov">  137599867 :                 idx = (ip - LOOKUP_START_IP) / LOOKUP_BLOCK_SIZE;</span></a>
+<a name="156"><span class="lineNum">     156 </span>            : </a>
+<a name="157"><span class="lineNum">     157 </span><span class="lineCov">  137599867 :                 if (unlikely((idx &gt;= lookup_num_blocks-1))) {</span></a>
+<a name="158"><span class="lineNum">     158 </span><span class="lineNoCov">          0 :                         orc_warn(&quot;WARNING: bad lookup idx: idx=%u num=%u ip=%pB\n&quot;,</span></a>
+<a name="159"><span class="lineNum">     159 </span>            :                                  idx, lookup_num_blocks, (void *)ip);</a>
+<a name="160"><span class="lineNum">     160 </span><span class="lineNoCov">          0 :                         return NULL;</span></a>
+<a name="161"><span class="lineNum">     161 </span>            :                 }</a>
+<a name="162"><span class="lineNum">     162 </span>            : </a>
+<a name="163"><span class="lineNum">     163 </span><span class="lineCov">  137599867 :                 start = orc_lookup[idx];</span></a>
+<a name="164"><span class="lineNum">     164 </span><span class="lineCov">  137599867 :                 stop = orc_lookup[idx + 1] + 1;</span></a>
+<a name="165"><span class="lineNum">     165 </span>            : </a>
+<a name="166"><span class="lineNum">     166 </span><span class="lineCov">  137599867 :                 if (unlikely((__start_orc_unwind + start &gt;= __stop_orc_unwind) ||</span></a>
+<a name="167"><span class="lineNum">     167 </span>            :                              (__start_orc_unwind + stop &gt; __stop_orc_unwind))) {</a>
+<a name="168"><span class="lineNum">     168 </span><span class="lineNoCov">          0 :                         orc_warn(&quot;WARNING: bad lookup value: idx=%u num=%u start=%u stop=%u ip=%pB\n&quot;,</span></a>
+<a name="169"><span class="lineNum">     169 </span>            :                                  idx, lookup_num_blocks, start, stop, (void *)ip);</a>
+<a name="170"><span class="lineNum">     170 </span><span class="lineNoCov">          0 :                         return NULL;</span></a>
+<a name="171"><span class="lineNum">     171 </span>            :                 }</a>
+<a name="172"><span class="lineNum">     172 </span>            : </a>
+<a name="173"><span class="lineNum">     173 </span><span class="lineCov">  137599867 :                 return __orc_find(__start_orc_unwind_ip + start,</span></a>
+<a name="174"><span class="lineNum">     174 </span>            :                                   __start_orc_unwind + start, stop - start, ip);</a>
+<a name="175"><span class="lineNum">     175 </span>            :         }</a>
+<a name="176"><span class="lineNum">     176 </span>            : </a>
+<a name="177"><span class="lineNum">     177 </span>            :         /* vmlinux .init slow lookup: */</a>
+<a name="178"><span class="lineNum">     178 </span><span class="lineCov">     832631 :         if (init_kernel_text(ip))</span></a>
+<a name="179"><span class="lineNum">     179 </span><span class="lineCov">    1072635 :                 return __orc_find(__start_orc_unwind_ip, __start_orc_unwind,</span></a>
+<a name="180"><span class="lineNum">     180 </span><span class="lineCov">    1072635 :                                   __stop_orc_unwind_ip - __start_orc_unwind_ip, ip);</span></a>
+<a name="181"><span class="lineNum">     181 </span>            : </a>
+<a name="182"><span class="lineNum">     182 </span>            :         /* Module lookup: */</a>
+<a name="183"><span class="lineNum">     183 </span><span class="lineNoCov">          0 :         orc = orc_module_find(ip);</span></a>
+<a name="184"><span class="lineNum">     184 </span><span class="lineNoCov">          0 :         if (orc)</span></a>
+<a name="185"><span class="lineNum">     185 </span>            :                 return orc;</a>
+<a name="186"><span class="lineNum">     186 </span>            : </a>
+<a name="187"><span class="lineNum">     187 </span><span class="lineCov">  139580854 :         return orc_ftrace_find(ip);</span></a>
+<a name="188"><span class="lineNum">     188 </span>            : }</a>
+<a name="189"><span class="lineNum">     189 </span>            : </a>
+<a name="190"><span class="lineNum">     190 </span>            : #ifdef CONFIG_MODULES</a>
+<a name="191"><span class="lineNum">     191 </span>            : </a>
+<a name="192"><span class="lineNum">     192 </span>            : static DEFINE_MUTEX(sort_mutex);</a>
+<a name="193"><span class="lineNum">     193 </span>            : static int *cur_orc_ip_table = __start_orc_unwind_ip;</a>
+<a name="194"><span class="lineNum">     194 </span>            : static struct orc_entry *cur_orc_table = __start_orc_unwind;</a>
+<a name="195"><span class="lineNum">     195 </span>            : </a>
+<a name="196"><span class="lineNum">     196 </span>            : static void orc_sort_swap(void *_a, void *_b, int size)</a>
+<a name="197"><span class="lineNum">     197 </span>            : {</a>
+<a name="198"><span class="lineNum">     198 </span>            :         struct orc_entry *orc_a, *orc_b;</a>
+<a name="199"><span class="lineNum">     199 </span>            :         struct orc_entry orc_tmp;</a>
+<a name="200"><span class="lineNum">     200 </span>            :         int *a = _a, *b = _b, tmp;</a>
+<a name="201"><span class="lineNum">     201 </span>            :         int delta = _b - _a;</a>
+<a name="202"><span class="lineNum">     202 </span>            : </a>
+<a name="203"><span class="lineNum">     203 </span>            :         /* Swap the .orc_unwind_ip entries: */</a>
+<a name="204"><span class="lineNum">     204 </span>            :         tmp = *a;</a>
+<a name="205"><span class="lineNum">     205 </span>            :         *a = *b + delta;</a>
+<a name="206"><span class="lineNum">     206 </span>            :         *b = tmp - delta;</a>
+<a name="207"><span class="lineNum">     207 </span>            : </a>
+<a name="208"><span class="lineNum">     208 </span>            :         /* Swap the corresponding .orc_unwind entries: */</a>
+<a name="209"><span class="lineNum">     209 </span>            :         orc_a = cur_orc_table + (a - cur_orc_ip_table);</a>
+<a name="210"><span class="lineNum">     210 </span>            :         orc_b = cur_orc_table + (b - cur_orc_ip_table);</a>
+<a name="211"><span class="lineNum">     211 </span>            :         orc_tmp = *orc_a;</a>
+<a name="212"><span class="lineNum">     212 </span>            :         *orc_a = *orc_b;</a>
+<a name="213"><span class="lineNum">     213 </span>            :         *orc_b = orc_tmp;</a>
+<a name="214"><span class="lineNum">     214 </span>            : }</a>
+<a name="215"><span class="lineNum">     215 </span>            : </a>
+<a name="216"><span class="lineNum">     216 </span>            : static int orc_sort_cmp(const void *_a, const void *_b)</a>
+<a name="217"><span class="lineNum">     217 </span>            : {</a>
+<a name="218"><span class="lineNum">     218 </span>            :         struct orc_entry *orc_a;</a>
+<a name="219"><span class="lineNum">     219 </span>            :         const int *a = _a, *b = _b;</a>
+<a name="220"><span class="lineNum">     220 </span>            :         unsigned long a_val = orc_ip(a);</a>
+<a name="221"><span class="lineNum">     221 </span>            :         unsigned long b_val = orc_ip(b);</a>
+<a name="222"><span class="lineNum">     222 </span>            : </a>
+<a name="223"><span class="lineNum">     223 </span>            :         if (a_val &gt; b_val)</a>
+<a name="224"><span class="lineNum">     224 </span>            :                 return 1;</a>
+<a name="225"><span class="lineNum">     225 </span>            :         if (a_val &lt; b_val)</a>
+<a name="226"><span class="lineNum">     226 </span>            :                 return -1;</a>
+<a name="227"><span class="lineNum">     227 </span>            : </a>
+<a name="228"><span class="lineNum">     228 </span>            :         /*</a>
+<a name="229"><span class="lineNum">     229 </span>            :          * The &quot;weak&quot; section terminator entries need to always be on the left</a>
+<a name="230"><span class="lineNum">     230 </span>            :          * to ensure the lookup code skips them in favor of real entries.</a>
+<a name="231"><span class="lineNum">     231 </span>            :          * These terminator entries exist to handle any gaps created by</a>
+<a name="232"><span class="lineNum">     232 </span>            :          * whitelisted .o files which didn't get objtool generation.</a>
+<a name="233"><span class="lineNum">     233 </span>            :          */</a>
+<a name="234"><span class="lineNum">     234 </span>            :         orc_a = cur_orc_table + (a - cur_orc_ip_table);</a>
+<a name="235"><span class="lineNum">     235 </span>            :         return orc_a-&gt;sp_reg == ORC_REG_UNDEFINED &amp;&amp; !orc_a-&gt;end ? -1 : 1;</a>
+<a name="236"><span class="lineNum">     236 </span>            : }</a>
+<a name="237"><span class="lineNum">     237 </span>            : </a>
+<a name="238"><span class="lineNum">     238 </span>            : void unwind_module_init(struct module *mod, void *_orc_ip, size_t orc_ip_size,</a>
+<a name="239"><span class="lineNum">     239 </span>            :                         void *_orc, size_t orc_size)</a>
+<a name="240"><span class="lineNum">     240 </span>            : {</a>
+<a name="241"><span class="lineNum">     241 </span>            :         int *orc_ip = _orc_ip;</a>
+<a name="242"><span class="lineNum">     242 </span>            :         struct orc_entry *orc = _orc;</a>
+<a name="243"><span class="lineNum">     243 </span>            :         unsigned int num_entries = orc_ip_size / sizeof(int);</a>
+<a name="244"><span class="lineNum">     244 </span>            : </a>
+<a name="245"><span class="lineNum">     245 </span>            :         WARN_ON_ONCE(orc_ip_size % sizeof(int) != 0 ||</a>
+<a name="246"><span class="lineNum">     246 </span>            :                      orc_size % sizeof(*orc) != 0 ||</a>
+<a name="247"><span class="lineNum">     247 </span>            :                      num_entries != orc_size / sizeof(*orc));</a>
+<a name="248"><span class="lineNum">     248 </span>            : </a>
+<a name="249"><span class="lineNum">     249 </span>            :         /*</a>
+<a name="250"><span class="lineNum">     250 </span>            :          * The 'cur_orc_*' globals allow the orc_sort_swap() callback to</a>
+<a name="251"><span class="lineNum">     251 </span>            :          * associate an .orc_unwind_ip table entry with its corresponding</a>
+<a name="252"><span class="lineNum">     252 </span>            :          * .orc_unwind entry so they can both be swapped.</a>
+<a name="253"><span class="lineNum">     253 </span>            :          */</a>
+<a name="254"><span class="lineNum">     254 </span>            :         mutex_lock(&amp;sort_mutex);</a>
+<a name="255"><span class="lineNum">     255 </span>            :         cur_orc_ip_table = orc_ip;</a>
+<a name="256"><span class="lineNum">     256 </span>            :         cur_orc_table = orc;</a>
+<a name="257"><span class="lineNum">     257 </span>            :         sort(orc_ip, num_entries, sizeof(int), orc_sort_cmp, orc_sort_swap);</a>
+<a name="258"><span class="lineNum">     258 </span>            :         mutex_unlock(&amp;sort_mutex);</a>
+<a name="259"><span class="lineNum">     259 </span>            : </a>
+<a name="260"><span class="lineNum">     260 </span>            :         mod-&gt;arch.orc_unwind_ip = orc_ip;</a>
+<a name="261"><span class="lineNum">     261 </span>            :         mod-&gt;arch.orc_unwind = orc;</a>
+<a name="262"><span class="lineNum">     262 </span>            :         mod-&gt;arch.num_orcs = num_entries;</a>
+<a name="263"><span class="lineNum">     263 </span>            : }</a>
+<a name="264"><span class="lineNum">     264 </span>            : #endif</a>
+<a name="265"><span class="lineNum">     265 </span>            : </a>
+<a name="266"><span class="lineNum">     266 </span><span class="lineCov">          1 : void __init unwind_init(void)</span></a>
+<a name="267"><span class="lineNum">     267 </span>            : {</a>
+<a name="268"><span class="lineNum">     268 </span><span class="lineCov">          1 :         size_t orc_ip_size = (void *)__stop_orc_unwind_ip - (void *)__start_orc_unwind_ip;</span></a>
+<a name="269"><span class="lineNum">     269 </span><span class="lineCov">          1 :         size_t orc_size = (void *)__stop_orc_unwind - (void *)__start_orc_unwind;</span></a>
+<a name="270"><span class="lineNum">     270 </span><span class="lineCov">          1 :         size_t num_entries = orc_ip_size / sizeof(int);</span></a>
+<a name="271"><span class="lineNum">     271 </span><span class="lineCov">          1 :         struct orc_entry *orc;</span></a>
+<a name="272"><span class="lineNum">     272 </span><span class="lineCov">          1 :         int i;</span></a>
+<a name="273"><span class="lineNum">     273 </span>            : </a>
+<a name="274"><span class="lineNum">     274 </span><span class="lineCov">          1 :         if (!num_entries || orc_ip_size % sizeof(int) != 0 ||</span></a>
+<a name="275"><span class="lineNum">     275 </span><span class="lineCov">          1 :             orc_size % sizeof(struct orc_entry) != 0 ||</span></a>
+<a name="276"><span class="lineNum">     276 </span><span class="lineCov">          1 :             num_entries != orc_size / sizeof(struct orc_entry)) {</span></a>
+<a name="277"><span class="lineNum">     277 </span><span class="lineNoCov">          0 :                 orc_warn(&quot;WARNING: Bad or missing .orc_unwind table.  Disabling unwinder.\n&quot;);</span></a>
+<a name="278"><span class="lineNum">     278 </span><span class="lineNoCov">          0 :                 return;</span></a>
+<a name="279"><span class="lineNum">     279 </span>            :         }</a>
+<a name="280"><span class="lineNum">     280 </span>            : </a>
+<a name="281"><span class="lineNum">     281 </span>            :         /*</a>
+<a name="282"><span class="lineNum">     282 </span>            :          * Note, the orc_unwind and orc_unwind_ip tables were already</a>
+<a name="283"><span class="lineNum">     283 </span>            :          * sorted at build time via the 'sorttable' tool.</a>
+<a name="284"><span class="lineNum">     284 </span>            :          * It's ready for binary search straight away, no need to sort it.</a>
+<a name="285"><span class="lineNum">     285 </span>            :          */</a>
+<a name="286"><span class="lineNum">     286 </span>            : </a>
+<a name="287"><span class="lineNum">     287 </span>            :         /* Initialize the fast lookup table: */</a>
+<a name="288"><span class="lineNum">     288 </span><span class="lineCov">          1 :         lookup_num_blocks = orc_lookup_end - orc_lookup;</span></a>
+<a name="289"><span class="lineNum">     289 </span><span class="lineCov">      81956 :         for (i = 0; i &lt; lookup_num_blocks-1; i++) {</span></a>
+<a name="290"><span class="lineNum">     290 </span><span class="lineCov">     163910 :                 orc = __orc_find(__start_orc_unwind_ip, __start_orc_unwind,</span></a>
+<a name="291"><span class="lineNum">     291 </span>            :                                  num_entries,</a>
+<a name="292"><span class="lineNum">     292 </span><span class="lineCov">      81955 :                                  LOOKUP_START_IP + (LOOKUP_BLOCK_SIZE * i));</span></a>
+<a name="293"><span class="lineNum">     293 </span><span class="lineCov">      81955 :                 if (!orc) {</span></a>
+<a name="294"><span class="lineNum">     294 </span><span class="lineNoCov">          0 :                         orc_warn(&quot;WARNING: Corrupt .orc_unwind table.  Disabling unwinder.\n&quot;);</span></a>
+<a name="295"><span class="lineNum">     295 </span><span class="lineNoCov">          0 :                         return;</span></a>
+<a name="296"><span class="lineNum">     296 </span>            :                 }</a>
+<a name="297"><span class="lineNum">     297 </span>            : </a>
+<a name="298"><span class="lineNum">     298 </span><span class="lineCov">      81955 :                 orc_lookup[i] = orc - __start_orc_unwind;</span></a>
+<a name="299"><span class="lineNum">     299 </span>            :         }</a>
+<a name="300"><span class="lineNum">     300 </span>            : </a>
+<a name="301"><span class="lineNum">     301 </span>            :         /* Initialize the ending block: */</a>
+<a name="302"><span class="lineNum">     302 </span><span class="lineCov">          1 :         orc = __orc_find(__start_orc_unwind_ip, __start_orc_unwind, num_entries,</span></a>
+<a name="303"><span class="lineNum">     303 </span>            :                          LOOKUP_STOP_IP);</a>
+<a name="304"><span class="lineNum">     304 </span><span class="lineCov">          1 :         if (!orc) {</span></a>
+<a name="305"><span class="lineNum">     305 </span><span class="lineNoCov">          0 :                 orc_warn(&quot;WARNING: Corrupt .orc_unwind table.  Disabling unwinder.\n&quot;);</span></a>
+<a name="306"><span class="lineNum">     306 </span><span class="lineNoCov">          0 :                 return;</span></a>
+<a name="307"><span class="lineNum">     307 </span>            :         }</a>
+<a name="308"><span class="lineNum">     308 </span><span class="lineCov">          1 :         orc_lookup[lookup_num_blocks-1] = orc - __start_orc_unwind;</span></a>
+<a name="309"><span class="lineNum">     309 </span>            : </a>
+<a name="310"><span class="lineNum">     310 </span><span class="lineCov">          1 :         orc_init = true;</span></a>
+<a name="311"><span class="lineNum">     311 </span>            : }</a>
+<a name="312"><span class="lineNum">     312 </span>            : </a>
+<a name="313"><span class="lineNum">     313 </span><span class="lineCov">  129441792 : unsigned long unwind_get_return_address(struct unwind_state *state)</span></a>
+<a name="314"><span class="lineNum">     314 </span>            : {</a>
+<a name="315"><span class="lineNum">     315 </span><span class="lineCov">  129441792 :         if (unwind_done(state))</span></a>
+<a name="316"><span class="lineNum">     316 </span>            :                 return 0;</a>
+<a name="317"><span class="lineNum">     317 </span>            : </a>
+<a name="318"><span class="lineNum">     318 </span><span class="lineCov">  129496481 :         return __kernel_text_address(state-&gt;ip) ? state-&gt;ip : 0;</span></a>
+<a name="319"><span class="lineNum">     319 </span>            : }</a>
+<a name="320"><span class="lineNum">     320 </span>            : EXPORT_SYMBOL_GPL(unwind_get_return_address);</a>
+<a name="321"><span class="lineNum">     321 </span>            : </a>
+<a name="322"><span class="lineNum">     322 </span><span class="lineCov">        231 : unsigned long *unwind_get_return_address_ptr(struct unwind_state *state)</span></a>
+<a name="323"><span class="lineNum">     323 </span>            : {</a>
+<a name="324"><span class="lineNum">     324 </span><span class="lineCov">        231 :         if (unwind_done(state))</span></a>
+<a name="325"><span class="lineNum">     325 </span>            :                 return NULL;</a>
+<a name="326"><span class="lineNum">     326 </span>            : </a>
+<a name="327"><span class="lineNum">     327 </span><span class="lineCov">        231 :         if (state-&gt;regs)</span></a>
+<a name="328"><span class="lineNum">     328 </span><span class="lineCov">         21 :                 return &amp;state-&gt;regs-&gt;ip;</span></a>
+<a name="329"><span class="lineNum">     329 </span>            : </a>
+<a name="330"><span class="lineNum">     330 </span><span class="lineCov">        210 :         if (state-&gt;sp)</span></a>
+<a name="331"><span class="lineNum">     331 </span><span class="lineCov">        210 :                 return (unsigned long *)state-&gt;sp - 1;</span></a>
+<a name="332"><span class="lineNum">     332 </span>            : </a>
+<a name="333"><span class="lineNum">     333 </span>            :         return NULL;</a>
+<a name="334"><span class="lineNum">     334 </span>            : }</a>
+<a name="335"><span class="lineNum">     335 </span>            : </a>
+<a name="336"><span class="lineNum">     336 </span><span class="lineCov">  223726238 : static bool stack_access_ok(struct unwind_state *state, unsigned long _addr,</span></a>
+<a name="337"><span class="lineNum">     337 </span>            :                             size_t len)</a>
+<a name="338"><span class="lineNum">     338 </span>            : {</a>
+<a name="339"><span class="lineNum">     339 </span><span class="lineCov">  223726238 :         struct stack_info *info = &amp;state-&gt;stack_info;</span></a>
+<a name="340"><span class="lineNum">     340 </span><span class="lineCov">  223726238 :         void *addr = (void *)_addr;</span></a>
+<a name="341"><span class="lineNum">     341 </span>            : </a>
+<a name="342"><span class="lineNum">     342 </span><span class="lineCov">  224576443 :         if (!on_stack(info, addr, len) &amp;&amp;</span></a>
+<a name="343"><span class="lineNum">     343 </span><span class="lineCov">     850582 :             (get_stack_info(addr, state-&gt;task, info, &amp;state-&gt;stack_mask)))</span></a>
+<a name="344"><span class="lineNum">     344 </span><span class="lineNoCov">          0 :                 return false;</span></a>
+<a name="345"><span class="lineNum">     345 </span>            : </a>
+<a name="346"><span class="lineNum">     346 </span>            :         return true;</a>
+<a name="347"><span class="lineNum">     347 </span>            : }</a>
+<a name="348"><span class="lineNum">     348 </span>            : </a>
+<a name="349"><span class="lineNum">     349 </span><span class="lineCov">  217804992 : static bool deref_stack_reg(struct unwind_state *state, unsigned long addr,</span></a>
+<a name="350"><span class="lineNum">     350 </span>            :                             unsigned long *val)</a>
+<a name="351"><span class="lineNum">     351 </span>            : {</a>
+<a name="352"><span class="lineNum">     352 </span><span class="lineCov">  217804992 :         if (!stack_access_ok(state, addr, sizeof(long)))</span></a>
+<a name="353"><span class="lineNum">     353 </span>            :                 return false;</a>
+<a name="354"><span class="lineNum">     354 </span>            : </a>
+<a name="355"><span class="lineNum">     355 </span><span class="lineCov">  218273571 :         *val = READ_ONCE_NOCHECK(*(unsigned long *)addr);</span></a>
+<a name="356"><span class="lineNum">     356 </span><span class="lineCov">  218270211 :         return true;</span></a>
+<a name="357"><span class="lineNum">     357 </span>            : }</a>
+<a name="358"><span class="lineNum">     358 </span>            : </a>
+<a name="359"><span class="lineNum">     359 </span><span class="lineCov">    6327349 : static bool deref_stack_regs(struct unwind_state *state, unsigned long addr,</span></a>
+<a name="360"><span class="lineNum">     360 </span>            :                              unsigned long *ip, unsigned long *sp)</a>
+<a name="361"><span class="lineNum">     361 </span>            : {</a>
+<a name="362"><span class="lineNum">     362 </span><span class="lineCov">    6327349 :         struct pt_regs *regs = (struct pt_regs *)addr;</span></a>
+<a name="363"><span class="lineNum">     363 </span>            : </a>
+<a name="364"><span class="lineNum">     364 </span>            :         /* x86-32 support will be more complicated due to the &amp;regs-&gt;sp hack */</a>
+<a name="365"><span class="lineNum">     365 </span><span class="lineCov">    6327349 :         BUILD_BUG_ON(IS_ENABLED(CONFIG_X86_32));</span></a>
+<a name="366"><span class="lineNum">     366 </span>            : </a>
+<a name="367"><span class="lineNum">     367 </span><span class="lineCov">    6327349 :         if (!stack_access_ok(state, addr, sizeof(struct pt_regs)))</span></a>
+<a name="368"><span class="lineNum">     368 </span>            :                 return false;</a>
+<a name="369"><span class="lineNum">     369 </span>            : </a>
+<a name="370"><span class="lineNum">     370 </span><span class="lineCov">    6327560 :         *ip = READ_ONCE_NOCHECK(regs-&gt;ip);</span></a>
+<a name="371"><span class="lineNum">     371 </span><span class="lineCov">    6327474 :         *sp = READ_ONCE_NOCHECK(regs-&gt;sp);</span></a>
+<a name="372"><span class="lineNum">     372 </span><span class="lineCov">    6327548 :         return true;</span></a>
+<a name="373"><span class="lineNum">     373 </span>            : }</a>
+<a name="374"><span class="lineNum">     374 </span>            : </a>
+<a name="375"><span class="lineNum">     375 </span><span class="lineNoCov">          0 : static bool deref_stack_iret_regs(struct unwind_state *state, unsigned long addr,</span></a>
+<a name="376"><span class="lineNum">     376 </span>            :                                   unsigned long *ip, unsigned long *sp)</a>
+<a name="377"><span class="lineNum">     377 </span>            : {</a>
+<a name="378"><span class="lineNum">     378 </span><span class="lineNoCov">          0 :         struct pt_regs *regs = (void *)addr - IRET_FRAME_OFFSET;</span></a>
+<a name="379"><span class="lineNum">     379 </span>            : </a>
+<a name="380"><span class="lineNum">     380 </span><span class="lineNoCov">          0 :         if (!stack_access_ok(state, addr, IRET_FRAME_SIZE))</span></a>
+<a name="381"><span class="lineNum">     381 </span>            :                 return false;</a>
+<a name="382"><span class="lineNum">     382 </span>            : </a>
+<a name="383"><span class="lineNum">     383 </span><span class="lineNoCov">          0 :         *ip = READ_ONCE_NOCHECK(regs-&gt;ip);</span></a>
+<a name="384"><span class="lineNum">     384 </span><span class="lineNoCov">          0 :         *sp = READ_ONCE_NOCHECK(regs-&gt;sp);</span></a>
+<a name="385"><span class="lineNum">     385 </span><span class="lineNoCov">          0 :         return true;</span></a>
+<a name="386"><span class="lineNum">     386 </span>            : }</a>
+<a name="387"><span class="lineNum">     387 </span>            : </a>
+<a name="388"><span class="lineNum">     388 </span>            : /*</a>
+<a name="389"><span class="lineNum">     389 </span>            :  * If state-&gt;regs is non-NULL, and points to a full pt_regs, just get the reg</a>
+<a name="390"><span class="lineNum">     390 </span>            :  * value from state-&gt;regs.</a>
+<a name="391"><span class="lineNum">     391 </span>            :  *</a>
+<a name="392"><span class="lineNum">     392 </span>            :  * Otherwise, if state-&gt;regs just points to IRET regs, and the previous frame</a>
+<a name="393"><span class="lineNum">     393 </span>            :  * had full regs, it's safe to get the value from the previous regs.  This can</a>
+<a name="394"><span class="lineNum">     394 </span>            :  * happen when early/late IRQ entry code gets interrupted by an NMI.</a>
+<a name="395"><span class="lineNum">     395 </span>            :  */</a>
+<a name="396"><span class="lineNum">     396 </span><span class="lineCov">   49158271 : static bool get_reg(struct unwind_state *state, unsigned int reg_off,</span></a>
+<a name="397"><span class="lineNum">     397 </span>            :                     unsigned long *val)</a>
+<a name="398"><span class="lineNum">     398 </span>            : {</a>
+<a name="399"><span class="lineNum">     399 </span><span class="lineCov">   49158271 :         unsigned int reg = reg_off/8;</span></a>
+<a name="400"><span class="lineNum">     400 </span>            : </a>
+<a name="401"><span class="lineNum">     401 </span><span class="lineCov">   49158271 :         if (!state-&gt;regs)</span></a>
+<a name="402"><span class="lineNum">     402 </span>            :                 return false;</a>
+<a name="403"><span class="lineNum">     403 </span>            : </a>
+<a name="404"><span class="lineNum">     404 </span><span class="lineCov">    6326968 :         if (state-&gt;full_regs) {</span></a>
+<a name="405"><span class="lineNum">     405 </span><span class="lineCov">    6326968 :                 *val = READ_ONCE_NOCHECK(((unsigned long *)state-&gt;regs)[reg]);</span></a>
+<a name="406"><span class="lineNum">     406 </span><span class="lineCov">    6326221 :                 return true;</span></a>
+<a name="407"><span class="lineNum">     407 </span>            :         }</a>
+<a name="408"><span class="lineNum">     408 </span>            : </a>
+<a name="409"><span class="lineNum">     409 </span><span class="lineNoCov">          0 :         if (state-&gt;prev_regs) {</span></a>
+<a name="410"><span class="lineNum">     410 </span><span class="lineNoCov">          0 :                 *val = READ_ONCE_NOCHECK(((unsigned long *)state-&gt;prev_regs)[reg]);</span></a>
+<a name="411"><span class="lineNum">     411 </span><span class="lineNoCov">          0 :                 return true;</span></a>
+<a name="412"><span class="lineNum">     412 </span>            :         }</a>
+<a name="413"><span class="lineNum">     413 </span>            : </a>
+<a name="414"><span class="lineNum">     414 </span>            :         return false;</a>
+<a name="415"><span class="lineNum">     415 </span>            : }</a>
+<a name="416"><span class="lineNum">     416 </span>            : </a>
+<a name="417"><span class="lineNum">     417 </span><span class="lineCov">  137893596 : bool unwind_next_frame(struct unwind_state *state)</span></a>
+<a name="418"><span class="lineNum">     418 </span>            : {</a>
+<a name="419"><span class="lineNum">     419 </span><span class="lineCov">  137893596 :         unsigned long ip_p, sp, tmp, orig_ip = state-&gt;ip, prev_sp = state-&gt;sp;</span></a>
+<a name="420"><span class="lineNum">     420 </span><span class="lineCov">  137893596 :         enum stack_type prev_type = state-&gt;stack_info.type;</span></a>
+<a name="421"><span class="lineNum">     421 </span><span class="lineCov">  137893596 :         struct orc_entry *orc;</span></a>
+<a name="422"><span class="lineNum">     422 </span><span class="lineCov">  137893596 :         bool indirect = false;</span></a>
+<a name="423"><span class="lineNum">     423 </span>            : </a>
+<a name="424"><span class="lineNum">     424 </span><span class="lineCov">  137893596 :         if (unwind_done(state))</span></a>
+<a name="425"><span class="lineNum">     425 </span>            :                 return false;</a>
+<a name="426"><span class="lineNum">     426 </span>            : </a>
+<a name="427"><span class="lineNum">     427 </span>            :         /* Don't let modules unload while we're reading their ORC data. */</a>
+<a name="428"><span class="lineNum">     428 </span><span class="lineCov">  137893596 :         preempt_disable();</span></a>
+<a name="429"><span class="lineNum">     429 </span>            : </a>
+<a name="430"><span class="lineNum">     430 </span>            :         /* End-of-stack check for user tasks: */</a>
+<a name="431"><span class="lineNum">     431 </span><span class="lineCov">  138478586 :         if (state-&gt;regs &amp;&amp; user_mode(state-&gt;regs))</span></a>
+<a name="432"><span class="lineNum">     432 </span><span class="lineNoCov">          0 :                 goto the_end;</span></a>
+<a name="433"><span class="lineNum">     433 </span>            : </a>
+<a name="434"><span class="lineNum">     434 </span>            :         /*</a>
+<a name="435"><span class="lineNum">     435 </span>            :          * Find the orc_entry associated with the text address.</a>
+<a name="436"><span class="lineNum">     436 </span>            :          *</a>
+<a name="437"><span class="lineNum">     437 </span>            :          * For a call frame (as opposed to a signal frame), state-&gt;ip points to</a>
+<a name="438"><span class="lineNum">     438 </span>            :          * the instruction after the call.  That instruction's stack layout</a>
+<a name="439"><span class="lineNum">     439 </span>            :          * could be different from the call instruction's layout, for example</a>
+<a name="440"><span class="lineNum">     440 </span>            :          * if the call was to a noreturn function.  So get the ORC data for the</a>
+<a name="441"><span class="lineNum">     441 </span>            :          * call instruction itself.</a>
+<a name="442"><span class="lineNum">     442 </span>            :          */</a>
+<a name="443"><span class="lineNum">     443 </span><span class="lineCov">  138478586 :         orc = orc_find(state-&gt;signal ? state-&gt;ip : state-&gt;ip - 1);</span></a>
+<a name="444"><span class="lineNum">     444 </span><span class="lineCov">  139666787 :         if (!orc) {</span></a>
+<a name="445"><span class="lineNum">     445 </span>            :                 /*</a>
+<a name="446"><span class="lineNum">     446 </span>            :                  * As a fallback, try to assume this code uses a frame pointer.</a>
+<a name="447"><span class="lineNum">     447 </span>            :                  * This is useful for generated code, like BPF, which ORC</a>
+<a name="448"><span class="lineNum">     448 </span>            :                  * doesn't know about.  This is just a guess, so the rest of</a>
+<a name="449"><span class="lineNum">     449 </span>            :                  * the unwind is no longer considered reliable.</a>
+<a name="450"><span class="lineNum">     450 </span>            :                  */</a>
+<a name="451"><span class="lineNum">     451 </span><span class="lineNoCov">          0 :                 orc = &amp;orc_fp_entry;</span></a>
+<a name="452"><span class="lineNum">     452 </span><span class="lineNoCov">          0 :                 state-&gt;error = true;</span></a>
+<a name="453"><span class="lineNum">     453 </span>            :         }</a>
+<a name="454"><span class="lineNum">     454 </span>            : </a>
+<a name="455"><span class="lineNum">     455 </span>            :         /* End-of-stack check for kernel threads: */</a>
+<a name="456"><span class="lineNum">     456 </span><span class="lineCov">  139666787 :         if (orc-&gt;sp_reg == ORC_REG_UNDEFINED) {</span></a>
+<a name="457"><span class="lineNum">     457 </span><span class="lineCov">    1448026 :                 if (!orc-&gt;end)</span></a>
+<a name="458"><span class="lineNum">     458 </span><span class="lineCov">         11 :                         goto err;</span></a>
+<a name="459"><span class="lineNum">     459 </span>            : </a>
+<a name="460"><span class="lineNum">     460 </span><span class="lineCov">    1448015 :                 goto the_end;</span></a>
+<a name="461"><span class="lineNum">     461 </span>            :         }</a>
+<a name="462"><span class="lineNum">     462 </span>            : </a>
+<a name="463"><span class="lineNum">     463 </span>            :         /* Find the previous frame's stack: */</a>
+<a name="464"><span class="lineNum">     464 </span><span class="lineCov">  138218761 :         switch (orc-&gt;sp_reg) {</span></a>
+<a name="465"><span class="lineNum">     465 </span><span class="lineCov">  126760380 :         case ORC_REG_SP:</span></a>
+<a name="466"><span class="lineNum">     466 </span><span class="lineCov">  126760380 :                 sp = state-&gt;sp + orc-&gt;sp_offset;</span></a>
+<a name="467"><span class="lineNum">     467 </span><span class="lineCov">  126760380 :                 break;</span></a>
+<a name="468"><span class="lineNum">     468 </span>            : </a>
+<a name="469"><span class="lineNum">     469 </span><span class="lineCov">   10600252 :         case ORC_REG_BP:</span></a>
+<a name="470"><span class="lineNum">     470 </span><span class="lineCov">   10600252 :                 sp = state-&gt;bp + orc-&gt;sp_offset;</span></a>
+<a name="471"><span class="lineNum">     471 </span><span class="lineCov">   10600252 :                 break;</span></a>
+<a name="472"><span class="lineNum">     472 </span>            : </a>
+<a name="473"><span class="lineNum">     473 </span><span class="lineCov">     850756 :         case ORC_REG_SP_INDIRECT:</span></a>
+<a name="474"><span class="lineNum">     474 </span><span class="lineCov">     850756 :                 sp = state-&gt;sp;</span></a>
+<a name="475"><span class="lineNum">     475 </span><span class="lineCov">     850756 :                 indirect = true;</span></a>
+<a name="476"><span class="lineNum">     476 </span><span class="lineCov">     850756 :                 break;</span></a>
+<a name="477"><span class="lineNum">     477 </span>            : </a>
+<a name="478"><span class="lineNum">     478 </span><span class="lineCov">       7373 :         case ORC_REG_BP_INDIRECT:</span></a>
+<a name="479"><span class="lineNum">     479 </span><span class="lineCov">       7373 :                 sp = state-&gt;bp + orc-&gt;sp_offset;</span></a>
+<a name="480"><span class="lineNum">     480 </span><span class="lineCov">       7373 :                 indirect = true;</span></a>
+<a name="481"><span class="lineNum">     481 </span><span class="lineCov">       7373 :                 break;</span></a>
+<a name="482"><span class="lineNum">     482 </span>            : </a>
+<a name="483"><span class="lineNum">     483 </span><span class="lineNoCov">          0 :         case ORC_REG_R10:</span></a>
+<a name="484"><span class="lineNum">     484 </span><span class="lineNoCov">          0 :                 if (!get_reg(state, offsetof(struct pt_regs, r10), &amp;sp)) {</span></a>
+<a name="485"><span class="lineNum">     485 </span><span class="lineNoCov">          0 :                         orc_warn_current(&quot;missing R10 value at %pB\n&quot;,</span></a>
+<a name="486"><span class="lineNum">     486 </span>            :                                          (void *)state-&gt;ip);</a>
+<a name="487"><span class="lineNum">     487 </span><span class="lineNoCov">          0 :                         goto err;</span></a>
+<a name="488"><span class="lineNum">     488 </span>            :                 }</a>
+<a name="489"><span class="lineNum">     489 </span>            :                 break;</a>
+<a name="490"><span class="lineNum">     490 </span>            : </a>
+<a name="491"><span class="lineNum">     491 </span><span class="lineNoCov">          0 :         case ORC_REG_R13:</span></a>
+<a name="492"><span class="lineNum">     492 </span><span class="lineNoCov">          0 :                 if (!get_reg(state, offsetof(struct pt_regs, r13), &amp;sp)) {</span></a>
+<a name="493"><span class="lineNum">     493 </span><span class="lineNoCov">          0 :                         orc_warn_current(&quot;missing R13 value at %pB\n&quot;,</span></a>
+<a name="494"><span class="lineNum">     494 </span>            :                                          (void *)state-&gt;ip);</a>
+<a name="495"><span class="lineNum">     495 </span><span class="lineNoCov">          0 :                         goto err;</span></a>
+<a name="496"><span class="lineNum">     496 </span>            :                 }</a>
+<a name="497"><span class="lineNum">     497 </span>            :                 break;</a>
+<a name="498"><span class="lineNum">     498 </span>            : </a>
+<a name="499"><span class="lineNum">     499 </span><span class="lineNoCov">          0 :         case ORC_REG_DI:</span></a>
+<a name="500"><span class="lineNum">     500 </span><span class="lineNoCov">          0 :                 if (!get_reg(state, offsetof(struct pt_regs, di), &amp;sp)) {</span></a>
+<a name="501"><span class="lineNum">     501 </span><span class="lineNoCov">          0 :                         orc_warn_current(&quot;missing RDI value at %pB\n&quot;,</span></a>
+<a name="502"><span class="lineNum">     502 </span>            :                                          (void *)state-&gt;ip);</a>
+<a name="503"><span class="lineNum">     503 </span><span class="lineNoCov">          0 :                         goto err;</span></a>
+<a name="504"><span class="lineNum">     504 </span>            :                 }</a>
+<a name="505"><span class="lineNum">     505 </span>            :                 break;</a>
+<a name="506"><span class="lineNum">     506 </span>            : </a>
+<a name="507"><span class="lineNum">     507 </span><span class="lineNoCov">          0 :         case ORC_REG_DX:</span></a>
+<a name="508"><span class="lineNum">     508 </span><span class="lineNoCov">          0 :                 if (!get_reg(state, offsetof(struct pt_regs, dx), &amp;sp)) {</span></a>
+<a name="509"><span class="lineNum">     509 </span><span class="lineNoCov">          0 :                         orc_warn_current(&quot;missing DX value at %pB\n&quot;,</span></a>
+<a name="510"><span class="lineNum">     510 </span>            :                                          (void *)state-&gt;ip);</a>
+<a name="511"><span class="lineNum">     511 </span><span class="lineNoCov">          0 :                         goto err;</span></a>
+<a name="512"><span class="lineNum">     512 </span>            :                 }</a>
+<a name="513"><span class="lineNum">     513 </span>            :                 break;</a>
+<a name="514"><span class="lineNum">     514 </span>            : </a>
+<a name="515"><span class="lineNum">     515 </span><span class="lineNoCov">          0 :         default:</span></a>
+<a name="516"><span class="lineNum">     516 </span><span class="lineNoCov">          0 :                 orc_warn(&quot;unknown SP base reg %d at %pB\n&quot;,</span></a>
+<a name="517"><span class="lineNum">     517 </span>            :                          orc-&gt;sp_reg, (void *)state-&gt;ip);</a>
+<a name="518"><span class="lineNum">     518 </span><span class="lineNoCov">          0 :                 goto err;</span></a>
+<a name="519"><span class="lineNum">     519 </span>            :         }</a>
+<a name="520"><span class="lineNum">     520 </span>            : </a>
+<a name="521"><span class="lineNum">     521 </span><span class="lineCov">  138218761 :         if (indirect) {</span></a>
+<a name="522"><span class="lineNum">     522 </span><span class="lineCov">     858129 :                 if (!deref_stack_reg(state, sp, &amp;sp))</span></a>
+<a name="523"><span class="lineNum">     523 </span><span class="lineNoCov">          0 :                         goto err;</span></a>
+<a name="524"><span class="lineNum">     524 </span>            : </a>
+<a name="525"><span class="lineNum">     525 </span><span class="lineCov">     858016 :                 if (orc-&gt;sp_reg == ORC_REG_SP_INDIRECT)</span></a>
+<a name="526"><span class="lineNum">     526 </span><span class="lineCov">     850700 :                         sp += orc-&gt;sp_offset;</span></a>
+<a name="527"><span class="lineNum">     527 </span>            :         }</a>
+<a name="528"><span class="lineNum">     528 </span>            : </a>
+<a name="529"><span class="lineNum">     529 </span>            :         /* Find IP, SP and possibly regs: */</a>
+<a name="530"><span class="lineNum">     530 </span><span class="lineCov">  138218648 :         switch (orc-&gt;type) {</span></a>
+<a name="531"><span class="lineNum">     531 </span><span class="lineCov">  131639519 :         case UNWIND_HINT_TYPE_CALL:</span></a>
+<a name="532"><span class="lineNum">     532 </span><span class="lineCov">  131639519 :                 ip_p = sp - sizeof(long);</span></a>
+<a name="533"><span class="lineNum">     533 </span>            : </a>
+<a name="534"><span class="lineNum">     534 </span><span class="lineCov">  131639519 :                 if (!deref_stack_reg(state, ip_p, &amp;state-&gt;ip))</span></a>
+<a name="535"><span class="lineNum">     535 </span><span class="lineNoCov">          0 :                         goto err;</span></a>
+<a name="536"><span class="lineNum">     536 </span>            : </a>
+<a name="537"><span class="lineNum">     537 </span><span class="lineCov">  131333178 :                 state-&gt;ip = ftrace_graph_ret_addr(state-&gt;task, &amp;state-&gt;graph_idx,</span></a>
+<a name="538"><span class="lineNum">     538 </span>            :                                                   state-&gt;ip, (void *)ip_p);</a>
+<a name="539"><span class="lineNum">     539 </span>            : </a>
+<a name="540"><span class="lineNum">     540 </span><span class="lineCov">  131333178 :                 state-&gt;sp = sp;</span></a>
+<a name="541"><span class="lineNum">     541 </span><span class="lineCov">  131333178 :                 state-&gt;regs = NULL;</span></a>
+<a name="542"><span class="lineNum">     542 </span><span class="lineCov">  131333178 :                 state-&gt;prev_regs = NULL;</span></a>
+<a name="543"><span class="lineNum">     543 </span><span class="lineCov">  131333178 :                 state-&gt;signal = false;</span></a>
+<a name="544"><span class="lineNum">     544 </span><span class="lineCov">  131333178 :                 break;</span></a>
+<a name="545"><span class="lineNum">     545 </span>            : </a>
+<a name="546"><span class="lineNum">     546 </span><span class="lineCov">    6327432 :         case UNWIND_HINT_TYPE_REGS:</span></a>
+<a name="547"><span class="lineNum">     547 </span><span class="lineCov">    6327432 :                 if (!deref_stack_regs(state, sp, &amp;state-&gt;ip, &amp;state-&gt;sp)) {</span></a>
+<a name="548"><span class="lineNum">     548 </span><span class="lineNoCov">          0 :                         orc_warn_current(&quot;can't access registers at %pB\n&quot;,</span></a>
+<a name="549"><span class="lineNum">     549 </span>            :                                          (void *)orig_ip);</a>
+<a name="550"><span class="lineNum">     550 </span><span class="lineNoCov">          0 :                         goto err;</span></a>
+<a name="551"><span class="lineNum">     551 </span>            :                 }</a>
+<a name="552"><span class="lineNum">     552 </span>            : </a>
+<a name="553"><span class="lineNum">     553 </span><span class="lineCov">    6327504 :                 state-&gt;regs = (struct pt_regs *)sp;</span></a>
+<a name="554"><span class="lineNum">     554 </span><span class="lineCov">    6327504 :                 state-&gt;prev_regs = NULL;</span></a>
+<a name="555"><span class="lineNum">     555 </span><span class="lineCov">    6327504 :                 state-&gt;full_regs = true;</span></a>
+<a name="556"><span class="lineNum">     556 </span><span class="lineCov">    6327504 :                 state-&gt;signal = true;</span></a>
+<a name="557"><span class="lineNum">     557 </span><span class="lineCov">    6327504 :                 break;</span></a>
+<a name="558"><span class="lineNum">     558 </span>            : </a>
+<a name="559"><span class="lineNum">     559 </span><span class="lineNoCov">          0 :         case UNWIND_HINT_TYPE_REGS_PARTIAL:</span></a>
+<a name="560"><span class="lineNum">     560 </span><span class="lineNoCov">          0 :                 if (!deref_stack_iret_regs(state, sp, &amp;state-&gt;ip, &amp;state-&gt;sp)) {</span></a>
+<a name="561"><span class="lineNum">     561 </span><span class="lineNoCov">          0 :                         orc_warn_current(&quot;can't access iret registers at %pB\n&quot;,</span></a>
+<a name="562"><span class="lineNum">     562 </span>            :                                          (void *)orig_ip);</a>
+<a name="563"><span class="lineNum">     563 </span><span class="lineNoCov">          0 :                         goto err;</span></a>
+<a name="564"><span class="lineNum">     564 </span>            :                 }</a>
+<a name="565"><span class="lineNum">     565 </span>            : </a>
+<a name="566"><span class="lineNum">     566 </span><span class="lineCov">     789662 :                 if (state-&gt;full_regs)</span></a>
+<a name="567"><span class="lineNum">     567 </span><span class="lineNoCov">          0 :                         state-&gt;prev_regs = state-&gt;regs;</span></a>
+<a name="568"><span class="lineNum">     568 </span><span class="lineCov">     789662 :                 state-&gt;regs = (void *)sp - IRET_FRAME_OFFSET;</span></a>
+<a name="569"><span class="lineNum">     569 </span><span class="lineCov">     789662 :                 state-&gt;full_regs = false;</span></a>
+<a name="570"><span class="lineNum">     570 </span><span class="lineCov">     789662 :                 state-&gt;signal = true;</span></a>
+<a name="571"><span class="lineNum">     571 </span><span class="lineCov">     789662 :                 break;</span></a>
+<a name="572"><span class="lineNum">     572 </span>            : </a>
+<a name="573"><span class="lineNum">     573 </span><span class="lineCov">     251697 :         default:</span></a>
+<a name="574"><span class="lineNum">     574 </span><span class="lineCov">     251697 :                 orc_warn(&quot;unknown .orc_unwind entry type %d at %pB\n&quot;,</span></a>
+<a name="575"><span class="lineNum">     575 </span>            :                          orc-&gt;type, (void *)orig_ip);</a>
+<a name="576"><span class="lineNum">     576 </span><span class="lineCov">     251697 :                 goto err;</span></a>
+<a name="577"><span class="lineNum">     577 </span>            :         }</a>
+<a name="578"><span class="lineNum">     578 </span>            : </a>
+<a name="579"><span class="lineNum">     579 </span>            :         /* Find BP: */</a>
+<a name="580"><span class="lineNum">     580 </span><span class="lineCov">  138450344 :         switch (orc-&gt;bp_reg) {</span></a>
+<a name="581"><span class="lineNum">     581 </span><span class="lineCov">   49080425 :         case ORC_REG_UNDEFINED:</span></a>
+<a name="582"><span class="lineNum">     582 </span><span class="lineCov">   49080425 :                 if (get_reg(state, offsetof(struct pt_regs, bp), &amp;tmp))</span></a>
+<a name="583"><span class="lineNum">     583 </span><span class="lineCov">    6326827 :                         state-&gt;bp = tmp;</span></a>
+<a name="584"><span class="lineNum">     584 </span>            :                 break;</a>
+<a name="585"><span class="lineNum">     585 </span>            : </a>
+<a name="586"><span class="lineNum">     586 </span><span class="lineCov">   89362546 :         case ORC_REG_PREV_SP:</span></a>
+<a name="587"><span class="lineNum">     587 </span><span class="lineCov">   89362546 :                 if (!deref_stack_reg(state, sp + orc-&gt;bp_offset, &amp;state-&gt;bp))</span></a>
+<a name="588"><span class="lineNum">     588 </span><span class="lineNoCov">          0 :                         goto err;</span></a>
+<a name="589"><span class="lineNum">     589 </span>            :                 break;</a>
+<a name="590"><span class="lineNum">     590 </span>            : </a>
+<a name="591"><span class="lineNum">     591 </span><span class="lineCov">       7373 :         case ORC_REG_BP:</span></a>
+<a name="592"><span class="lineNum">     592 </span><span class="lineCov">       7373 :                 if (!deref_stack_reg(state, state-&gt;bp + orc-&gt;bp_offset, &amp;state-&gt;bp))</span></a>
+<a name="593"><span class="lineNum">     593 </span><span class="lineNoCov">          0 :                         goto err;</span></a>
+<a name="594"><span class="lineNum">     594 </span>            :                 break;</a>
+<a name="595"><span class="lineNum">     595 </span>            : </a>
+<a name="596"><span class="lineNum">     596 </span><span class="lineNoCov">          0 :         default:</span></a>
+<a name="597"><span class="lineNum">     597 </span><span class="lineNoCov">          0 :                 orc_warn(&quot;unknown BP base reg %d for ip %pB\n&quot;,</span></a>
+<a name="598"><span class="lineNum">     598 </span>            :                          orc-&gt;bp_reg, (void *)orig_ip);</a>
+<a name="599"><span class="lineNum">     599 </span><span class="lineNoCov">          0 :                 goto err;</span></a>
+<a name="600"><span class="lineNum">     600 </span>            :         }</a>
+<a name="601"><span class="lineNum">     601 </span>            : </a>
+<a name="602"><span class="lineNum">     602 </span>            :         /* Prevent a recursive loop due to bad ORC data: */</a>
+<a name="603"><span class="lineNum">     603 </span><span class="lineCov">  138113166 :         if (state-&gt;stack_info.type == prev_type &amp;&amp;</span></a>
+<a name="604"><span class="lineNum">     604 </span><span class="lineCov">  135207455 :             on_stack(&amp;state-&gt;stack_info, (void *)state-&gt;sp, sizeof(long)) &amp;&amp;</span></a>
+<a name="605"><span class="lineNum">     605 </span>            :             state-&gt;sp &lt;= prev_sp) {</a>
+<a name="606"><span class="lineNum">     606 </span><span class="lineNoCov">          0 :                 orc_warn_current(&quot;stack going in the wrong direction? at %pB\n&quot;,</span></a>
+<a name="607"><span class="lineNum">     607 </span>            :                                  (void *)orig_ip);</a>
+<a name="608"><span class="lineNum">     608 </span><span class="lineNoCov">          0 :                 goto err;</span></a>
+<a name="609"><span class="lineNum">     609 </span>            :         }</a>
+<a name="610"><span class="lineNum">     610 </span>            : </a>
+<a name="611"><span class="lineNum">     611 </span><span class="lineCov">  138113166 :         preempt_enable();</span></a>
+<a name="612"><span class="lineNum">     612 </span><span class="lineCov">  136364081 :         return true;</span></a>
+<a name="613"><span class="lineNum">     613 </span>            : </a>
+<a name="614"><span class="lineNum">     614 </span><span class="lineCov">     251708 : err:</span></a>
+<a name="615"><span class="lineNum">     615 </span><span class="lineCov">     251708 :         state-&gt;error = true;</span></a>
+<a name="616"><span class="lineNum">     616 </span>            : </a>
+<a name="617"><span class="lineNum">     617 </span><span class="lineCov">    1699723 : the_end:</span></a>
+<a name="618"><span class="lineNum">     618 </span><span class="lineCov">    1699723 :         preempt_enable();</span></a>
+<a name="619"><span class="lineNum">     619 </span><span class="lineCov">    1447795 :         state-&gt;stack_info.type = STACK_TYPE_UNKNOWN;</span></a>
+<a name="620"><span class="lineNum">     620 </span><span class="lineCov">    1447795 :         return false;</span></a>
+<a name="621"><span class="lineNum">     621 </span>            : }</a>
+<a name="622"><span class="lineNum">     622 </span>            : EXPORT_SYMBOL_GPL(unwind_next_frame);</a>
+<a name="623"><span class="lineNum">     623 </span>            : </a>
+<a name="624"><span class="lineNum">     624 </span><span class="lineCov">    7000192 : void __unwind_start(struct unwind_state *state, struct task_struct *task,</span></a>
+<a name="625"><span class="lineNum">     625 </span>            :                     struct pt_regs *regs, unsigned long *first_frame)</a>
+<a name="626"><span class="lineNum">     626 </span>            : {</a>
+<a name="627"><span class="lineNum">     627 </span><span class="lineCov">    7000192 :         memset(state, 0, sizeof(*state));</span></a>
+<a name="628"><span class="lineNum">     628 </span><span class="lineCov">    7000192 :         state-&gt;task = task;</span></a>
+<a name="629"><span class="lineNum">     629 </span>            : </a>
+<a name="630"><span class="lineNum">     630 </span><span class="lineCov">    7000192 :         if (!orc_init)</span></a>
+<a name="631"><span class="lineNum">     631 </span><span class="lineCov">        370 :                 goto err;</span></a>
+<a name="632"><span class="lineNum">     632 </span>            : </a>
+<a name="633"><span class="lineNum">     633 </span>            :         /*</a>
+<a name="634"><span class="lineNum">     634 </span>            :          * Refuse to unwind the stack of a task while it's executing on another</a>
+<a name="635"><span class="lineNum">     635 </span>            :          * CPU.  This check is racy, but that's ok: the unwinder has other</a>
+<a name="636"><span class="lineNum">     636 </span>            :          * checks to prevent it from going off the rails.</a>
+<a name="637"><span class="lineNum">     637 </span>            :          */</a>
+<a name="638"><span class="lineNum">     638 </span><span class="lineCov">   13999644 :         if (task_on_another_cpu(task))</span></a>
+<a name="639"><span class="lineNum">     639 </span><span class="lineNoCov">          0 :                 goto err;</span></a>
+<a name="640"><span class="lineNum">     640 </span>            : </a>
+<a name="641"><span class="lineNum">     641 </span><span class="lineCov">    6999822 :         if (regs) {</span></a>
+<a name="642"><span class="lineNum">     642 </span><span class="lineCov">          1 :                 if (user_mode(regs))</span></a>
+<a name="643"><span class="lineNum">     643 </span><span class="lineNoCov">          0 :                         goto the_end;</span></a>
+<a name="644"><span class="lineNum">     644 </span>            : </a>
+<a name="645"><span class="lineNum">     645 </span><span class="lineCov">          1 :                 state-&gt;ip = regs-&gt;ip;</span></a>
+<a name="646"><span class="lineNum">     646 </span><span class="lineCov">          1 :                 state-&gt;sp = regs-&gt;sp;</span></a>
+<a name="647"><span class="lineNum">     647 </span><span class="lineCov">          1 :                 state-&gt;bp = regs-&gt;bp;</span></a>
+<a name="648"><span class="lineNum">     648 </span><span class="lineCov">          1 :                 state-&gt;regs = regs;</span></a>
+<a name="649"><span class="lineNum">     649 </span><span class="lineCov">          1 :                 state-&gt;full_regs = true;</span></a>
+<a name="650"><span class="lineNum">     650 </span><span class="lineCov">          1 :                 state-&gt;signal = true;</span></a>
+<a name="651"><span class="lineNum">     651 </span>            : </a>
+<a name="652"><span class="lineNum">     652 </span><span class="lineCov">    6999821 :         } else if (task == current) {</span></a>
+<a name="653"><span class="lineNum">     653 </span><span class="lineCov">    6999821 :                 asm volatile(&quot;lea (%%rip), %0\n\t&quot;</span></a>
+<a name="654"><span class="lineNum">     654 </span>            :                              &quot;mov %%rsp, %1\n\t&quot;</a>
+<a name="655"><span class="lineNum">     655 </span>            :                              &quot;mov %%rbp, %2\n\t&quot;</a>
+<a name="656"><span class="lineNum">     656 </span>            :                              : &quot;=r&quot; (state-&gt;ip), &quot;=r&quot; (state-&gt;sp),</a>
+<a name="657"><span class="lineNum">     657 </span>            :                                &quot;=r&quot; (state-&gt;bp));</a>
+<a name="658"><span class="lineNum">     658 </span>            : </a>
+<a name="659"><span class="lineNum">     659 </span>            :         } else {</a>
+<a name="660"><span class="lineNum">     660 </span><span class="lineNoCov">          0 :                 struct inactive_task_frame *frame = (void *)task-&gt;thread.sp;</span></a>
+<a name="661"><span class="lineNum">     661 </span>            : </a>
+<a name="662"><span class="lineNum">     662 </span><span class="lineNoCov">          0 :                 state-&gt;sp = task-&gt;thread.sp + sizeof(*frame);</span></a>
+<a name="663"><span class="lineNum">     663 </span><span class="lineNoCov">          0 :                 state-&gt;bp = READ_ONCE_NOCHECK(frame-&gt;bp);</span></a>
+<a name="664"><span class="lineNum">     664 </span><span class="lineNoCov">          0 :                 state-&gt;ip = READ_ONCE_NOCHECK(frame-&gt;ret_addr);</span></a>
+<a name="665"><span class="lineNum">     665 </span><span class="lineNoCov">          0 :                 state-&gt;signal = (void *)state-&gt;ip == ret_from_fork;</span></a>
+<a name="666"><span class="lineNum">     666 </span>            :         }</a>
+<a name="667"><span class="lineNum">     667 </span>            : </a>
+<a name="668"><span class="lineNum">     668 </span><span class="lineCov">    6999651 :         if (get_stack_info((unsigned long *)state-&gt;sp, state-&gt;task,</span></a>
+<a name="669"><span class="lineNum">     669 </span>            :                            &amp;state-&gt;stack_info, &amp;state-&gt;stack_mask)) {</a>
+<a name="670"><span class="lineNum">     670 </span>            :                 /*</a>
+<a name="671"><span class="lineNum">     671 </span>            :                  * We weren't on a valid stack.  It's possible that</a>
+<a name="672"><span class="lineNum">     672 </span>            :                  * we overflowed a valid stack into a guard page.</a>
+<a name="673"><span class="lineNum">     673 </span>            :                  * See if the next page up is valid so that we can</a>
+<a name="674"><span class="lineNum">     674 </span>            :                  * generate some kind of backtrace if this happens.</a>
+<a name="675"><span class="lineNum">     675 </span>            :                  */</a>
+<a name="676"><span class="lineNum">     676 </span><span class="lineNoCov">          0 :                 void *next_page = (void *)PAGE_ALIGN((unsigned long)state-&gt;sp);</span></a>
+<a name="677"><span class="lineNum">     677 </span><span class="lineNoCov">          0 :                 state-&gt;error = true;</span></a>
+<a name="678"><span class="lineNum">     678 </span><span class="lineNoCov">          0 :                 if (get_stack_info(next_page, state-&gt;task, &amp;state-&gt;stack_info,</span></a>
+<a name="679"><span class="lineNum">     679 </span>            :                                    &amp;state-&gt;stack_mask))</a>
+<a name="680"><span class="lineNum">     680 </span>            :                         return;</a>
+<a name="681"><span class="lineNum">     681 </span>            :         }</a>
+<a name="682"><span class="lineNum">     682 </span>            : </a>
+<a name="683"><span class="lineNum">     683 </span>            :         /*</a>
+<a name="684"><span class="lineNum">     684 </span>            :          * The caller can provide the address of the first frame directly</a>
+<a name="685"><span class="lineNum">     685 </span>            :          * (first_frame) or indirectly (regs-&gt;sp) to indicate which stack frame</a>
+<a name="686"><span class="lineNum">     686 </span>            :          * to start unwinding at.  Skip ahead until we reach it.</a>
+<a name="687"><span class="lineNum">     687 </span>            :          */</a>
+<a name="688"><span class="lineNum">     688 </span>            : </a>
+<a name="689"><span class="lineNum">     689 </span>            :         /* When starting from regs, skip the regs frame: */</a>
+<a name="690"><span class="lineNum">     690 </span><span class="lineCov">    6991142 :         if (regs) {</span></a>
+<a name="691"><span class="lineNum">     691 </span><span class="lineCov">          1 :                 unwind_next_frame(state);</span></a>
+<a name="692"><span class="lineNum">     692 </span><span class="lineCov">          1 :                 return;</span></a>
+<a name="693"><span class="lineNum">     693 </span>            :         }</a>
+<a name="694"><span class="lineNum">     694 </span>            : </a>
+<a name="695"><span class="lineNum">     695 </span>            :         /* Otherwise, skip ahead to the user-specified starting frame: */</a>
+<a name="696"><span class="lineNum">     696 </span><span class="lineCov">   20925736 :         while (!unwind_done(state) &amp;&amp;</span></a>
+<a name="697"><span class="lineNum">     697 </span><span class="lineCov">   20925736 :                (!on_stack(&amp;state-&gt;stack_info, first_frame, sizeof(long)) ||</span></a>
+<a name="698"><span class="lineNum">     698 </span><span class="lineCov">   20925736 :                         state-&gt;sp &lt; (unsigned long)first_frame))</span></a>
+<a name="699"><span class="lineNum">     699 </span><span class="lineCov">   13926964 :                 unwind_next_frame(state);</span></a>
+<a name="700"><span class="lineNum">     700 </span>            : </a>
+<a name="701"><span class="lineNum">     701 </span>            :         return;</a>
+<a name="702"><span class="lineNum">     702 </span>            : </a>
+<a name="703"><span class="lineNum">     703 </span><span class="lineCov">        370 : err:</span></a>
+<a name="704"><span class="lineNum">     704 </span><span class="lineCov">        370 :         state-&gt;error = true;</span></a>
+<a name="705"><span class="lineNum">     705 </span>            : the_end:</a>
+<a name="706"><span class="lineNum">     706 </span>            :         state-&gt;stack_info.type = STACK_TYPE_UNKNOWN;</a>
+<a name="707"><span class="lineNum">     707 </span>            : }</a>
+<a name="708"><span class="lineNum">     708 </span>            : EXPORT_SYMBOL_GPL(__unwind_start);</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

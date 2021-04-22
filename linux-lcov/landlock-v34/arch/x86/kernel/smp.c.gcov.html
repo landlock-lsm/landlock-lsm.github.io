@@ -1,0 +1,355 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - landlock.info - arch/x86/kernel/smp.c</title>
+  <link rel="stylesheet" type="text/css" href="../../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../../index.html">top level</a> - <a href="index.html">arch/x86/kernel</a> - smp.c<span style="font-size: 80%;"> (source / <a href="smp.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">landlock.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">20</td>
+            <td class="headerCovTableEntry">57</td>
+            <td class="headerCovTableEntryLo">35.1 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2021-04-22 12:43:58</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">5</td>
+            <td class="headerCovTableEntry">10</td>
+            <td class="headerCovTableEntryLo">50.0 %</td>
+          </tr>
+          <tr><td><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : // SPDX-License-Identifier: GPL-2.0-or-later</a>
+<a name="2"><span class="lineNum">       2 </span>            : /*</a>
+<a name="3"><span class="lineNum">       3 </span>            :  *      Intel SMP support routines.</a>
+<a name="4"><span class="lineNum">       4 </span>            :  *</a>
+<a name="5"><span class="lineNum">       5 </span>            :  *      (c) 1995 Alan Cox, Building #3 &lt;alan@lxorguk.ukuu.org.uk&gt;</a>
+<a name="6"><span class="lineNum">       6 </span>            :  *      (c) 1998-99, 2000, 2009 Ingo Molnar &lt;mingo@redhat.com&gt;</a>
+<a name="7"><span class="lineNum">       7 </span>            :  *      (c) 2002,2003 Andi Kleen, SuSE Labs.</a>
+<a name="8"><span class="lineNum">       8 </span>            :  *</a>
+<a name="9"><span class="lineNum">       9 </span>            :  *      i386 and x86_64 integration by Glauber Costa &lt;gcosta@redhat.com&gt;</a>
+<a name="10"><span class="lineNum">      10 </span>            :  */</a>
+<a name="11"><span class="lineNum">      11 </span>            : </a>
+<a name="12"><span class="lineNum">      12 </span>            : #include &lt;linux/init.h&gt;</a>
+<a name="13"><span class="lineNum">      13 </span>            : </a>
+<a name="14"><span class="lineNum">      14 </span>            : #include &lt;linux/mm.h&gt;</a>
+<a name="15"><span class="lineNum">      15 </span>            : #include &lt;linux/delay.h&gt;</a>
+<a name="16"><span class="lineNum">      16 </span>            : #include &lt;linux/spinlock.h&gt;</a>
+<a name="17"><span class="lineNum">      17 </span>            : #include &lt;linux/export.h&gt;</a>
+<a name="18"><span class="lineNum">      18 </span>            : #include &lt;linux/kernel_stat.h&gt;</a>
+<a name="19"><span class="lineNum">      19 </span>            : #include &lt;linux/mc146818rtc.h&gt;</a>
+<a name="20"><span class="lineNum">      20 </span>            : #include &lt;linux/cache.h&gt;</a>
+<a name="21"><span class="lineNum">      21 </span>            : #include &lt;linux/interrupt.h&gt;</a>
+<a name="22"><span class="lineNum">      22 </span>            : #include &lt;linux/cpu.h&gt;</a>
+<a name="23"><span class="lineNum">      23 </span>            : #include &lt;linux/gfp.h&gt;</a>
+<a name="24"><span class="lineNum">      24 </span>            : </a>
+<a name="25"><span class="lineNum">      25 </span>            : #include &lt;asm/mtrr.h&gt;</a>
+<a name="26"><span class="lineNum">      26 </span>            : #include &lt;asm/tlbflush.h&gt;</a>
+<a name="27"><span class="lineNum">      27 </span>            : #include &lt;asm/mmu_context.h&gt;</a>
+<a name="28"><span class="lineNum">      28 </span>            : #include &lt;asm/proto.h&gt;</a>
+<a name="29"><span class="lineNum">      29 </span>            : #include &lt;asm/apic.h&gt;</a>
+<a name="30"><span class="lineNum">      30 </span>            : #include &lt;asm/idtentry.h&gt;</a>
+<a name="31"><span class="lineNum">      31 </span>            : #include &lt;asm/nmi.h&gt;</a>
+<a name="32"><span class="lineNum">      32 </span>            : #include &lt;asm/mce.h&gt;</a>
+<a name="33"><span class="lineNum">      33 </span>            : #include &lt;asm/trace/irq_vectors.h&gt;</a>
+<a name="34"><span class="lineNum">      34 </span>            : #include &lt;asm/kexec.h&gt;</a>
+<a name="35"><span class="lineNum">      35 </span>            : #include &lt;asm/virtext.h&gt;</a>
+<a name="36"><span class="lineNum">      36 </span>            : </a>
+<a name="37"><span class="lineNum">      37 </span>            : /*</a>
+<a name="38"><span class="lineNum">      38 </span>            :  *      Some notes on x86 processor bugs affecting SMP operation:</a>
+<a name="39"><span class="lineNum">      39 </span>            :  *</a>
+<a name="40"><span class="lineNum">      40 </span>            :  *      Pentium, Pentium Pro, II, III (and all CPUs) have bugs.</a>
+<a name="41"><span class="lineNum">      41 </span>            :  *      The Linux implications for SMP are handled as follows:</a>
+<a name="42"><span class="lineNum">      42 </span>            :  *</a>
+<a name="43"><span class="lineNum">      43 </span>            :  *      Pentium III / [Xeon]</a>
+<a name="44"><span class="lineNum">      44 </span>            :  *              None of the E1AP-E3AP errata are visible to the user.</a>
+<a name="45"><span class="lineNum">      45 </span>            :  *</a>
+<a name="46"><span class="lineNum">      46 </span>            :  *      E1AP.   see PII A1AP</a>
+<a name="47"><span class="lineNum">      47 </span>            :  *      E2AP.   see PII A2AP</a>
+<a name="48"><span class="lineNum">      48 </span>            :  *      E3AP.   see PII A3AP</a>
+<a name="49"><span class="lineNum">      49 </span>            :  *</a>
+<a name="50"><span class="lineNum">      50 </span>            :  *      Pentium II / [Xeon]</a>
+<a name="51"><span class="lineNum">      51 </span>            :  *              None of the A1AP-A3AP errata are visible to the user.</a>
+<a name="52"><span class="lineNum">      52 </span>            :  *</a>
+<a name="53"><span class="lineNum">      53 </span>            :  *      A1AP.   see PPro 1AP</a>
+<a name="54"><span class="lineNum">      54 </span>            :  *      A2AP.   see PPro 2AP</a>
+<a name="55"><span class="lineNum">      55 </span>            :  *      A3AP.   see PPro 7AP</a>
+<a name="56"><span class="lineNum">      56 </span>            :  *</a>
+<a name="57"><span class="lineNum">      57 </span>            :  *      Pentium Pro</a>
+<a name="58"><span class="lineNum">      58 </span>            :  *              None of 1AP-9AP errata are visible to the normal user,</a>
+<a name="59"><span class="lineNum">      59 </span>            :  *      except occasional delivery of 'spurious interrupt' as trap #15.</a>
+<a name="60"><span class="lineNum">      60 </span>            :  *      This is very rare and a non-problem.</a>
+<a name="61"><span class="lineNum">      61 </span>            :  *</a>
+<a name="62"><span class="lineNum">      62 </span>            :  *      1AP.    Linux maps APIC as non-cacheable</a>
+<a name="63"><span class="lineNum">      63 </span>            :  *      2AP.    worked around in hardware</a>
+<a name="64"><span class="lineNum">      64 </span>            :  *      3AP.    fixed in C0 and above steppings microcode update.</a>
+<a name="65"><span class="lineNum">      65 </span>            :  *              Linux does not use excessive STARTUP_IPIs.</a>
+<a name="66"><span class="lineNum">      66 </span>            :  *      4AP.    worked around in hardware</a>
+<a name="67"><span class="lineNum">      67 </span>            :  *      5AP.    symmetric IO mode (normal Linux operation) not affected.</a>
+<a name="68"><span class="lineNum">      68 </span>            :  *              'noapic' mode has vector 0xf filled out properly.</a>
+<a name="69"><span class="lineNum">      69 </span>            :  *      6AP.    'noapic' mode might be affected - fixed in later steppings</a>
+<a name="70"><span class="lineNum">      70 </span>            :  *      7AP.    We do not assume writes to the LVT deassering IRQs</a>
+<a name="71"><span class="lineNum">      71 </span>            :  *      8AP.    We do not enable low power mode (deep sleep) during MP bootup</a>
+<a name="72"><span class="lineNum">      72 </span>            :  *      9AP.    We do not use mixed mode</a>
+<a name="73"><span class="lineNum">      73 </span>            :  *</a>
+<a name="74"><span class="lineNum">      74 </span>            :  *      Pentium</a>
+<a name="75"><span class="lineNum">      75 </span>            :  *              There is a marginal case where REP MOVS on 100MHz SMP</a>
+<a name="76"><span class="lineNum">      76 </span>            :  *      machines with B stepping processors can fail. XXX should provide</a>
+<a name="77"><span class="lineNum">      77 </span>            :  *      an L1cache=Writethrough or L1cache=off option.</a>
+<a name="78"><span class="lineNum">      78 </span>            :  *</a>
+<a name="79"><span class="lineNum">      79 </span>            :  *              B stepping CPUs may hang. There are hardware work arounds</a>
+<a name="80"><span class="lineNum">      80 </span>            :  *      for this. We warn about it in case your board doesn't have the work</a>
+<a name="81"><span class="lineNum">      81 </span>            :  *      arounds. Basically that's so I can tell anyone with a B stepping</a>
+<a name="82"><span class="lineNum">      82 </span>            :  *      CPU and SMP problems &quot;tough&quot;.</a>
+<a name="83"><span class="lineNum">      83 </span>            :  *</a>
+<a name="84"><span class="lineNum">      84 </span>            :  *      Specific items [From Pentium Processor Specification Update]</a>
+<a name="85"><span class="lineNum">      85 </span>            :  *</a>
+<a name="86"><span class="lineNum">      86 </span>            :  *      1AP.    Linux doesn't use remote read</a>
+<a name="87"><span class="lineNum">      87 </span>            :  *      2AP.    Linux doesn't trust APIC errors</a>
+<a name="88"><span class="lineNum">      88 </span>            :  *      3AP.    We work around this</a>
+<a name="89"><span class="lineNum">      89 </span>            :  *      4AP.    Linux never generated 3 interrupts of the same priority</a>
+<a name="90"><span class="lineNum">      90 </span>            :  *              to cause a lost local interrupt.</a>
+<a name="91"><span class="lineNum">      91 </span>            :  *      5AP.    Remote read is never used</a>
+<a name="92"><span class="lineNum">      92 </span>            :  *      6AP.    not affected - worked around in hardware</a>
+<a name="93"><span class="lineNum">      93 </span>            :  *      7AP.    not affected - worked around in hardware</a>
+<a name="94"><span class="lineNum">      94 </span>            :  *      8AP.    worked around in hardware - we get explicit CS errors if not</a>
+<a name="95"><span class="lineNum">      95 </span>            :  *      9AP.    only 'noapic' mode affected. Might generate spurious</a>
+<a name="96"><span class="lineNum">      96 </span>            :  *              interrupts, we log only the first one and count the</a>
+<a name="97"><span class="lineNum">      97 </span>            :  *              rest silently.</a>
+<a name="98"><span class="lineNum">      98 </span>            :  *      10AP.   not affected - worked around in hardware</a>
+<a name="99"><span class="lineNum">      99 </span>            :  *      11AP.   Linux reads the APIC between writes to avoid this, as per</a>
+<a name="100"><span class="lineNum">     100 </span>            :  *              the documentation. Make sure you preserve this as it affects</a>
+<a name="101"><span class="lineNum">     101 </span>            :  *              the C stepping chips too.</a>
+<a name="102"><span class="lineNum">     102 </span>            :  *      12AP.   not affected - worked around in hardware</a>
+<a name="103"><span class="lineNum">     103 </span>            :  *      13AP.   not affected - worked around in hardware</a>
+<a name="104"><span class="lineNum">     104 </span>            :  *      14AP.   we always deassert INIT during bootup</a>
+<a name="105"><span class="lineNum">     105 </span>            :  *      15AP.   not affected - worked around in hardware</a>
+<a name="106"><span class="lineNum">     106 </span>            :  *      16AP.   not affected - worked around in hardware</a>
+<a name="107"><span class="lineNum">     107 </span>            :  *      17AP.   not affected - worked around in hardware</a>
+<a name="108"><span class="lineNum">     108 </span>            :  *      18AP.   not affected - worked around in hardware</a>
+<a name="109"><span class="lineNum">     109 </span>            :  *      19AP.   not affected - worked around in BIOS</a>
+<a name="110"><span class="lineNum">     110 </span>            :  *</a>
+<a name="111"><span class="lineNum">     111 </span>            :  *      If this sounds worrying believe me these bugs are either ___RARE___,</a>
+<a name="112"><span class="lineNum">     112 </span>            :  *      or are signal timing bugs worked around in hardware and there's</a>
+<a name="113"><span class="lineNum">     113 </span>            :  *      about nothing of note with C stepping upwards.</a>
+<a name="114"><span class="lineNum">     114 </span>            :  */</a>
+<a name="115"><span class="lineNum">     115 </span>            : </a>
+<a name="116"><span class="lineNum">     116 </span>            : static atomic_t stopping_cpu = ATOMIC_INIT(-1);</a>
+<a name="117"><span class="lineNum">     117 </span>            : static bool smp_no_nmi_ipi = false;</a>
+<a name="118"><span class="lineNum">     118 </span>            : </a>
+<a name="119"><span class="lineNum">     119 </span><span class="lineNoCov">          0 : static int smp_stop_nmi_callback(unsigned int val, struct pt_regs *regs)</span></a>
+<a name="120"><span class="lineNum">     120 </span>            : {</a>
+<a name="121"><span class="lineNum">     121 </span>            :         /* We are registered on stopping cpu too, avoid spurious NMI */</a>
+<a name="122"><span class="lineNum">     122 </span><span class="lineNoCov">          0 :         if (raw_smp_processor_id() == atomic_read(&amp;stopping_cpu))</span></a>
+<a name="123"><span class="lineNum">     123 </span>            :                 return NMI_HANDLED;</a>
+<a name="124"><span class="lineNum">     124 </span>            : </a>
+<a name="125"><span class="lineNum">     125 </span><span class="lineNoCov">          0 :         cpu_emergency_vmxoff();</span></a>
+<a name="126"><span class="lineNum">     126 </span><span class="lineNoCov">          0 :         stop_this_cpu(NULL);</span></a>
+<a name="127"><span class="lineNum">     127 </span>            : </a>
+<a name="128"><span class="lineNum">     128 </span><span class="lineNoCov">          0 :         return NMI_HANDLED;</span></a>
+<a name="129"><span class="lineNum">     129 </span>            : }</a>
+<a name="130"><span class="lineNum">     130 </span>            : </a>
+<a name="131"><span class="lineNum">     131 </span>            : /*</a>
+<a name="132"><span class="lineNum">     132 </span>            :  * this function calls the 'stop' function on all other CPUs in the system.</a>
+<a name="133"><span class="lineNum">     133 </span>            :  */</a>
+<a name="134"><span class="lineNum">     134 </span><span class="lineNoCov">          0 : DEFINE_IDTENTRY_SYSVEC(sysvec_reboot)</span></a>
+<a name="135"><span class="lineNum">     135 </span>            : {</a>
+<a name="136"><span class="lineNum">     136 </span><span class="lineNoCov">          0 :         ack_APIC_irq();</span></a>
+<a name="137"><span class="lineNum">     137 </span><span class="lineNoCov">          0 :         cpu_emergency_vmxoff();</span></a>
+<a name="138"><span class="lineNum">     138 </span><span class="lineNoCov">          0 :         stop_this_cpu(NULL);</span></a>
+<a name="139"><span class="lineNum">     139 </span><span class="lineNoCov">          0 : }</span></a>
+<a name="140"><span class="lineNum">     140 </span>            : </a>
+<a name="141"><span class="lineNum">     141 </span><span class="lineNoCov">          0 : static int register_stop_handler(void)</span></a>
+<a name="142"><span class="lineNum">     142 </span>            : {</a>
+<a name="143"><span class="lineNum">     143 </span><span class="lineNoCov">          0 :         return register_nmi_handler(NMI_LOCAL, smp_stop_nmi_callback,</span></a>
+<a name="144"><span class="lineNum">     144 </span>            :                                     NMI_FLAG_FIRST, &quot;smp_stop&quot;);</a>
+<a name="145"><span class="lineNum">     145 </span>            : }</a>
+<a name="146"><span class="lineNum">     146 </span>            : </a>
+<a name="147"><span class="lineNum">     147 </span><span class="lineNoCov">          0 : static void native_stop_other_cpus(int wait)</span></a>
+<a name="148"><span class="lineNum">     148 </span>            : {</a>
+<a name="149"><span class="lineNum">     149 </span><span class="lineNoCov">          0 :         unsigned long flags;</span></a>
+<a name="150"><span class="lineNum">     150 </span><span class="lineNoCov">          0 :         unsigned long timeout;</span></a>
+<a name="151"><span class="lineNum">     151 </span>            : </a>
+<a name="152"><span class="lineNum">     152 </span><span class="lineNoCov">          0 :         if (reboot_force)</span></a>
+<a name="153"><span class="lineNum">     153 </span>            :                 return;</a>
+<a name="154"><span class="lineNum">     154 </span>            : </a>
+<a name="155"><span class="lineNum">     155 </span>            :         /*</a>
+<a name="156"><span class="lineNum">     156 </span>            :          * Use an own vector here because smp_call_function</a>
+<a name="157"><span class="lineNum">     157 </span>            :          * does lots of things not suitable in a panic situation.</a>
+<a name="158"><span class="lineNum">     158 </span>            :          */</a>
+<a name="159"><span class="lineNum">     159 </span>            : </a>
+<a name="160"><span class="lineNum">     160 </span>            :         /*</a>
+<a name="161"><span class="lineNum">     161 </span>            :          * We start by using the REBOOT_VECTOR irq.</a>
+<a name="162"><span class="lineNum">     162 </span>            :          * The irq is treated as a sync point to allow critical</a>
+<a name="163"><span class="lineNum">     163 </span>            :          * regions of code on other cpus to release their spin locks</a>
+<a name="164"><span class="lineNum">     164 </span>            :          * and re-enable irqs.  Jumping straight to an NMI might</a>
+<a name="165"><span class="lineNum">     165 </span>            :          * accidentally cause deadlocks with further shutdown/panic</a>
+<a name="166"><span class="lineNum">     166 </span>            :          * code.  By syncing, we give the cpus up to one second to</a>
+<a name="167"><span class="lineNum">     167 </span>            :          * finish their work before we force them off with the NMI.</a>
+<a name="168"><span class="lineNum">     168 </span>            :          */</a>
+<a name="169"><span class="lineNum">     169 </span><span class="lineNoCov">          0 :         if (num_online_cpus() &gt; 1) {</span></a>
+<a name="170"><span class="lineNum">     170 </span>            :                 /* did someone beat us here? */</a>
+<a name="171"><span class="lineNum">     171 </span><span class="lineNoCov">          0 :                 if (atomic_cmpxchg(&amp;stopping_cpu, -1, safe_smp_processor_id()) != -1)</span></a>
+<a name="172"><span class="lineNum">     172 </span>            :                         return;</a>
+<a name="173"><span class="lineNum">     173 </span>            : </a>
+<a name="174"><span class="lineNum">     174 </span>            :                 /* sync above data before sending IRQ */</a>
+<a name="175"><span class="lineNum">     175 </span><span class="lineNoCov">          0 :                 wmb();</span></a>
+<a name="176"><span class="lineNum">     176 </span>            : </a>
+<a name="177"><span class="lineNum">     177 </span><span class="lineNoCov">          0 :                 apic_send_IPI_allbutself(REBOOT_VECTOR);</span></a>
+<a name="178"><span class="lineNum">     178 </span>            : </a>
+<a name="179"><span class="lineNum">     179 </span>            :                 /*</a>
+<a name="180"><span class="lineNum">     180 </span>            :                  * Don't wait longer than a second for IPI completion. The</a>
+<a name="181"><span class="lineNum">     181 </span>            :                  * wait request is not checked here because that would</a>
+<a name="182"><span class="lineNum">     182 </span>            :                  * prevent an NMI shutdown attempt in case that not all</a>
+<a name="183"><span class="lineNum">     183 </span>            :                  * CPUs reach shutdown state.</a>
+<a name="184"><span class="lineNum">     184 </span>            :                  */</a>
+<a name="185"><span class="lineNum">     185 </span><span class="lineNoCov">          0 :                 timeout = USEC_PER_SEC;</span></a>
+<a name="186"><span class="lineNum">     186 </span><span class="lineNoCov">          0 :                 while (num_online_cpus() &gt; 1 &amp;&amp; timeout--)</span></a>
+<a name="187"><span class="lineNum">     187 </span><span class="lineNoCov">          0 :                         udelay(1);</span></a>
+<a name="188"><span class="lineNum">     188 </span>            :         }</a>
+<a name="189"><span class="lineNum">     189 </span>            : </a>
+<a name="190"><span class="lineNum">     190 </span>            :         /* if the REBOOT_VECTOR didn't work, try with the NMI */</a>
+<a name="191"><span class="lineNum">     191 </span><span class="lineNoCov">          0 :         if (num_online_cpus() &gt; 1) {</span></a>
+<a name="192"><span class="lineNum">     192 </span>            :                 /*</a>
+<a name="193"><span class="lineNum">     193 </span>            :                  * If NMI IPI is enabled, try to register the stop handler</a>
+<a name="194"><span class="lineNum">     194 </span>            :                  * and send the IPI. In any case try to wait for the other</a>
+<a name="195"><span class="lineNum">     195 </span>            :                  * CPUs to stop.</a>
+<a name="196"><span class="lineNum">     196 </span>            :                  */</a>
+<a name="197"><span class="lineNum">     197 </span><span class="lineNoCov">          0 :                 if (!smp_no_nmi_ipi &amp;&amp; !register_stop_handler()) {</span></a>
+<a name="198"><span class="lineNum">     198 </span>            :                         /* Sync above data before sending IRQ */</a>
+<a name="199"><span class="lineNum">     199 </span><span class="lineNoCov">          0 :                         wmb();</span></a>
+<a name="200"><span class="lineNum">     200 </span>            : </a>
+<a name="201"><span class="lineNum">     201 </span><span class="lineNoCov">          0 :                         pr_emerg(&quot;Shutting down cpus with NMI\n&quot;);</span></a>
+<a name="202"><span class="lineNum">     202 </span>            : </a>
+<a name="203"><span class="lineNum">     203 </span><span class="lineNoCov">          0 :                         apic_send_IPI_allbutself(NMI_VECTOR);</span></a>
+<a name="204"><span class="lineNum">     204 </span>            :                 }</a>
+<a name="205"><span class="lineNum">     205 </span>            :                 /*</a>
+<a name="206"><span class="lineNum">     206 </span>            :                  * Don't wait longer than 10 ms if the caller didn't</a>
+<a name="207"><span class="lineNum">     207 </span>            :                  * reqeust it. If wait is true, the machine hangs here if</a>
+<a name="208"><span class="lineNum">     208 </span>            :                  * one or more CPUs do not reach shutdown state.</a>
+<a name="209"><span class="lineNum">     209 </span>            :                  */</a>
+<a name="210"><span class="lineNum">     210 </span>            :                 timeout = USEC_PER_MSEC * 10;</a>
+<a name="211"><span class="lineNum">     211 </span><span class="lineNoCov">          0 :                 while (num_online_cpus() &gt; 1 &amp;&amp; (wait || timeout--))</span></a>
+<a name="212"><span class="lineNum">     212 </span><span class="lineNoCov">          0 :                         udelay(1);</span></a>
+<a name="213"><span class="lineNum">     213 </span>            :         }</a>
+<a name="214"><span class="lineNum">     214 </span>            : </a>
+<a name="215"><span class="lineNum">     215 </span><span class="lineNoCov">          0 :         local_irq_save(flags);</span></a>
+<a name="216"><span class="lineNum">     216 </span><span class="lineNoCov">          0 :         disable_local_APIC();</span></a>
+<a name="217"><span class="lineNum">     217 </span><span class="lineNoCov">          0 :         mcheck_cpu_clear(this_cpu_ptr(&amp;cpu_info));</span></a>
+<a name="218"><span class="lineNum">     218 </span><span class="lineNoCov">          0 :         local_irq_restore(flags);</span></a>
+<a name="219"><span class="lineNum">     219 </span>            : }</a>
+<a name="220"><span class="lineNum">     220 </span>            : </a>
+<a name="221"><span class="lineNum">     221 </span>            : /*</a>
+<a name="222"><span class="lineNum">     222 </span>            :  * Reschedule call back. KVM uses this interrupt to force a cpu out of</a>
+<a name="223"><span class="lineNum">     223 </span>            :  * guest mode.</a>
+<a name="224"><span class="lineNum">     224 </span>            :  */</a>
+<a name="225"><span class="lineNum">     225 </span><span class="lineCov">       5050 : DEFINE_IDTENTRY_SYSVEC_SIMPLE(sysvec_reschedule_ipi)</span></a>
+<a name="226"><span class="lineNum">     226 </span>            : {</a>
+<a name="227"><span class="lineNum">     227 </span><span class="lineCov">       2525 :         ack_APIC_irq();</span></a>
+<a name="228"><span class="lineNum">     228 </span><span class="lineCov">       2525 :         trace_reschedule_entry(RESCHEDULE_VECTOR);</span></a>
+<a name="229"><span class="lineNum">     229 </span><span class="lineCov">       2525 :         inc_irq_stat(irq_resched_count);</span></a>
+<a name="230"><span class="lineNum">     230 </span><span class="lineCov">       2525 :         scheduler_ipi();</span></a>
+<a name="231"><span class="lineNum">     231 </span><span class="lineCov">       2525 :         trace_reschedule_exit(RESCHEDULE_VECTOR);</span></a>
+<a name="232"><span class="lineNum">     232 </span>            : }</a>
+<a name="233"><span class="lineNum">     233 </span>            : </a>
+<a name="234"><span class="lineNum">     234 </span><span class="lineCov">        256 : DEFINE_IDTENTRY_SYSVEC(sysvec_call_function)</span></a>
+<a name="235"><span class="lineNum">     235 </span>            : {</a>
+<a name="236"><span class="lineNum">     236 </span><span class="lineCov">        130 :         ack_APIC_irq();</span></a>
+<a name="237"><span class="lineNum">     237 </span><span class="lineCov">        135 :         trace_call_function_entry(CALL_FUNCTION_VECTOR);</span></a>
+<a name="238"><span class="lineNum">     238 </span><span class="lineCov">        139 :         inc_irq_stat(irq_call_count);</span></a>
+<a name="239"><span class="lineNum">     239 </span><span class="lineCov">        139 :         generic_smp_call_function_interrupt();</span></a>
+<a name="240"><span class="lineNum">     240 </span><span class="lineCov">        140 :         trace_call_function_exit(CALL_FUNCTION_VECTOR);</span></a>
+<a name="241"><span class="lineNum">     241 </span><span class="lineCov">        141 : }</span></a>
+<a name="242"><span class="lineNum">     242 </span>            : </a>
+<a name="243"><span class="lineNum">     243 </span><span class="lineCov">      23528 : DEFINE_IDTENTRY_SYSVEC(sysvec_call_function_single)</span></a>
+<a name="244"><span class="lineNum">     244 </span>            : {</a>
+<a name="245"><span class="lineNum">     245 </span><span class="lineCov">      11763 :         ack_APIC_irq();</span></a>
+<a name="246"><span class="lineNum">     246 </span><span class="lineCov">      11763 :         trace_call_function_single_entry(CALL_FUNCTION_SINGLE_VECTOR);</span></a>
+<a name="247"><span class="lineNum">     247 </span><span class="lineCov">      11766 :         inc_irq_stat(irq_call_count);</span></a>
+<a name="248"><span class="lineNum">     248 </span><span class="lineCov">      11766 :         generic_smp_call_function_single_interrupt();</span></a>
+<a name="249"><span class="lineNum">     249 </span><span class="lineCov">      11762 :         trace_call_function_single_exit(CALL_FUNCTION_SINGLE_VECTOR);</span></a>
+<a name="250"><span class="lineNum">     250 </span><span class="lineCov">      11764 : }</span></a>
+<a name="251"><span class="lineNum">     251 </span>            : </a>
+<a name="252"><span class="lineNum">     252 </span><span class="lineNoCov">          0 : static int __init nonmi_ipi_setup(char *str)</span></a>
+<a name="253"><span class="lineNum">     253 </span>            : {</a>
+<a name="254"><span class="lineNum">     254 </span><span class="lineNoCov">          0 :         smp_no_nmi_ipi = true;</span></a>
+<a name="255"><span class="lineNum">     255 </span><span class="lineNoCov">          0 :         return 1;</span></a>
+<a name="256"><span class="lineNum">     256 </span>            : }</a>
+<a name="257"><span class="lineNum">     257 </span>            : </a>
+<a name="258"><span class="lineNum">     258 </span>            : __setup(&quot;nonmi_ipi&quot;, nonmi_ipi_setup);</a>
+<a name="259"><span class="lineNum">     259 </span>            : </a>
+<a name="260"><span class="lineNum">     260 </span>            : struct smp_ops smp_ops = {</a>
+<a name="261"><span class="lineNum">     261 </span>            :         .smp_prepare_boot_cpu   = native_smp_prepare_boot_cpu,</a>
+<a name="262"><span class="lineNum">     262 </span>            :         .smp_prepare_cpus       = native_smp_prepare_cpus,</a>
+<a name="263"><span class="lineNum">     263 </span>            :         .smp_cpus_done          = native_smp_cpus_done,</a>
+<a name="264"><span class="lineNum">     264 </span>            : </a>
+<a name="265"><span class="lineNum">     265 </span>            :         .stop_other_cpus        = native_stop_other_cpus,</a>
+<a name="266"><span class="lineNum">     266 </span>            : #if defined(CONFIG_KEXEC_CORE)</a>
+<a name="267"><span class="lineNum">     267 </span>            :         .crash_stop_other_cpus  = kdump_nmi_shootdown_cpus,</a>
+<a name="268"><span class="lineNum">     268 </span>            : #endif</a>
+<a name="269"><span class="lineNum">     269 </span>            :         .smp_send_reschedule    = native_smp_send_reschedule,</a>
+<a name="270"><span class="lineNum">     270 </span>            : </a>
+<a name="271"><span class="lineNum">     271 </span>            :         .cpu_up                 = native_cpu_up,</a>
+<a name="272"><span class="lineNum">     272 </span>            :         .cpu_die                = native_cpu_die,</a>
+<a name="273"><span class="lineNum">     273 </span>            :         .cpu_disable            = native_cpu_disable,</a>
+<a name="274"><span class="lineNum">     274 </span>            :         .play_dead              = native_play_dead,</a>
+<a name="275"><span class="lineNum">     275 </span>            : </a>
+<a name="276"><span class="lineNum">     276 </span>            :         .send_call_func_ipi     = native_send_call_func_ipi,</a>
+<a name="277"><span class="lineNum">     277 </span>            :         .send_call_func_single_ipi = native_send_call_func_single_ipi,</a>
+<a name="278"><span class="lineNum">     278 </span>            : };</a>
+<a name="279"><span class="lineNum">     279 </span>            : EXPORT_SYMBOL_GPL(smp_ops);</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

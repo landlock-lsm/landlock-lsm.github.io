@@ -1,0 +1,890 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - landlock.info - lib/kobject_uevent.c</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">lib</a> - kobject_uevent.c<span style="font-size: 80%;"> (source / <a href="kobject_uevent.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">landlock.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">180</td>
+            <td class="headerCovTableEntry">372</td>
+            <td class="headerCovTableEntryLo">48.4 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2021-04-22 12:43:58</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">12</td>
+            <td class="headerCovTableEntry">21</td>
+            <td class="headerCovTableEntryLo">57.1 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : // SPDX-License-Identifier: GPL-2.0</a>
+<a name="2"><span class="lineNum">       2 </span>            : /*</a>
+<a name="3"><span class="lineNum">       3 </span>            :  * kernel userspace event delivery</a>
+<a name="4"><span class="lineNum">       4 </span>            :  *</a>
+<a name="5"><span class="lineNum">       5 </span>            :  * Copyright (C) 2004 Red Hat, Inc.  All rights reserved.</a>
+<a name="6"><span class="lineNum">       6 </span>            :  * Copyright (C) 2004 Novell, Inc.  All rights reserved.</a>
+<a name="7"><span class="lineNum">       7 </span>            :  * Copyright (C) 2004 IBM, Inc. All rights reserved.</a>
+<a name="8"><span class="lineNum">       8 </span>            :  *</a>
+<a name="9"><span class="lineNum">       9 </span>            :  * Authors:</a>
+<a name="10"><span class="lineNum">      10 </span>            :  *      Robert Love             &lt;rml@novell.com&gt;</a>
+<a name="11"><span class="lineNum">      11 </span>            :  *      Kay Sievers             &lt;kay.sievers@vrfy.org&gt;</a>
+<a name="12"><span class="lineNum">      12 </span>            :  *      Arjan van de Ven        &lt;arjanv@redhat.com&gt;</a>
+<a name="13"><span class="lineNum">      13 </span>            :  *      Greg Kroah-Hartman      &lt;greg@kroah.com&gt;</a>
+<a name="14"><span class="lineNum">      14 </span>            :  */</a>
+<a name="15"><span class="lineNum">      15 </span>            : </a>
+<a name="16"><span class="lineNum">      16 </span>            : #include &lt;linux/spinlock.h&gt;</a>
+<a name="17"><span class="lineNum">      17 </span>            : #include &lt;linux/string.h&gt;</a>
+<a name="18"><span class="lineNum">      18 </span>            : #include &lt;linux/kobject.h&gt;</a>
+<a name="19"><span class="lineNum">      19 </span>            : #include &lt;linux/export.h&gt;</a>
+<a name="20"><span class="lineNum">      20 </span>            : #include &lt;linux/kmod.h&gt;</a>
+<a name="21"><span class="lineNum">      21 </span>            : #include &lt;linux/slab.h&gt;</a>
+<a name="22"><span class="lineNum">      22 </span>            : #include &lt;linux/socket.h&gt;</a>
+<a name="23"><span class="lineNum">      23 </span>            : #include &lt;linux/skbuff.h&gt;</a>
+<a name="24"><span class="lineNum">      24 </span>            : #include &lt;linux/netlink.h&gt;</a>
+<a name="25"><span class="lineNum">      25 </span>            : #include &lt;linux/uidgid.h&gt;</a>
+<a name="26"><span class="lineNum">      26 </span>            : #include &lt;linux/uuid.h&gt;</a>
+<a name="27"><span class="lineNum">      27 </span>            : #include &lt;linux/ctype.h&gt;</a>
+<a name="28"><span class="lineNum">      28 </span>            : #include &lt;net/sock.h&gt;</a>
+<a name="29"><span class="lineNum">      29 </span>            : #include &lt;net/netlink.h&gt;</a>
+<a name="30"><span class="lineNum">      30 </span>            : #include &lt;net/net_namespace.h&gt;</a>
+<a name="31"><span class="lineNum">      31 </span>            : </a>
+<a name="32"><span class="lineNum">      32 </span>            : </a>
+<a name="33"><span class="lineNum">      33 </span>            : u64 uevent_seqnum;</a>
+<a name="34"><span class="lineNum">      34 </span>            : #ifdef CONFIG_UEVENT_HELPER</a>
+<a name="35"><span class="lineNum">      35 </span>            : char uevent_helper[UEVENT_HELPER_PATH_LEN] = CONFIG_UEVENT_HELPER_PATH;</a>
+<a name="36"><span class="lineNum">      36 </span>            : #endif</a>
+<a name="37"><span class="lineNum">      37 </span>            : </a>
+<a name="38"><span class="lineNum">      38 </span>            : struct uevent_sock {</a>
+<a name="39"><span class="lineNum">      39 </span>            :         struct list_head list;</a>
+<a name="40"><span class="lineNum">      40 </span>            :         struct sock *sk;</a>
+<a name="41"><span class="lineNum">      41 </span>            : };</a>
+<a name="42"><span class="lineNum">      42 </span>            : </a>
+<a name="43"><span class="lineNum">      43 </span>            : #ifdef CONFIG_NET</a>
+<a name="44"><span class="lineNum">      44 </span>            : static LIST_HEAD(uevent_sock_list);</a>
+<a name="45"><span class="lineNum">      45 </span>            : #endif</a>
+<a name="46"><span class="lineNum">      46 </span>            : </a>
+<a name="47"><span class="lineNum">      47 </span>            : /* This lock protects uevent_seqnum and uevent_sock_list */</a>
+<a name="48"><span class="lineNum">      48 </span>            : static DEFINE_MUTEX(uevent_sock_mutex);</a>
+<a name="49"><span class="lineNum">      49 </span>            : </a>
+<a name="50"><span class="lineNum">      50 </span>            : /* the strings here must match the enum in include/linux/kobject.h */</a>
+<a name="51"><span class="lineNum">      51 </span>            : static const char *kobject_actions[] = {</a>
+<a name="52"><span class="lineNum">      52 </span>            :         [KOBJ_ADD] =            &quot;add&quot;,</a>
+<a name="53"><span class="lineNum">      53 </span>            :         [KOBJ_REMOVE] =         &quot;remove&quot;,</a>
+<a name="54"><span class="lineNum">      54 </span>            :         [KOBJ_CHANGE] =         &quot;change&quot;,</a>
+<a name="55"><span class="lineNum">      55 </span>            :         [KOBJ_MOVE] =           &quot;move&quot;,</a>
+<a name="56"><span class="lineNum">      56 </span>            :         [KOBJ_ONLINE] =         &quot;online&quot;,</a>
+<a name="57"><span class="lineNum">      57 </span>            :         [KOBJ_OFFLINE] =        &quot;offline&quot;,</a>
+<a name="58"><span class="lineNum">      58 </span>            :         [KOBJ_BIND] =           &quot;bind&quot;,</a>
+<a name="59"><span class="lineNum">      59 </span>            :         [KOBJ_UNBIND] =         &quot;unbind&quot;,</a>
+<a name="60"><span class="lineNum">      60 </span>            : };</a>
+<a name="61"><span class="lineNum">      61 </span>            : </a>
+<a name="62"><span class="lineNum">      62 </span><span class="lineCov">        171 : static int kobject_action_type(const char *buf, size_t count,</span></a>
+<a name="63"><span class="lineNum">      63 </span>            :                                enum kobject_action *type,</a>
+<a name="64"><span class="lineNum">      64 </span>            :                                const char **args)</a>
+<a name="65"><span class="lineNum">      65 </span>            : {</a>
+<a name="66"><span class="lineNum">      66 </span><span class="lineCov">        171 :         enum kobject_action action;</span></a>
+<a name="67"><span class="lineNum">      67 </span><span class="lineCov">        171 :         size_t count_first;</span></a>
+<a name="68"><span class="lineNum">      68 </span><span class="lineCov">        171 :         const char *args_start;</span></a>
+<a name="69"><span class="lineNum">      69 </span><span class="lineCov">        171 :         int ret = -EINVAL;</span></a>
+<a name="70"><span class="lineNum">      70 </span>            : </a>
+<a name="71"><span class="lineNum">      71 </span><span class="lineCov">        171 :         if (count &amp;&amp; (buf[count-1] == '\n' || buf[count-1] == '\0'))</span></a>
+<a name="72"><span class="lineNum">      72 </span><span class="lineCov">        171 :                 count--;</span></a>
+<a name="73"><span class="lineNum">      73 </span>            : </a>
+<a name="74"><span class="lineNum">      74 </span><span class="lineCov">        171 :         if (!count)</span></a>
+<a name="75"><span class="lineNum">      75 </span><span class="lineNoCov">          0 :                 goto out;</span></a>
+<a name="76"><span class="lineNum">      76 </span>            : </a>
+<a name="77"><span class="lineNum">      77 </span><span class="lineCov">        171 :         args_start = strnchr(buf, count, ' ');</span></a>
+<a name="78"><span class="lineNum">      78 </span><span class="lineCov">        171 :         if (args_start) {</span></a>
+<a name="79"><span class="lineNum">      79 </span><span class="lineNoCov">          0 :                 count_first = args_start - buf;</span></a>
+<a name="80"><span class="lineNum">      80 </span><span class="lineNoCov">          0 :                 args_start = args_start + 1;</span></a>
+<a name="81"><span class="lineNum">      81 </span>            :         } else</a>
+<a name="82"><span class="lineNum">      82 </span>            :                 count_first = count;</a>
+<a name="83"><span class="lineNum">      83 </span>            : </a>
+<a name="84"><span class="lineNum">      84 </span><span class="lineCov">        171 :         for (action = 0; action &lt; ARRAY_SIZE(kobject_actions); action++) {</span></a>
+<a name="85"><span class="lineNum">      85 </span><span class="lineCov">        171 :                 if (strncmp(kobject_actions[action], buf, count_first) != 0)</span></a>
+<a name="86"><span class="lineNum">      86 </span><span class="lineNoCov">          0 :                         continue;</span></a>
+<a name="87"><span class="lineNum">      87 </span><span class="lineCov">        171 :                 if (kobject_actions[action][count_first] != '\0')</span></a>
+<a name="88"><span class="lineNum">      88 </span><span class="lineNoCov">          0 :                         continue;</span></a>
+<a name="89"><span class="lineNum">      89 </span><span class="lineCov">        171 :                 if (args)</span></a>
+<a name="90"><span class="lineNum">      90 </span><span class="lineCov">        171 :                         *args = args_start;</span></a>
+<a name="91"><span class="lineNum">      91 </span><span class="lineCov">        171 :                 *type = action;</span></a>
+<a name="92"><span class="lineNum">      92 </span><span class="lineCov">        171 :                 ret = 0;</span></a>
+<a name="93"><span class="lineNum">      93 </span><span class="lineCov">        171 :                 break;</span></a>
+<a name="94"><span class="lineNum">      94 </span>            :         }</a>
+<a name="95"><span class="lineNum">      95 </span><span class="lineNoCov">          0 : out:</span></a>
+<a name="96"><span class="lineNum">      96 </span><span class="lineCov">        171 :         return ret;</span></a>
+<a name="97"><span class="lineNum">      97 </span>            : }</a>
+<a name="98"><span class="lineNum">      98 </span>            : </a>
+<a name="99"><span class="lineNum">      99 </span><span class="lineNoCov">          0 : static const char *action_arg_word_end(const char *buf, const char *buf_end,</span></a>
+<a name="100"><span class="lineNum">     100 </span>            :                                        char delim)</a>
+<a name="101"><span class="lineNum">     101 </span>            : {</a>
+<a name="102"><span class="lineNum">     102 </span><span class="lineNoCov">          0 :         const char *next = buf;</span></a>
+<a name="103"><span class="lineNum">     103 </span>            : </a>
+<a name="104"><span class="lineNum">     104 </span><span class="lineNoCov">          0 :         while (next &lt;= buf_end &amp;&amp; *next != delim)</span></a>
+<a name="105"><span class="lineNum">     105 </span><span class="lineNoCov">          0 :                 if (!isalnum(*next++))</span></a>
+<a name="106"><span class="lineNum">     106 </span>            :                         return NULL;</a>
+<a name="107"><span class="lineNum">     107 </span>            : </a>
+<a name="108"><span class="lineNum">     108 </span><span class="lineNoCov">          0 :         if (next == buf)</span></a>
+<a name="109"><span class="lineNum">     109 </span><span class="lineNoCov">          0 :                 return NULL;</span></a>
+<a name="110"><span class="lineNum">     110 </span>            : </a>
+<a name="111"><span class="lineNum">     111 </span>            :         return next;</a>
+<a name="112"><span class="lineNum">     112 </span>            : }</a>
+<a name="113"><span class="lineNum">     113 </span>            : </a>
+<a name="114"><span class="lineNum">     114 </span><span class="lineNoCov">          0 : static int kobject_action_args(const char *buf, size_t count,</span></a>
+<a name="115"><span class="lineNum">     115 </span>            :                                struct kobj_uevent_env **ret_env)</a>
+<a name="116"><span class="lineNum">     116 </span>            : {</a>
+<a name="117"><span class="lineNum">     117 </span><span class="lineNoCov">          0 :         struct kobj_uevent_env *env = NULL;</span></a>
+<a name="118"><span class="lineNum">     118 </span><span class="lineNoCov">          0 :         const char *next, *buf_end, *key;</span></a>
+<a name="119"><span class="lineNum">     119 </span><span class="lineNoCov">          0 :         int key_len;</span></a>
+<a name="120"><span class="lineNum">     120 </span><span class="lineNoCov">          0 :         int r = -EINVAL;</span></a>
+<a name="121"><span class="lineNum">     121 </span>            : </a>
+<a name="122"><span class="lineNum">     122 </span><span class="lineNoCov">          0 :         if (count &amp;&amp; (buf[count - 1] == '\n' || buf[count - 1] == '\0'))</span></a>
+<a name="123"><span class="lineNum">     123 </span><span class="lineNoCov">          0 :                 count--;</span></a>
+<a name="124"><span class="lineNum">     124 </span>            : </a>
+<a name="125"><span class="lineNum">     125 </span><span class="lineNoCov">          0 :         if (!count)</span></a>
+<a name="126"><span class="lineNum">     126 </span>            :                 return -EINVAL;</a>
+<a name="127"><span class="lineNum">     127 </span>            : </a>
+<a name="128"><span class="lineNum">     128 </span><span class="lineNoCov">          0 :         env = kzalloc(sizeof(*env), GFP_KERNEL);</span></a>
+<a name="129"><span class="lineNum">     129 </span><span class="lineNoCov">          0 :         if (!env)</span></a>
+<a name="130"><span class="lineNum">     130 </span>            :                 return -ENOMEM;</a>
+<a name="131"><span class="lineNum">     131 </span>            : </a>
+<a name="132"><span class="lineNum">     132 </span>            :         /* first arg is UUID */</a>
+<a name="133"><span class="lineNum">     133 </span><span class="lineNoCov">          0 :         if (count &lt; UUID_STRING_LEN || !uuid_is_valid(buf) ||</span></a>
+<a name="134"><span class="lineNum">     134 </span><span class="lineNoCov">          0 :             add_uevent_var(env, &quot;SYNTH_UUID=%.*s&quot;, UUID_STRING_LEN, buf))</span></a>
+<a name="135"><span class="lineNum">     135 </span><span class="lineNoCov">          0 :                 goto out;</span></a>
+<a name="136"><span class="lineNum">     136 </span>            : </a>
+<a name="137"><span class="lineNum">     137 </span>            :         /*</a>
+<a name="138"><span class="lineNum">     138 </span>            :          * the rest are custom environment variables in KEY=VALUE</a>
+<a name="139"><span class="lineNum">     139 </span>            :          * format with ' ' delimiter between each KEY=VALUE pair</a>
+<a name="140"><span class="lineNum">     140 </span>            :          */</a>
+<a name="141"><span class="lineNum">     141 </span><span class="lineNoCov">          0 :         next = buf + UUID_STRING_LEN;</span></a>
+<a name="142"><span class="lineNum">     142 </span><span class="lineNoCov">          0 :         buf_end = buf + count - 1;</span></a>
+<a name="143"><span class="lineNum">     143 </span>            : </a>
+<a name="144"><span class="lineNum">     144 </span><span class="lineNoCov">          0 :         while (next &lt;= buf_end) {</span></a>
+<a name="145"><span class="lineNum">     145 </span><span class="lineNoCov">          0 :                 if (*next != ' ')</span></a>
+<a name="146"><span class="lineNum">     146 </span><span class="lineNoCov">          0 :                         goto out;</span></a>
+<a name="147"><span class="lineNum">     147 </span>            : </a>
+<a name="148"><span class="lineNum">     148 </span>            :                 /* skip the ' ', key must follow */</a>
+<a name="149"><span class="lineNum">     149 </span><span class="lineNoCov">          0 :                 key = ++next;</span></a>
+<a name="150"><span class="lineNum">     150 </span><span class="lineNoCov">          0 :                 if (key &gt; buf_end)</span></a>
+<a name="151"><span class="lineNum">     151 </span><span class="lineNoCov">          0 :                         goto out;</span></a>
+<a name="152"><span class="lineNum">     152 </span>            : </a>
+<a name="153"><span class="lineNum">     153 </span><span class="lineNoCov">          0 :                 buf = next;</span></a>
+<a name="154"><span class="lineNum">     154 </span><span class="lineNoCov">          0 :                 next = action_arg_word_end(buf, buf_end, '=');</span></a>
+<a name="155"><span class="lineNum">     155 </span><span class="lineNoCov">          0 :                 if (!next || next &gt; buf_end || *next != '=')</span></a>
+<a name="156"><span class="lineNum">     156 </span><span class="lineNoCov">          0 :                         goto out;</span></a>
+<a name="157"><span class="lineNum">     157 </span><span class="lineNoCov">          0 :                 key_len = next - buf;</span></a>
+<a name="158"><span class="lineNum">     158 </span>            : </a>
+<a name="159"><span class="lineNum">     159 </span>            :                 /* skip the '=', value must follow */</a>
+<a name="160"><span class="lineNum">     160 </span><span class="lineNoCov">          0 :                 if (++next &gt; buf_end)</span></a>
+<a name="161"><span class="lineNum">     161 </span><span class="lineNoCov">          0 :                         goto out;</span></a>
+<a name="162"><span class="lineNum">     162 </span>            : </a>
+<a name="163"><span class="lineNum">     163 </span><span class="lineNoCov">          0 :                 buf = next;</span></a>
+<a name="164"><span class="lineNum">     164 </span><span class="lineNoCov">          0 :                 next = action_arg_word_end(buf, buf_end, ' ');</span></a>
+<a name="165"><span class="lineNum">     165 </span><span class="lineNoCov">          0 :                 if (!next)</span></a>
+<a name="166"><span class="lineNum">     166 </span><span class="lineNoCov">          0 :                         goto out;</span></a>
+<a name="167"><span class="lineNum">     167 </span>            : </a>
+<a name="168"><span class="lineNum">     168 </span><span class="lineNoCov">          0 :                 if (add_uevent_var(env, &quot;SYNTH_ARG_%.*s=%.*s&quot;,</span></a>
+<a name="169"><span class="lineNum">     169 </span><span class="lineNoCov">          0 :                                    key_len, key, (int) (next - buf), buf))</span></a>
+<a name="170"><span class="lineNum">     170 </span><span class="lineNoCov">          0 :                         goto out;</span></a>
+<a name="171"><span class="lineNum">     171 </span>            :         }</a>
+<a name="172"><span class="lineNum">     172 </span>            : </a>
+<a name="173"><span class="lineNum">     173 </span>            :         r = 0;</a>
+<a name="174"><span class="lineNum">     174 </span><span class="lineNoCov">          0 : out:</span></a>
+<a name="175"><span class="lineNum">     175 </span><span class="lineNoCov">          0 :         if (r)</span></a>
+<a name="176"><span class="lineNum">     176 </span><span class="lineNoCov">          0 :                 kfree(env);</span></a>
+<a name="177"><span class="lineNum">     177 </span>            :         else</a>
+<a name="178"><span class="lineNum">     178 </span><span class="lineNoCov">          0 :                 *ret_env = env;</span></a>
+<a name="179"><span class="lineNum">     179 </span>            :         return r;</a>
+<a name="180"><span class="lineNum">     180 </span>            : }</a>
+<a name="181"><span class="lineNum">     181 </span>            : </a>
+<a name="182"><span class="lineNum">     182 </span>            : /**</a>
+<a name="183"><span class="lineNum">     183 </span>            :  * kobject_synth_uevent - send synthetic uevent with arguments</a>
+<a name="184"><span class="lineNum">     184 </span>            :  *</a>
+<a name="185"><span class="lineNum">     185 </span>            :  * @kobj: struct kobject for which synthetic uevent is to be generated</a>
+<a name="186"><span class="lineNum">     186 </span>            :  * @buf: buffer containing action type and action args, newline is ignored</a>
+<a name="187"><span class="lineNum">     187 </span>            :  * @count: length of buffer</a>
+<a name="188"><span class="lineNum">     188 </span>            :  *</a>
+<a name="189"><span class="lineNum">     189 </span>            :  * Returns 0 if kobject_synthetic_uevent() is completed with success or the</a>
+<a name="190"><span class="lineNum">     190 </span>            :  * corresponding error when it fails.</a>
+<a name="191"><span class="lineNum">     191 </span>            :  */</a>
+<a name="192"><span class="lineNum">     192 </span><span class="lineCov">        171 : int kobject_synth_uevent(struct kobject *kobj, const char *buf, size_t count)</span></a>
+<a name="193"><span class="lineNum">     193 </span>            : {</a>
+<a name="194"><span class="lineNum">     194 </span><span class="lineCov">        171 :         char *no_uuid_envp[] = { &quot;SYNTH_UUID=0&quot;, NULL };</span></a>
+<a name="195"><span class="lineNum">     195 </span><span class="lineCov">        171 :         enum kobject_action action;</span></a>
+<a name="196"><span class="lineNum">     196 </span><span class="lineCov">        171 :         const char *action_args;</span></a>
+<a name="197"><span class="lineNum">     197 </span><span class="lineCov">        171 :         struct kobj_uevent_env *env;</span></a>
+<a name="198"><span class="lineNum">     198 </span><span class="lineCov">        171 :         const char *msg = NULL, *devpath;</span></a>
+<a name="199"><span class="lineNum">     199 </span><span class="lineCov">        171 :         int r;</span></a>
+<a name="200"><span class="lineNum">     200 </span>            : </a>
+<a name="201"><span class="lineNum">     201 </span><span class="lineCov">        171 :         r = kobject_action_type(buf, count, &amp;action, &amp;action_args);</span></a>
+<a name="202"><span class="lineNum">     202 </span><span class="lineCov">        171 :         if (r) {</span></a>
+<a name="203"><span class="lineNum">     203 </span><span class="lineNoCov">          0 :                 msg = &quot;unknown uevent action string&quot;;</span></a>
+<a name="204"><span class="lineNum">     204 </span><span class="lineNoCov">          0 :                 goto out;</span></a>
+<a name="205"><span class="lineNum">     205 </span>            :         }</a>
+<a name="206"><span class="lineNum">     206 </span>            : </a>
+<a name="207"><span class="lineNum">     207 </span><span class="lineCov">        171 :         if (!action_args) {</span></a>
+<a name="208"><span class="lineNum">     208 </span><span class="lineCov">        171 :                 r = kobject_uevent_env(kobj, action, no_uuid_envp);</span></a>
+<a name="209"><span class="lineNum">     209 </span><span class="lineCov">        171 :                 goto out;</span></a>
+<a name="210"><span class="lineNum">     210 </span>            :         }</a>
+<a name="211"><span class="lineNum">     211 </span>            : </a>
+<a name="212"><span class="lineNum">     212 </span><span class="lineNoCov">          0 :         r = kobject_action_args(action_args,</span></a>
+<a name="213"><span class="lineNum">     213 </span><span class="lineNoCov">          0 :                                 count - (action_args - buf), &amp;env);</span></a>
+<a name="214"><span class="lineNum">     214 </span><span class="lineNoCov">          0 :         if (r == -EINVAL) {</span></a>
+<a name="215"><span class="lineNum">     215 </span><span class="lineNoCov">          0 :                 msg = &quot;incorrect uevent action arguments&quot;;</span></a>
+<a name="216"><span class="lineNum">     216 </span><span class="lineNoCov">          0 :                 goto out;</span></a>
+<a name="217"><span class="lineNum">     217 </span>            :         }</a>
+<a name="218"><span class="lineNum">     218 </span>            : </a>
+<a name="219"><span class="lineNum">     219 </span><span class="lineNoCov">          0 :         if (r)</span></a>
+<a name="220"><span class="lineNum">     220 </span><span class="lineNoCov">          0 :                 goto out;</span></a>
+<a name="221"><span class="lineNum">     221 </span>            : </a>
+<a name="222"><span class="lineNum">     222 </span><span class="lineNoCov">          0 :         r = kobject_uevent_env(kobj, action, env-&gt;envp);</span></a>
+<a name="223"><span class="lineNum">     223 </span><span class="lineNoCov">          0 :         kfree(env);</span></a>
+<a name="224"><span class="lineNum">     224 </span><span class="lineCov">        171 : out:</span></a>
+<a name="225"><span class="lineNum">     225 </span><span class="lineCov">        171 :         if (r) {</span></a>
+<a name="226"><span class="lineNum">     226 </span><span class="lineNoCov">          0 :                 devpath = kobject_get_path(kobj, GFP_KERNEL);</span></a>
+<a name="227"><span class="lineNum">     227 </span><span class="lineNoCov">          0 :                 pr_warn(&quot;synth uevent: %s: %s\n&quot;,</span></a>
+<a name="228"><span class="lineNum">     228 </span>            :                        devpath ?: &quot;unknown device&quot;,</a>
+<a name="229"><span class="lineNum">     229 </span>            :                        msg ?: &quot;failed to send uevent&quot;);</a>
+<a name="230"><span class="lineNum">     230 </span><span class="lineNoCov">          0 :                 kfree(devpath);</span></a>
+<a name="231"><span class="lineNum">     231 </span>            :         }</a>
+<a name="232"><span class="lineNum">     232 </span><span class="lineCov">        171 :         return r;</span></a>
+<a name="233"><span class="lineNum">     233 </span>            : }</a>
+<a name="234"><span class="lineNum">     234 </span>            : </a>
+<a name="235"><span class="lineNum">     235 </span>            : #ifdef CONFIG_UEVENT_HELPER</a>
+<a name="236"><span class="lineNum">     236 </span><span class="lineNoCov">          0 : static int kobj_usermode_filter(struct kobject *kobj)</span></a>
+<a name="237"><span class="lineNum">     237 </span>            : {</a>
+<a name="238"><span class="lineNum">     238 </span><span class="lineNoCov">          0 :         const struct kobj_ns_type_operations *ops;</span></a>
+<a name="239"><span class="lineNum">     239 </span>            : </a>
+<a name="240"><span class="lineNum">     240 </span><span class="lineNoCov">          0 :         ops = kobj_ns_ops(kobj);</span></a>
+<a name="241"><span class="lineNum">     241 </span><span class="lineNoCov">          0 :         if (ops) {</span></a>
+<a name="242"><span class="lineNum">     242 </span><span class="lineNoCov">          0 :                 const void *init_ns, *ns;</span></a>
+<a name="243"><span class="lineNum">     243 </span>            : </a>
+<a name="244"><span class="lineNum">     244 </span><span class="lineNoCov">          0 :                 ns = kobj-&gt;ktype-&gt;namespace(kobj);</span></a>
+<a name="245"><span class="lineNum">     245 </span><span class="lineNoCov">          0 :                 init_ns = ops-&gt;initial_ns();</span></a>
+<a name="246"><span class="lineNum">     246 </span><span class="lineNoCov">          0 :                 return ns != init_ns;</span></a>
+<a name="247"><span class="lineNum">     247 </span>            :         }</a>
+<a name="248"><span class="lineNum">     248 </span>            : </a>
+<a name="249"><span class="lineNum">     249 </span>            :         return 0;</a>
+<a name="250"><span class="lineNum">     250 </span>            : }</a>
+<a name="251"><span class="lineNum">     251 </span>            : </a>
+<a name="252"><span class="lineNum">     252 </span><span class="lineNoCov">          0 : static int init_uevent_argv(struct kobj_uevent_env *env, const char *subsystem)</span></a>
+<a name="253"><span class="lineNum">     253 </span>            : {</a>
+<a name="254"><span class="lineNum">     254 </span><span class="lineNoCov">          0 :         int len;</span></a>
+<a name="255"><span class="lineNum">     255 </span>            : </a>
+<a name="256"><span class="lineNum">     256 </span><span class="lineNoCov">          0 :         len = strlcpy(&amp;env-&gt;buf[env-&gt;buflen], subsystem,</span></a>
+<a name="257"><span class="lineNum">     257 </span><span class="lineNoCov">          0 :                       sizeof(env-&gt;buf) - env-&gt;buflen);</span></a>
+<a name="258"><span class="lineNum">     258 </span><span class="lineNoCov">          0 :         if (len &gt;= (sizeof(env-&gt;buf) - env-&gt;buflen)) {</span></a>
+<a name="259"><span class="lineNum">     259 </span><span class="lineNoCov">          0 :                 WARN(1, KERN_ERR &quot;init_uevent_argv: buffer size too small\n&quot;);</span></a>
+<a name="260"><span class="lineNum">     260 </span><span class="lineNoCov">          0 :                 return -ENOMEM;</span></a>
+<a name="261"><span class="lineNum">     261 </span>            :         }</a>
+<a name="262"><span class="lineNum">     262 </span>            : </a>
+<a name="263"><span class="lineNum">     263 </span><span class="lineNoCov">          0 :         env-&gt;argv[0] = uevent_helper;</span></a>
+<a name="264"><span class="lineNum">     264 </span><span class="lineNoCov">          0 :         env-&gt;argv[1] = &amp;env-&gt;buf[env-&gt;buflen];</span></a>
+<a name="265"><span class="lineNum">     265 </span><span class="lineNoCov">          0 :         env-&gt;argv[2] = NULL;</span></a>
+<a name="266"><span class="lineNum">     266 </span>            : </a>
+<a name="267"><span class="lineNum">     267 </span><span class="lineNoCov">          0 :         env-&gt;buflen += len + 1;</span></a>
+<a name="268"><span class="lineNum">     268 </span><span class="lineNoCov">          0 :         return 0;</span></a>
+<a name="269"><span class="lineNum">     269 </span>            : }</a>
+<a name="270"><span class="lineNum">     270 </span>            : </a>
+<a name="271"><span class="lineNum">     271 </span><span class="lineNoCov">          0 : static void cleanup_uevent_env(struct subprocess_info *info)</span></a>
+<a name="272"><span class="lineNum">     272 </span>            : {</a>
+<a name="273"><span class="lineNum">     273 </span><span class="lineNoCov">          0 :         kfree(info-&gt;data);</span></a>
+<a name="274"><span class="lineNum">     274 </span><span class="lineNoCov">          0 : }</span></a>
+<a name="275"><span class="lineNum">     275 </span>            : #endif</a>
+<a name="276"><span class="lineNum">     276 </span>            : </a>
+<a name="277"><span class="lineNum">     277 </span>            : #ifdef CONFIG_NET</a>
+<a name="278"><span class="lineNum">     278 </span><span class="lineCov">        192 : static struct sk_buff *alloc_uevent_skb(struct kobj_uevent_env *env,</span></a>
+<a name="279"><span class="lineNum">     279 </span>            :                                         const char *action_string,</a>
+<a name="280"><span class="lineNum">     280 </span>            :                                         const char *devpath)</a>
+<a name="281"><span class="lineNum">     281 </span>            : {</a>
+<a name="282"><span class="lineNum">     282 </span><span class="lineCov">        192 :         struct netlink_skb_parms *parms;</span></a>
+<a name="283"><span class="lineNum">     283 </span><span class="lineCov">        192 :         struct sk_buff *skb = NULL;</span></a>
+<a name="284"><span class="lineNum">     284 </span><span class="lineCov">        192 :         char *scratch;</span></a>
+<a name="285"><span class="lineNum">     285 </span><span class="lineCov">        192 :         size_t len;</span></a>
+<a name="286"><span class="lineNum">     286 </span>            : </a>
+<a name="287"><span class="lineNum">     287 </span>            :         /* allocate message with maximum possible size */</a>
+<a name="288"><span class="lineNum">     288 </span><span class="lineCov">        192 :         len = strlen(action_string) + strlen(devpath) + 2;</span></a>
+<a name="289"><span class="lineNum">     289 </span><span class="lineCov">        192 :         skb = alloc_skb(len + env-&gt;buflen, GFP_KERNEL);</span></a>
+<a name="290"><span class="lineNum">     290 </span><span class="lineCov">        192 :         if (!skb)</span></a>
+<a name="291"><span class="lineNum">     291 </span>            :                 return NULL;</a>
+<a name="292"><span class="lineNum">     292 </span>            : </a>
+<a name="293"><span class="lineNum">     293 </span>            :         /* add header */</a>
+<a name="294"><span class="lineNum">     294 </span><span class="lineCov">        192 :         scratch = skb_put(skb, len);</span></a>
+<a name="295"><span class="lineNum">     295 </span><span class="lineCov">        192 :         sprintf(scratch, &quot;%s@%s&quot;, action_string, devpath);</span></a>
+<a name="296"><span class="lineNum">     296 </span>            : </a>
+<a name="297"><span class="lineNum">     297 </span><span class="lineCov">        192 :         skb_put_data(skb, env-&gt;buf, env-&gt;buflen);</span></a>
+<a name="298"><span class="lineNum">     298 </span>            : </a>
+<a name="299"><span class="lineNum">     299 </span><span class="lineCov">        192 :         parms = &amp;NETLINK_CB(skb);</span></a>
+<a name="300"><span class="lineNum">     300 </span><span class="lineCov">        192 :         parms-&gt;creds.uid = GLOBAL_ROOT_UID;</span></a>
+<a name="301"><span class="lineNum">     301 </span><span class="lineCov">        192 :         parms-&gt;creds.gid = GLOBAL_ROOT_GID;</span></a>
+<a name="302"><span class="lineNum">     302 </span><span class="lineCov">        192 :         parms-&gt;dst_group = 1;</span></a>
+<a name="303"><span class="lineNum">     303 </span><span class="lineCov">        192 :         parms-&gt;portid = 0;</span></a>
+<a name="304"><span class="lineNum">     304 </span>            : </a>
+<a name="305"><span class="lineNum">     305 </span><span class="lineCov">        192 :         return skb;</span></a>
+<a name="306"><span class="lineNum">     306 </span>            : }</a>
+<a name="307"><span class="lineNum">     307 </span>            : </a>
+<a name="308"><span class="lineNum">     308 </span><span class="lineCov">        471 : static int uevent_net_broadcast_untagged(struct kobj_uevent_env *env,</span></a>
+<a name="309"><span class="lineNum">     309 </span>            :                                          const char *action_string,</a>
+<a name="310"><span class="lineNum">     310 </span>            :                                          const char *devpath)</a>
+<a name="311"><span class="lineNum">     311 </span>            : {</a>
+<a name="312"><span class="lineNum">     312 </span><span class="lineCov">        471 :         struct sk_buff *skb = NULL;</span></a>
+<a name="313"><span class="lineNum">     313 </span><span class="lineCov">        471 :         struct uevent_sock *ue_sk;</span></a>
+<a name="314"><span class="lineNum">     314 </span><span class="lineCov">        471 :         int retval = 0;</span></a>
+<a name="315"><span class="lineNum">     315 </span>            : </a>
+<a name="316"><span class="lineNum">     316 </span>            :         /* send netlink message */</a>
+<a name="317"><span class="lineNum">     317 </span><span class="lineCov">        931 :         list_for_each_entry(ue_sk, &amp;uevent_sock_list, list) {</span></a>
+<a name="318"><span class="lineNum">     318 </span><span class="lineCov">        460 :                 struct sock *uevent_sock = ue_sk-&gt;sk;</span></a>
+<a name="319"><span class="lineNum">     319 </span>            : </a>
+<a name="320"><span class="lineNum">     320 </span><span class="lineCov">        460 :                 if (!netlink_has_listeners(uevent_sock, 1))</span></a>
+<a name="321"><span class="lineNum">     321 </span><span class="lineCov">        276 :                         continue;</span></a>
+<a name="322"><span class="lineNum">     322 </span>            : </a>
+<a name="323"><span class="lineNum">     323 </span><span class="lineCov">        184 :                 if (!skb) {</span></a>
+<a name="324"><span class="lineNum">     324 </span><span class="lineCov">        184 :                         retval = -ENOMEM;</span></a>
+<a name="325"><span class="lineNum">     325 </span><span class="lineCov">        184 :                         skb = alloc_uevent_skb(env, action_string, devpath);</span></a>
+<a name="326"><span class="lineNum">     326 </span><span class="lineCov">        184 :                         if (!skb)</span></a>
+<a name="327"><span class="lineNum">     327 </span><span class="lineNoCov">          0 :                                 continue;</span></a>
+<a name="328"><span class="lineNum">     328 </span>            :                 }</a>
+<a name="329"><span class="lineNum">     329 </span>            : </a>
+<a name="330"><span class="lineNum">     330 </span><span class="lineCov">        184 :                 retval = netlink_broadcast(uevent_sock, skb_get(skb), 0, 1,</span></a>
+<a name="331"><span class="lineNum">     331 </span>            :                                            GFP_KERNEL);</a>
+<a name="332"><span class="lineNum">     332 </span>            :                 /* ENOBUFS should be handled in userspace */</a>
+<a name="333"><span class="lineNum">     333 </span><span class="lineCov">        184 :                 if (retval == -ENOBUFS || retval == -ESRCH)</span></a>
+<a name="334"><span class="lineNum">     334 </span><span class="lineNoCov">          0 :                         retval = 0;</span></a>
+<a name="335"><span class="lineNum">     335 </span>            :         }</a>
+<a name="336"><span class="lineNum">     336 </span><span class="lineCov">        471 :         consume_skb(skb);</span></a>
+<a name="337"><span class="lineNum">     337 </span>            : </a>
+<a name="338"><span class="lineNum">     338 </span><span class="lineCov">        471 :         return retval;</span></a>
+<a name="339"><span class="lineNum">     339 </span>            : }</a>
+<a name="340"><span class="lineNum">     340 </span>            : </a>
+<a name="341"><span class="lineNum">     341 </span><span class="lineCov">          8 : static int uevent_net_broadcast_tagged(struct sock *usk,</span></a>
+<a name="342"><span class="lineNum">     342 </span>            :                                        struct kobj_uevent_env *env,</a>
+<a name="343"><span class="lineNum">     343 </span>            :                                        const char *action_string,</a>
+<a name="344"><span class="lineNum">     344 </span>            :                                        const char *devpath)</a>
+<a name="345"><span class="lineNum">     345 </span>            : {</a>
+<a name="346"><span class="lineNum">     346 </span><span class="lineCov">          8 :         struct user_namespace *owning_user_ns = sock_net(usk)-&gt;user_ns;</span></a>
+<a name="347"><span class="lineNum">     347 </span><span class="lineCov">          8 :         struct sk_buff *skb = NULL;</span></a>
+<a name="348"><span class="lineNum">     348 </span><span class="lineCov">          8 :         int ret = 0;</span></a>
+<a name="349"><span class="lineNum">     349 </span>            : </a>
+<a name="350"><span class="lineNum">     350 </span><span class="lineCov">          8 :         skb = alloc_uevent_skb(env, action_string, devpath);</span></a>
+<a name="351"><span class="lineNum">     351 </span><span class="lineCov">          8 :         if (!skb)</span></a>
+<a name="352"><span class="lineNum">     352 </span>            :                 return -ENOMEM;</a>
+<a name="353"><span class="lineNum">     353 </span>            : </a>
+<a name="354"><span class="lineNum">     354 </span>            :         /* fix credentials */</a>
+<a name="355"><span class="lineNum">     355 </span><span class="lineCov">          8 :         if (owning_user_ns != &amp;init_user_ns) {</span></a>
+<a name="356"><span class="lineNum">     356 </span><span class="lineNoCov">          0 :                 struct netlink_skb_parms *parms = &amp;NETLINK_CB(skb);</span></a>
+<a name="357"><span class="lineNum">     357 </span><span class="lineNoCov">          0 :                 kuid_t root_uid;</span></a>
+<a name="358"><span class="lineNum">     358 </span><span class="lineNoCov">          0 :                 kgid_t root_gid;</span></a>
+<a name="359"><span class="lineNum">     359 </span>            : </a>
+<a name="360"><span class="lineNum">     360 </span>            :                 /* fix uid */</a>
+<a name="361"><span class="lineNum">     361 </span><span class="lineNoCov">          0 :                 root_uid = make_kuid(owning_user_ns, 0);</span></a>
+<a name="362"><span class="lineNum">     362 </span><span class="lineNoCov">          0 :                 if (uid_valid(root_uid))</span></a>
+<a name="363"><span class="lineNum">     363 </span><span class="lineNoCov">          0 :                         parms-&gt;creds.uid = root_uid;</span></a>
+<a name="364"><span class="lineNum">     364 </span>            : </a>
+<a name="365"><span class="lineNum">     365 </span>            :                 /* fix gid */</a>
+<a name="366"><span class="lineNum">     366 </span><span class="lineNoCov">          0 :                 root_gid = make_kgid(owning_user_ns, 0);</span></a>
+<a name="367"><span class="lineNum">     367 </span><span class="lineNoCov">          0 :                 if (gid_valid(root_gid))</span></a>
+<a name="368"><span class="lineNum">     368 </span><span class="lineNoCov">          0 :                         parms-&gt;creds.gid = root_gid;</span></a>
+<a name="369"><span class="lineNum">     369 </span>            :         }</a>
+<a name="370"><span class="lineNum">     370 </span>            : </a>
+<a name="371"><span class="lineNum">     371 </span><span class="lineCov">          8 :         ret = netlink_broadcast(usk, skb, 0, 1, GFP_KERNEL);</span></a>
+<a name="372"><span class="lineNum">     372 </span>            :         /* ENOBUFS should be handled in userspace */</a>
+<a name="373"><span class="lineNum">     373 </span><span class="lineCov">          8 :         if (ret == -ENOBUFS || ret == -ESRCH)</span></a>
+<a name="374"><span class="lineNum">     374 </span><span class="lineCov">          6 :                 ret = 0;</span></a>
+<a name="375"><span class="lineNum">     375 </span>            : </a>
+<a name="376"><span class="lineNum">     376 </span>            :         return ret;</a>
+<a name="377"><span class="lineNum">     377 </span>            : }</a>
+<a name="378"><span class="lineNum">     378 </span>            : #endif</a>
+<a name="379"><span class="lineNum">     379 </span>            : </a>
+<a name="380"><span class="lineNum">     380 </span><span class="lineCov">        479 : static int kobject_uevent_net_broadcast(struct kobject *kobj,</span></a>
+<a name="381"><span class="lineNum">     381 </span>            :                                         struct kobj_uevent_env *env,</a>
+<a name="382"><span class="lineNum">     382 </span>            :                                         const char *action_string,</a>
+<a name="383"><span class="lineNum">     383 </span>            :                                         const char *devpath)</a>
+<a name="384"><span class="lineNum">     384 </span>            : {</a>
+<a name="385"><span class="lineNum">     385 </span><span class="lineCov">        479 :         int ret = 0;</span></a>
+<a name="386"><span class="lineNum">     386 </span>            : </a>
+<a name="387"><span class="lineNum">     387 </span>            : #ifdef CONFIG_NET</a>
+<a name="388"><span class="lineNum">     388 </span><span class="lineCov">        479 :         const struct kobj_ns_type_operations *ops;</span></a>
+<a name="389"><span class="lineNum">     389 </span><span class="lineCov">        479 :         const struct net *net = NULL;</span></a>
+<a name="390"><span class="lineNum">     390 </span>            : </a>
+<a name="391"><span class="lineNum">     391 </span><span class="lineCov">        479 :         ops = kobj_ns_ops(kobj);</span></a>
+<a name="392"><span class="lineNum">     392 </span><span class="lineCov">        479 :         if (!ops &amp;&amp; kobj-&gt;kset) {</span></a>
+<a name="393"><span class="lineNum">     393 </span><span class="lineCov">        475 :                 struct kobject *ksobj = &amp;kobj-&gt;kset-&gt;kobj;</span></a>
+<a name="394"><span class="lineNum">     394 </span>            : </a>
+<a name="395"><span class="lineNum">     395 </span><span class="lineCov">        475 :                 if (ksobj-&gt;parent != NULL)</span></a>
+<a name="396"><span class="lineNum">     396 </span><span class="lineCov">         34 :                         ops = kobj_ns_ops(ksobj-&gt;parent);</span></a>
+<a name="397"><span class="lineNum">     397 </span>            :         }</a>
+<a name="398"><span class="lineNum">     398 </span>            : </a>
+<a name="399"><span class="lineNum">     399 </span>            :         /* kobjects currently only carry network namespace tags and they</a>
+<a name="400"><span class="lineNum">     400 </span>            :          * are the only tag relevant here since we want to decide which</a>
+<a name="401"><span class="lineNum">     401 </span>            :          * network namespaces to broadcast the uevent into.</a>
+<a name="402"><span class="lineNum">     402 </span>            :          */</a>
+<a name="403"><span class="lineNum">     403 </span><span class="lineCov">        479 :         if (ops &amp;&amp; ops-&gt;netlink_ns &amp;&amp; kobj-&gt;ktype-&gt;namespace)</span></a>
+<a name="404"><span class="lineNum">     404 </span><span class="lineCov">          8 :                 if (ops-&gt;type == KOBJ_NS_TYPE_NET)</span></a>
+<a name="405"><span class="lineNum">     405 </span><span class="lineCov">          8 :                         net = kobj-&gt;ktype-&gt;namespace(kobj);</span></a>
+<a name="406"><span class="lineNum">     406 </span>            : </a>
+<a name="407"><span class="lineNum">     407 </span><span class="lineCov">          8 :         if (!net)</span></a>
+<a name="408"><span class="lineNum">     408 </span><span class="lineCov">        471 :                 ret = uevent_net_broadcast_untagged(env, action_string,</span></a>
+<a name="409"><span class="lineNum">     409 </span>            :                                                     devpath);</a>
+<a name="410"><span class="lineNum">     410 </span>            :         else</a>
+<a name="411"><span class="lineNum">     411 </span><span class="lineCov">          8 :                 ret = uevent_net_broadcast_tagged(net-&gt;uevent_sock-&gt;sk, env,</span></a>
+<a name="412"><span class="lineNum">     412 </span>            :                                                   action_string, devpath);</a>
+<a name="413"><span class="lineNum">     413 </span>            : #endif</a>
+<a name="414"><span class="lineNum">     414 </span>            : </a>
+<a name="415"><span class="lineNum">     415 </span><span class="lineCov">        479 :         return ret;</span></a>
+<a name="416"><span class="lineNum">     416 </span>            : }</a>
+<a name="417"><span class="lineNum">     417 </span>            : </a>
+<a name="418"><span class="lineNum">     418 </span><span class="lineNoCov">          0 : static void zap_modalias_env(struct kobj_uevent_env *env)</span></a>
+<a name="419"><span class="lineNum">     419 </span>            : {</a>
+<a name="420"><span class="lineNum">     420 </span><span class="lineNoCov">          0 :         static const char modalias_prefix[] = &quot;MODALIAS=&quot;;</span></a>
+<a name="421"><span class="lineNum">     421 </span><span class="lineNoCov">          0 :         size_t len;</span></a>
+<a name="422"><span class="lineNum">     422 </span><span class="lineNoCov">          0 :         int i, j;</span></a>
+<a name="423"><span class="lineNum">     423 </span>            : </a>
+<a name="424"><span class="lineNum">     424 </span><span class="lineNoCov">          0 :         for (i = 0; i &lt; env-&gt;envp_idx;) {</span></a>
+<a name="425"><span class="lineNum">     425 </span><span class="lineNoCov">          0 :                 if (strncmp(env-&gt;envp[i], modalias_prefix,</span></a>
+<a name="426"><span class="lineNum">     426 </span>            :                             sizeof(modalias_prefix) - 1)) {</a>
+<a name="427"><span class="lineNum">     427 </span><span class="lineNoCov">          0 :                         i++;</span></a>
+<a name="428"><span class="lineNum">     428 </span><span class="lineNoCov">          0 :                         continue;</span></a>
+<a name="429"><span class="lineNum">     429 </span>            :                 }</a>
+<a name="430"><span class="lineNum">     430 </span>            : </a>
+<a name="431"><span class="lineNum">     431 </span><span class="lineNoCov">          0 :                 len = strlen(env-&gt;envp[i]) + 1;</span></a>
+<a name="432"><span class="lineNum">     432 </span>            : </a>
+<a name="433"><span class="lineNum">     433 </span><span class="lineNoCov">          0 :                 if (i != env-&gt;envp_idx - 1) {</span></a>
+<a name="434"><span class="lineNum">     434 </span><span class="lineNoCov">          0 :                         memmove(env-&gt;envp[i], env-&gt;envp[i + 1],</span></a>
+<a name="435"><span class="lineNum">     435 </span><span class="lineNoCov">          0 :                                 env-&gt;buflen - len);</span></a>
+<a name="436"><span class="lineNum">     436 </span>            : </a>
+<a name="437"><span class="lineNum">     437 </span><span class="lineNoCov">          0 :                         for (j = i; j &lt; env-&gt;envp_idx - 1; j++)</span></a>
+<a name="438"><span class="lineNum">     438 </span><span class="lineNoCov">          0 :                                 env-&gt;envp[j] = env-&gt;envp[j + 1] - len;</span></a>
+<a name="439"><span class="lineNum">     439 </span>            :                 }</a>
+<a name="440"><span class="lineNum">     440 </span>            : </a>
+<a name="441"><span class="lineNum">     441 </span><span class="lineNoCov">          0 :                 env-&gt;envp_idx--;</span></a>
+<a name="442"><span class="lineNum">     442 </span><span class="lineNoCov">          0 :                 env-&gt;buflen -= len;</span></a>
+<a name="443"><span class="lineNum">     443 </span>            :         }</a>
+<a name="444"><span class="lineNum">     444 </span><span class="lineNoCov">          0 : }</span></a>
+<a name="445"><span class="lineNum">     445 </span>            : </a>
+<a name="446"><span class="lineNum">     446 </span>            : /**</a>
+<a name="447"><span class="lineNum">     447 </span>            :  * kobject_uevent_env - send an uevent with environmental data</a>
+<a name="448"><span class="lineNum">     448 </span>            :  *</a>
+<a name="449"><span class="lineNum">     449 </span>            :  * @kobj: struct kobject that the action is happening to</a>
+<a name="450"><span class="lineNum">     450 </span>            :  * @action: action that is happening</a>
+<a name="451"><span class="lineNum">     451 </span>            :  * @envp_ext: pointer to environmental data</a>
+<a name="452"><span class="lineNum">     452 </span>            :  *</a>
+<a name="453"><span class="lineNum">     453 </span>            :  * Returns 0 if kobject_uevent_env() is completed with success or the</a>
+<a name="454"><span class="lineNum">     454 </span>            :  * corresponding error when it fails.</a>
+<a name="455"><span class="lineNum">     455 </span>            :  */</a>
+<a name="456"><span class="lineNum">     456 </span><span class="lineCov">        633 : int kobject_uevent_env(struct kobject *kobj, enum kobject_action action,</span></a>
+<a name="457"><span class="lineNum">     457 </span>            :                        char *envp_ext[])</a>
+<a name="458"><span class="lineNum">     458 </span>            : {</a>
+<a name="459"><span class="lineNum">     459 </span><span class="lineCov">        633 :         struct kobj_uevent_env *env;</span></a>
+<a name="460"><span class="lineNum">     460 </span><span class="lineCov">        633 :         const char *action_string = kobject_actions[action];</span></a>
+<a name="461"><span class="lineNum">     461 </span><span class="lineCov">        633 :         const char *devpath = NULL;</span></a>
+<a name="462"><span class="lineNum">     462 </span><span class="lineCov">        633 :         const char *subsystem;</span></a>
+<a name="463"><span class="lineNum">     463 </span><span class="lineCov">        633 :         struct kobject *top_kobj;</span></a>
+<a name="464"><span class="lineNum">     464 </span><span class="lineCov">        633 :         struct kset *kset;</span></a>
+<a name="465"><span class="lineNum">     465 </span><span class="lineCov">        633 :         const struct kset_uevent_ops *uevent_ops;</span></a>
+<a name="466"><span class="lineNum">     466 </span><span class="lineCov">        633 :         int i = 0;</span></a>
+<a name="467"><span class="lineNum">     467 </span><span class="lineCov">        633 :         int retval = 0;</span></a>
+<a name="468"><span class="lineNum">     468 </span>            : </a>
+<a name="469"><span class="lineNum">     469 </span>            :         /*</a>
+<a name="470"><span class="lineNum">     470 </span>            :          * Mark &quot;remove&quot; event done regardless of result, for some subsystems</a>
+<a name="471"><span class="lineNum">     471 </span>            :          * do not want to re-trigger &quot;remove&quot; event via automatic cleanup.</a>
+<a name="472"><span class="lineNum">     472 </span>            :          */</a>
+<a name="473"><span class="lineNum">     473 </span><span class="lineCov">        633 :         if (action == KOBJ_REMOVE)</span></a>
+<a name="474"><span class="lineNum">     474 </span><span class="lineCov">          1 :                 kobj-&gt;state_remove_uevent_sent = 1;</span></a>
+<a name="475"><span class="lineNum">     475 </span>            : </a>
+<a name="476"><span class="lineNum">     476 </span><span class="lineCov">        633 :         pr_debug(&quot;kobject: '%s' (%p): %s\n&quot;,</span></a>
+<a name="477"><span class="lineNum">     477 </span>            :                  kobject_name(kobj), kobj, __func__);</a>
+<a name="478"><span class="lineNum">     478 </span>            : </a>
+<a name="479"><span class="lineNum">     479 </span>            :         /* search the kset we belong to */</a>
+<a name="480"><span class="lineNum">     480 </span><span class="lineCov">        633 :         top_kobj = kobj;</span></a>
+<a name="481"><span class="lineNum">     481 </span><span class="lineCov">        676 :         while (!top_kobj-&gt;kset &amp;&amp; top_kobj-&gt;parent)</span></a>
+<a name="482"><span class="lineNum">     482 </span>            :                 top_kobj = top_kobj-&gt;parent;</a>
+<a name="483"><span class="lineNum">     483 </span>            : </a>
+<a name="484"><span class="lineNum">     484 </span><span class="lineCov">        633 :         if (!top_kobj-&gt;kset) {</span></a>
+<a name="485"><span class="lineNum">     485 </span>            :                 pr_debug(&quot;kobject: '%s' (%p): %s: attempted to send uevent &quot;</a>
+<a name="486"><span class="lineNum">     486 </span>            :                          &quot;without kset!\n&quot;, kobject_name(kobj), kobj,</a>
+<a name="487"><span class="lineNum">     487 </span>            :                          __func__);</a>
+<a name="488"><span class="lineNum">     488 </span>            :                 return -EINVAL;</a>
+<a name="489"><span class="lineNum">     489 </span>            :         }</a>
+<a name="490"><span class="lineNum">     490 </span>            : </a>
+<a name="491"><span class="lineNum">     491 </span><span class="lineCov">        626 :         kset = top_kobj-&gt;kset;</span></a>
+<a name="492"><span class="lineNum">     492 </span><span class="lineCov">        626 :         uevent_ops = kset-&gt;uevent_ops;</span></a>
+<a name="493"><span class="lineNum">     493 </span>            : </a>
+<a name="494"><span class="lineNum">     494 </span>            :         /* skip the event, if uevent_suppress is set*/</a>
+<a name="495"><span class="lineNum">     495 </span><span class="lineCov">        626 :         if (kobj-&gt;uevent_suppress) {</span></a>
+<a name="496"><span class="lineNum">     496 </span>            :                 pr_debug(&quot;kobject: '%s' (%p): %s: uevent_suppress &quot;</a>
+<a name="497"><span class="lineNum">     497 </span>            :                                  &quot;caused the event to drop!\n&quot;,</a>
+<a name="498"><span class="lineNum">     498 </span>            :                                  kobject_name(kobj), kobj, __func__);</a>
+<a name="499"><span class="lineNum">     499 </span>            :                 return 0;</a>
+<a name="500"><span class="lineNum">     500 </span>            :         }</a>
+<a name="501"><span class="lineNum">     501 </span>            :         /* skip the event, if the filter returns zero. */</a>
+<a name="502"><span class="lineNum">     502 </span><span class="lineCov">        547 :         if (uevent_ops &amp;&amp; uevent_ops-&gt;filter)</span></a>
+<a name="503"><span class="lineNum">     503 </span><span class="lineCov">        498 :                 if (!uevent_ops-&gt;filter(kset, kobj)) {</span></a>
+<a name="504"><span class="lineNum">     504 </span>            :                         pr_debug(&quot;kobject: '%s' (%p): %s: filter function &quot;</a>
+<a name="505"><span class="lineNum">     505 </span>            :                                  &quot;caused the event to drop!\n&quot;,</a>
+<a name="506"><span class="lineNum">     506 </span>            :                                  kobject_name(kobj), kobj, __func__);</a>
+<a name="507"><span class="lineNum">     507 </span>            :                         return 0;</a>
+<a name="508"><span class="lineNum">     508 </span>            :                 }</a>
+<a name="509"><span class="lineNum">     509 </span>            : </a>
+<a name="510"><span class="lineNum">     510 </span>            :         /* originating subsystem */</a>
+<a name="511"><span class="lineNum">     511 </span><span class="lineCov">        479 :         if (uevent_ops &amp;&amp; uevent_ops-&gt;name)</span></a>
+<a name="512"><span class="lineNum">     512 </span><span class="lineCov">        299 :                 subsystem = uevent_ops-&gt;name(kset, kobj);</span></a>
+<a name="513"><span class="lineNum">     513 </span>            :         else</a>
+<a name="514"><span class="lineNum">     514 </span><span class="lineCov">        180 :                 subsystem = kobject_name(&amp;kset-&gt;kobj);</span></a>
+<a name="515"><span class="lineNum">     515 </span><span class="lineCov">        479 :         if (!subsystem) {</span></a>
+<a name="516"><span class="lineNum">     516 </span>            :                 pr_debug(&quot;kobject: '%s' (%p): %s: unset subsystem caused the &quot;</a>
+<a name="517"><span class="lineNum">     517 </span>            :                          &quot;event to drop!\n&quot;, kobject_name(kobj), kobj,</a>
+<a name="518"><span class="lineNum">     518 </span>            :                          __func__);</a>
+<a name="519"><span class="lineNum">     519 </span>            :                 return 0;</a>
+<a name="520"><span class="lineNum">     520 </span>            :         }</a>
+<a name="521"><span class="lineNum">     521 </span>            : </a>
+<a name="522"><span class="lineNum">     522 </span>            :         /* environment buffer */</a>
+<a name="523"><span class="lineNum">     523 </span><span class="lineCov">        479 :         env = kzalloc(sizeof(struct kobj_uevent_env), GFP_KERNEL);</span></a>
+<a name="524"><span class="lineNum">     524 </span><span class="lineCov">        479 :         if (!env)</span></a>
+<a name="525"><span class="lineNum">     525 </span>            :                 return -ENOMEM;</a>
+<a name="526"><span class="lineNum">     526 </span>            : </a>
+<a name="527"><span class="lineNum">     527 </span>            :         /* complete object path */</a>
+<a name="528"><span class="lineNum">     528 </span><span class="lineCov">        479 :         devpath = kobject_get_path(kobj, GFP_KERNEL);</span></a>
+<a name="529"><span class="lineNum">     529 </span><span class="lineCov">        479 :         if (!devpath) {</span></a>
+<a name="530"><span class="lineNum">     530 </span><span class="lineNoCov">          0 :                 retval = -ENOENT;</span></a>
+<a name="531"><span class="lineNum">     531 </span><span class="lineNoCov">          0 :                 goto exit;</span></a>
+<a name="532"><span class="lineNum">     532 </span>            :         }</a>
+<a name="533"><span class="lineNum">     533 </span>            : </a>
+<a name="534"><span class="lineNum">     534 </span>            :         /* default keys */</a>
+<a name="535"><span class="lineNum">     535 </span><span class="lineCov">        479 :         retval = add_uevent_var(env, &quot;ACTION=%s&quot;, action_string);</span></a>
+<a name="536"><span class="lineNum">     536 </span><span class="lineCov">        479 :         if (retval)</span></a>
+<a name="537"><span class="lineNum">     537 </span><span class="lineNoCov">          0 :                 goto exit;</span></a>
+<a name="538"><span class="lineNum">     538 </span><span class="lineCov">        479 :         retval = add_uevent_var(env, &quot;DEVPATH=%s&quot;, devpath);</span></a>
+<a name="539"><span class="lineNum">     539 </span><span class="lineCov">        479 :         if (retval)</span></a>
+<a name="540"><span class="lineNum">     540 </span><span class="lineNoCov">          0 :                 goto exit;</span></a>
+<a name="541"><span class="lineNum">     541 </span><span class="lineCov">        479 :         retval = add_uevent_var(env, &quot;SUBSYSTEM=%s&quot;, subsystem);</span></a>
+<a name="542"><span class="lineNum">     542 </span><span class="lineCov">        479 :         if (retval)</span></a>
+<a name="543"><span class="lineNum">     543 </span><span class="lineNoCov">          0 :                 goto exit;</span></a>
+<a name="544"><span class="lineNum">     544 </span>            : </a>
+<a name="545"><span class="lineNum">     545 </span>            :         /* keys passed in from the caller */</a>
+<a name="546"><span class="lineNum">     546 </span><span class="lineCov">        479 :         if (envp_ext) {</span></a>
+<a name="547"><span class="lineNum">     547 </span><span class="lineCov">        342 :                 for (i = 0; envp_ext[i]; i++) {</span></a>
+<a name="548"><span class="lineNum">     548 </span><span class="lineCov">        171 :                         retval = add_uevent_var(env, &quot;%s&quot;, envp_ext[i]);</span></a>
+<a name="549"><span class="lineNum">     549 </span><span class="lineCov">        171 :                         if (retval)</span></a>
+<a name="550"><span class="lineNum">     550 </span><span class="lineNoCov">          0 :                                 goto exit;</span></a>
+<a name="551"><span class="lineNum">     551 </span>            :                 }</a>
+<a name="552"><span class="lineNum">     552 </span>            :         }</a>
+<a name="553"><span class="lineNum">     553 </span>            : </a>
+<a name="554"><span class="lineNum">     554 </span>            :         /* let the kset specific function add its stuff */</a>
+<a name="555"><span class="lineNum">     555 </span><span class="lineCov">        479 :         if (uevent_ops &amp;&amp; uevent_ops-&gt;uevent) {</span></a>
+<a name="556"><span class="lineNum">     556 </span><span class="lineCov">        299 :                 retval = uevent_ops-&gt;uevent(kset, kobj, env);</span></a>
+<a name="557"><span class="lineNum">     557 </span><span class="lineCov">        299 :                 if (retval) {</span></a>
+<a name="558"><span class="lineNum">     558 </span><span class="lineNoCov">          0 :                         pr_debug(&quot;kobject: '%s' (%p): %s: uevent() returned &quot;</span></a>
+<a name="559"><span class="lineNum">     559 </span>            :                                  &quot;%d\n&quot;, kobject_name(kobj), kobj,</a>
+<a name="560"><span class="lineNum">     560 </span>            :                                  __func__, retval);</a>
+<a name="561"><span class="lineNum">     561 </span><span class="lineNoCov">          0 :                         goto exit;</span></a>
+<a name="562"><span class="lineNum">     562 </span>            :                 }</a>
+<a name="563"><span class="lineNum">     563 </span>            :         }</a>
+<a name="564"><span class="lineNum">     564 </span>            : </a>
+<a name="565"><span class="lineNum">     565 </span><span class="lineCov">        479 :         switch (action) {</span></a>
+<a name="566"><span class="lineNum">     566 </span><span class="lineCov">        473 :         case KOBJ_ADD:</span></a>
+<a name="567"><span class="lineNum">     567 </span>            :                 /*</a>
+<a name="568"><span class="lineNum">     568 </span>            :                  * Mark &quot;add&quot; event so we can make sure we deliver &quot;remove&quot;</a>
+<a name="569"><span class="lineNum">     569 </span>            :                  * event to userspace during automatic cleanup. If</a>
+<a name="570"><span class="lineNum">     570 </span>            :                  * the object did send an &quot;add&quot; event, &quot;remove&quot; will</a>
+<a name="571"><span class="lineNum">     571 </span>            :                  * automatically generated by the core, if not already done</a>
+<a name="572"><span class="lineNum">     572 </span>            :                  * by the caller.</a>
+<a name="573"><span class="lineNum">     573 </span>            :                  */</a>
+<a name="574"><span class="lineNum">     574 </span><span class="lineCov">        473 :                 kobj-&gt;state_add_uevent_sent = 1;</span></a>
+<a name="575"><span class="lineNum">     575 </span><span class="lineCov">        473 :                 break;</span></a>
+<a name="576"><span class="lineNum">     576 </span>            : </a>
+<a name="577"><span class="lineNum">     577 </span><span class="lineNoCov">          0 :         case KOBJ_UNBIND:</span></a>
+<a name="578"><span class="lineNum">     578 </span><span class="lineNoCov">          0 :                 zap_modalias_env(env);</span></a>
+<a name="579"><span class="lineNum">     579 </span><span class="lineNoCov">          0 :                 break;</span></a>
+<a name="580"><span class="lineNum">     580 </span>            : </a>
+<a name="581"><span class="lineNum">     581 </span>            :         default:</a>
+<a name="582"><span class="lineNum">     582 </span>            :                 break;</a>
+<a name="583"><span class="lineNum">     583 </span>            :         }</a>
+<a name="584"><span class="lineNum">     584 </span>            : </a>
+<a name="585"><span class="lineNum">     585 </span><span class="lineCov">        479 :         mutex_lock(&amp;uevent_sock_mutex);</span></a>
+<a name="586"><span class="lineNum">     586 </span>            :         /* we will send an event, so request a new sequence number */</a>
+<a name="587"><span class="lineNum">     587 </span><span class="lineCov">        479 :         retval = add_uevent_var(env, &quot;SEQNUM=%llu&quot;, ++uevent_seqnum);</span></a>
+<a name="588"><span class="lineNum">     588 </span><span class="lineCov">        479 :         if (retval) {</span></a>
+<a name="589"><span class="lineNum">     589 </span><span class="lineNoCov">          0 :                 mutex_unlock(&amp;uevent_sock_mutex);</span></a>
+<a name="590"><span class="lineNum">     590 </span><span class="lineNoCov">          0 :                 goto exit;</span></a>
+<a name="591"><span class="lineNum">     591 </span>            :         }</a>
+<a name="592"><span class="lineNum">     592 </span><span class="lineCov">        479 :         retval = kobject_uevent_net_broadcast(kobj, env, action_string,</span></a>
+<a name="593"><span class="lineNum">     593 </span>            :                                               devpath);</a>
+<a name="594"><span class="lineNum">     594 </span><span class="lineCov">        479 :         mutex_unlock(&amp;uevent_sock_mutex);</span></a>
+<a name="595"><span class="lineNum">     595 </span>            : </a>
+<a name="596"><span class="lineNum">     596 </span>            : #ifdef CONFIG_UEVENT_HELPER</a>
+<a name="597"><span class="lineNum">     597 </span>            :         /* call uevent_helper, usually only enabled during early boot */</a>
+<a name="598"><span class="lineNum">     598 </span><span class="lineCov">        479 :         if (uevent_helper[0] &amp;&amp; !kobj_usermode_filter(kobj)) {</span></a>
+<a name="599"><span class="lineNum">     599 </span><span class="lineNoCov">          0 :                 struct subprocess_info *info;</span></a>
+<a name="600"><span class="lineNum">     600 </span>            : </a>
+<a name="601"><span class="lineNum">     601 </span><span class="lineNoCov">          0 :                 retval = add_uevent_var(env, &quot;HOME=/&quot;);</span></a>
+<a name="602"><span class="lineNum">     602 </span><span class="lineNoCov">          0 :                 if (retval)</span></a>
+<a name="603"><span class="lineNum">     603 </span><span class="lineNoCov">          0 :                         goto exit;</span></a>
+<a name="604"><span class="lineNum">     604 </span><span class="lineNoCov">          0 :                 retval = add_uevent_var(env,</span></a>
+<a name="605"><span class="lineNum">     605 </span>            :                                         &quot;PATH=/sbin:/bin:/usr/sbin:/usr/bin&quot;);</a>
+<a name="606"><span class="lineNum">     606 </span><span class="lineNoCov">          0 :                 if (retval)</span></a>
+<a name="607"><span class="lineNum">     607 </span><span class="lineNoCov">          0 :                         goto exit;</span></a>
+<a name="608"><span class="lineNum">     608 </span><span class="lineNoCov">          0 :                 retval = init_uevent_argv(env, subsystem);</span></a>
+<a name="609"><span class="lineNum">     609 </span><span class="lineNoCov">          0 :                 if (retval)</span></a>
+<a name="610"><span class="lineNum">     610 </span><span class="lineNoCov">          0 :                         goto exit;</span></a>
+<a name="611"><span class="lineNum">     611 </span>            : </a>
+<a name="612"><span class="lineNum">     612 </span><span class="lineNoCov">          0 :                 retval = -ENOMEM;</span></a>
+<a name="613"><span class="lineNum">     613 </span><span class="lineNoCov">          0 :                 info = call_usermodehelper_setup(env-&gt;argv[0], env-&gt;argv,</span></a>
+<a name="614"><span class="lineNum">     614 </span><span class="lineNoCov">          0 :                                                  env-&gt;envp, GFP_KERNEL,</span></a>
+<a name="615"><span class="lineNum">     615 </span>            :                                                  NULL, cleanup_uevent_env, env);</a>
+<a name="616"><span class="lineNum">     616 </span><span class="lineNoCov">          0 :                 if (info) {</span></a>
+<a name="617"><span class="lineNum">     617 </span><span class="lineNoCov">          0 :                         retval = call_usermodehelper_exec(info, UMH_NO_WAIT);</span></a>
+<a name="618"><span class="lineNum">     618 </span><span class="lineNoCov">          0 :                         env = NULL;     /* freed by cleanup_uevent_env */</span></a>
+<a name="619"><span class="lineNum">     619 </span>            :                 }</a>
+<a name="620"><span class="lineNum">     620 </span>            :         }</a>
+<a name="621"><span class="lineNum">     621 </span>            : #endif</a>
+<a name="622"><span class="lineNum">     622 </span>            : </a>
+<a name="623"><span class="lineNum">     623 </span><span class="lineCov">        479 : exit:</span></a>
+<a name="624"><span class="lineNum">     624 </span><span class="lineCov">        479 :         kfree(devpath);</span></a>
+<a name="625"><span class="lineNum">     625 </span><span class="lineCov">        479 :         kfree(env);</span></a>
+<a name="626"><span class="lineNum">     626 </span><span class="lineCov">        479 :         return retval;</span></a>
+<a name="627"><span class="lineNum">     627 </span>            : }</a>
+<a name="628"><span class="lineNum">     628 </span>            : EXPORT_SYMBOL_GPL(kobject_uevent_env);</a>
+<a name="629"><span class="lineNum">     629 </span>            : </a>
+<a name="630"><span class="lineNum">     630 </span>            : /**</a>
+<a name="631"><span class="lineNum">     631 </span>            :  * kobject_uevent - notify userspace by sending an uevent</a>
+<a name="632"><span class="lineNum">     632 </span>            :  *</a>
+<a name="633"><span class="lineNum">     633 </span>            :  * @kobj: struct kobject that the action is happening to</a>
+<a name="634"><span class="lineNum">     634 </span>            :  * @action: action that is happening</a>
+<a name="635"><span class="lineNum">     635 </span>            :  *</a>
+<a name="636"><span class="lineNum">     636 </span>            :  * Returns 0 if kobject_uevent() is completed with success or the</a>
+<a name="637"><span class="lineNum">     637 </span>            :  * corresponding error when it fails.</a>
+<a name="638"><span class="lineNum">     638 </span>            :  */</a>
+<a name="639"><span class="lineNum">     639 </span><span class="lineCov">        462 : int kobject_uevent(struct kobject *kobj, enum kobject_action action)</span></a>
+<a name="640"><span class="lineNum">     640 </span>            : {</a>
+<a name="641"><span class="lineNum">     641 </span><span class="lineCov">        462 :         return kobject_uevent_env(kobj, action, NULL);</span></a>
+<a name="642"><span class="lineNum">     642 </span>            : }</a>
+<a name="643"><span class="lineNum">     643 </span>            : EXPORT_SYMBOL_GPL(kobject_uevent);</a>
+<a name="644"><span class="lineNum">     644 </span>            : </a>
+<a name="645"><span class="lineNum">     645 </span>            : /**</a>
+<a name="646"><span class="lineNum">     646 </span>            :  * add_uevent_var - add key value string to the environment buffer</a>
+<a name="647"><span class="lineNum">     647 </span>            :  * @env: environment buffer structure</a>
+<a name="648"><span class="lineNum">     648 </span>            :  * @format: printf format for the key=value pair</a>
+<a name="649"><span class="lineNum">     649 </span>            :  *</a>
+<a name="650"><span class="lineNum">     650 </span>            :  * Returns 0 if environment variable was added successfully or -ENOMEM</a>
+<a name="651"><span class="lineNum">     651 </span>            :  * if no space was available.</a>
+<a name="652"><span class="lineNum">     652 </span>            :  */</a>
+<a name="653"><span class="lineNum">     653 </span><span class="lineCov">       4348 : int add_uevent_var(struct kobj_uevent_env *env, const char *format, ...)</span></a>
+<a name="654"><span class="lineNum">     654 </span>            : {</a>
+<a name="655"><span class="lineNum">     655 </span><span class="lineCov">       4348 :         va_list args;</span></a>
+<a name="656"><span class="lineNum">     656 </span><span class="lineCov">       4348 :         int len;</span></a>
+<a name="657"><span class="lineNum">     657 </span>            : </a>
+<a name="658"><span class="lineNum">     658 </span><span class="lineCov">       4348 :         if (env-&gt;envp_idx &gt;= ARRAY_SIZE(env-&gt;envp)) {</span></a>
+<a name="659"><span class="lineNum">     659 </span><span class="lineNoCov">          0 :                 WARN(1, KERN_ERR &quot;add_uevent_var: too many keys\n&quot;);</span></a>
+<a name="660"><span class="lineNum">     660 </span><span class="lineNoCov">          0 :                 return -ENOMEM;</span></a>
+<a name="661"><span class="lineNum">     661 </span>            :         }</a>
+<a name="662"><span class="lineNum">     662 </span>            : </a>
+<a name="663"><span class="lineNum">     663 </span><span class="lineCov">       4348 :         va_start(args, format);</span></a>
+<a name="664"><span class="lineNum">     664 </span><span class="lineCov">       4348 :         len = vsnprintf(&amp;env-&gt;buf[env-&gt;buflen],</span></a>
+<a name="665"><span class="lineNum">     665 </span><span class="lineCov">       4348 :                         sizeof(env-&gt;buf) - env-&gt;buflen,</span></a>
+<a name="666"><span class="lineNum">     666 </span>            :                         format, args);</a>
+<a name="667"><span class="lineNum">     667 </span><span class="lineCov">       4348 :         va_end(args);</span></a>
+<a name="668"><span class="lineNum">     668 </span>            : </a>
+<a name="669"><span class="lineNum">     669 </span><span class="lineCov">       4348 :         if (len &gt;= (sizeof(env-&gt;buf) - env-&gt;buflen)) {</span></a>
+<a name="670"><span class="lineNum">     670 </span><span class="lineNoCov">          0 :                 WARN(1, KERN_ERR &quot;add_uevent_var: buffer size too small\n&quot;);</span></a>
+<a name="671"><span class="lineNum">     671 </span><span class="lineNoCov">          0 :                 return -ENOMEM;</span></a>
+<a name="672"><span class="lineNum">     672 </span>            :         }</a>
+<a name="673"><span class="lineNum">     673 </span>            : </a>
+<a name="674"><span class="lineNum">     674 </span><span class="lineCov">       4348 :         env-&gt;envp[env-&gt;envp_idx++] = &amp;env-&gt;buf[env-&gt;buflen];</span></a>
+<a name="675"><span class="lineNum">     675 </span><span class="lineCov">       4348 :         env-&gt;buflen += len + 1;</span></a>
+<a name="676"><span class="lineNum">     676 </span><span class="lineCov">       4348 :         return 0;</span></a>
+<a name="677"><span class="lineNum">     677 </span>            : }</a>
+<a name="678"><span class="lineNum">     678 </span>            : EXPORT_SYMBOL_GPL(add_uevent_var);</a>
+<a name="679"><span class="lineNum">     679 </span>            : </a>
+<a name="680"><span class="lineNum">     680 </span>            : #if defined(CONFIG_NET)</a>
+<a name="681"><span class="lineNum">     681 </span><span class="lineNoCov">          0 : static int uevent_net_broadcast(struct sock *usk, struct sk_buff *skb,</span></a>
+<a name="682"><span class="lineNum">     682 </span>            :                                 struct netlink_ext_ack *extack)</a>
+<a name="683"><span class="lineNum">     683 </span>            : {</a>
+<a name="684"><span class="lineNum">     684 </span>            :         /* u64 to chars: 2^64 - 1 = 21 chars */</a>
+<a name="685"><span class="lineNum">     685 </span><span class="lineNoCov">          0 :         char buf[sizeof(&quot;SEQNUM=&quot;) + 21];</span></a>
+<a name="686"><span class="lineNum">     686 </span><span class="lineNoCov">          0 :         struct sk_buff *skbc;</span></a>
+<a name="687"><span class="lineNum">     687 </span><span class="lineNoCov">          0 :         int ret;</span></a>
+<a name="688"><span class="lineNum">     688 </span>            : </a>
+<a name="689"><span class="lineNum">     689 </span>            :         /* bump and prepare sequence number */</a>
+<a name="690"><span class="lineNum">     690 </span><span class="lineNoCov">          0 :         ret = snprintf(buf, sizeof(buf), &quot;SEQNUM=%llu&quot;, ++uevent_seqnum);</span></a>
+<a name="691"><span class="lineNum">     691 </span><span class="lineNoCov">          0 :         if (ret &lt; 0 || (size_t)ret &gt;= sizeof(buf))</span></a>
+<a name="692"><span class="lineNum">     692 </span>            :                 return -ENOMEM;</a>
+<a name="693"><span class="lineNum">     693 </span><span class="lineNoCov">          0 :         ret++;</span></a>
+<a name="694"><span class="lineNum">     694 </span>            : </a>
+<a name="695"><span class="lineNum">     695 </span>            :         /* verify message does not overflow */</a>
+<a name="696"><span class="lineNum">     696 </span><span class="lineNoCov">          0 :         if ((skb-&gt;len + ret) &gt; UEVENT_BUFFER_SIZE) {</span></a>
+<a name="697"><span class="lineNum">     697 </span><span class="lineNoCov">          0 :                 NL_SET_ERR_MSG(extack, &quot;uevent message too big&quot;);</span></a>
+<a name="698"><span class="lineNum">     698 </span><span class="lineNoCov">          0 :                 return -EINVAL;</span></a>
+<a name="699"><span class="lineNum">     699 </span>            :         }</a>
+<a name="700"><span class="lineNum">     700 </span>            : </a>
+<a name="701"><span class="lineNum">     701 </span>            :         /* copy skb and extend to accommodate sequence number */</a>
+<a name="702"><span class="lineNum">     702 </span><span class="lineNoCov">          0 :         skbc = skb_copy_expand(skb, 0, ret, GFP_KERNEL);</span></a>
+<a name="703"><span class="lineNum">     703 </span><span class="lineNoCov">          0 :         if (!skbc)</span></a>
+<a name="704"><span class="lineNum">     704 </span>            :                 return -ENOMEM;</a>
+<a name="705"><span class="lineNum">     705 </span>            : </a>
+<a name="706"><span class="lineNum">     706 </span>            :         /* append sequence number */</a>
+<a name="707"><span class="lineNum">     707 </span><span class="lineNoCov">          0 :         skb_put_data(skbc, buf, ret);</span></a>
+<a name="708"><span class="lineNum">     708 </span>            : </a>
+<a name="709"><span class="lineNum">     709 </span>            :         /* remove msg header */</a>
+<a name="710"><span class="lineNum">     710 </span><span class="lineNoCov">          0 :         skb_pull(skbc, NLMSG_HDRLEN);</span></a>
+<a name="711"><span class="lineNum">     711 </span>            : </a>
+<a name="712"><span class="lineNum">     712 </span>            :         /* set portid 0 to inform userspace message comes from kernel */</a>
+<a name="713"><span class="lineNum">     713 </span><span class="lineNoCov">          0 :         NETLINK_CB(skbc).portid = 0;</span></a>
+<a name="714"><span class="lineNum">     714 </span><span class="lineNoCov">          0 :         NETLINK_CB(skbc).dst_group = 1;</span></a>
+<a name="715"><span class="lineNum">     715 </span>            : </a>
+<a name="716"><span class="lineNum">     716 </span><span class="lineNoCov">          0 :         ret = netlink_broadcast(usk, skbc, 0, 1, GFP_KERNEL);</span></a>
+<a name="717"><span class="lineNum">     717 </span>            :         /* ENOBUFS should be handled in userspace */</a>
+<a name="718"><span class="lineNum">     718 </span><span class="lineNoCov">          0 :         if (ret == -ENOBUFS || ret == -ESRCH)</span></a>
+<a name="719"><span class="lineNum">     719 </span><span class="lineNoCov">          0 :                 ret = 0;</span></a>
+<a name="720"><span class="lineNum">     720 </span>            : </a>
+<a name="721"><span class="lineNum">     721 </span>            :         return ret;</a>
+<a name="722"><span class="lineNum">     722 </span>            : }</a>
+<a name="723"><span class="lineNum">     723 </span>            : </a>
+<a name="724"><span class="lineNum">     724 </span><span class="lineNoCov">          0 : static int uevent_net_rcv_skb(struct sk_buff *skb, struct nlmsghdr *nlh,</span></a>
+<a name="725"><span class="lineNum">     725 </span>            :                               struct netlink_ext_ack *extack)</a>
+<a name="726"><span class="lineNum">     726 </span>            : {</a>
+<a name="727"><span class="lineNum">     727 </span><span class="lineNoCov">          0 :         struct net *net;</span></a>
+<a name="728"><span class="lineNum">     728 </span><span class="lineNoCov">          0 :         int ret;</span></a>
+<a name="729"><span class="lineNum">     729 </span>            : </a>
+<a name="730"><span class="lineNum">     730 </span><span class="lineNoCov">          0 :         if (!nlmsg_data(nlh))</span></a>
+<a name="731"><span class="lineNum">     731 </span>            :                 return -EINVAL;</a>
+<a name="732"><span class="lineNum">     732 </span>            : </a>
+<a name="733"><span class="lineNum">     733 </span>            :         /*</a>
+<a name="734"><span class="lineNum">     734 </span>            :          * Verify that we are allowed to send messages to the target</a>
+<a name="735"><span class="lineNum">     735 </span>            :          * network namespace. The caller must have CAP_SYS_ADMIN in the</a>
+<a name="736"><span class="lineNum">     736 </span>            :          * owning user namespace of the target network namespace.</a>
+<a name="737"><span class="lineNum">     737 </span>            :          */</a>
+<a name="738"><span class="lineNum">     738 </span><span class="lineNoCov">          0 :         net = sock_net(NETLINK_CB(skb).sk);</span></a>
+<a name="739"><span class="lineNum">     739 </span><span class="lineNoCov">          0 :         if (!netlink_ns_capable(skb, net-&gt;user_ns, CAP_SYS_ADMIN)) {</span></a>
+<a name="740"><span class="lineNum">     740 </span><span class="lineNoCov">          0 :                 NL_SET_ERR_MSG(extack, &quot;missing CAP_SYS_ADMIN capability&quot;);</span></a>
+<a name="741"><span class="lineNum">     741 </span><span class="lineNoCov">          0 :                 return -EPERM;</span></a>
+<a name="742"><span class="lineNum">     742 </span>            :         }</a>
+<a name="743"><span class="lineNum">     743 </span>            : </a>
+<a name="744"><span class="lineNum">     744 </span><span class="lineNoCov">          0 :         mutex_lock(&amp;uevent_sock_mutex);</span></a>
+<a name="745"><span class="lineNum">     745 </span><span class="lineNoCov">          0 :         ret = uevent_net_broadcast(net-&gt;uevent_sock-&gt;sk, skb, extack);</span></a>
+<a name="746"><span class="lineNum">     746 </span><span class="lineNoCov">          0 :         mutex_unlock(&amp;uevent_sock_mutex);</span></a>
+<a name="747"><span class="lineNum">     747 </span>            : </a>
+<a name="748"><span class="lineNum">     748 </span><span class="lineNoCov">          0 :         return ret;</span></a>
+<a name="749"><span class="lineNum">     749 </span>            : }</a>
+<a name="750"><span class="lineNum">     750 </span>            : </a>
+<a name="751"><span class="lineNum">     751 </span><span class="lineCov">        186 : static void uevent_net_rcv(struct sk_buff *skb)</span></a>
+<a name="752"><span class="lineNum">     752 </span>            : {</a>
+<a name="753"><span class="lineNum">     753 </span><span class="lineCov">        186 :         netlink_rcv_skb(skb, &amp;uevent_net_rcv_skb);</span></a>
+<a name="754"><span class="lineNum">     754 </span><span class="lineCov">        186 : }</span></a>
+<a name="755"><span class="lineNum">     755 </span>            : </a>
+<a name="756"><span class="lineNum">     756 </span><span class="lineCov">          1 : static int uevent_net_init(struct net *net)</span></a>
+<a name="757"><span class="lineNum">     757 </span>            : {</a>
+<a name="758"><span class="lineNum">     758 </span><span class="lineCov">          1 :         struct uevent_sock *ue_sk;</span></a>
+<a name="759"><span class="lineNum">     759 </span><span class="lineCov">          1 :         struct netlink_kernel_cfg cfg = {</span></a>
+<a name="760"><span class="lineNum">     760 </span>            :                 .groups = 1,</a>
+<a name="761"><span class="lineNum">     761 </span>            :                 .input = uevent_net_rcv,</a>
+<a name="762"><span class="lineNum">     762 </span>            :                 .flags  = NL_CFG_F_NONROOT_RECV</a>
+<a name="763"><span class="lineNum">     763 </span>            :         };</a>
+<a name="764"><span class="lineNum">     764 </span>            : </a>
+<a name="765"><span class="lineNum">     765 </span><span class="lineCov">          1 :         ue_sk = kzalloc(sizeof(*ue_sk), GFP_KERNEL);</span></a>
+<a name="766"><span class="lineNum">     766 </span><span class="lineCov">          1 :         if (!ue_sk)</span></a>
+<a name="767"><span class="lineNum">     767 </span>            :                 return -ENOMEM;</a>
+<a name="768"><span class="lineNum">     768 </span>            : </a>
+<a name="769"><span class="lineNum">     769 </span><span class="lineCov">          1 :         ue_sk-&gt;sk = netlink_kernel_create(net, NETLINK_KOBJECT_UEVENT, &amp;cfg);</span></a>
+<a name="770"><span class="lineNum">     770 </span><span class="lineCov">          1 :         if (!ue_sk-&gt;sk) {</span></a>
+<a name="771"><span class="lineNum">     771 </span><span class="lineNoCov">          0 :                 pr_err(&quot;kobject_uevent: unable to create netlink socket!\n&quot;);</span></a>
+<a name="772"><span class="lineNum">     772 </span><span class="lineNoCov">          0 :                 kfree(ue_sk);</span></a>
+<a name="773"><span class="lineNum">     773 </span><span class="lineNoCov">          0 :                 return -ENODEV;</span></a>
+<a name="774"><span class="lineNum">     774 </span>            :         }</a>
+<a name="775"><span class="lineNum">     775 </span>            : </a>
+<a name="776"><span class="lineNum">     776 </span><span class="lineCov">          1 :         net-&gt;uevent_sock = ue_sk;</span></a>
+<a name="777"><span class="lineNum">     777 </span>            : </a>
+<a name="778"><span class="lineNum">     778 </span>            :         /* Restrict uevents to initial user namespace. */</a>
+<a name="779"><span class="lineNum">     779 </span><span class="lineCov">          1 :         if (sock_net(ue_sk-&gt;sk)-&gt;user_ns == &amp;init_user_ns) {</span></a>
+<a name="780"><span class="lineNum">     780 </span><span class="lineCov">          1 :                 mutex_lock(&amp;uevent_sock_mutex);</span></a>
+<a name="781"><span class="lineNum">     781 </span><span class="lineCov">          1 :                 list_add_tail(&amp;ue_sk-&gt;list, &amp;uevent_sock_list);</span></a>
+<a name="782"><span class="lineNum">     782 </span><span class="lineCov">          1 :                 mutex_unlock(&amp;uevent_sock_mutex);</span></a>
+<a name="783"><span class="lineNum">     783 </span>            :         }</a>
+<a name="784"><span class="lineNum">     784 </span>            : </a>
+<a name="785"><span class="lineNum">     785 </span>            :         return 0;</a>
+<a name="786"><span class="lineNum">     786 </span>            : }</a>
+<a name="787"><span class="lineNum">     787 </span>            : </a>
+<a name="788"><span class="lineNum">     788 </span><span class="lineNoCov">          0 : static void uevent_net_exit(struct net *net)</span></a>
+<a name="789"><span class="lineNum">     789 </span>            : {</a>
+<a name="790"><span class="lineNum">     790 </span><span class="lineNoCov">          0 :         struct uevent_sock *ue_sk = net-&gt;uevent_sock;</span></a>
+<a name="791"><span class="lineNum">     791 </span>            : </a>
+<a name="792"><span class="lineNum">     792 </span><span class="lineNoCov">          0 :         if (sock_net(ue_sk-&gt;sk)-&gt;user_ns == &amp;init_user_ns) {</span></a>
+<a name="793"><span class="lineNum">     793 </span><span class="lineNoCov">          0 :                 mutex_lock(&amp;uevent_sock_mutex);</span></a>
+<a name="794"><span class="lineNum">     794 </span><span class="lineNoCov">          0 :                 list_del(&amp;ue_sk-&gt;list);</span></a>
+<a name="795"><span class="lineNum">     795 </span><span class="lineNoCov">          0 :                 mutex_unlock(&amp;uevent_sock_mutex);</span></a>
+<a name="796"><span class="lineNum">     796 </span>            :         }</a>
+<a name="797"><span class="lineNum">     797 </span>            : </a>
+<a name="798"><span class="lineNum">     798 </span><span class="lineNoCov">          0 :         netlink_kernel_release(ue_sk-&gt;sk);</span></a>
+<a name="799"><span class="lineNum">     799 </span><span class="lineNoCov">          0 :         kfree(ue_sk);</span></a>
+<a name="800"><span class="lineNum">     800 </span><span class="lineNoCov">          0 : }</span></a>
+<a name="801"><span class="lineNum">     801 </span>            : </a>
+<a name="802"><span class="lineNum">     802 </span>            : static struct pernet_operations uevent_net_ops = {</a>
+<a name="803"><span class="lineNum">     803 </span>            :         .init   = uevent_net_init,</a>
+<a name="804"><span class="lineNum">     804 </span>            :         .exit   = uevent_net_exit,</a>
+<a name="805"><span class="lineNum">     805 </span>            : };</a>
+<a name="806"><span class="lineNum">     806 </span>            : </a>
+<a name="807"><span class="lineNum">     807 </span><span class="lineCov">          1 : static int __init kobject_uevent_init(void)</span></a>
+<a name="808"><span class="lineNum">     808 </span>            : {</a>
+<a name="809"><span class="lineNum">     809 </span><span class="lineCov">          1 :         return register_pernet_subsys(&amp;uevent_net_ops);</span></a>
+<a name="810"><span class="lineNum">     810 </span>            : }</a>
+<a name="811"><span class="lineNum">     811 </span>            : </a>
+<a name="812"><span class="lineNum">     812 </span>            : </a>
+<a name="813"><span class="lineNum">     813 </span>            : postcore_initcall(kobject_uevent_init);</a>
+<a name="814"><span class="lineNum">     814 </span>            : #endif</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

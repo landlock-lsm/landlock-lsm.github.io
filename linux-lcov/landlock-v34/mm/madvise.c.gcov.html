@@ -1,0 +1,1317 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - landlock.info - mm/madvise.c</title>
+  <link rel="stylesheet" type="text/css" href="../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../index.html">top level</a> - <a href="index.html">mm</a> - madvise.c<span style="font-size: 80%;"> (source / <a href="madvise.c.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">landlock.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">81</td>
+            <td class="headerCovTableEntry">504</td>
+            <td class="headerCovTableEntryLo">16.1 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2021-04-22 12:43:58</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">5</td>
+            <td class="headerCovTableEntry">19</td>
+            <td class="headerCovTableEntryLo">26.3 %</td>
+          </tr>
+          <tr><td><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : // SPDX-License-Identifier: GPL-2.0</a>
+<a name="2"><span class="lineNum">       2 </span>            : /*</a>
+<a name="3"><span class="lineNum">       3 </span>            :  *      linux/mm/madvise.c</a>
+<a name="4"><span class="lineNum">       4 </span>            :  *</a>
+<a name="5"><span class="lineNum">       5 </span>            :  * Copyright (C) 1999  Linus Torvalds</a>
+<a name="6"><span class="lineNum">       6 </span>            :  * Copyright (C) 2002  Christoph Hellwig</a>
+<a name="7"><span class="lineNum">       7 </span>            :  */</a>
+<a name="8"><span class="lineNum">       8 </span>            : </a>
+<a name="9"><span class="lineNum">       9 </span>            : #include &lt;linux/mman.h&gt;</a>
+<a name="10"><span class="lineNum">      10 </span>            : #include &lt;linux/pagemap.h&gt;</a>
+<a name="11"><span class="lineNum">      11 </span>            : #include &lt;linux/syscalls.h&gt;</a>
+<a name="12"><span class="lineNum">      12 </span>            : #include &lt;linux/mempolicy.h&gt;</a>
+<a name="13"><span class="lineNum">      13 </span>            : #include &lt;linux/page-isolation.h&gt;</a>
+<a name="14"><span class="lineNum">      14 </span>            : #include &lt;linux/page_idle.h&gt;</a>
+<a name="15"><span class="lineNum">      15 </span>            : #include &lt;linux/userfaultfd_k.h&gt;</a>
+<a name="16"><span class="lineNum">      16 </span>            : #include &lt;linux/hugetlb.h&gt;</a>
+<a name="17"><span class="lineNum">      17 </span>            : #include &lt;linux/falloc.h&gt;</a>
+<a name="18"><span class="lineNum">      18 </span>            : #include &lt;linux/fadvise.h&gt;</a>
+<a name="19"><span class="lineNum">      19 </span>            : #include &lt;linux/sched.h&gt;</a>
+<a name="20"><span class="lineNum">      20 </span>            : #include &lt;linux/sched/mm.h&gt;</a>
+<a name="21"><span class="lineNum">      21 </span>            : #include &lt;linux/uio.h&gt;</a>
+<a name="22"><span class="lineNum">      22 </span>            : #include &lt;linux/ksm.h&gt;</a>
+<a name="23"><span class="lineNum">      23 </span>            : #include &lt;linux/fs.h&gt;</a>
+<a name="24"><span class="lineNum">      24 </span>            : #include &lt;linux/file.h&gt;</a>
+<a name="25"><span class="lineNum">      25 </span>            : #include &lt;linux/blkdev.h&gt;</a>
+<a name="26"><span class="lineNum">      26 </span>            : #include &lt;linux/backing-dev.h&gt;</a>
+<a name="27"><span class="lineNum">      27 </span>            : #include &lt;linux/pagewalk.h&gt;</a>
+<a name="28"><span class="lineNum">      28 </span>            : #include &lt;linux/swap.h&gt;</a>
+<a name="29"><span class="lineNum">      29 </span>            : #include &lt;linux/swapops.h&gt;</a>
+<a name="30"><span class="lineNum">      30 </span>            : #include &lt;linux/shmem_fs.h&gt;</a>
+<a name="31"><span class="lineNum">      31 </span>            : #include &lt;linux/mmu_notifier.h&gt;</a>
+<a name="32"><span class="lineNum">      32 </span>            : </a>
+<a name="33"><span class="lineNum">      33 </span>            : #include &lt;asm/tlb.h&gt;</a>
+<a name="34"><span class="lineNum">      34 </span>            : </a>
+<a name="35"><span class="lineNum">      35 </span>            : #include &quot;internal.h&quot;</a>
+<a name="36"><span class="lineNum">      36 </span>            : </a>
+<a name="37"><span class="lineNum">      37 </span>            : struct madvise_walk_private {</a>
+<a name="38"><span class="lineNum">      38 </span>            :         struct mmu_gather *tlb;</a>
+<a name="39"><span class="lineNum">      39 </span>            :         bool pageout;</a>
+<a name="40"><span class="lineNum">      40 </span>            : };</a>
+<a name="41"><span class="lineNum">      41 </span>            : </a>
+<a name="42"><span class="lineNum">      42 </span>            : /*</a>
+<a name="43"><span class="lineNum">      43 </span>            :  * Any behaviour which results in changes to the vma-&gt;vm_flags needs to</a>
+<a name="44"><span class="lineNum">      44 </span>            :  * take mmap_lock for writing. Others, which simply traverse vmas, need</a>
+<a name="45"><span class="lineNum">      45 </span>            :  * to only take it for reading.</a>
+<a name="46"><span class="lineNum">      46 </span>            :  */</a>
+<a name="47"><span class="lineNum">      47 </span><span class="lineCov">         12 : static int madvise_need_mmap_write(int behavior)</span></a>
+<a name="48"><span class="lineNum">      48 </span>            : {</a>
+<a name="49"><span class="lineNum">      49 </span><span class="lineCov">         12 :         switch (behavior) {</span></a>
+<a name="50"><span class="lineNum">      50 </span>            :         case MADV_REMOVE:</a>
+<a name="51"><span class="lineNum">      51 </span>            :         case MADV_WILLNEED:</a>
+<a name="52"><span class="lineNum">      52 </span>            :         case MADV_DONTNEED:</a>
+<a name="53"><span class="lineNum">      53 </span>            :         case MADV_COLD:</a>
+<a name="54"><span class="lineNum">      54 </span>            :         case MADV_PAGEOUT:</a>
+<a name="55"><span class="lineNum">      55 </span>            :         case MADV_FREE:</a>
+<a name="56"><span class="lineNum">      56 </span>            :                 return 0;</a>
+<a name="57"><span class="lineNum">      57 </span>            :         default:</a>
+<a name="58"><span class="lineNum">      58 </span>            :                 /* be safe, default to 1. list exceptions explicitly */</a>
+<a name="59"><span class="lineNum">      59 </span><span class="lineCov">         10 :                 return 1;</span></a>
+<a name="60"><span class="lineNum">      60 </span>            :         }</a>
+<a name="61"><span class="lineNum">      61 </span>            : }</a>
+<a name="62"><span class="lineNum">      62 </span>            : </a>
+<a name="63"><span class="lineNum">      63 </span>            : /*</a>
+<a name="64"><span class="lineNum">      64 </span>            :  * We can potentially split a vm area into separate</a>
+<a name="65"><span class="lineNum">      65 </span>            :  * areas, each area with its own behavior.</a>
+<a name="66"><span class="lineNum">      66 </span>            :  */</a>
+<a name="67"><span class="lineNum">      67 </span><span class="lineCov">         10 : static long madvise_behavior(struct vm_area_struct *vma,</span></a>
+<a name="68"><span class="lineNum">      68 </span>            :                      struct vm_area_struct **prev,</a>
+<a name="69"><span class="lineNum">      69 </span>            :                      unsigned long start, unsigned long end, int behavior)</a>
+<a name="70"><span class="lineNum">      70 </span>            : {</a>
+<a name="71"><span class="lineNum">      71 </span><span class="lineCov">         10 :         struct mm_struct *mm = vma-&gt;vm_mm;</span></a>
+<a name="72"><span class="lineNum">      72 </span><span class="lineCov">         10 :         int error = 0;</span></a>
+<a name="73"><span class="lineNum">      73 </span><span class="lineCov">         10 :         pgoff_t pgoff;</span></a>
+<a name="74"><span class="lineNum">      74 </span><span class="lineCov">         10 :         unsigned long new_flags = vma-&gt;vm_flags;</span></a>
+<a name="75"><span class="lineNum">      75 </span>            : </a>
+<a name="76"><span class="lineNum">      76 </span><span class="lineCov">         10 :         switch (behavior) {</span></a>
+<a name="77"><span class="lineNum">      77 </span><span class="lineNoCov">          0 :         case MADV_NORMAL:</span></a>
+<a name="78"><span class="lineNum">      78 </span><span class="lineNoCov">          0 :                 new_flags = new_flags &amp; ~VM_RAND_READ &amp; ~VM_SEQ_READ;</span></a>
+<a name="79"><span class="lineNum">      79 </span><span class="lineNoCov">          0 :                 break;</span></a>
+<a name="80"><span class="lineNum">      80 </span><span class="lineNoCov">          0 :         case MADV_SEQUENTIAL:</span></a>
+<a name="81"><span class="lineNum">      81 </span><span class="lineNoCov">          0 :                 new_flags = (new_flags &amp; ~VM_RAND_READ) | VM_SEQ_READ;</span></a>
+<a name="82"><span class="lineNum">      82 </span><span class="lineNoCov">          0 :                 break;</span></a>
+<a name="83"><span class="lineNum">      83 </span><span class="lineNoCov">          0 :         case MADV_RANDOM:</span></a>
+<a name="84"><span class="lineNum">      84 </span><span class="lineNoCov">          0 :                 new_flags = (new_flags &amp; ~VM_SEQ_READ) | VM_RAND_READ;</span></a>
+<a name="85"><span class="lineNum">      85 </span><span class="lineNoCov">          0 :                 break;</span></a>
+<a name="86"><span class="lineNum">      86 </span><span class="lineNoCov">          0 :         case MADV_DONTFORK:</span></a>
+<a name="87"><span class="lineNum">      87 </span><span class="lineNoCov">          0 :                 new_flags |= VM_DONTCOPY;</span></a>
+<a name="88"><span class="lineNum">      88 </span><span class="lineNoCov">          0 :                 break;</span></a>
+<a name="89"><span class="lineNum">      89 </span><span class="lineCov">         10 :         case MADV_DOFORK:</span></a>
+<a name="90"><span class="lineNum">      90 </span><span class="lineCov">         10 :                 if (vma-&gt;vm_flags &amp; VM_IO) {</span></a>
+<a name="91"><span class="lineNum">      91 </span><span class="lineNoCov">          0 :                         error = -EINVAL;</span></a>
+<a name="92"><span class="lineNum">      92 </span><span class="lineNoCov">          0 :                         goto out;</span></a>
+<a name="93"><span class="lineNum">      93 </span>            :                 }</a>
+<a name="94"><span class="lineNum">      94 </span><span class="lineCov">         10 :                 new_flags &amp;= ~VM_DONTCOPY;</span></a>
+<a name="95"><span class="lineNum">      95 </span><span class="lineCov">         10 :                 break;</span></a>
+<a name="96"><span class="lineNum">      96 </span><span class="lineNoCov">          0 :         case MADV_WIPEONFORK:</span></a>
+<a name="97"><span class="lineNum">      97 </span>            :                 /* MADV_WIPEONFORK is only supported on anonymous memory. */</a>
+<a name="98"><span class="lineNum">      98 </span><span class="lineNoCov">          0 :                 if (vma-&gt;vm_file || vma-&gt;vm_flags &amp; VM_SHARED) {</span></a>
+<a name="99"><span class="lineNum">      99 </span><span class="lineNoCov">          0 :                         error = -EINVAL;</span></a>
+<a name="100"><span class="lineNum">     100 </span><span class="lineNoCov">          0 :                         goto out;</span></a>
+<a name="101"><span class="lineNum">     101 </span>            :                 }</a>
+<a name="102"><span class="lineNum">     102 </span><span class="lineNoCov">          0 :                 new_flags |= VM_WIPEONFORK;</span></a>
+<a name="103"><span class="lineNum">     103 </span><span class="lineNoCov">          0 :                 break;</span></a>
+<a name="104"><span class="lineNum">     104 </span><span class="lineNoCov">          0 :         case MADV_KEEPONFORK:</span></a>
+<a name="105"><span class="lineNum">     105 </span><span class="lineNoCov">          0 :                 new_flags &amp;= ~VM_WIPEONFORK;</span></a>
+<a name="106"><span class="lineNum">     106 </span><span class="lineNoCov">          0 :                 break;</span></a>
+<a name="107"><span class="lineNum">     107 </span><span class="lineNoCov">          0 :         case MADV_DONTDUMP:</span></a>
+<a name="108"><span class="lineNum">     108 </span><span class="lineNoCov">          0 :                 new_flags |= VM_DONTDUMP;</span></a>
+<a name="109"><span class="lineNum">     109 </span><span class="lineNoCov">          0 :                 break;</span></a>
+<a name="110"><span class="lineNum">     110 </span>            :         case MADV_DODUMP:</a>
+<a name="111"><span class="lineNum">     111 </span><span class="lineNoCov">          0 :                 if (!is_vm_hugetlb_page(vma) &amp;&amp; new_flags &amp; VM_SPECIAL) {</span></a>
+<a name="112"><span class="lineNum">     112 </span><span class="lineNoCov">          0 :                         error = -EINVAL;</span></a>
+<a name="113"><span class="lineNum">     113 </span><span class="lineNoCov">          0 :                         goto out;</span></a>
+<a name="114"><span class="lineNum">     114 </span>            :                 }</a>
+<a name="115"><span class="lineNum">     115 </span><span class="lineNoCov">          0 :                 new_flags &amp;= ~VM_DONTDUMP;</span></a>
+<a name="116"><span class="lineNum">     116 </span><span class="lineNoCov">          0 :                 break;</span></a>
+<a name="117"><span class="lineNum">     117 </span><span class="lineNoCov">          0 :         case MADV_MERGEABLE:</span></a>
+<a name="118"><span class="lineNum">     118 </span>            :         case MADV_UNMERGEABLE:</a>
+<a name="119"><span class="lineNum">     119 </span><span class="lineNoCov">          0 :                 error = ksm_madvise(vma, start, end, behavior, &amp;new_flags);</span></a>
+<a name="120"><span class="lineNum">     120 </span><span class="lineNoCov">          0 :                 if (error)</span></a>
+<a name="121"><span class="lineNum">     121 </span><span class="lineNoCov">          0 :                         goto out_convert_errno;</span></a>
+<a name="122"><span class="lineNum">     122 </span>            :                 break;</a>
+<a name="123"><span class="lineNum">     123 </span><span class="lineNoCov">          0 :         case MADV_HUGEPAGE:</span></a>
+<a name="124"><span class="lineNum">     124 </span>            :         case MADV_NOHUGEPAGE:</a>
+<a name="125"><span class="lineNum">     125 </span><span class="lineNoCov">          0 :                 error = hugepage_madvise(vma, &amp;new_flags, behavior);</span></a>
+<a name="126"><span class="lineNum">     126 </span><span class="lineNoCov">          0 :                 if (error)</span></a>
+<a name="127"><span class="lineNum">     127 </span><span class="lineNoCov">          0 :                         goto out_convert_errno;</span></a>
+<a name="128"><span class="lineNum">     128 </span>            :                 break;</a>
+<a name="129"><span class="lineNum">     129 </span>            :         }</a>
+<a name="130"><span class="lineNum">     130 </span>            : </a>
+<a name="131"><span class="lineNum">     131 </span><span class="lineCov">         10 :         if (new_flags == vma-&gt;vm_flags) {</span></a>
+<a name="132"><span class="lineNum">     132 </span><span class="lineCov">         10 :                 *prev = vma;</span></a>
+<a name="133"><span class="lineNum">     133 </span><span class="lineCov">         10 :                 goto out;</span></a>
+<a name="134"><span class="lineNum">     134 </span>            :         }</a>
+<a name="135"><span class="lineNum">     135 </span>            : </a>
+<a name="136"><span class="lineNum">     136 </span><span class="lineNoCov">          0 :         pgoff = vma-&gt;vm_pgoff + ((start - vma-&gt;vm_start) &gt;&gt; PAGE_SHIFT);</span></a>
+<a name="137"><span class="lineNum">     137 </span><span class="lineNoCov">          0 :         *prev = vma_merge(mm, *prev, start, end, new_flags, vma-&gt;anon_vma,</span></a>
+<a name="138"><span class="lineNum">     138 </span>            :                           vma-&gt;vm_file, pgoff, vma_policy(vma),</a>
+<a name="139"><span class="lineNum">     139 </span>            :                           vma-&gt;vm_userfaultfd_ctx);</a>
+<a name="140"><span class="lineNum">     140 </span><span class="lineNoCov">          0 :         if (*prev) {</span></a>
+<a name="141"><span class="lineNum">     141 </span><span class="lineNoCov">          0 :                 vma = *prev;</span></a>
+<a name="142"><span class="lineNum">     142 </span><span class="lineNoCov">          0 :                 goto success;</span></a>
+<a name="143"><span class="lineNum">     143 </span>            :         }</a>
+<a name="144"><span class="lineNum">     144 </span>            : </a>
+<a name="145"><span class="lineNum">     145 </span><span class="lineNoCov">          0 :         *prev = vma;</span></a>
+<a name="146"><span class="lineNum">     146 </span>            : </a>
+<a name="147"><span class="lineNum">     147 </span><span class="lineNoCov">          0 :         if (start != vma-&gt;vm_start) {</span></a>
+<a name="148"><span class="lineNum">     148 </span><span class="lineNoCov">          0 :                 if (unlikely(mm-&gt;map_count &gt;= sysctl_max_map_count)) {</span></a>
+<a name="149"><span class="lineNum">     149 </span><span class="lineNoCov">          0 :                         error = -ENOMEM;</span></a>
+<a name="150"><span class="lineNum">     150 </span><span class="lineNoCov">          0 :                         goto out;</span></a>
+<a name="151"><span class="lineNum">     151 </span>            :                 }</a>
+<a name="152"><span class="lineNum">     152 </span><span class="lineNoCov">          0 :                 error = __split_vma(mm, vma, start, 1);</span></a>
+<a name="153"><span class="lineNum">     153 </span><span class="lineNoCov">          0 :                 if (error)</span></a>
+<a name="154"><span class="lineNum">     154 </span><span class="lineNoCov">          0 :                         goto out_convert_errno;</span></a>
+<a name="155"><span class="lineNum">     155 </span>            :         }</a>
+<a name="156"><span class="lineNum">     156 </span>            : </a>
+<a name="157"><span class="lineNum">     157 </span><span class="lineNoCov">          0 :         if (end != vma-&gt;vm_end) {</span></a>
+<a name="158"><span class="lineNum">     158 </span><span class="lineNoCov">          0 :                 if (unlikely(mm-&gt;map_count &gt;= sysctl_max_map_count)) {</span></a>
+<a name="159"><span class="lineNum">     159 </span><span class="lineNoCov">          0 :                         error = -ENOMEM;</span></a>
+<a name="160"><span class="lineNum">     160 </span><span class="lineNoCov">          0 :                         goto out;</span></a>
+<a name="161"><span class="lineNum">     161 </span>            :                 }</a>
+<a name="162"><span class="lineNum">     162 </span><span class="lineNoCov">          0 :                 error = __split_vma(mm, vma, end, 0);</span></a>
+<a name="163"><span class="lineNum">     163 </span><span class="lineNoCov">          0 :                 if (error)</span></a>
+<a name="164"><span class="lineNum">     164 </span><span class="lineNoCov">          0 :                         goto out_convert_errno;</span></a>
+<a name="165"><span class="lineNum">     165 </span>            :         }</a>
+<a name="166"><span class="lineNum">     166 </span>            : </a>
+<a name="167"><span class="lineNum">     167 </span><span class="lineNoCov">          0 : success:</span></a>
+<a name="168"><span class="lineNum">     168 </span>            :         /*</a>
+<a name="169"><span class="lineNum">     169 </span>            :          * vm_flags is protected by the mmap_lock held in write mode.</a>
+<a name="170"><span class="lineNum">     170 </span>            :          */</a>
+<a name="171"><span class="lineNum">     171 </span><span class="lineNoCov">          0 :         vma-&gt;vm_flags = new_flags;</span></a>
+<a name="172"><span class="lineNum">     172 </span>            : </a>
+<a name="173"><span class="lineNum">     173 </span><span class="lineNoCov">          0 : out_convert_errno:</span></a>
+<a name="174"><span class="lineNum">     174 </span>            :         /*</a>
+<a name="175"><span class="lineNum">     175 </span>            :          * madvise() returns EAGAIN if kernel resources, such as</a>
+<a name="176"><span class="lineNum">     176 </span>            :          * slab, are temporarily unavailable.</a>
+<a name="177"><span class="lineNum">     177 </span>            :          */</a>
+<a name="178"><span class="lineNum">     178 </span><span class="lineNoCov">          0 :         if (error == -ENOMEM)</span></a>
+<a name="179"><span class="lineNum">     179 </span><span class="lineNoCov">          0 :                 error = -EAGAIN;</span></a>
+<a name="180"><span class="lineNum">     180 </span><span class="lineNoCov">          0 : out:</span></a>
+<a name="181"><span class="lineNum">     181 </span><span class="lineCov">         10 :         return error;</span></a>
+<a name="182"><span class="lineNum">     182 </span>            : }</a>
+<a name="183"><span class="lineNum">     183 </span>            : </a>
+<a name="184"><span class="lineNum">     184 </span>            : #ifdef CONFIG_SWAP</a>
+<a name="185"><span class="lineNum">     185 </span>            : static int swapin_walk_pmd_entry(pmd_t *pmd, unsigned long start,</a>
+<a name="186"><span class="lineNum">     186 </span>            :         unsigned long end, struct mm_walk *walk)</a>
+<a name="187"><span class="lineNum">     187 </span>            : {</a>
+<a name="188"><span class="lineNum">     188 </span>            :         pte_t *orig_pte;</a>
+<a name="189"><span class="lineNum">     189 </span>            :         struct vm_area_struct *vma = walk-&gt;private;</a>
+<a name="190"><span class="lineNum">     190 </span>            :         unsigned long index;</a>
+<a name="191"><span class="lineNum">     191 </span>            : </a>
+<a name="192"><span class="lineNum">     192 </span>            :         if (pmd_none_or_trans_huge_or_clear_bad(pmd))</a>
+<a name="193"><span class="lineNum">     193 </span>            :                 return 0;</a>
+<a name="194"><span class="lineNum">     194 </span>            : </a>
+<a name="195"><span class="lineNum">     195 </span>            :         for (index = start; index != end; index += PAGE_SIZE) {</a>
+<a name="196"><span class="lineNum">     196 </span>            :                 pte_t pte;</a>
+<a name="197"><span class="lineNum">     197 </span>            :                 swp_entry_t entry;</a>
+<a name="198"><span class="lineNum">     198 </span>            :                 struct page *page;</a>
+<a name="199"><span class="lineNum">     199 </span>            :                 spinlock_t *ptl;</a>
+<a name="200"><span class="lineNum">     200 </span>            : </a>
+<a name="201"><span class="lineNum">     201 </span>            :                 orig_pte = pte_offset_map_lock(vma-&gt;vm_mm, pmd, start, &amp;ptl);</a>
+<a name="202"><span class="lineNum">     202 </span>            :                 pte = *(orig_pte + ((index - start) / PAGE_SIZE));</a>
+<a name="203"><span class="lineNum">     203 </span>            :                 pte_unmap_unlock(orig_pte, ptl);</a>
+<a name="204"><span class="lineNum">     204 </span>            : </a>
+<a name="205"><span class="lineNum">     205 </span>            :                 if (pte_present(pte) || pte_none(pte))</a>
+<a name="206"><span class="lineNum">     206 </span>            :                         continue;</a>
+<a name="207"><span class="lineNum">     207 </span>            :                 entry = pte_to_swp_entry(pte);</a>
+<a name="208"><span class="lineNum">     208 </span>            :                 if (unlikely(non_swap_entry(entry)))</a>
+<a name="209"><span class="lineNum">     209 </span>            :                         continue;</a>
+<a name="210"><span class="lineNum">     210 </span>            : </a>
+<a name="211"><span class="lineNum">     211 </span>            :                 page = read_swap_cache_async(entry, GFP_HIGHUSER_MOVABLE,</a>
+<a name="212"><span class="lineNum">     212 </span>            :                                                         vma, index, false);</a>
+<a name="213"><span class="lineNum">     213 </span>            :                 if (page)</a>
+<a name="214"><span class="lineNum">     214 </span>            :                         put_page(page);</a>
+<a name="215"><span class="lineNum">     215 </span>            :         }</a>
+<a name="216"><span class="lineNum">     216 </span>            : </a>
+<a name="217"><span class="lineNum">     217 </span>            :         return 0;</a>
+<a name="218"><span class="lineNum">     218 </span>            : }</a>
+<a name="219"><span class="lineNum">     219 </span>            : </a>
+<a name="220"><span class="lineNum">     220 </span>            : static const struct mm_walk_ops swapin_walk_ops = {</a>
+<a name="221"><span class="lineNum">     221 </span>            :         .pmd_entry              = swapin_walk_pmd_entry,</a>
+<a name="222"><span class="lineNum">     222 </span>            : };</a>
+<a name="223"><span class="lineNum">     223 </span>            : </a>
+<a name="224"><span class="lineNum">     224 </span>            : static void force_shm_swapin_readahead(struct vm_area_struct *vma,</a>
+<a name="225"><span class="lineNum">     225 </span>            :                 unsigned long start, unsigned long end,</a>
+<a name="226"><span class="lineNum">     226 </span>            :                 struct address_space *mapping)</a>
+<a name="227"><span class="lineNum">     227 </span>            : {</a>
+<a name="228"><span class="lineNum">     228 </span>            :         XA_STATE(xas, &amp;mapping-&gt;i_pages, linear_page_index(vma, start));</a>
+<a name="229"><span class="lineNum">     229 </span>            :         pgoff_t end_index = linear_page_index(vma, end + PAGE_SIZE - 1);</a>
+<a name="230"><span class="lineNum">     230 </span>            :         struct page *page;</a>
+<a name="231"><span class="lineNum">     231 </span>            : </a>
+<a name="232"><span class="lineNum">     232 </span>            :         rcu_read_lock();</a>
+<a name="233"><span class="lineNum">     233 </span>            :         xas_for_each(&amp;xas, page, end_index) {</a>
+<a name="234"><span class="lineNum">     234 </span>            :                 swp_entry_t swap;</a>
+<a name="235"><span class="lineNum">     235 </span>            : </a>
+<a name="236"><span class="lineNum">     236 </span>            :                 if (!xa_is_value(page))</a>
+<a name="237"><span class="lineNum">     237 </span>            :                         continue;</a>
+<a name="238"><span class="lineNum">     238 </span>            :                 xas_pause(&amp;xas);</a>
+<a name="239"><span class="lineNum">     239 </span>            :                 rcu_read_unlock();</a>
+<a name="240"><span class="lineNum">     240 </span>            : </a>
+<a name="241"><span class="lineNum">     241 </span>            :                 swap = radix_to_swp_entry(page);</a>
+<a name="242"><span class="lineNum">     242 </span>            :                 page = read_swap_cache_async(swap, GFP_HIGHUSER_MOVABLE,</a>
+<a name="243"><span class="lineNum">     243 </span>            :                                                         NULL, 0, false);</a>
+<a name="244"><span class="lineNum">     244 </span>            :                 if (page)</a>
+<a name="245"><span class="lineNum">     245 </span>            :                         put_page(page);</a>
+<a name="246"><span class="lineNum">     246 </span>            : </a>
+<a name="247"><span class="lineNum">     247 </span>            :                 rcu_read_lock();</a>
+<a name="248"><span class="lineNum">     248 </span>            :         }</a>
+<a name="249"><span class="lineNum">     249 </span>            :         rcu_read_unlock();</a>
+<a name="250"><span class="lineNum">     250 </span>            : </a>
+<a name="251"><span class="lineNum">     251 </span>            :         lru_add_drain();        /* Push any new pages onto the LRU now */</a>
+<a name="252"><span class="lineNum">     252 </span>            : }</a>
+<a name="253"><span class="lineNum">     253 </span>            : #endif          /* CONFIG_SWAP */</a>
+<a name="254"><span class="lineNum">     254 </span>            : </a>
+<a name="255"><span class="lineNum">     255 </span>            : /*</a>
+<a name="256"><span class="lineNum">     256 </span>            :  * Schedule all required I/O operations.  Do not wait for completion.</a>
+<a name="257"><span class="lineNum">     257 </span>            :  */</a>
+<a name="258"><span class="lineNum">     258 </span><span class="lineNoCov">          0 : static long madvise_willneed(struct vm_area_struct *vma,</span></a>
+<a name="259"><span class="lineNum">     259 </span>            :                              struct vm_area_struct **prev,</a>
+<a name="260"><span class="lineNum">     260 </span>            :                              unsigned long start, unsigned long end)</a>
+<a name="261"><span class="lineNum">     261 </span>            : {</a>
+<a name="262"><span class="lineNum">     262 </span><span class="lineNoCov">          0 :         struct mm_struct *mm = vma-&gt;vm_mm;</span></a>
+<a name="263"><span class="lineNum">     263 </span><span class="lineNoCov">          0 :         struct file *file = vma-&gt;vm_file;</span></a>
+<a name="264"><span class="lineNum">     264 </span><span class="lineNoCov">          0 :         loff_t offset;</span></a>
+<a name="265"><span class="lineNum">     265 </span>            : </a>
+<a name="266"><span class="lineNum">     266 </span><span class="lineNoCov">          0 :         *prev = vma;</span></a>
+<a name="267"><span class="lineNum">     267 </span>            : #ifdef CONFIG_SWAP</a>
+<a name="268"><span class="lineNum">     268 </span>            :         if (!file) {</a>
+<a name="269"><span class="lineNum">     269 </span>            :                 walk_page_range(vma-&gt;vm_mm, start, end, &amp;swapin_walk_ops, vma);</a>
+<a name="270"><span class="lineNum">     270 </span>            :                 lru_add_drain(); /* Push any new pages onto the LRU now */</a>
+<a name="271"><span class="lineNum">     271 </span>            :                 return 0;</a>
+<a name="272"><span class="lineNum">     272 </span>            :         }</a>
+<a name="273"><span class="lineNum">     273 </span>            : </a>
+<a name="274"><span class="lineNum">     274 </span>            :         if (shmem_mapping(file-&gt;f_mapping)) {</a>
+<a name="275"><span class="lineNum">     275 </span>            :                 force_shm_swapin_readahead(vma, start, end,</a>
+<a name="276"><span class="lineNum">     276 </span>            :                                         file-&gt;f_mapping);</a>
+<a name="277"><span class="lineNum">     277 </span>            :                 return 0;</a>
+<a name="278"><span class="lineNum">     278 </span>            :         }</a>
+<a name="279"><span class="lineNum">     279 </span>            : #else</a>
+<a name="280"><span class="lineNum">     280 </span><span class="lineNoCov">          0 :         if (!file)</span></a>
+<a name="281"><span class="lineNum">     281 </span>            :                 return -EBADF;</a>
+<a name="282"><span class="lineNum">     282 </span>            : #endif</a>
+<a name="283"><span class="lineNum">     283 </span>            : </a>
+<a name="284"><span class="lineNum">     284 </span><span class="lineNoCov">          0 :         if (IS_DAX(file_inode(file))) {</span></a>
+<a name="285"><span class="lineNum">     285 </span>            :                 /* no bad return value, but ignore advice */</a>
+<a name="286"><span class="lineNum">     286 </span>            :                 return 0;</a>
+<a name="287"><span class="lineNum">     287 </span>            :         }</a>
+<a name="288"><span class="lineNum">     288 </span>            : </a>
+<a name="289"><span class="lineNum">     289 </span>            :         /*</a>
+<a name="290"><span class="lineNum">     290 </span>            :          * Filesystem's fadvise may need to take various locks.  We need to</a>
+<a name="291"><span class="lineNum">     291 </span>            :          * explicitly grab a reference because the vma (and hence the</a>
+<a name="292"><span class="lineNum">     292 </span>            :          * vma's reference to the file) can go away as soon as we drop</a>
+<a name="293"><span class="lineNum">     293 </span>            :          * mmap_lock.</a>
+<a name="294"><span class="lineNum">     294 </span>            :          */</a>
+<a name="295"><span class="lineNum">     295 </span><span class="lineNoCov">          0 :         *prev = NULL;   /* tell sys_madvise we drop mmap_lock */</span></a>
+<a name="296"><span class="lineNum">     296 </span><span class="lineNoCov">          0 :         get_file(file);</span></a>
+<a name="297"><span class="lineNum">     297 </span><span class="lineNoCov">          0 :         offset = (loff_t)(start - vma-&gt;vm_start)</span></a>
+<a name="298"><span class="lineNum">     298 </span><span class="lineNoCov">          0 :                         + ((loff_t)vma-&gt;vm_pgoff &lt;&lt; PAGE_SHIFT);</span></a>
+<a name="299"><span class="lineNum">     299 </span><span class="lineNoCov">          0 :         mmap_read_unlock(mm);</span></a>
+<a name="300"><span class="lineNum">     300 </span><span class="lineNoCov">          0 :         vfs_fadvise(file, offset, end - start, POSIX_FADV_WILLNEED);</span></a>
+<a name="301"><span class="lineNum">     301 </span><span class="lineNoCov">          0 :         fput(file);</span></a>
+<a name="302"><span class="lineNum">     302 </span><span class="lineNoCov">          0 :         mmap_read_lock(mm);</span></a>
+<a name="303"><span class="lineNum">     303 </span><span class="lineNoCov">          0 :         return 0;</span></a>
+<a name="304"><span class="lineNum">     304 </span>            : }</a>
+<a name="305"><span class="lineNum">     305 </span>            : </a>
+<a name="306"><span class="lineNum">     306 </span><span class="lineNoCov">          0 : static int madvise_cold_or_pageout_pte_range(pmd_t *pmd,</span></a>
+<a name="307"><span class="lineNum">     307 </span>            :                                 unsigned long addr, unsigned long end,</a>
+<a name="308"><span class="lineNum">     308 </span>            :                                 struct mm_walk *walk)</a>
+<a name="309"><span class="lineNum">     309 </span>            : {</a>
+<a name="310"><span class="lineNum">     310 </span><span class="lineNoCov">          0 :         struct madvise_walk_private *private = walk-&gt;private;</span></a>
+<a name="311"><span class="lineNum">     311 </span><span class="lineNoCov">          0 :         struct mmu_gather *tlb = private-&gt;tlb;</span></a>
+<a name="312"><span class="lineNum">     312 </span><span class="lineNoCov">          0 :         bool pageout = private-&gt;pageout;</span></a>
+<a name="313"><span class="lineNum">     313 </span><span class="lineNoCov">          0 :         struct mm_struct *mm = tlb-&gt;mm;</span></a>
+<a name="314"><span class="lineNum">     314 </span><span class="lineNoCov">          0 :         struct vm_area_struct *vma = walk-&gt;vma;</span></a>
+<a name="315"><span class="lineNum">     315 </span><span class="lineNoCov">          0 :         pte_t *orig_pte, *pte, ptent;</span></a>
+<a name="316"><span class="lineNum">     316 </span><span class="lineNoCov">          0 :         spinlock_t *ptl;</span></a>
+<a name="317"><span class="lineNum">     317 </span><span class="lineNoCov">          0 :         struct page *page = NULL;</span></a>
+<a name="318"><span class="lineNum">     318 </span><span class="lineNoCov">          0 :         LIST_HEAD(page_list);</span></a>
+<a name="319"><span class="lineNum">     319 </span>            : </a>
+<a name="320"><span class="lineNum">     320 </span><span class="lineNoCov">          0 :         if (fatal_signal_pending(current))</span></a>
+<a name="321"><span class="lineNum">     321 </span>            :                 return -EINTR;</a>
+<a name="322"><span class="lineNum">     322 </span>            : </a>
+<a name="323"><span class="lineNum">     323 </span>            : #ifdef CONFIG_TRANSPARENT_HUGEPAGE</a>
+<a name="324"><span class="lineNum">     324 </span><span class="lineNoCov">          0 :         if (pmd_trans_huge(*pmd)) {</span></a>
+<a name="325"><span class="lineNum">     325 </span><span class="lineNoCov">          0 :                 pmd_t orig_pmd;</span></a>
+<a name="326"><span class="lineNum">     326 </span><span class="lineNoCov">          0 :                 unsigned long next = pmd_addr_end(addr, end);</span></a>
+<a name="327"><span class="lineNum">     327 </span>            : </a>
+<a name="328"><span class="lineNum">     328 </span><span class="lineNoCov">          0 :                 tlb_change_page_size(tlb, HPAGE_PMD_SIZE);</span></a>
+<a name="329"><span class="lineNum">     329 </span><span class="lineNoCov">          0 :                 ptl = pmd_trans_huge_lock(pmd, vma);</span></a>
+<a name="330"><span class="lineNum">     330 </span><span class="lineNoCov">          0 :                 if (!ptl)</span></a>
+<a name="331"><span class="lineNum">     331 </span><span class="lineNoCov">          0 :                         return 0;</span></a>
+<a name="332"><span class="lineNum">     332 </span>            : </a>
+<a name="333"><span class="lineNum">     333 </span><span class="lineNoCov">          0 :                 orig_pmd = *pmd;</span></a>
+<a name="334"><span class="lineNum">     334 </span><span class="lineNoCov">          0 :                 if (is_huge_zero_pmd(orig_pmd))</span></a>
+<a name="335"><span class="lineNum">     335 </span><span class="lineNoCov">          0 :                         goto huge_unlock;</span></a>
+<a name="336"><span class="lineNum">     336 </span>            : </a>
+<a name="337"><span class="lineNum">     337 </span><span class="lineNoCov">          0 :                 if (unlikely(!pmd_present(orig_pmd))) {</span></a>
+<a name="338"><span class="lineNum">     338 </span><span class="lineNoCov">          0 :                         VM_BUG_ON(thp_migration_supported() &amp;&amp;</span></a>
+<a name="339"><span class="lineNum">     339 </span>            :                                         !is_pmd_migration_entry(orig_pmd));</a>
+<a name="340"><span class="lineNum">     340 </span><span class="lineNoCov">          0 :                         goto huge_unlock;</span></a>
+<a name="341"><span class="lineNum">     341 </span>            :                 }</a>
+<a name="342"><span class="lineNum">     342 </span>            : </a>
+<a name="343"><span class="lineNum">     343 </span><span class="lineNoCov">          0 :                 page = pmd_page(orig_pmd);</span></a>
+<a name="344"><span class="lineNum">     344 </span>            : </a>
+<a name="345"><span class="lineNum">     345 </span>            :                 /* Do not interfere with other mappings of this page */</a>
+<a name="346"><span class="lineNum">     346 </span><span class="lineNoCov">          0 :                 if (page_mapcount(page) != 1)</span></a>
+<a name="347"><span class="lineNum">     347 </span><span class="lineNoCov">          0 :                         goto huge_unlock;</span></a>
+<a name="348"><span class="lineNum">     348 </span>            : </a>
+<a name="349"><span class="lineNum">     349 </span><span class="lineNoCov">          0 :                 if (next - addr != HPAGE_PMD_SIZE) {</span></a>
+<a name="350"><span class="lineNum">     350 </span><span class="lineNoCov">          0 :                         int err;</span></a>
+<a name="351"><span class="lineNum">     351 </span>            : </a>
+<a name="352"><span class="lineNum">     352 </span><span class="lineNoCov">          0 :                         get_page(page);</span></a>
+<a name="353"><span class="lineNum">     353 </span><span class="lineNoCov">          0 :                         spin_unlock(ptl);</span></a>
+<a name="354"><span class="lineNum">     354 </span><span class="lineNoCov">          0 :                         lock_page(page);</span></a>
+<a name="355"><span class="lineNum">     355 </span><span class="lineNoCov">          0 :                         err = split_huge_page(page);</span></a>
+<a name="356"><span class="lineNum">     356 </span><span class="lineNoCov">          0 :                         unlock_page(page);</span></a>
+<a name="357"><span class="lineNum">     357 </span><span class="lineNoCov">          0 :                         put_page(page);</span></a>
+<a name="358"><span class="lineNum">     358 </span><span class="lineNoCov">          0 :                         if (!err)</span></a>
+<a name="359"><span class="lineNum">     359 </span><span class="lineNoCov">          0 :                                 goto regular_page;</span></a>
+<a name="360"><span class="lineNum">     360 </span>            :                         return 0;</a>
+<a name="361"><span class="lineNum">     361 </span>            :                 }</a>
+<a name="362"><span class="lineNum">     362 </span>            : </a>
+<a name="363"><span class="lineNum">     363 </span><span class="lineNoCov">          0 :                 if (pmd_young(orig_pmd)) {</span></a>
+<a name="364"><span class="lineNum">     364 </span><span class="lineNoCov">          0 :                         pmdp_invalidate(vma, addr, pmd);</span></a>
+<a name="365"><span class="lineNum">     365 </span><span class="lineNoCov">          0 :                         orig_pmd = pmd_mkold(orig_pmd);</span></a>
+<a name="366"><span class="lineNum">     366 </span>            : </a>
+<a name="367"><span class="lineNum">     367 </span><span class="lineNoCov">          0 :                         set_pmd_at(mm, addr, pmd, orig_pmd);</span></a>
+<a name="368"><span class="lineNum">     368 </span><span class="lineNoCov">          0 :                         tlb_remove_pmd_tlb_entry(tlb, pmd, addr);</span></a>
+<a name="369"><span class="lineNum">     369 </span>            :                 }</a>
+<a name="370"><span class="lineNum">     370 </span>            : </a>
+<a name="371"><span class="lineNum">     371 </span><span class="lineNoCov">          0 :                 ClearPageReferenced(page);</span></a>
+<a name="372"><span class="lineNum">     372 </span><span class="lineNoCov">          0 :                 test_and_clear_page_young(page);</span></a>
+<a name="373"><span class="lineNum">     373 </span><span class="lineNoCov">          0 :                 if (pageout) {</span></a>
+<a name="374"><span class="lineNum">     374 </span><span class="lineNoCov">          0 :                         if (!isolate_lru_page(page)) {</span></a>
+<a name="375"><span class="lineNum">     375 </span><span class="lineNoCov">          0 :                                 if (PageUnevictable(page))</span></a>
+<a name="376"><span class="lineNum">     376 </span><span class="lineNoCov">          0 :                                         putback_lru_page(page);</span></a>
+<a name="377"><span class="lineNum">     377 </span>            :                                 else</a>
+<a name="378"><span class="lineNum">     378 </span><span class="lineNoCov">          0 :                                         list_add(&amp;page-&gt;lru, &amp;page_list);</span></a>
+<a name="379"><span class="lineNum">     379 </span>            :                         }</a>
+<a name="380"><span class="lineNum">     380 </span>            :                 } else</a>
+<a name="381"><span class="lineNum">     381 </span><span class="lineNoCov">          0 :                         deactivate_page(page);</span></a>
+<a name="382"><span class="lineNum">     382 </span><span class="lineNoCov">          0 : huge_unlock:</span></a>
+<a name="383"><span class="lineNum">     383 </span><span class="lineNoCov">          0 :                 spin_unlock(ptl);</span></a>
+<a name="384"><span class="lineNum">     384 </span><span class="lineNoCov">          0 :                 if (pageout)</span></a>
+<a name="385"><span class="lineNum">     385 </span><span class="lineNoCov">          0 :                         reclaim_pages(&amp;page_list);</span></a>
+<a name="386"><span class="lineNum">     386 </span><span class="lineNoCov">          0 :                 return 0;</span></a>
+<a name="387"><span class="lineNum">     387 </span>            :         }</a>
+<a name="388"><span class="lineNum">     388 </span>            : </a>
+<a name="389"><span class="lineNum">     389 </span><span class="lineNoCov">          0 : regular_page:</span></a>
+<a name="390"><span class="lineNum">     390 </span><span class="lineNoCov">          0 :         if (pmd_trans_unstable(pmd))</span></a>
+<a name="391"><span class="lineNum">     391 </span>            :                 return 0;</a>
+<a name="392"><span class="lineNum">     392 </span>            : #endif</a>
+<a name="393"><span class="lineNum">     393 </span><span class="lineNoCov">          0 :         tlb_change_page_size(tlb, PAGE_SIZE);</span></a>
+<a name="394"><span class="lineNum">     394 </span><span class="lineNoCov">          0 :         orig_pte = pte = pte_offset_map_lock(vma-&gt;vm_mm, pmd, addr, &amp;ptl);</span></a>
+<a name="395"><span class="lineNum">     395 </span><span class="lineNoCov">          0 :         flush_tlb_batched_pending(mm);</span></a>
+<a name="396"><span class="lineNum">     396 </span><span class="lineNoCov">          0 :         arch_enter_lazy_mmu_mode();</span></a>
+<a name="397"><span class="lineNum">     397 </span><span class="lineNoCov">          0 :         for (; addr &lt; end; pte++, addr += PAGE_SIZE) {</span></a>
+<a name="398"><span class="lineNum">     398 </span><span class="lineNoCov">          0 :                 ptent = *pte;</span></a>
+<a name="399"><span class="lineNum">     399 </span>            : </a>
+<a name="400"><span class="lineNum">     400 </span><span class="lineNoCov">          0 :                 if (pte_none(ptent))</span></a>
+<a name="401"><span class="lineNum">     401 </span><span class="lineNoCov">          0 :                         continue;</span></a>
+<a name="402"><span class="lineNum">     402 </span>            : </a>
+<a name="403"><span class="lineNum">     403 </span><span class="lineNoCov">          0 :                 if (!pte_present(ptent))</span></a>
+<a name="404"><span class="lineNum">     404 </span><span class="lineNoCov">          0 :                         continue;</span></a>
+<a name="405"><span class="lineNum">     405 </span>            : </a>
+<a name="406"><span class="lineNum">     406 </span><span class="lineNoCov">          0 :                 page = vm_normal_page(vma, addr, ptent);</span></a>
+<a name="407"><span class="lineNum">     407 </span><span class="lineNoCov">          0 :                 if (!page)</span></a>
+<a name="408"><span class="lineNum">     408 </span><span class="lineNoCov">          0 :                         continue;</span></a>
+<a name="409"><span class="lineNum">     409 </span>            : </a>
+<a name="410"><span class="lineNum">     410 </span>            :                 /*</a>
+<a name="411"><span class="lineNum">     411 </span>            :                  * Creating a THP page is expensive so split it only if we</a>
+<a name="412"><span class="lineNum">     412 </span>            :                  * are sure it's worth. Split it if we are only owner.</a>
+<a name="413"><span class="lineNum">     413 </span>            :                  */</a>
+<a name="414"><span class="lineNum">     414 </span><span class="lineNoCov">          0 :                 if (PageTransCompound(page)) {</span></a>
+<a name="415"><span class="lineNum">     415 </span><span class="lineNoCov">          0 :                         if (page_mapcount(page) != 1)</span></a>
+<a name="416"><span class="lineNum">     416 </span>            :                                 break;</a>
+<a name="417"><span class="lineNum">     417 </span><span class="lineNoCov">          0 :                         get_page(page);</span></a>
+<a name="418"><span class="lineNum">     418 </span><span class="lineNoCov">          0 :                         if (!trylock_page(page)) {</span></a>
+<a name="419"><span class="lineNum">     419 </span><span class="lineNoCov">          0 :                                 put_page(page);</span></a>
+<a name="420"><span class="lineNum">     420 </span><span class="lineNoCov">          0 :                                 break;</span></a>
+<a name="421"><span class="lineNum">     421 </span>            :                         }</a>
+<a name="422"><span class="lineNum">     422 </span><span class="lineNoCov">          0 :                         pte_unmap_unlock(orig_pte, ptl);</span></a>
+<a name="423"><span class="lineNum">     423 </span><span class="lineNoCov">          0 :                         if (split_huge_page(page)) {</span></a>
+<a name="424"><span class="lineNum">     424 </span><span class="lineNoCov">          0 :                                 unlock_page(page);</span></a>
+<a name="425"><span class="lineNum">     425 </span><span class="lineNoCov">          0 :                                 put_page(page);</span></a>
+<a name="426"><span class="lineNum">     426 </span><span class="lineNoCov">          0 :                                 pte_offset_map_lock(mm, pmd, addr, &amp;ptl);</span></a>
+<a name="427"><span class="lineNum">     427 </span><span class="lineNoCov">          0 :                                 break;</span></a>
+<a name="428"><span class="lineNum">     428 </span>            :                         }</a>
+<a name="429"><span class="lineNum">     429 </span><span class="lineNoCov">          0 :                         unlock_page(page);</span></a>
+<a name="430"><span class="lineNum">     430 </span><span class="lineNoCov">          0 :                         put_page(page);</span></a>
+<a name="431"><span class="lineNum">     431 </span><span class="lineNoCov">          0 :                         pte = pte_offset_map_lock(mm, pmd, addr, &amp;ptl);</span></a>
+<a name="432"><span class="lineNum">     432 </span><span class="lineNoCov">          0 :                         pte--;</span></a>
+<a name="433"><span class="lineNum">     433 </span><span class="lineNoCov">          0 :                         addr -= PAGE_SIZE;</span></a>
+<a name="434"><span class="lineNum">     434 </span><span class="lineNoCov">          0 :                         continue;</span></a>
+<a name="435"><span class="lineNum">     435 </span>            :                 }</a>
+<a name="436"><span class="lineNum">     436 </span>            : </a>
+<a name="437"><span class="lineNum">     437 </span>            :                 /* Do not interfere with other mappings of this page */</a>
+<a name="438"><span class="lineNum">     438 </span><span class="lineNoCov">          0 :                 if (page_mapcount(page) != 1)</span></a>
+<a name="439"><span class="lineNum">     439 </span><span class="lineNoCov">          0 :                         continue;</span></a>
+<a name="440"><span class="lineNum">     440 </span>            : </a>
+<a name="441"><span class="lineNum">     441 </span><span class="lineNoCov">          0 :                 VM_BUG_ON_PAGE(PageTransCompound(page), page);</span></a>
+<a name="442"><span class="lineNum">     442 </span>            : </a>
+<a name="443"><span class="lineNum">     443 </span><span class="lineNoCov">          0 :                 if (pte_young(ptent)) {</span></a>
+<a name="444"><span class="lineNum">     444 </span><span class="lineNoCov">          0 :                         ptent = ptep_get_and_clear_full(mm, addr, pte,</span></a>
+<a name="445"><span class="lineNum">     445 </span><span class="lineNoCov">          0 :                                                         tlb-&gt;fullmm);</span></a>
+<a name="446"><span class="lineNum">     446 </span><span class="lineNoCov">          0 :                         ptent = pte_mkold(ptent);</span></a>
+<a name="447"><span class="lineNum">     447 </span><span class="lineNoCov">          0 :                         set_pte_at(mm, addr, pte, ptent);</span></a>
+<a name="448"><span class="lineNum">     448 </span><span class="lineNoCov">          0 :                         tlb_remove_tlb_entry(tlb, pte, addr);</span></a>
+<a name="449"><span class="lineNum">     449 </span>            :                 }</a>
+<a name="450"><span class="lineNum">     450 </span>            : </a>
+<a name="451"><span class="lineNum">     451 </span>            :                 /*</a>
+<a name="452"><span class="lineNum">     452 </span>            :                  * We are deactivating a page for accelerating reclaiming.</a>
+<a name="453"><span class="lineNum">     453 </span>            :                  * VM couldn't reclaim the page unless we clear PG_young.</a>
+<a name="454"><span class="lineNum">     454 </span>            :                  * As a side effect, it makes confuse idle-page tracking</a>
+<a name="455"><span class="lineNum">     455 </span>            :                  * because they will miss recent referenced history.</a>
+<a name="456"><span class="lineNum">     456 </span>            :                  */</a>
+<a name="457"><span class="lineNum">     457 </span><span class="lineNoCov">          0 :                 ClearPageReferenced(page);</span></a>
+<a name="458"><span class="lineNum">     458 </span><span class="lineNoCov">          0 :                 test_and_clear_page_young(page);</span></a>
+<a name="459"><span class="lineNum">     459 </span><span class="lineNoCov">          0 :                 if (pageout) {</span></a>
+<a name="460"><span class="lineNum">     460 </span><span class="lineNoCov">          0 :                         if (!isolate_lru_page(page)) {</span></a>
+<a name="461"><span class="lineNum">     461 </span><span class="lineNoCov">          0 :                                 if (PageUnevictable(page))</span></a>
+<a name="462"><span class="lineNum">     462 </span><span class="lineNoCov">          0 :                                         putback_lru_page(page);</span></a>
+<a name="463"><span class="lineNum">     463 </span>            :                                 else</a>
+<a name="464"><span class="lineNum">     464 </span><span class="lineNoCov">          0 :                                         list_add(&amp;page-&gt;lru, &amp;page_list);</span></a>
+<a name="465"><span class="lineNum">     465 </span>            :                         }</a>
+<a name="466"><span class="lineNum">     466 </span>            :                 } else</a>
+<a name="467"><span class="lineNum">     467 </span><span class="lineNoCov">          0 :                         deactivate_page(page);</span></a>
+<a name="468"><span class="lineNum">     468 </span>            :         }</a>
+<a name="469"><span class="lineNum">     469 </span>            : </a>
+<a name="470"><span class="lineNum">     470 </span><span class="lineNoCov">          0 :         arch_leave_lazy_mmu_mode();</span></a>
+<a name="471"><span class="lineNum">     471 </span><span class="lineNoCov">          0 :         pte_unmap_unlock(orig_pte, ptl);</span></a>
+<a name="472"><span class="lineNum">     472 </span><span class="lineNoCov">          0 :         if (pageout)</span></a>
+<a name="473"><span class="lineNum">     473 </span><span class="lineNoCov">          0 :                 reclaim_pages(&amp;page_list);</span></a>
+<a name="474"><span class="lineNum">     474 </span><span class="lineNoCov">          0 :         cond_resched();</span></a>
+<a name="475"><span class="lineNum">     475 </span>            : </a>
+<a name="476"><span class="lineNum">     476 </span><span class="lineNoCov">          0 :         return 0;</span></a>
+<a name="477"><span class="lineNum">     477 </span>            : }</a>
+<a name="478"><span class="lineNum">     478 </span>            : </a>
+<a name="479"><span class="lineNum">     479 </span>            : static const struct mm_walk_ops cold_walk_ops = {</a>
+<a name="480"><span class="lineNum">     480 </span>            :         .pmd_entry = madvise_cold_or_pageout_pte_range,</a>
+<a name="481"><span class="lineNum">     481 </span>            : };</a>
+<a name="482"><span class="lineNum">     482 </span>            : </a>
+<a name="483"><span class="lineNum">     483 </span><span class="lineNoCov">          0 : static void madvise_cold_page_range(struct mmu_gather *tlb,</span></a>
+<a name="484"><span class="lineNum">     484 </span>            :                              struct vm_area_struct *vma,</a>
+<a name="485"><span class="lineNum">     485 </span>            :                              unsigned long addr, unsigned long end)</a>
+<a name="486"><span class="lineNum">     486 </span>            : {</a>
+<a name="487"><span class="lineNum">     487 </span><span class="lineNoCov">          0 :         struct madvise_walk_private walk_private = {</span></a>
+<a name="488"><span class="lineNum">     488 </span>            :                 .pageout = false,</a>
+<a name="489"><span class="lineNum">     489 </span>            :                 .tlb = tlb,</a>
+<a name="490"><span class="lineNum">     490 </span>            :         };</a>
+<a name="491"><span class="lineNum">     491 </span>            : </a>
+<a name="492"><span class="lineNum">     492 </span><span class="lineNoCov">          0 :         tlb_start_vma(tlb, vma);</span></a>
+<a name="493"><span class="lineNum">     493 </span><span class="lineNoCov">          0 :         walk_page_range(vma-&gt;vm_mm, addr, end, &amp;cold_walk_ops, &amp;walk_private);</span></a>
+<a name="494"><span class="lineNum">     494 </span><span class="lineNoCov">          0 :         tlb_end_vma(tlb, vma);</span></a>
+<a name="495"><span class="lineNum">     495 </span><span class="lineNoCov">          0 : }</span></a>
+<a name="496"><span class="lineNum">     496 </span>            : </a>
+<a name="497"><span class="lineNum">     497 </span><span class="lineNoCov">          0 : static long madvise_cold(struct vm_area_struct *vma,</span></a>
+<a name="498"><span class="lineNum">     498 </span>            :                         struct vm_area_struct **prev,</a>
+<a name="499"><span class="lineNum">     499 </span>            :                         unsigned long start_addr, unsigned long end_addr)</a>
+<a name="500"><span class="lineNum">     500 </span>            : {</a>
+<a name="501"><span class="lineNum">     501 </span><span class="lineNoCov">          0 :         struct mm_struct *mm = vma-&gt;vm_mm;</span></a>
+<a name="502"><span class="lineNum">     502 </span><span class="lineNoCov">          0 :         struct mmu_gather tlb;</span></a>
+<a name="503"><span class="lineNum">     503 </span>            : </a>
+<a name="504"><span class="lineNum">     504 </span><span class="lineNoCov">          0 :         *prev = vma;</span></a>
+<a name="505"><span class="lineNum">     505 </span><span class="lineNoCov">          0 :         if (!can_madv_lru_vma(vma))</span></a>
+<a name="506"><span class="lineNum">     506 </span>            :                 return -EINVAL;</a>
+<a name="507"><span class="lineNum">     507 </span>            : </a>
+<a name="508"><span class="lineNum">     508 </span><span class="lineNoCov">          0 :         lru_add_drain();</span></a>
+<a name="509"><span class="lineNum">     509 </span><span class="lineNoCov">          0 :         tlb_gather_mmu(&amp;tlb, mm);</span></a>
+<a name="510"><span class="lineNum">     510 </span><span class="lineNoCov">          0 :         madvise_cold_page_range(&amp;tlb, vma, start_addr, end_addr);</span></a>
+<a name="511"><span class="lineNum">     511 </span><span class="lineNoCov">          0 :         tlb_finish_mmu(&amp;tlb);</span></a>
+<a name="512"><span class="lineNum">     512 </span>            : </a>
+<a name="513"><span class="lineNum">     513 </span><span class="lineNoCov">          0 :         return 0;</span></a>
+<a name="514"><span class="lineNum">     514 </span>            : }</a>
+<a name="515"><span class="lineNum">     515 </span>            : </a>
+<a name="516"><span class="lineNum">     516 </span><span class="lineNoCov">          0 : static void madvise_pageout_page_range(struct mmu_gather *tlb,</span></a>
+<a name="517"><span class="lineNum">     517 </span>            :                              struct vm_area_struct *vma,</a>
+<a name="518"><span class="lineNum">     518 </span>            :                              unsigned long addr, unsigned long end)</a>
+<a name="519"><span class="lineNum">     519 </span>            : {</a>
+<a name="520"><span class="lineNum">     520 </span><span class="lineNoCov">          0 :         struct madvise_walk_private walk_private = {</span></a>
+<a name="521"><span class="lineNum">     521 </span>            :                 .pageout = true,</a>
+<a name="522"><span class="lineNum">     522 </span>            :                 .tlb = tlb,</a>
+<a name="523"><span class="lineNum">     523 </span>            :         };</a>
+<a name="524"><span class="lineNum">     524 </span>            : </a>
+<a name="525"><span class="lineNum">     525 </span><span class="lineNoCov">          0 :         tlb_start_vma(tlb, vma);</span></a>
+<a name="526"><span class="lineNum">     526 </span><span class="lineNoCov">          0 :         walk_page_range(vma-&gt;vm_mm, addr, end, &amp;cold_walk_ops, &amp;walk_private);</span></a>
+<a name="527"><span class="lineNum">     527 </span><span class="lineNoCov">          0 :         tlb_end_vma(tlb, vma);</span></a>
+<a name="528"><span class="lineNum">     528 </span><span class="lineNoCov">          0 : }</span></a>
+<a name="529"><span class="lineNum">     529 </span>            : </a>
+<a name="530"><span class="lineNum">     530 </span><span class="lineNoCov">          0 : static inline bool can_do_pageout(struct vm_area_struct *vma)</span></a>
+<a name="531"><span class="lineNum">     531 </span>            : {</a>
+<a name="532"><span class="lineNum">     532 </span><span class="lineNoCov">          0 :         if (vma_is_anonymous(vma))</span></a>
+<a name="533"><span class="lineNum">     533 </span>            :                 return true;</a>
+<a name="534"><span class="lineNum">     534 </span><span class="lineNoCov">          0 :         if (!vma-&gt;vm_file)</span></a>
+<a name="535"><span class="lineNum">     535 </span>            :                 return false;</a>
+<a name="536"><span class="lineNum">     536 </span>            :         /*</a>
+<a name="537"><span class="lineNum">     537 </span>            :          * paging out pagecache only for non-anonymous mappings that correspond</a>
+<a name="538"><span class="lineNum">     538 </span>            :          * to the files the calling process could (if tried) open for writing;</a>
+<a name="539"><span class="lineNum">     539 </span>            :          * otherwise we'd be including shared non-exclusive mappings, which</a>
+<a name="540"><span class="lineNum">     540 </span>            :          * opens a side channel.</a>
+<a name="541"><span class="lineNum">     541 </span>            :          */</a>
+<a name="542"><span class="lineNum">     542 </span><span class="lineNoCov">          0 :         return inode_owner_or_capable(&amp;init_user_ns,</span></a>
+<a name="543"><span class="lineNum">     543 </span><span class="lineNoCov">          0 :                                       file_inode(vma-&gt;vm_file)) ||</span></a>
+<a name="544"><span class="lineNum">     544 </span><span class="lineNoCov">          0 :                file_permission(vma-&gt;vm_file, MAY_WRITE) == 0;</span></a>
+<a name="545"><span class="lineNum">     545 </span>            : }</a>
+<a name="546"><span class="lineNum">     546 </span>            : </a>
+<a name="547"><span class="lineNum">     547 </span><span class="lineNoCov">          0 : static long madvise_pageout(struct vm_area_struct *vma,</span></a>
+<a name="548"><span class="lineNum">     548 </span>            :                         struct vm_area_struct **prev,</a>
+<a name="549"><span class="lineNum">     549 </span>            :                         unsigned long start_addr, unsigned long end_addr)</a>
+<a name="550"><span class="lineNum">     550 </span>            : {</a>
+<a name="551"><span class="lineNum">     551 </span><span class="lineNoCov">          0 :         struct mm_struct *mm = vma-&gt;vm_mm;</span></a>
+<a name="552"><span class="lineNum">     552 </span><span class="lineNoCov">          0 :         struct mmu_gather tlb;</span></a>
+<a name="553"><span class="lineNum">     553 </span>            : </a>
+<a name="554"><span class="lineNum">     554 </span><span class="lineNoCov">          0 :         *prev = vma;</span></a>
+<a name="555"><span class="lineNum">     555 </span><span class="lineNoCov">          0 :         if (!can_madv_lru_vma(vma))</span></a>
+<a name="556"><span class="lineNum">     556 </span>            :                 return -EINVAL;</a>
+<a name="557"><span class="lineNum">     557 </span>            : </a>
+<a name="558"><span class="lineNum">     558 </span><span class="lineNoCov">          0 :         if (!can_do_pageout(vma))</span></a>
+<a name="559"><span class="lineNum">     559 </span>            :                 return 0;</a>
+<a name="560"><span class="lineNum">     560 </span>            : </a>
+<a name="561"><span class="lineNum">     561 </span><span class="lineNoCov">          0 :         lru_add_drain();</span></a>
+<a name="562"><span class="lineNum">     562 </span><span class="lineNoCov">          0 :         tlb_gather_mmu(&amp;tlb, mm);</span></a>
+<a name="563"><span class="lineNum">     563 </span><span class="lineNoCov">          0 :         madvise_pageout_page_range(&amp;tlb, vma, start_addr, end_addr);</span></a>
+<a name="564"><span class="lineNum">     564 </span><span class="lineNoCov">          0 :         tlb_finish_mmu(&amp;tlb);</span></a>
+<a name="565"><span class="lineNum">     565 </span>            : </a>
+<a name="566"><span class="lineNum">     566 </span><span class="lineNoCov">          0 :         return 0;</span></a>
+<a name="567"><span class="lineNum">     567 </span>            : }</a>
+<a name="568"><span class="lineNum">     568 </span>            : </a>
+<a name="569"><span class="lineNum">     569 </span><span class="lineNoCov">          0 : static int madvise_free_pte_range(pmd_t *pmd, unsigned long addr,</span></a>
+<a name="570"><span class="lineNum">     570 </span>            :                                 unsigned long end, struct mm_walk *walk)</a>
+<a name="571"><span class="lineNum">     571 </span>            : </a>
+<a name="572"><span class="lineNum">     572 </span>            : {</a>
+<a name="573"><span class="lineNum">     573 </span><span class="lineNoCov">          0 :         struct mmu_gather *tlb = walk-&gt;private;</span></a>
+<a name="574"><span class="lineNum">     574 </span><span class="lineNoCov">          0 :         struct mm_struct *mm = tlb-&gt;mm;</span></a>
+<a name="575"><span class="lineNum">     575 </span><span class="lineNoCov">          0 :         struct vm_area_struct *vma = walk-&gt;vma;</span></a>
+<a name="576"><span class="lineNum">     576 </span><span class="lineNoCov">          0 :         spinlock_t *ptl;</span></a>
+<a name="577"><span class="lineNum">     577 </span><span class="lineNoCov">          0 :         pte_t *orig_pte, *pte, ptent;</span></a>
+<a name="578"><span class="lineNum">     578 </span><span class="lineNoCov">          0 :         struct page *page;</span></a>
+<a name="579"><span class="lineNum">     579 </span><span class="lineNoCov">          0 :         int nr_swap = 0;</span></a>
+<a name="580"><span class="lineNum">     580 </span><span class="lineNoCov">          0 :         unsigned long next;</span></a>
+<a name="581"><span class="lineNum">     581 </span>            : </a>
+<a name="582"><span class="lineNum">     582 </span><span class="lineNoCov">          0 :         next = pmd_addr_end(addr, end);</span></a>
+<a name="583"><span class="lineNum">     583 </span><span class="lineNoCov">          0 :         if (pmd_trans_huge(*pmd))</span></a>
+<a name="584"><span class="lineNum">     584 </span><span class="lineNoCov">          0 :                 if (madvise_free_huge_pmd(tlb, vma, pmd, addr, next))</span></a>
+<a name="585"><span class="lineNum">     585 </span><span class="lineNoCov">          0 :                         goto next;</span></a>
+<a name="586"><span class="lineNum">     586 </span>            : </a>
+<a name="587"><span class="lineNum">     587 </span><span class="lineNoCov">          0 :         if (pmd_trans_unstable(pmd))</span></a>
+<a name="588"><span class="lineNum">     588 </span>            :                 return 0;</a>
+<a name="589"><span class="lineNum">     589 </span>            : </a>
+<a name="590"><span class="lineNum">     590 </span><span class="lineNoCov">          0 :         tlb_change_page_size(tlb, PAGE_SIZE);</span></a>
+<a name="591"><span class="lineNum">     591 </span><span class="lineNoCov">          0 :         orig_pte = pte = pte_offset_map_lock(mm, pmd, addr, &amp;ptl);</span></a>
+<a name="592"><span class="lineNum">     592 </span><span class="lineNoCov">          0 :         flush_tlb_batched_pending(mm);</span></a>
+<a name="593"><span class="lineNum">     593 </span><span class="lineNoCov">          0 :         arch_enter_lazy_mmu_mode();</span></a>
+<a name="594"><span class="lineNum">     594 </span><span class="lineNoCov">          0 :         for (; addr != end; pte++, addr += PAGE_SIZE) {</span></a>
+<a name="595"><span class="lineNum">     595 </span><span class="lineNoCov">          0 :                 ptent = *pte;</span></a>
+<a name="596"><span class="lineNum">     596 </span>            : </a>
+<a name="597"><span class="lineNum">     597 </span><span class="lineNoCov">          0 :                 if (pte_none(ptent))</span></a>
+<a name="598"><span class="lineNum">     598 </span><span class="lineNoCov">          0 :                         continue;</span></a>
+<a name="599"><span class="lineNum">     599 </span>            :                 /*</a>
+<a name="600"><span class="lineNum">     600 </span>            :                  * If the pte has swp_entry, just clear page table to</a>
+<a name="601"><span class="lineNum">     601 </span>            :                  * prevent swap-in which is more expensive rather than</a>
+<a name="602"><span class="lineNum">     602 </span>            :                  * (page allocation + zeroing).</a>
+<a name="603"><span class="lineNum">     603 </span>            :                  */</a>
+<a name="604"><span class="lineNum">     604 </span><span class="lineNoCov">          0 :                 if (!pte_present(ptent)) {</span></a>
+<a name="605"><span class="lineNum">     605 </span><span class="lineNoCov">          0 :                         swp_entry_t entry;</span></a>
+<a name="606"><span class="lineNum">     606 </span>            : </a>
+<a name="607"><span class="lineNum">     607 </span><span class="lineNoCov">          0 :                         entry = pte_to_swp_entry(ptent);</span></a>
+<a name="608"><span class="lineNum">     608 </span><span class="lineNoCov">          0 :                         if (non_swap_entry(entry))</span></a>
+<a name="609"><span class="lineNum">     609 </span><span class="lineNoCov">          0 :                                 continue;</span></a>
+<a name="610"><span class="lineNum">     610 </span><span class="lineNoCov">          0 :                         nr_swap--;</span></a>
+<a name="611"><span class="lineNum">     611 </span><span class="lineNoCov">          0 :                         free_swap_and_cache(entry);</span></a>
+<a name="612"><span class="lineNum">     612 </span><span class="lineNoCov">          0 :                         pte_clear_not_present_full(mm, addr, pte, tlb-&gt;fullmm);</span></a>
+<a name="613"><span class="lineNum">     613 </span><span class="lineNoCov">          0 :                         continue;</span></a>
+<a name="614"><span class="lineNum">     614 </span>            :                 }</a>
+<a name="615"><span class="lineNum">     615 </span>            : </a>
+<a name="616"><span class="lineNum">     616 </span><span class="lineNoCov">          0 :                 page = vm_normal_page(vma, addr, ptent);</span></a>
+<a name="617"><span class="lineNum">     617 </span><span class="lineNoCov">          0 :                 if (!page)</span></a>
+<a name="618"><span class="lineNum">     618 </span><span class="lineNoCov">          0 :                         continue;</span></a>
+<a name="619"><span class="lineNum">     619 </span>            : </a>
+<a name="620"><span class="lineNum">     620 </span>            :                 /*</a>
+<a name="621"><span class="lineNum">     621 </span>            :                  * If pmd isn't transhuge but the page is THP and</a>
+<a name="622"><span class="lineNum">     622 </span>            :                  * is owned by only this process, split it and</a>
+<a name="623"><span class="lineNum">     623 </span>            :                  * deactivate all pages.</a>
+<a name="624"><span class="lineNum">     624 </span>            :                  */</a>
+<a name="625"><span class="lineNum">     625 </span><span class="lineNoCov">          0 :                 if (PageTransCompound(page)) {</span></a>
+<a name="626"><span class="lineNum">     626 </span><span class="lineNoCov">          0 :                         if (page_mapcount(page) != 1)</span></a>
+<a name="627"><span class="lineNum">     627 </span><span class="lineNoCov">          0 :                                 goto out;</span></a>
+<a name="628"><span class="lineNum">     628 </span><span class="lineNoCov">          0 :                         get_page(page);</span></a>
+<a name="629"><span class="lineNum">     629 </span><span class="lineNoCov">          0 :                         if (!trylock_page(page)) {</span></a>
+<a name="630"><span class="lineNum">     630 </span><span class="lineNoCov">          0 :                                 put_page(page);</span></a>
+<a name="631"><span class="lineNum">     631 </span><span class="lineNoCov">          0 :                                 goto out;</span></a>
+<a name="632"><span class="lineNum">     632 </span>            :                         }</a>
+<a name="633"><span class="lineNum">     633 </span><span class="lineNoCov">          0 :                         pte_unmap_unlock(orig_pte, ptl);</span></a>
+<a name="634"><span class="lineNum">     634 </span><span class="lineNoCov">          0 :                         if (split_huge_page(page)) {</span></a>
+<a name="635"><span class="lineNum">     635 </span><span class="lineNoCov">          0 :                                 unlock_page(page);</span></a>
+<a name="636"><span class="lineNum">     636 </span><span class="lineNoCov">          0 :                                 put_page(page);</span></a>
+<a name="637"><span class="lineNum">     637 </span><span class="lineNoCov">          0 :                                 pte_offset_map_lock(mm, pmd, addr, &amp;ptl);</span></a>
+<a name="638"><span class="lineNum">     638 </span><span class="lineNoCov">          0 :                                 goto out;</span></a>
+<a name="639"><span class="lineNum">     639 </span>            :                         }</a>
+<a name="640"><span class="lineNum">     640 </span><span class="lineNoCov">          0 :                         unlock_page(page);</span></a>
+<a name="641"><span class="lineNum">     641 </span><span class="lineNoCov">          0 :                         put_page(page);</span></a>
+<a name="642"><span class="lineNum">     642 </span><span class="lineNoCov">          0 :                         pte = pte_offset_map_lock(mm, pmd, addr, &amp;ptl);</span></a>
+<a name="643"><span class="lineNum">     643 </span><span class="lineNoCov">          0 :                         pte--;</span></a>
+<a name="644"><span class="lineNum">     644 </span><span class="lineNoCov">          0 :                         addr -= PAGE_SIZE;</span></a>
+<a name="645"><span class="lineNum">     645 </span><span class="lineNoCov">          0 :                         continue;</span></a>
+<a name="646"><span class="lineNum">     646 </span>            :                 }</a>
+<a name="647"><span class="lineNum">     647 </span>            : </a>
+<a name="648"><span class="lineNum">     648 </span><span class="lineNoCov">          0 :                 VM_BUG_ON_PAGE(PageTransCompound(page), page);</span></a>
+<a name="649"><span class="lineNum">     649 </span>            : </a>
+<a name="650"><span class="lineNum">     650 </span><span class="lineNoCov">          0 :                 if (PageSwapCache(page) || PageDirty(page)) {</span></a>
+<a name="651"><span class="lineNum">     651 </span><span class="lineNoCov">          0 :                         if (!trylock_page(page))</span></a>
+<a name="652"><span class="lineNum">     652 </span><span class="lineNoCov">          0 :                                 continue;</span></a>
+<a name="653"><span class="lineNum">     653 </span>            :                         /*</a>
+<a name="654"><span class="lineNum">     654 </span>            :                          * If page is shared with others, we couldn't clear</a>
+<a name="655"><span class="lineNum">     655 </span>            :                          * PG_dirty of the page.</a>
+<a name="656"><span class="lineNum">     656 </span>            :                          */</a>
+<a name="657"><span class="lineNum">     657 </span><span class="lineNoCov">          0 :                         if (page_mapcount(page) != 1) {</span></a>
+<a name="658"><span class="lineNum">     658 </span><span class="lineNoCov">          0 :                                 unlock_page(page);</span></a>
+<a name="659"><span class="lineNum">     659 </span><span class="lineNoCov">          0 :                                 continue;</span></a>
+<a name="660"><span class="lineNum">     660 </span>            :                         }</a>
+<a name="661"><span class="lineNum">     661 </span>            : </a>
+<a name="662"><span class="lineNum">     662 </span><span class="lineNoCov">          0 :                         if (PageSwapCache(page) &amp;&amp; !try_to_free_swap(page)) {</span></a>
+<a name="663"><span class="lineNum">     663 </span>            :                                 unlock_page(page);</a>
+<a name="664"><span class="lineNum">     664 </span>            :                                 continue;</a>
+<a name="665"><span class="lineNum">     665 </span>            :                         }</a>
+<a name="666"><span class="lineNum">     666 </span>            : </a>
+<a name="667"><span class="lineNum">     667 </span><span class="lineNoCov">          0 :                         ClearPageDirty(page);</span></a>
+<a name="668"><span class="lineNum">     668 </span><span class="lineNoCov">          0 :                         unlock_page(page);</span></a>
+<a name="669"><span class="lineNum">     669 </span>            :                 }</a>
+<a name="670"><span class="lineNum">     670 </span>            : </a>
+<a name="671"><span class="lineNum">     671 </span><span class="lineNoCov">          0 :                 if (pte_young(ptent) || pte_dirty(ptent)) {</span></a>
+<a name="672"><span class="lineNum">     672 </span>            :                         /*</a>
+<a name="673"><span class="lineNum">     673 </span>            :                          * Some of architecture(ex, PPC) don't update TLB</a>
+<a name="674"><span class="lineNum">     674 </span>            :                          * with set_pte_at and tlb_remove_tlb_entry so for</a>
+<a name="675"><span class="lineNum">     675 </span>            :                          * the portability, remap the pte with old|clean</a>
+<a name="676"><span class="lineNum">     676 </span>            :                          * after pte clearing.</a>
+<a name="677"><span class="lineNum">     677 </span>            :                          */</a>
+<a name="678"><span class="lineNum">     678 </span><span class="lineNoCov">          0 :                         ptent = ptep_get_and_clear_full(mm, addr, pte,</span></a>
+<a name="679"><span class="lineNum">     679 </span><span class="lineNoCov">          0 :                                                         tlb-&gt;fullmm);</span></a>
+<a name="680"><span class="lineNum">     680 </span>            : </a>
+<a name="681"><span class="lineNum">     681 </span><span class="lineNoCov">          0 :                         ptent = pte_mkold(ptent);</span></a>
+<a name="682"><span class="lineNum">     682 </span><span class="lineNoCov">          0 :                         ptent = pte_mkclean(ptent);</span></a>
+<a name="683"><span class="lineNum">     683 </span><span class="lineNoCov">          0 :                         set_pte_at(mm, addr, pte, ptent);</span></a>
+<a name="684"><span class="lineNum">     684 </span><span class="lineNoCov">          0 :                         tlb_remove_tlb_entry(tlb, pte, addr);</span></a>
+<a name="685"><span class="lineNum">     685 </span>            :                 }</a>
+<a name="686"><span class="lineNum">     686 </span><span class="lineNoCov">          0 :                 mark_page_lazyfree(page);</span></a>
+<a name="687"><span class="lineNum">     687 </span>            :         }</a>
+<a name="688"><span class="lineNum">     688 </span><span class="lineNoCov">          0 : out:</span></a>
+<a name="689"><span class="lineNum">     689 </span><span class="lineNoCov">          0 :         if (nr_swap) {</span></a>
+<a name="690"><span class="lineNum">     690 </span><span class="lineNoCov">          0 :                 if (current-&gt;mm == mm)</span></a>
+<a name="691"><span class="lineNum">     691 </span><span class="lineNoCov">          0 :                         sync_mm_rss(mm);</span></a>
+<a name="692"><span class="lineNum">     692 </span>            : </a>
+<a name="693"><span class="lineNum">     693 </span><span class="lineNoCov">          0 :                 add_mm_counter(mm, MM_SWAPENTS, nr_swap);</span></a>
+<a name="694"><span class="lineNum">     694 </span>            :         }</a>
+<a name="695"><span class="lineNum">     695 </span><span class="lineNoCov">          0 :         arch_leave_lazy_mmu_mode();</span></a>
+<a name="696"><span class="lineNum">     696 </span><span class="lineNoCov">          0 :         pte_unmap_unlock(orig_pte, ptl);</span></a>
+<a name="697"><span class="lineNum">     697 </span><span class="lineNoCov">          0 :         cond_resched();</span></a>
+<a name="698"><span class="lineNum">     698 </span>            : next:</a>
+<a name="699"><span class="lineNum">     699 </span>            :         return 0;</a>
+<a name="700"><span class="lineNum">     700 </span>            : }</a>
+<a name="701"><span class="lineNum">     701 </span>            : </a>
+<a name="702"><span class="lineNum">     702 </span>            : static const struct mm_walk_ops madvise_free_walk_ops = {</a>
+<a name="703"><span class="lineNum">     703 </span>            :         .pmd_entry              = madvise_free_pte_range,</a>
+<a name="704"><span class="lineNum">     704 </span>            : };</a>
+<a name="705"><span class="lineNum">     705 </span>            : </a>
+<a name="706"><span class="lineNum">     706 </span><span class="lineNoCov">          0 : static int madvise_free_single_vma(struct vm_area_struct *vma,</span></a>
+<a name="707"><span class="lineNum">     707 </span>            :                         unsigned long start_addr, unsigned long end_addr)</a>
+<a name="708"><span class="lineNum">     708 </span>            : {</a>
+<a name="709"><span class="lineNum">     709 </span><span class="lineNoCov">          0 :         struct mm_struct *mm = vma-&gt;vm_mm;</span></a>
+<a name="710"><span class="lineNum">     710 </span><span class="lineNoCov">          0 :         struct mmu_notifier_range range;</span></a>
+<a name="711"><span class="lineNum">     711 </span><span class="lineNoCov">          0 :         struct mmu_gather tlb;</span></a>
+<a name="712"><span class="lineNum">     712 </span>            : </a>
+<a name="713"><span class="lineNum">     713 </span>            :         /* MADV_FREE works for only anon vma at the moment */</a>
+<a name="714"><span class="lineNum">     714 </span><span class="lineNoCov">          0 :         if (!vma_is_anonymous(vma))</span></a>
+<a name="715"><span class="lineNum">     715 </span>            :                 return -EINVAL;</a>
+<a name="716"><span class="lineNum">     716 </span>            : </a>
+<a name="717"><span class="lineNum">     717 </span><span class="lineNoCov">          0 :         range.start = max(vma-&gt;vm_start, start_addr);</span></a>
+<a name="718"><span class="lineNum">     718 </span><span class="lineNoCov">          0 :         if (range.start &gt;= vma-&gt;vm_end)</span></a>
+<a name="719"><span class="lineNum">     719 </span>            :                 return -EINVAL;</a>
+<a name="720"><span class="lineNum">     720 </span><span class="lineNoCov">          0 :         range.end = min(vma-&gt;vm_end, end_addr);</span></a>
+<a name="721"><span class="lineNum">     721 </span><span class="lineNoCov">          0 :         if (range.end &lt;= vma-&gt;vm_start)</span></a>
+<a name="722"><span class="lineNum">     722 </span>            :                 return -EINVAL;</a>
+<a name="723"><span class="lineNum">     723 </span><span class="lineNoCov">          0 :         mmu_notifier_range_init(&amp;range, MMU_NOTIFY_CLEAR, 0, vma, mm,</span></a>
+<a name="724"><span class="lineNum">     724 </span>            :                                 range.start, range.end);</a>
+<a name="725"><span class="lineNum">     725 </span>            : </a>
+<a name="726"><span class="lineNum">     726 </span><span class="lineNoCov">          0 :         lru_add_drain();</span></a>
+<a name="727"><span class="lineNum">     727 </span><span class="lineNoCov">          0 :         tlb_gather_mmu(&amp;tlb, mm);</span></a>
+<a name="728"><span class="lineNum">     728 </span><span class="lineNoCov">          0 :         update_hiwater_rss(mm);</span></a>
+<a name="729"><span class="lineNum">     729 </span>            : </a>
+<a name="730"><span class="lineNum">     730 </span><span class="lineNoCov">          0 :         mmu_notifier_invalidate_range_start(&amp;range);</span></a>
+<a name="731"><span class="lineNum">     731 </span><span class="lineNoCov">          0 :         tlb_start_vma(&amp;tlb, vma);</span></a>
+<a name="732"><span class="lineNum">     732 </span><span class="lineNoCov">          0 :         walk_page_range(vma-&gt;vm_mm, range.start, range.end,</span></a>
+<a name="733"><span class="lineNum">     733 </span>            :                         &amp;madvise_free_walk_ops, &amp;tlb);</a>
+<a name="734"><span class="lineNum">     734 </span><span class="lineNoCov">          0 :         tlb_end_vma(&amp;tlb, vma);</span></a>
+<a name="735"><span class="lineNum">     735 </span><span class="lineNoCov">          0 :         mmu_notifier_invalidate_range_end(&amp;range);</span></a>
+<a name="736"><span class="lineNum">     736 </span><span class="lineNoCov">          0 :         tlb_finish_mmu(&amp;tlb);</span></a>
+<a name="737"><span class="lineNum">     737 </span>            : </a>
+<a name="738"><span class="lineNum">     738 </span><span class="lineNoCov">          0 :         return 0;</span></a>
+<a name="739"><span class="lineNum">     739 </span>            : }</a>
+<a name="740"><span class="lineNum">     740 </span>            : </a>
+<a name="741"><span class="lineNum">     741 </span>            : /*</a>
+<a name="742"><span class="lineNum">     742 </span>            :  * Application no longer needs these pages.  If the pages are dirty,</a>
+<a name="743"><span class="lineNum">     743 </span>            :  * it's OK to just throw them away.  The app will be more careful about</a>
+<a name="744"><span class="lineNum">     744 </span>            :  * data it wants to keep.  Be sure to free swap resources too.  The</a>
+<a name="745"><span class="lineNum">     745 </span>            :  * zap_page_range call sets things up for shrink_active_list to actually free</a>
+<a name="746"><span class="lineNum">     746 </span>            :  * these pages later if no one else has touched them in the meantime,</a>
+<a name="747"><span class="lineNum">     747 </span>            :  * although we could add these pages to a global reuse list for</a>
+<a name="748"><span class="lineNum">     748 </span>            :  * shrink_active_list to pick up before reclaiming other pages.</a>
+<a name="749"><span class="lineNum">     749 </span>            :  *</a>
+<a name="750"><span class="lineNum">     750 </span>            :  * NB: This interface discards data rather than pushes it out to swap,</a>
+<a name="751"><span class="lineNum">     751 </span>            :  * as some implementations do.  This has performance implications for</a>
+<a name="752"><span class="lineNum">     752 </span>            :  * applications like large transactional databases which want to discard</a>
+<a name="753"><span class="lineNum">     753 </span>            :  * pages in anonymous maps after committing to backing store the data</a>
+<a name="754"><span class="lineNum">     754 </span>            :  * that was kept in them.  There is no reason to write this data out to</a>
+<a name="755"><span class="lineNum">     755 </span>            :  * the swap area if the application is discarding it.</a>
+<a name="756"><span class="lineNum">     756 </span>            :  *</a>
+<a name="757"><span class="lineNum">     757 </span>            :  * An interface that causes the system to free clean pages and flush</a>
+<a name="758"><span class="lineNum">     758 </span>            :  * dirty pages is already available as msync(MS_INVALIDATE).</a>
+<a name="759"><span class="lineNum">     759 </span>            :  */</a>
+<a name="760"><span class="lineNum">     760 </span><span class="lineCov">          4 : static long madvise_dontneed_single_vma(struct vm_area_struct *vma,</span></a>
+<a name="761"><span class="lineNum">     761 </span>            :                                         unsigned long start, unsigned long end)</a>
+<a name="762"><span class="lineNum">     762 </span>            : {</a>
+<a name="763"><span class="lineNum">     763 </span><span class="lineCov">          4 :         zap_page_range(vma, start, end - start);</span></a>
+<a name="764"><span class="lineNum">     764 </span><span class="lineCov">          4 :         return 0;</span></a>
+<a name="765"><span class="lineNum">     765 </span>            : }</a>
+<a name="766"><span class="lineNum">     766 </span>            : </a>
+<a name="767"><span class="lineNum">     767 </span><span class="lineCov">          4 : static long madvise_dontneed_free(struct vm_area_struct *vma,</span></a>
+<a name="768"><span class="lineNum">     768 </span>            :                                   struct vm_area_struct **prev,</a>
+<a name="769"><span class="lineNum">     769 </span>            :                                   unsigned long start, unsigned long end,</a>
+<a name="770"><span class="lineNum">     770 </span>            :                                   int behavior)</a>
+<a name="771"><span class="lineNum">     771 </span>            : {</a>
+<a name="772"><span class="lineNum">     772 </span><span class="lineCov">          4 :         struct mm_struct *mm = vma-&gt;vm_mm;</span></a>
+<a name="773"><span class="lineNum">     773 </span>            : </a>
+<a name="774"><span class="lineNum">     774 </span><span class="lineCov">          4 :         *prev = vma;</span></a>
+<a name="775"><span class="lineNum">     775 </span><span class="lineCov">          4 :         if (!can_madv_lru_vma(vma))</span></a>
+<a name="776"><span class="lineNum">     776 </span>            :                 return -EINVAL;</a>
+<a name="777"><span class="lineNum">     777 </span>            : </a>
+<a name="778"><span class="lineNum">     778 </span><span class="lineCov">          4 :         if (!userfaultfd_remove(vma, start, end)) {</span></a>
+<a name="779"><span class="lineNum">     779 </span>            :                 *prev = NULL; /* mmap_lock has been dropped, prev is stale */</a>
+<a name="780"><span class="lineNum">     780 </span>            : </a>
+<a name="781"><span class="lineNum">     781 </span>            :                 mmap_read_lock(mm);</a>
+<a name="782"><span class="lineNum">     782 </span>            :                 vma = find_vma(mm, start);</a>
+<a name="783"><span class="lineNum">     783 </span>            :                 if (!vma)</a>
+<a name="784"><span class="lineNum">     784 </span>            :                         return -ENOMEM;</a>
+<a name="785"><span class="lineNum">     785 </span>            :                 if (start &lt; vma-&gt;vm_start) {</a>
+<a name="786"><span class="lineNum">     786 </span>            :                         /*</a>
+<a name="787"><span class="lineNum">     787 </span>            :                          * This &quot;vma&quot; under revalidation is the one</a>
+<a name="788"><span class="lineNum">     788 </span>            :                          * with the lowest vma-&gt;vm_start where start</a>
+<a name="789"><span class="lineNum">     789 </span>            :                          * is also &lt; vma-&gt;vm_end. If start &lt;</a>
+<a name="790"><span class="lineNum">     790 </span>            :                          * vma-&gt;vm_start it means an hole materialized</a>
+<a name="791"><span class="lineNum">     791 </span>            :                          * in the user address space within the</a>
+<a name="792"><span class="lineNum">     792 </span>            :                          * virtual range passed to MADV_DONTNEED</a>
+<a name="793"><span class="lineNum">     793 </span>            :                          * or MADV_FREE.</a>
+<a name="794"><span class="lineNum">     794 </span>            :                          */</a>
+<a name="795"><span class="lineNum">     795 </span>            :                         return -ENOMEM;</a>
+<a name="796"><span class="lineNum">     796 </span>            :                 }</a>
+<a name="797"><span class="lineNum">     797 </span>            :                 if (!can_madv_lru_vma(vma))</a>
+<a name="798"><span class="lineNum">     798 </span>            :                         return -EINVAL;</a>
+<a name="799"><span class="lineNum">     799 </span>            :                 if (end &gt; vma-&gt;vm_end) {</a>
+<a name="800"><span class="lineNum">     800 </span>            :                         /*</a>
+<a name="801"><span class="lineNum">     801 </span>            :                          * Don't fail if end &gt; vma-&gt;vm_end. If the old</a>
+<a name="802"><span class="lineNum">     802 </span>            :                          * vma was splitted while the mmap_lock was</a>
+<a name="803"><span class="lineNum">     803 </span>            :                          * released the effect of the concurrent</a>
+<a name="804"><span class="lineNum">     804 </span>            :                          * operation may not cause madvise() to</a>
+<a name="805"><span class="lineNum">     805 </span>            :                          * have an undefined result. There may be an</a>
+<a name="806"><span class="lineNum">     806 </span>            :                          * adjacent next vma that we'll walk</a>
+<a name="807"><span class="lineNum">     807 </span>            :                          * next. userfaultfd_remove() will generate an</a>
+<a name="808"><span class="lineNum">     808 </span>            :                          * UFFD_EVENT_REMOVE repetition on the</a>
+<a name="809"><span class="lineNum">     809 </span>            :                          * end-vma-&gt;vm_end range, but the manager can</a>
+<a name="810"><span class="lineNum">     810 </span>            :                          * handle a repetition fine.</a>
+<a name="811"><span class="lineNum">     811 </span>            :                          */</a>
+<a name="812"><span class="lineNum">     812 </span>            :                         end = vma-&gt;vm_end;</a>
+<a name="813"><span class="lineNum">     813 </span>            :                 }</a>
+<a name="814"><span class="lineNum">     814 </span>            :                 VM_WARN_ON(start &gt;= end);</a>
+<a name="815"><span class="lineNum">     815 </span>            :         }</a>
+<a name="816"><span class="lineNum">     816 </span>            : </a>
+<a name="817"><span class="lineNum">     817 </span><span class="lineCov">          4 :         if (behavior == MADV_DONTNEED)</span></a>
+<a name="818"><span class="lineNum">     818 </span><span class="lineCov">          4 :                 return madvise_dontneed_single_vma(vma, start, end);</span></a>
+<a name="819"><span class="lineNum">     819 </span><span class="lineNoCov">          0 :         else if (behavior == MADV_FREE)</span></a>
+<a name="820"><span class="lineNum">     820 </span><span class="lineNoCov">          0 :                 return madvise_free_single_vma(vma, start, end);</span></a>
+<a name="821"><span class="lineNum">     821 </span>            :         else</a>
+<a name="822"><span class="lineNum">     822 </span>            :                 return -EINVAL;</a>
+<a name="823"><span class="lineNum">     823 </span>            : }</a>
+<a name="824"><span class="lineNum">     824 </span>            : </a>
+<a name="825"><span class="lineNum">     825 </span>            : /*</a>
+<a name="826"><span class="lineNum">     826 </span>            :  * Application wants to free up the pages and associated backing store.</a>
+<a name="827"><span class="lineNum">     827 </span>            :  * This is effectively punching a hole into the middle of a file.</a>
+<a name="828"><span class="lineNum">     828 </span>            :  */</a>
+<a name="829"><span class="lineNum">     829 </span><span class="lineNoCov">          0 : static long madvise_remove(struct vm_area_struct *vma,</span></a>
+<a name="830"><span class="lineNum">     830 </span>            :                                 struct vm_area_struct **prev,</a>
+<a name="831"><span class="lineNum">     831 </span>            :                                 unsigned long start, unsigned long end)</a>
+<a name="832"><span class="lineNum">     832 </span>            : {</a>
+<a name="833"><span class="lineNum">     833 </span><span class="lineNoCov">          0 :         loff_t offset;</span></a>
+<a name="834"><span class="lineNum">     834 </span><span class="lineNoCov">          0 :         int error;</span></a>
+<a name="835"><span class="lineNum">     835 </span><span class="lineNoCov">          0 :         struct file *f;</span></a>
+<a name="836"><span class="lineNum">     836 </span><span class="lineNoCov">          0 :         struct mm_struct *mm = vma-&gt;vm_mm;</span></a>
+<a name="837"><span class="lineNum">     837 </span>            : </a>
+<a name="838"><span class="lineNum">     838 </span><span class="lineNoCov">          0 :         *prev = NULL;   /* tell sys_madvise we drop mmap_lock */</span></a>
+<a name="839"><span class="lineNum">     839 </span>            : </a>
+<a name="840"><span class="lineNum">     840 </span><span class="lineNoCov">          0 :         if (vma-&gt;vm_flags &amp; VM_LOCKED)</span></a>
+<a name="841"><span class="lineNum">     841 </span>            :                 return -EINVAL;</a>
+<a name="842"><span class="lineNum">     842 </span>            : </a>
+<a name="843"><span class="lineNum">     843 </span><span class="lineNoCov">          0 :         f = vma-&gt;vm_file;</span></a>
+<a name="844"><span class="lineNum">     844 </span>            : </a>
+<a name="845"><span class="lineNum">     845 </span><span class="lineNoCov">          0 :         if (!f || !f-&gt;f_mapping || !f-&gt;f_mapping-&gt;host) {</span></a>
+<a name="846"><span class="lineNum">     846 </span>            :                         return -EINVAL;</a>
+<a name="847"><span class="lineNum">     847 </span>            :         }</a>
+<a name="848"><span class="lineNum">     848 </span>            : </a>
+<a name="849"><span class="lineNum">     849 </span><span class="lineNoCov">          0 :         if ((vma-&gt;vm_flags &amp; (VM_SHARED|VM_WRITE)) != (VM_SHARED|VM_WRITE))</span></a>
+<a name="850"><span class="lineNum">     850 </span>            :                 return -EACCES;</a>
+<a name="851"><span class="lineNum">     851 </span>            : </a>
+<a name="852"><span class="lineNum">     852 </span><span class="lineNoCov">          0 :         offset = (loff_t)(start - vma-&gt;vm_start)</span></a>
+<a name="853"><span class="lineNum">     853 </span><span class="lineNoCov">          0 :                         + ((loff_t)vma-&gt;vm_pgoff &lt;&lt; PAGE_SHIFT);</span></a>
+<a name="854"><span class="lineNum">     854 </span>            : </a>
+<a name="855"><span class="lineNum">     855 </span>            :         /*</a>
+<a name="856"><span class="lineNum">     856 </span>            :          * Filesystem's fallocate may need to take i_mutex.  We need to</a>
+<a name="857"><span class="lineNum">     857 </span>            :          * explicitly grab a reference because the vma (and hence the</a>
+<a name="858"><span class="lineNum">     858 </span>            :          * vma's reference to the file) can go away as soon as we drop</a>
+<a name="859"><span class="lineNum">     859 </span>            :          * mmap_lock.</a>
+<a name="860"><span class="lineNum">     860 </span>            :          */</a>
+<a name="861"><span class="lineNum">     861 </span><span class="lineNoCov">          0 :         get_file(f);</span></a>
+<a name="862"><span class="lineNum">     862 </span><span class="lineNoCov">          0 :         if (userfaultfd_remove(vma, start, end)) {</span></a>
+<a name="863"><span class="lineNum">     863 </span>            :                 /* mmap_lock was not released by userfaultfd_remove() */</a>
+<a name="864"><span class="lineNum">     864 </span><span class="lineNoCov">          0 :                 mmap_read_unlock(mm);</span></a>
+<a name="865"><span class="lineNum">     865 </span>            :         }</a>
+<a name="866"><span class="lineNum">     866 </span><span class="lineNoCov">          0 :         error = vfs_fallocate(f,</span></a>
+<a name="867"><span class="lineNum">     867 </span>            :                                 FALLOC_FL_PUNCH_HOLE | FALLOC_FL_KEEP_SIZE,</a>
+<a name="868"><span class="lineNum">     868 </span><span class="lineNoCov">          0 :                                 offset, end - start);</span></a>
+<a name="869"><span class="lineNum">     869 </span><span class="lineNoCov">          0 :         fput(f);</span></a>
+<a name="870"><span class="lineNum">     870 </span><span class="lineNoCov">          0 :         mmap_read_lock(mm);</span></a>
+<a name="871"><span class="lineNum">     871 </span><span class="lineNoCov">          0 :         return error;</span></a>
+<a name="872"><span class="lineNum">     872 </span>            : }</a>
+<a name="873"><span class="lineNum">     873 </span>            : </a>
+<a name="874"><span class="lineNum">     874 </span>            : #ifdef CONFIG_MEMORY_FAILURE</a>
+<a name="875"><span class="lineNum">     875 </span>            : /*</a>
+<a name="876"><span class="lineNum">     876 </span>            :  * Error injection support for memory error handling.</a>
+<a name="877"><span class="lineNum">     877 </span>            :  */</a>
+<a name="878"><span class="lineNum">     878 </span>            : static int madvise_inject_error(int behavior,</a>
+<a name="879"><span class="lineNum">     879 </span>            :                 unsigned long start, unsigned long end)</a>
+<a name="880"><span class="lineNum">     880 </span>            : {</a>
+<a name="881"><span class="lineNum">     881 </span>            :         unsigned long size;</a>
+<a name="882"><span class="lineNum">     882 </span>            : </a>
+<a name="883"><span class="lineNum">     883 </span>            :         if (!capable(CAP_SYS_ADMIN))</a>
+<a name="884"><span class="lineNum">     884 </span>            :                 return -EPERM;</a>
+<a name="885"><span class="lineNum">     885 </span>            : </a>
+<a name="886"><span class="lineNum">     886 </span>            : </a>
+<a name="887"><span class="lineNum">     887 </span>            :         for (; start &lt; end; start += size) {</a>
+<a name="888"><span class="lineNum">     888 </span>            :                 unsigned long pfn;</a>
+<a name="889"><span class="lineNum">     889 </span>            :                 struct page *page;</a>
+<a name="890"><span class="lineNum">     890 </span>            :                 int ret;</a>
+<a name="891"><span class="lineNum">     891 </span>            : </a>
+<a name="892"><span class="lineNum">     892 </span>            :                 ret = get_user_pages_fast(start, 1, 0, &amp;page);</a>
+<a name="893"><span class="lineNum">     893 </span>            :                 if (ret != 1)</a>
+<a name="894"><span class="lineNum">     894 </span>            :                         return ret;</a>
+<a name="895"><span class="lineNum">     895 </span>            :                 pfn = page_to_pfn(page);</a>
+<a name="896"><span class="lineNum">     896 </span>            : </a>
+<a name="897"><span class="lineNum">     897 </span>            :                 /*</a>
+<a name="898"><span class="lineNum">     898 </span>            :                  * When soft offlining hugepages, after migrating the page</a>
+<a name="899"><span class="lineNum">     899 </span>            :                  * we dissolve it, therefore in the second loop &quot;page&quot; will</a>
+<a name="900"><span class="lineNum">     900 </span>            :                  * no longer be a compound page.</a>
+<a name="901"><span class="lineNum">     901 </span>            :                  */</a>
+<a name="902"><span class="lineNum">     902 </span>            :                 size = page_size(compound_head(page));</a>
+<a name="903"><span class="lineNum">     903 </span>            : </a>
+<a name="904"><span class="lineNum">     904 </span>            :                 if (behavior == MADV_SOFT_OFFLINE) {</a>
+<a name="905"><span class="lineNum">     905 </span>            :                         pr_info(&quot;Soft offlining pfn %#lx at process virtual address %#lx\n&quot;,</a>
+<a name="906"><span class="lineNum">     906 </span>            :                                  pfn, start);</a>
+<a name="907"><span class="lineNum">     907 </span>            :                         ret = soft_offline_page(pfn, MF_COUNT_INCREASED);</a>
+<a name="908"><span class="lineNum">     908 </span>            :                 } else {</a>
+<a name="909"><span class="lineNum">     909 </span>            :                         pr_info(&quot;Injecting memory failure for pfn %#lx at process virtual address %#lx\n&quot;,</a>
+<a name="910"><span class="lineNum">     910 </span>            :                                  pfn, start);</a>
+<a name="911"><span class="lineNum">     911 </span>            :                         ret = memory_failure(pfn, MF_COUNT_INCREASED);</a>
+<a name="912"><span class="lineNum">     912 </span>            :                 }</a>
+<a name="913"><span class="lineNum">     913 </span>            : </a>
+<a name="914"><span class="lineNum">     914 </span>            :                 if (ret)</a>
+<a name="915"><span class="lineNum">     915 </span>            :                         return ret;</a>
+<a name="916"><span class="lineNum">     916 </span>            :         }</a>
+<a name="917"><span class="lineNum">     917 </span>            : </a>
+<a name="918"><span class="lineNum">     918 </span>            :         return 0;</a>
+<a name="919"><span class="lineNum">     919 </span>            : }</a>
+<a name="920"><span class="lineNum">     920 </span>            : #endif</a>
+<a name="921"><span class="lineNum">     921 </span>            : </a>
+<a name="922"><span class="lineNum">     922 </span>            : static long</a>
+<a name="923"><span class="lineNum">     923 </span><span class="lineCov">         14 : madvise_vma(struct vm_area_struct *vma, struct vm_area_struct **prev,</span></a>
+<a name="924"><span class="lineNum">     924 </span>            :                 unsigned long start, unsigned long end, int behavior)</a>
+<a name="925"><span class="lineNum">     925 </span>            : {</a>
+<a name="926"><span class="lineNum">     926 </span><span class="lineCov">         14 :         switch (behavior) {</span></a>
+<a name="927"><span class="lineNum">     927 </span><span class="lineNoCov">          0 :         case MADV_REMOVE:</span></a>
+<a name="928"><span class="lineNum">     928 </span><span class="lineNoCov">          0 :                 return madvise_remove(vma, prev, start, end);</span></a>
+<a name="929"><span class="lineNum">     929 </span><span class="lineNoCov">          0 :         case MADV_WILLNEED:</span></a>
+<a name="930"><span class="lineNum">     930 </span><span class="lineNoCov">          0 :                 return madvise_willneed(vma, prev, start, end);</span></a>
+<a name="931"><span class="lineNum">     931 </span><span class="lineNoCov">          0 :         case MADV_COLD:</span></a>
+<a name="932"><span class="lineNum">     932 </span><span class="lineNoCov">          0 :                 return madvise_cold(vma, prev, start, end);</span></a>
+<a name="933"><span class="lineNum">     933 </span><span class="lineNoCov">          0 :         case MADV_PAGEOUT:</span></a>
+<a name="934"><span class="lineNum">     934 </span><span class="lineNoCov">          0 :                 return madvise_pageout(vma, prev, start, end);</span></a>
+<a name="935"><span class="lineNum">     935 </span><span class="lineCov">          4 :         case MADV_FREE:</span></a>
+<a name="936"><span class="lineNum">     936 </span>            :         case MADV_DONTNEED:</a>
+<a name="937"><span class="lineNum">     937 </span><span class="lineCov">          4 :                 return madvise_dontneed_free(vma, prev, start, end, behavior);</span></a>
+<a name="938"><span class="lineNum">     938 </span><span class="lineCov">         10 :         default:</span></a>
+<a name="939"><span class="lineNum">     939 </span><span class="lineCov">         10 :                 return madvise_behavior(vma, prev, start, end, behavior);</span></a>
+<a name="940"><span class="lineNum">     940 </span>            :         }</a>
+<a name="941"><span class="lineNum">     941 </span>            : }</a>
+<a name="942"><span class="lineNum">     942 </span>            : </a>
+<a name="943"><span class="lineNum">     943 </span>            : static bool</a>
+<a name="944"><span class="lineNum">     944 </span><span class="lineCov">         12 : madvise_behavior_valid(int behavior)</span></a>
+<a name="945"><span class="lineNum">     945 </span>            : {</a>
+<a name="946"><span class="lineNum">     946 </span><span class="lineCov">         12 :         switch (behavior) {</span></a>
+<a name="947"><span class="lineNum">     947 </span>            :         case MADV_DOFORK:</a>
+<a name="948"><span class="lineNum">     948 </span>            :         case MADV_DONTFORK:</a>
+<a name="949"><span class="lineNum">     949 </span>            :         case MADV_NORMAL:</a>
+<a name="950"><span class="lineNum">     950 </span>            :         case MADV_SEQUENTIAL:</a>
+<a name="951"><span class="lineNum">     951 </span>            :         case MADV_RANDOM:</a>
+<a name="952"><span class="lineNum">     952 </span>            :         case MADV_REMOVE:</a>
+<a name="953"><span class="lineNum">     953 </span>            :         case MADV_WILLNEED:</a>
+<a name="954"><span class="lineNum">     954 </span>            :         case MADV_DONTNEED:</a>
+<a name="955"><span class="lineNum">     955 </span>            :         case MADV_FREE:</a>
+<a name="956"><span class="lineNum">     956 </span>            :         case MADV_COLD:</a>
+<a name="957"><span class="lineNum">     957 </span>            :         case MADV_PAGEOUT:</a>
+<a name="958"><span class="lineNum">     958 </span>            : #ifdef CONFIG_KSM</a>
+<a name="959"><span class="lineNum">     959 </span>            :         case MADV_MERGEABLE:</a>
+<a name="960"><span class="lineNum">     960 </span>            :         case MADV_UNMERGEABLE:</a>
+<a name="961"><span class="lineNum">     961 </span>            : #endif</a>
+<a name="962"><span class="lineNum">     962 </span>            : #ifdef CONFIG_TRANSPARENT_HUGEPAGE</a>
+<a name="963"><span class="lineNum">     963 </span>            :         case MADV_HUGEPAGE:</a>
+<a name="964"><span class="lineNum">     964 </span>            :         case MADV_NOHUGEPAGE:</a>
+<a name="965"><span class="lineNum">     965 </span>            : #endif</a>
+<a name="966"><span class="lineNum">     966 </span>            :         case MADV_DONTDUMP:</a>
+<a name="967"><span class="lineNum">     967 </span>            :         case MADV_DODUMP:</a>
+<a name="968"><span class="lineNum">     968 </span>            :         case MADV_WIPEONFORK:</a>
+<a name="969"><span class="lineNum">     969 </span>            :         case MADV_KEEPONFORK:</a>
+<a name="970"><span class="lineNum">     970 </span>            : #ifdef CONFIG_MEMORY_FAILURE</a>
+<a name="971"><span class="lineNum">     971 </span>            :         case MADV_SOFT_OFFLINE:</a>
+<a name="972"><span class="lineNum">     972 </span>            :         case MADV_HWPOISON:</a>
+<a name="973"><span class="lineNum">     973 </span>            : #endif</a>
+<a name="974"><span class="lineNum">     974 </span>            :                 return true;</a>
+<a name="975"><span class="lineNum">     975 </span>            : </a>
+<a name="976"><span class="lineNum">     976 </span>            :         default:</a>
+<a name="977"><span class="lineNum">     977 </span>            :                 return false;</a>
+<a name="978"><span class="lineNum">     978 </span>            :         }</a>
+<a name="979"><span class="lineNum">     979 </span>            : }</a>
+<a name="980"><span class="lineNum">     980 </span>            : </a>
+<a name="981"><span class="lineNum">     981 </span>            : static bool</a>
+<a name="982"><span class="lineNum">     982 </span><span class="lineNoCov">          0 : process_madvise_behavior_valid(int behavior)</span></a>
+<a name="983"><span class="lineNum">     983 </span>            : {</a>
+<a name="984"><span class="lineNum">     984 </span><span class="lineNoCov">          0 :         switch (behavior) {</span></a>
+<a name="985"><span class="lineNum">     985 </span>            :         case MADV_COLD:</a>
+<a name="986"><span class="lineNum">     986 </span>            :         case MADV_PAGEOUT:</a>
+<a name="987"><span class="lineNum">     987 </span>            :                 return true;</a>
+<a name="988"><span class="lineNum">     988 </span>            :         default:</a>
+<a name="989"><span class="lineNum">     989 </span><span class="lineNoCov">          0 :                 return false;</span></a>
+<a name="990"><span class="lineNum">     990 </span>            :         }</a>
+<a name="991"><span class="lineNum">     991 </span>            : }</a>
+<a name="992"><span class="lineNum">     992 </span>            : </a>
+<a name="993"><span class="lineNum">     993 </span>            : /*</a>
+<a name="994"><span class="lineNum">     994 </span>            :  * The madvise(2) system call.</a>
+<a name="995"><span class="lineNum">     995 </span>            :  *</a>
+<a name="996"><span class="lineNum">     996 </span>            :  * Applications can use madvise() to advise the kernel how it should</a>
+<a name="997"><span class="lineNum">     997 </span>            :  * handle paging I/O in this VM area.  The idea is to help the kernel</a>
+<a name="998"><span class="lineNum">     998 </span>            :  * use appropriate read-ahead and caching techniques.  The information</a>
+<a name="999"><span class="lineNum">     999 </span>            :  * provided is advisory only, and can be safely disregarded by the</a>
+<a name="1000"><span class="lineNum">    1000 </span>            :  * kernel without affecting the correct operation of the application.</a>
+<a name="1001"><span class="lineNum">    1001 </span>            :  *</a>
+<a name="1002"><span class="lineNum">    1002 </span>            :  * behavior values:</a>
+<a name="1003"><span class="lineNum">    1003 </span>            :  *  MADV_NORMAL - the default behavior is to read clusters.  This</a>
+<a name="1004"><span class="lineNum">    1004 </span>            :  *              results in some read-ahead and read-behind.</a>
+<a name="1005"><span class="lineNum">    1005 </span>            :  *  MADV_RANDOM - the system should read the minimum amount of data</a>
+<a name="1006"><span class="lineNum">    1006 </span>            :  *              on any access, since it is unlikely that the appli-</a>
+<a name="1007"><span class="lineNum">    1007 </span>            :  *              cation will need more than what it asks for.</a>
+<a name="1008"><span class="lineNum">    1008 </span>            :  *  MADV_SEQUENTIAL - pages in the given range will probably be accessed</a>
+<a name="1009"><span class="lineNum">    1009 </span>            :  *              once, so they can be aggressively read ahead, and</a>
+<a name="1010"><span class="lineNum">    1010 </span>            :  *              can be freed soon after they are accessed.</a>
+<a name="1011"><span class="lineNum">    1011 </span>            :  *  MADV_WILLNEED - the application is notifying the system to read</a>
+<a name="1012"><span class="lineNum">    1012 </span>            :  *              some pages ahead.</a>
+<a name="1013"><span class="lineNum">    1013 </span>            :  *  MADV_DONTNEED - the application is finished with the given range,</a>
+<a name="1014"><span class="lineNum">    1014 </span>            :  *              so the kernel can free resources associated with it.</a>
+<a name="1015"><span class="lineNum">    1015 </span>            :  *  MADV_FREE - the application marks pages in the given range as lazy free,</a>
+<a name="1016"><span class="lineNum">    1016 </span>            :  *              where actual purges are postponed until memory pressure happens.</a>
+<a name="1017"><span class="lineNum">    1017 </span>            :  *  MADV_REMOVE - the application wants to free up the given range of</a>
+<a name="1018"><span class="lineNum">    1018 </span>            :  *              pages and associated backing store.</a>
+<a name="1019"><span class="lineNum">    1019 </span>            :  *  MADV_DONTFORK - omit this area from child's address space when forking:</a>
+<a name="1020"><span class="lineNum">    1020 </span>            :  *              typically, to avoid COWing pages pinned by get_user_pages().</a>
+<a name="1021"><span class="lineNum">    1021 </span>            :  *  MADV_DOFORK - cancel MADV_DONTFORK: no longer omit this area when forking.</a>
+<a name="1022"><span class="lineNum">    1022 </span>            :  *  MADV_WIPEONFORK - present the child process with zero-filled memory in this</a>
+<a name="1023"><span class="lineNum">    1023 </span>            :  *              range after a fork.</a>
+<a name="1024"><span class="lineNum">    1024 </span>            :  *  MADV_KEEPONFORK - undo the effect of MADV_WIPEONFORK</a>
+<a name="1025"><span class="lineNum">    1025 </span>            :  *  MADV_HWPOISON - trigger memory error handler as if the given memory range</a>
+<a name="1026"><span class="lineNum">    1026 </span>            :  *              were corrupted by unrecoverable hardware memory failure.</a>
+<a name="1027"><span class="lineNum">    1027 </span>            :  *  MADV_SOFT_OFFLINE - try to soft-offline the given range of memory.</a>
+<a name="1028"><span class="lineNum">    1028 </span>            :  *  MADV_MERGEABLE - the application recommends that KSM try to merge pages in</a>
+<a name="1029"><span class="lineNum">    1029 </span>            :  *              this area with pages of identical content from other such areas.</a>
+<a name="1030"><span class="lineNum">    1030 </span>            :  *  MADV_UNMERGEABLE- cancel MADV_MERGEABLE: no longer merge pages with others.</a>
+<a name="1031"><span class="lineNum">    1031 </span>            :  *  MADV_HUGEPAGE - the application wants to back the given range by transparent</a>
+<a name="1032"><span class="lineNum">    1032 </span>            :  *              huge pages in the future. Existing pages might be coalesced and</a>
+<a name="1033"><span class="lineNum">    1033 </span>            :  *              new pages might be allocated as THP.</a>
+<a name="1034"><span class="lineNum">    1034 </span>            :  *  MADV_NOHUGEPAGE - mark the given range as not worth being backed by</a>
+<a name="1035"><span class="lineNum">    1035 </span>            :  *              transparent huge pages so the existing pages will not be</a>
+<a name="1036"><span class="lineNum">    1036 </span>            :  *              coalesced into THP and new pages will not be allocated as THP.</a>
+<a name="1037"><span class="lineNum">    1037 </span>            :  *  MADV_DONTDUMP - the application wants to prevent pages in the given range</a>
+<a name="1038"><span class="lineNum">    1038 </span>            :  *              from being included in its core dump.</a>
+<a name="1039"><span class="lineNum">    1039 </span>            :  *  MADV_DODUMP - cancel MADV_DONTDUMP: no longer exclude from core dump.</a>
+<a name="1040"><span class="lineNum">    1040 </span>            :  *  MADV_COLD - the application is not expected to use this memory soon,</a>
+<a name="1041"><span class="lineNum">    1041 </span>            :  *              deactivate pages in this range so that they can be reclaimed</a>
+<a name="1042"><span class="lineNum">    1042 </span>            :  *              easily if memory pressure hanppens.</a>
+<a name="1043"><span class="lineNum">    1043 </span>            :  *  MADV_PAGEOUT - the application is not expected to use this memory soon,</a>
+<a name="1044"><span class="lineNum">    1044 </span>            :  *              page out the pages in this range immediately.</a>
+<a name="1045"><span class="lineNum">    1045 </span>            :  *</a>
+<a name="1046"><span class="lineNum">    1046 </span>            :  * return values:</a>
+<a name="1047"><span class="lineNum">    1047 </span>            :  *  zero    - success</a>
+<a name="1048"><span class="lineNum">    1048 </span>            :  *  -EINVAL - start + len &lt; 0, start is not page-aligned,</a>
+<a name="1049"><span class="lineNum">    1049 </span>            :  *              &quot;behavior&quot; is not a valid value, or application</a>
+<a name="1050"><span class="lineNum">    1050 </span>            :  *              is attempting to release locked or shared pages,</a>
+<a name="1051"><span class="lineNum">    1051 </span>            :  *              or the specified address range includes file, Huge TLB,</a>
+<a name="1052"><span class="lineNum">    1052 </span>            :  *              MAP_SHARED or VMPFNMAP range.</a>
+<a name="1053"><span class="lineNum">    1053 </span>            :  *  -ENOMEM - addresses in the specified range are not currently</a>
+<a name="1054"><span class="lineNum">    1054 </span>            :  *              mapped, or are outside the AS of the process.</a>
+<a name="1055"><span class="lineNum">    1055 </span>            :  *  -EIO    - an I/O error occurred while paging in data.</a>
+<a name="1056"><span class="lineNum">    1056 </span>            :  *  -EBADF  - map exists, but area maps something that isn't a file.</a>
+<a name="1057"><span class="lineNum">    1057 </span>            :  *  -EAGAIN - a kernel resource was temporarily unavailable.</a>
+<a name="1058"><span class="lineNum">    1058 </span>            :  */</a>
+<a name="1059"><span class="lineNum">    1059 </span><span class="lineCov">         12 : int do_madvise(struct mm_struct *mm, unsigned long start, size_t len_in, int behavior)</span></a>
+<a name="1060"><span class="lineNum">    1060 </span>            : {</a>
+<a name="1061"><span class="lineNum">    1061 </span><span class="lineCov">         12 :         unsigned long end, tmp;</span></a>
+<a name="1062"><span class="lineNum">    1062 </span><span class="lineCov">         12 :         struct vm_area_struct *vma, *prev;</span></a>
+<a name="1063"><span class="lineNum">    1063 </span><span class="lineCov">         12 :         int unmapped_error = 0;</span></a>
+<a name="1064"><span class="lineNum">    1064 </span><span class="lineCov">         12 :         int error = -EINVAL;</span></a>
+<a name="1065"><span class="lineNum">    1065 </span><span class="lineCov">         12 :         int write;</span></a>
+<a name="1066"><span class="lineNum">    1066 </span><span class="lineCov">         12 :         size_t len;</span></a>
+<a name="1067"><span class="lineNum">    1067 </span><span class="lineCov">         12 :         struct blk_plug plug;</span></a>
+<a name="1068"><span class="lineNum">    1068 </span>            : </a>
+<a name="1069"><span class="lineNum">    1069 </span><span class="lineCov">         12 :         start = untagged_addr(start);</span></a>
+<a name="1070"><span class="lineNum">    1070 </span>            : </a>
+<a name="1071"><span class="lineNum">    1071 </span><span class="lineCov">         12 :         if (!madvise_behavior_valid(behavior))</span></a>
+<a name="1072"><span class="lineNum">    1072 </span>            :                 return error;</a>
+<a name="1073"><span class="lineNum">    1073 </span>            : </a>
+<a name="1074"><span class="lineNum">    1074 </span><span class="lineCov">         12 :         if (!PAGE_ALIGNED(start))</span></a>
+<a name="1075"><span class="lineNum">    1075 </span>            :                 return error;</a>
+<a name="1076"><span class="lineNum">    1076 </span><span class="lineCov">         12 :         len = PAGE_ALIGN(len_in);</span></a>
+<a name="1077"><span class="lineNum">    1077 </span>            : </a>
+<a name="1078"><span class="lineNum">    1078 </span>            :         /* Check to see whether len was rounded up from small -ve to zero */</a>
+<a name="1079"><span class="lineNum">    1079 </span><span class="lineCov">         12 :         if (len_in &amp;&amp; !len)</span></a>
+<a name="1080"><span class="lineNum">    1080 </span>            :                 return error;</a>
+<a name="1081"><span class="lineNum">    1081 </span>            : </a>
+<a name="1082"><span class="lineNum">    1082 </span><span class="lineCov">         12 :         end = start + len;</span></a>
+<a name="1083"><span class="lineNum">    1083 </span><span class="lineCov">         12 :         if (end &lt; start)</span></a>
+<a name="1084"><span class="lineNum">    1084 </span>            :                 return error;</a>
+<a name="1085"><span class="lineNum">    1085 </span>            : </a>
+<a name="1086"><span class="lineNum">    1086 </span><span class="lineCov">         12 :         error = 0;</span></a>
+<a name="1087"><span class="lineNum">    1087 </span><span class="lineCov">         12 :         if (end == start)</span></a>
+<a name="1088"><span class="lineNum">    1088 </span>            :                 return error;</a>
+<a name="1089"><span class="lineNum">    1089 </span>            : </a>
+<a name="1090"><span class="lineNum">    1090 </span>            : #ifdef CONFIG_MEMORY_FAILURE</a>
+<a name="1091"><span class="lineNum">    1091 </span>            :         if (behavior == MADV_HWPOISON || behavior == MADV_SOFT_OFFLINE)</a>
+<a name="1092"><span class="lineNum">    1092 </span>            :                 return madvise_inject_error(behavior, start, start + len_in);</a>
+<a name="1093"><span class="lineNum">    1093 </span>            : #endif</a>
+<a name="1094"><span class="lineNum">    1094 </span>            : </a>
+<a name="1095"><span class="lineNum">    1095 </span><span class="lineCov">         12 :         write = madvise_need_mmap_write(behavior);</span></a>
+<a name="1096"><span class="lineNum">    1096 </span><span class="lineCov">         12 :         if (write) {</span></a>
+<a name="1097"><span class="lineNum">    1097 </span><span class="lineCov">         10 :                 if (mmap_write_lock_killable(mm))</span></a>
+<a name="1098"><span class="lineNum">    1098 </span>            :                         return -EINTR;</a>
+<a name="1099"><span class="lineNum">    1099 </span>            :         } else {</a>
+<a name="1100"><span class="lineNum">    1100 </span><span class="lineCov">          2 :                 mmap_read_lock(mm);</span></a>
+<a name="1101"><span class="lineNum">    1101 </span>            :         }</a>
+<a name="1102"><span class="lineNum">    1102 </span>            : </a>
+<a name="1103"><span class="lineNum">    1103 </span>            :         /*</a>
+<a name="1104"><span class="lineNum">    1104 </span>            :          * If the interval [start,end) covers some unmapped address</a>
+<a name="1105"><span class="lineNum">    1105 </span>            :          * ranges, just ignore them, but return -ENOMEM at the end.</a>
+<a name="1106"><span class="lineNum">    1106 </span>            :          * - different from the way of handling in mlock etc.</a>
+<a name="1107"><span class="lineNum">    1107 </span>            :          */</a>
+<a name="1108"><span class="lineNum">    1108 </span><span class="lineCov">         12 :         vma = find_vma_prev(mm, start, &amp;prev);</span></a>
+<a name="1109"><span class="lineNum">    1109 </span><span class="lineCov">         12 :         if (vma &amp;&amp; start &gt; vma-&gt;vm_start)</span></a>
+<a name="1110"><span class="lineNum">    1110 </span><span class="lineNoCov">          0 :                 prev = vma;</span></a>
+<a name="1111"><span class="lineNum">    1111 </span>            : </a>
+<a name="1112"><span class="lineNum">    1112 </span><span class="lineCov">         12 :         blk_start_plug(&amp;plug);</span></a>
+<a name="1113"><span class="lineNum">    1113 </span><span class="lineCov">         14 :         for (;;) {</span></a>
+<a name="1114"><span class="lineNum">    1114 </span>            :                 /* Still start &lt; end. */</a>
+<a name="1115"><span class="lineNum">    1115 </span><span class="lineCov">         14 :                 error = -ENOMEM;</span></a>
+<a name="1116"><span class="lineNum">    1116 </span><span class="lineCov">         14 :                 if (!vma)</span></a>
+<a name="1117"><span class="lineNum">    1117 </span><span class="lineNoCov">          0 :                         goto out;</span></a>
+<a name="1118"><span class="lineNum">    1118 </span>            : </a>
+<a name="1119"><span class="lineNum">    1119 </span>            :                 /* Here start &lt; (end|vma-&gt;vm_end). */</a>
+<a name="1120"><span class="lineNum">    1120 </span><span class="lineCov">         14 :                 if (start &lt; vma-&gt;vm_start) {</span></a>
+<a name="1121"><span class="lineNum">    1121 </span><span class="lineNoCov">          0 :                         unmapped_error = -ENOMEM;</span></a>
+<a name="1122"><span class="lineNum">    1122 </span><span class="lineNoCov">          0 :                         start = vma-&gt;vm_start;</span></a>
+<a name="1123"><span class="lineNum">    1123 </span><span class="lineNoCov">          0 :                         if (start &gt;= end)</span></a>
+<a name="1124"><span class="lineNum">    1124 </span><span class="lineNoCov">          0 :                                 goto out;</span></a>
+<a name="1125"><span class="lineNum">    1125 </span>            :                 }</a>
+<a name="1126"><span class="lineNum">    1126 </span>            : </a>
+<a name="1127"><span class="lineNum">    1127 </span>            :                 /* Here vma-&gt;vm_start &lt;= start &lt; (end|vma-&gt;vm_end) */</a>
+<a name="1128"><span class="lineNum">    1128 </span><span class="lineCov">         14 :                 tmp = vma-&gt;vm_end;</span></a>
+<a name="1129"><span class="lineNum">    1129 </span><span class="lineCov">         14 :                 if (end &lt; tmp)</span></a>
+<a name="1130"><span class="lineNum">    1130 </span>            :                         tmp = end;</a>
+<a name="1131"><span class="lineNum">    1131 </span>            : </a>
+<a name="1132"><span class="lineNum">    1132 </span>            :                 /* Here vma-&gt;vm_start &lt;= start &lt; tmp &lt;= (end|vma-&gt;vm_end). */</a>
+<a name="1133"><span class="lineNum">    1133 </span><span class="lineCov">         14 :                 error = madvise_vma(vma, &amp;prev, start, tmp, behavior);</span></a>
+<a name="1134"><span class="lineNum">    1134 </span><span class="lineCov">         14 :                 if (error)</span></a>
+<a name="1135"><span class="lineNum">    1135 </span><span class="lineNoCov">          0 :                         goto out;</span></a>
+<a name="1136"><span class="lineNum">    1136 </span><span class="lineCov">         14 :                 start = tmp;</span></a>
+<a name="1137"><span class="lineNum">    1137 </span><span class="lineCov">         14 :                 if (prev &amp;&amp; start &lt; prev-&gt;vm_end)</span></a>
+<a name="1138"><span class="lineNum">    1138 </span>            :                         start = prev-&gt;vm_end;</a>
+<a name="1139"><span class="lineNum">    1139 </span><span class="lineCov">         14 :                 error = unmapped_error;</span></a>
+<a name="1140"><span class="lineNum">    1140 </span><span class="lineCov">         14 :                 if (start &gt;= end)</span></a>
+<a name="1141"><span class="lineNum">    1141 </span><span class="lineCov">         12 :                         goto out;</span></a>
+<a name="1142"><span class="lineNum">    1142 </span><span class="lineCov">          2 :                 if (prev)</span></a>
+<a name="1143"><span class="lineNum">    1143 </span><span class="lineCov">          2 :                         vma = prev-&gt;vm_next;</span></a>
+<a name="1144"><span class="lineNum">    1144 </span>            :                 else    /* madvise_remove dropped mmap_lock */</a>
+<a name="1145"><span class="lineNum">    1145 </span><span class="lineNoCov">          0 :                         vma = find_vma(mm, start);</span></a>
+<a name="1146"><span class="lineNum">    1146 </span>            :         }</a>
+<a name="1147"><span class="lineNum">    1147 </span><span class="lineCov">         12 : out:</span></a>
+<a name="1148"><span class="lineNum">    1148 </span><span class="lineCov">         12 :         blk_finish_plug(&amp;plug);</span></a>
+<a name="1149"><span class="lineNum">    1149 </span><span class="lineCov">         12 :         if (write)</span></a>
+<a name="1150"><span class="lineNum">    1150 </span><span class="lineCov">         10 :                 mmap_write_unlock(mm);</span></a>
+<a name="1151"><span class="lineNum">    1151 </span>            :         else</a>
+<a name="1152"><span class="lineNum">    1152 </span><span class="lineCov">          2 :                 mmap_read_unlock(mm);</span></a>
+<a name="1153"><span class="lineNum">    1153 </span>            : </a>
+<a name="1154"><span class="lineNum">    1154 </span>            :         return error;</a>
+<a name="1155"><span class="lineNum">    1155 </span>            : }</a>
+<a name="1156"><span class="lineNum">    1156 </span>            : </a>
+<a name="1157"><span class="lineNum">    1157 </span><span class="lineCov">         24 : SYSCALL_DEFINE3(madvise, unsigned long, start, size_t, len_in, int, behavior)</span></a>
+<a name="1158"><span class="lineNum">    1158 </span>            : {</a>
+<a name="1159"><span class="lineNum">    1159 </span><span class="lineCov">         12 :         return do_madvise(current-&gt;mm, start, len_in, behavior);</span></a>
+<a name="1160"><span class="lineNum">    1160 </span>            : }</a>
+<a name="1161"><span class="lineNum">    1161 </span>            : </a>
+<a name="1162"><span class="lineNum">    1162 </span><span class="lineNoCov">          0 : SYSCALL_DEFINE5(process_madvise, int, pidfd, const struct iovec __user *, vec,</span></a>
+<a name="1163"><span class="lineNum">    1163 </span>            :                 size_t, vlen, int, behavior, unsigned int, flags)</a>
+<a name="1164"><span class="lineNum">    1164 </span>            : {</a>
+<a name="1165"><span class="lineNum">    1165 </span><span class="lineNoCov">          0 :         ssize_t ret;</span></a>
+<a name="1166"><span class="lineNum">    1166 </span><span class="lineNoCov">          0 :         struct iovec iovstack[UIO_FASTIOV], iovec;</span></a>
+<a name="1167"><span class="lineNum">    1167 </span><span class="lineNoCov">          0 :         struct iovec *iov = iovstack;</span></a>
+<a name="1168"><span class="lineNum">    1168 </span><span class="lineNoCov">          0 :         struct iov_iter iter;</span></a>
+<a name="1169"><span class="lineNum">    1169 </span><span class="lineNoCov">          0 :         struct pid *pid;</span></a>
+<a name="1170"><span class="lineNum">    1170 </span><span class="lineNoCov">          0 :         struct task_struct *task;</span></a>
+<a name="1171"><span class="lineNum">    1171 </span><span class="lineNoCov">          0 :         struct mm_struct *mm;</span></a>
+<a name="1172"><span class="lineNum">    1172 </span><span class="lineNoCov">          0 :         size_t total_len;</span></a>
+<a name="1173"><span class="lineNum">    1173 </span><span class="lineNoCov">          0 :         unsigned int f_flags;</span></a>
+<a name="1174"><span class="lineNum">    1174 </span>            : </a>
+<a name="1175"><span class="lineNum">    1175 </span><span class="lineNoCov">          0 :         if (flags != 0) {</span></a>
+<a name="1176"><span class="lineNum">    1176 </span><span class="lineNoCov">          0 :                 ret = -EINVAL;</span></a>
+<a name="1177"><span class="lineNum">    1177 </span><span class="lineNoCov">          0 :                 goto out;</span></a>
+<a name="1178"><span class="lineNum">    1178 </span>            :         }</a>
+<a name="1179"><span class="lineNum">    1179 </span>            : </a>
+<a name="1180"><span class="lineNum">    1180 </span><span class="lineNoCov">          0 :         ret = import_iovec(READ, vec, vlen, ARRAY_SIZE(iovstack), &amp;iov, &amp;iter);</span></a>
+<a name="1181"><span class="lineNum">    1181 </span><span class="lineNoCov">          0 :         if (ret &lt; 0)</span></a>
+<a name="1182"><span class="lineNum">    1182 </span><span class="lineNoCov">          0 :                 goto out;</span></a>
+<a name="1183"><span class="lineNum">    1183 </span>            : </a>
+<a name="1184"><span class="lineNum">    1184 </span><span class="lineNoCov">          0 :         pid = pidfd_get_pid(pidfd, &amp;f_flags);</span></a>
+<a name="1185"><span class="lineNum">    1185 </span><span class="lineNoCov">          0 :         if (IS_ERR(pid)) {</span></a>
+<a name="1186"><span class="lineNum">    1186 </span><span class="lineNoCov">          0 :                 ret = PTR_ERR(pid);</span></a>
+<a name="1187"><span class="lineNum">    1187 </span><span class="lineNoCov">          0 :                 goto free_iov;</span></a>
+<a name="1188"><span class="lineNum">    1188 </span>            :         }</a>
+<a name="1189"><span class="lineNum">    1189 </span>            : </a>
+<a name="1190"><span class="lineNum">    1190 </span><span class="lineNoCov">          0 :         task = get_pid_task(pid, PIDTYPE_PID);</span></a>
+<a name="1191"><span class="lineNum">    1191 </span><span class="lineNoCov">          0 :         if (!task) {</span></a>
+<a name="1192"><span class="lineNum">    1192 </span><span class="lineNoCov">          0 :                 ret = -ESRCH;</span></a>
+<a name="1193"><span class="lineNum">    1193 </span><span class="lineNoCov">          0 :                 goto put_pid;</span></a>
+<a name="1194"><span class="lineNum">    1194 </span>            :         }</a>
+<a name="1195"><span class="lineNum">    1195 </span>            : </a>
+<a name="1196"><span class="lineNum">    1196 </span><span class="lineNoCov">          0 :         if (!process_madvise_behavior_valid(behavior)) {</span></a>
+<a name="1197"><span class="lineNum">    1197 </span><span class="lineNoCov">          0 :                 ret = -EINVAL;</span></a>
+<a name="1198"><span class="lineNum">    1198 </span><span class="lineNoCov">          0 :                 goto release_task;</span></a>
+<a name="1199"><span class="lineNum">    1199 </span>            :         }</a>
+<a name="1200"><span class="lineNum">    1200 </span>            : </a>
+<a name="1201"><span class="lineNum">    1201 </span>            :         /* Require PTRACE_MODE_READ to avoid leaking ASLR metadata. */</a>
+<a name="1202"><span class="lineNum">    1202 </span><span class="lineNoCov">          0 :         mm = mm_access(task, PTRACE_MODE_READ_FSCREDS);</span></a>
+<a name="1203"><span class="lineNum">    1203 </span><span class="lineNoCov">          0 :         if (IS_ERR_OR_NULL(mm)) {</span></a>
+<a name="1204"><span class="lineNum">    1204 </span><span class="lineNoCov">          0 :                 ret = IS_ERR(mm) ? PTR_ERR(mm) : -ESRCH;</span></a>
+<a name="1205"><span class="lineNum">    1205 </span><span class="lineNoCov">          0 :                 goto release_task;</span></a>
+<a name="1206"><span class="lineNum">    1206 </span>            :         }</a>
+<a name="1207"><span class="lineNum">    1207 </span>            : </a>
+<a name="1208"><span class="lineNum">    1208 </span>            :         /*</a>
+<a name="1209"><span class="lineNum">    1209 </span>            :          * Require CAP_SYS_NICE for influencing process performance. Note that</a>
+<a name="1210"><span class="lineNum">    1210 </span>            :          * only non-destructive hints are currently supported.</a>
+<a name="1211"><span class="lineNum">    1211 </span>            :          */</a>
+<a name="1212"><span class="lineNum">    1212 </span><span class="lineNoCov">          0 :         if (!capable(CAP_SYS_NICE)) {</span></a>
+<a name="1213"><span class="lineNum">    1213 </span><span class="lineNoCov">          0 :                 ret = -EPERM;</span></a>
+<a name="1214"><span class="lineNum">    1214 </span><span class="lineNoCov">          0 :                 goto release_mm;</span></a>
+<a name="1215"><span class="lineNum">    1215 </span>            :         }</a>
+<a name="1216"><span class="lineNum">    1216 </span>            : </a>
+<a name="1217"><span class="lineNum">    1217 </span><span class="lineNoCov">          0 :         total_len = iov_iter_count(&amp;iter);</span></a>
+<a name="1218"><span class="lineNum">    1218 </span>            : </a>
+<a name="1219"><span class="lineNum">    1219 </span><span class="lineNoCov">          0 :         while (iov_iter_count(&amp;iter)) {</span></a>
+<a name="1220"><span class="lineNum">    1220 </span><span class="lineNoCov">          0 :                 iovec = iov_iter_iovec(&amp;iter);</span></a>
+<a name="1221"><span class="lineNum">    1221 </span><span class="lineNoCov">          0 :                 ret = do_madvise(mm, (unsigned long)iovec.iov_base,</span></a>
+<a name="1222"><span class="lineNum">    1222 </span>            :                                         iovec.iov_len, behavior);</a>
+<a name="1223"><span class="lineNum">    1223 </span><span class="lineNoCov">          0 :                 if (ret &lt; 0)</span></a>
+<a name="1224"><span class="lineNum">    1224 </span>            :                         break;</a>
+<a name="1225"><span class="lineNum">    1225 </span><span class="lineNoCov">          0 :                 iov_iter_advance(&amp;iter, iovec.iov_len);</span></a>
+<a name="1226"><span class="lineNum">    1226 </span>            :         }</a>
+<a name="1227"><span class="lineNum">    1227 </span>            : </a>
+<a name="1228"><span class="lineNum">    1228 </span><span class="lineNoCov">          0 :         if (ret == 0)</span></a>
+<a name="1229"><span class="lineNum">    1229 </span><span class="lineNoCov">          0 :                 ret = total_len - iov_iter_count(&amp;iter);</span></a>
+<a name="1230"><span class="lineNum">    1230 </span>            : </a>
+<a name="1231"><span class="lineNum">    1231 </span><span class="lineNoCov">          0 : release_mm:</span></a>
+<a name="1232"><span class="lineNum">    1232 </span><span class="lineNoCov">          0 :         mmput(mm);</span></a>
+<a name="1233"><span class="lineNum">    1233 </span><span class="lineNoCov">          0 : release_task:</span></a>
+<a name="1234"><span class="lineNum">    1234 </span><span class="lineNoCov">          0 :         put_task_struct(task);</span></a>
+<a name="1235"><span class="lineNum">    1235 </span><span class="lineNoCov">          0 : put_pid:</span></a>
+<a name="1236"><span class="lineNum">    1236 </span><span class="lineNoCov">          0 :         put_pid(pid);</span></a>
+<a name="1237"><span class="lineNum">    1237 </span><span class="lineNoCov">          0 : free_iov:</span></a>
+<a name="1238"><span class="lineNum">    1238 </span><span class="lineNoCov">          0 :         kfree(iov);</span></a>
+<a name="1239"><span class="lineNum">    1239 </span><span class="lineNoCov">          0 : out:</span></a>
+<a name="1240"><span class="lineNum">    1240 </span><span class="lineNoCov">          0 :         return ret;</span></a>
+<a name="1241"><span class="lineNum">    1241 </span>            : }</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

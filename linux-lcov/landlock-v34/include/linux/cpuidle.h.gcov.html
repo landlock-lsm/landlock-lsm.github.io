@@ -1,0 +1,388 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - landlock.info - include/linux/cpuidle.h</title>
+  <link rel="stylesheet" type="text/css" href="../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../index.html">top level</a> - <a href="index.html">include/linux</a> - cpuidle.h<span style="font-size: 80%;"> (source / <a href="cpuidle.h.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">landlock.info</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">5</td>
+            <td class="headerCovTableEntry">8</td>
+            <td class="headerCovTableEntryLo">62.5 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2021-04-22 12:43:58</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntry">0</td>
+            <td class="headerCovTableEntryHi">-</td>
+          </tr>
+          <tr><td><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : /*</a>
+<a name="2"><span class="lineNum">       2 </span>            :  * cpuidle.h - a generic framework for CPU idle power management</a>
+<a name="3"><span class="lineNum">       3 </span>            :  *</a>
+<a name="4"><span class="lineNum">       4 </span>            :  * (C) 2007 Venkatesh Pallipadi &lt;venkatesh.pallipadi@intel.com&gt;</a>
+<a name="5"><span class="lineNum">       5 </span>            :  *          Shaohua Li &lt;shaohua.li@intel.com&gt;</a>
+<a name="6"><span class="lineNum">       6 </span>            :  *          Adam Belay &lt;abelay@novell.com&gt;</a>
+<a name="7"><span class="lineNum">       7 </span>            :  *</a>
+<a name="8"><span class="lineNum">       8 </span>            :  * This code is licenced under the GPL.</a>
+<a name="9"><span class="lineNum">       9 </span>            :  */</a>
+<a name="10"><span class="lineNum">      10 </span>            : </a>
+<a name="11"><span class="lineNum">      11 </span>            : #ifndef _LINUX_CPUIDLE_H</a>
+<a name="12"><span class="lineNum">      12 </span>            : #define _LINUX_CPUIDLE_H</a>
+<a name="13"><span class="lineNum">      13 </span>            : </a>
+<a name="14"><span class="lineNum">      14 </span>            : #include &lt;linux/percpu.h&gt;</a>
+<a name="15"><span class="lineNum">      15 </span>            : #include &lt;linux/list.h&gt;</a>
+<a name="16"><span class="lineNum">      16 </span>            : #include &lt;linux/hrtimer.h&gt;</a>
+<a name="17"><span class="lineNum">      17 </span>            : </a>
+<a name="18"><span class="lineNum">      18 </span>            : #define CPUIDLE_STATE_MAX       10</a>
+<a name="19"><span class="lineNum">      19 </span>            : #define CPUIDLE_NAME_LEN        16</a>
+<a name="20"><span class="lineNum">      20 </span>            : #define CPUIDLE_DESC_LEN        32</a>
+<a name="21"><span class="lineNum">      21 </span>            : </a>
+<a name="22"><span class="lineNum">      22 </span>            : struct module;</a>
+<a name="23"><span class="lineNum">      23 </span>            : </a>
+<a name="24"><span class="lineNum">      24 </span>            : struct cpuidle_device;</a>
+<a name="25"><span class="lineNum">      25 </span>            : struct cpuidle_driver;</a>
+<a name="26"><span class="lineNum">      26 </span>            : </a>
+<a name="27"><span class="lineNum">      27 </span>            : </a>
+<a name="28"><span class="lineNum">      28 </span>            : /****************************</a>
+<a name="29"><span class="lineNum">      29 </span>            :  * CPUIDLE DEVICE INTERFACE *</a>
+<a name="30"><span class="lineNum">      30 </span>            :  ****************************/</a>
+<a name="31"><span class="lineNum">      31 </span>            : </a>
+<a name="32"><span class="lineNum">      32 </span>            : #define CPUIDLE_STATE_DISABLED_BY_USER          BIT(0)</a>
+<a name="33"><span class="lineNum">      33 </span>            : #define CPUIDLE_STATE_DISABLED_BY_DRIVER        BIT(1)</a>
+<a name="34"><span class="lineNum">      34 </span>            : </a>
+<a name="35"><span class="lineNum">      35 </span>            : struct cpuidle_state_usage {</a>
+<a name="36"><span class="lineNum">      36 </span>            :         unsigned long long      disable;</a>
+<a name="37"><span class="lineNum">      37 </span>            :         unsigned long long      usage;</a>
+<a name="38"><span class="lineNum">      38 </span>            :         u64                     time_ns;</a>
+<a name="39"><span class="lineNum">      39 </span>            :         unsigned long long      above; /* Number of times it's been too deep */</a>
+<a name="40"><span class="lineNum">      40 </span>            :         unsigned long long      below; /* Number of times it's been too shallow */</a>
+<a name="41"><span class="lineNum">      41 </span>            :         unsigned long long      rejected; /* Number of times idle entry was rejected */</a>
+<a name="42"><span class="lineNum">      42 </span>            : #ifdef CONFIG_SUSPEND</a>
+<a name="43"><span class="lineNum">      43 </span>            :         unsigned long long      s2idle_usage;</a>
+<a name="44"><span class="lineNum">      44 </span>            :         unsigned long long      s2idle_time; /* in US */</a>
+<a name="45"><span class="lineNum">      45 </span>            : #endif</a>
+<a name="46"><span class="lineNum">      46 </span>            : };</a>
+<a name="47"><span class="lineNum">      47 </span>            : </a>
+<a name="48"><span class="lineNum">      48 </span>            : struct cpuidle_state {</a>
+<a name="49"><span class="lineNum">      49 </span>            :         char            name[CPUIDLE_NAME_LEN];</a>
+<a name="50"><span class="lineNum">      50 </span>            :         char            desc[CPUIDLE_DESC_LEN];</a>
+<a name="51"><span class="lineNum">      51 </span>            : </a>
+<a name="52"><span class="lineNum">      52 </span>            :         u64             exit_latency_ns;</a>
+<a name="53"><span class="lineNum">      53 </span>            :         u64             target_residency_ns;</a>
+<a name="54"><span class="lineNum">      54 </span>            :         unsigned int    flags;</a>
+<a name="55"><span class="lineNum">      55 </span>            :         unsigned int    exit_latency; /* in US */</a>
+<a name="56"><span class="lineNum">      56 </span>            :         int             power_usage; /* in mW */</a>
+<a name="57"><span class="lineNum">      57 </span>            :         unsigned int    target_residency; /* in US */</a>
+<a name="58"><span class="lineNum">      58 </span>            : </a>
+<a name="59"><span class="lineNum">      59 </span>            :         int (*enter)    (struct cpuidle_device *dev,</a>
+<a name="60"><span class="lineNum">      60 </span>            :                         struct cpuidle_driver *drv,</a>
+<a name="61"><span class="lineNum">      61 </span>            :                         int index);</a>
+<a name="62"><span class="lineNum">      62 </span>            : </a>
+<a name="63"><span class="lineNum">      63 </span>            :         int (*enter_dead) (struct cpuidle_device *dev, int index);</a>
+<a name="64"><span class="lineNum">      64 </span>            : </a>
+<a name="65"><span class="lineNum">      65 </span>            :         /*</a>
+<a name="66"><span class="lineNum">      66 </span>            :          * CPUs execute -&gt;enter_s2idle with the local tick or entire timekeeping</a>
+<a name="67"><span class="lineNum">      67 </span>            :          * suspended, so it must not re-enable interrupts at any point (even</a>
+<a name="68"><span class="lineNum">      68 </span>            :          * temporarily) or attempt to change states of clock event devices.</a>
+<a name="69"><span class="lineNum">      69 </span>            :          *</a>
+<a name="70"><span class="lineNum">      70 </span>            :          * This callback may point to the same function as -&gt;enter if all of</a>
+<a name="71"><span class="lineNum">      71 </span>            :          * the above requirements are met by it.</a>
+<a name="72"><span class="lineNum">      72 </span>            :          */</a>
+<a name="73"><span class="lineNum">      73 </span>            :         int (*enter_s2idle)(struct cpuidle_device *dev,</a>
+<a name="74"><span class="lineNum">      74 </span>            :                             struct cpuidle_driver *drv,</a>
+<a name="75"><span class="lineNum">      75 </span>            :                             int index);</a>
+<a name="76"><span class="lineNum">      76 </span>            : };</a>
+<a name="77"><span class="lineNum">      77 </span>            : </a>
+<a name="78"><span class="lineNum">      78 </span>            : /* Idle State Flags */</a>
+<a name="79"><span class="lineNum">      79 </span>            : #define CPUIDLE_FLAG_NONE               (0x00)</a>
+<a name="80"><span class="lineNum">      80 </span>            : #define CPUIDLE_FLAG_POLLING            BIT(0) /* polling state */</a>
+<a name="81"><span class="lineNum">      81 </span>            : #define CPUIDLE_FLAG_COUPLED            BIT(1) /* state applies to multiple cpus */</a>
+<a name="82"><span class="lineNum">      82 </span>            : #define CPUIDLE_FLAG_TIMER_STOP         BIT(2) /* timer is stopped on this state */</a>
+<a name="83"><span class="lineNum">      83 </span>            : #define CPUIDLE_FLAG_UNUSABLE           BIT(3) /* avoid using this state */</a>
+<a name="84"><span class="lineNum">      84 </span>            : #define CPUIDLE_FLAG_OFF                BIT(4) /* disable this state by default */</a>
+<a name="85"><span class="lineNum">      85 </span>            : #define CPUIDLE_FLAG_TLB_FLUSHED        BIT(5) /* idle-state flushes TLBs */</a>
+<a name="86"><span class="lineNum">      86 </span>            : #define CPUIDLE_FLAG_RCU_IDLE           BIT(6) /* idle-state takes care of RCU */</a>
+<a name="87"><span class="lineNum">      87 </span>            : </a>
+<a name="88"><span class="lineNum">      88 </span>            : struct cpuidle_device_kobj;</a>
+<a name="89"><span class="lineNum">      89 </span>            : struct cpuidle_state_kobj;</a>
+<a name="90"><span class="lineNum">      90 </span>            : struct cpuidle_driver_kobj;</a>
+<a name="91"><span class="lineNum">      91 </span>            : </a>
+<a name="92"><span class="lineNum">      92 </span>            : struct cpuidle_device {</a>
+<a name="93"><span class="lineNum">      93 </span>            :         unsigned int            registered:1;</a>
+<a name="94"><span class="lineNum">      94 </span>            :         unsigned int            enabled:1;</a>
+<a name="95"><span class="lineNum">      95 </span>            :         unsigned int            poll_time_limit:1;</a>
+<a name="96"><span class="lineNum">      96 </span>            :         unsigned int            cpu;</a>
+<a name="97"><span class="lineNum">      97 </span>            :         ktime_t                 next_hrtimer;</a>
+<a name="98"><span class="lineNum">      98 </span>            : </a>
+<a name="99"><span class="lineNum">      99 </span>            :         int                     last_state_idx;</a>
+<a name="100"><span class="lineNum">     100 </span>            :         u64                     last_residency_ns;</a>
+<a name="101"><span class="lineNum">     101 </span>            :         u64                     poll_limit_ns;</a>
+<a name="102"><span class="lineNum">     102 </span>            :         u64                     forced_idle_latency_limit_ns;</a>
+<a name="103"><span class="lineNum">     103 </span>            :         struct cpuidle_state_usage      states_usage[CPUIDLE_STATE_MAX];</a>
+<a name="104"><span class="lineNum">     104 </span>            :         struct cpuidle_state_kobj *kobjs[CPUIDLE_STATE_MAX];</a>
+<a name="105"><span class="lineNum">     105 </span>            :         struct cpuidle_driver_kobj *kobj_driver;</a>
+<a name="106"><span class="lineNum">     106 </span>            :         struct cpuidle_device_kobj *kobj_dev;</a>
+<a name="107"><span class="lineNum">     107 </span>            :         struct list_head        device_list;</a>
+<a name="108"><span class="lineNum">     108 </span>            : </a>
+<a name="109"><span class="lineNum">     109 </span>            : #ifdef CONFIG_ARCH_NEEDS_CPU_IDLE_COUPLED</a>
+<a name="110"><span class="lineNum">     110 </span>            :         cpumask_t               coupled_cpus;</a>
+<a name="111"><span class="lineNum">     111 </span>            :         struct cpuidle_coupled  *coupled;</a>
+<a name="112"><span class="lineNum">     112 </span>            : #endif</a>
+<a name="113"><span class="lineNum">     113 </span>            : };</a>
+<a name="114"><span class="lineNum">     114 </span>            : </a>
+<a name="115"><span class="lineNum">     115 </span>            : DECLARE_PER_CPU(struct cpuidle_device *, cpuidle_devices);</a>
+<a name="116"><span class="lineNum">     116 </span>            : DECLARE_PER_CPU(struct cpuidle_device, cpuidle_dev);</a>
+<a name="117"><span class="lineNum">     117 </span>            : </a>
+<a name="118"><span class="lineNum">     118 </span>            : /****************************</a>
+<a name="119"><span class="lineNum">     119 </span>            :  * CPUIDLE DRIVER INTERFACE *</a>
+<a name="120"><span class="lineNum">     120 </span>            :  ****************************/</a>
+<a name="121"><span class="lineNum">     121 </span>            : </a>
+<a name="122"><span class="lineNum">     122 </span>            : struct cpuidle_driver {</a>
+<a name="123"><span class="lineNum">     123 </span>            :         const char              *name;</a>
+<a name="124"><span class="lineNum">     124 </span>            :         struct module           *owner;</a>
+<a name="125"><span class="lineNum">     125 </span>            : </a>
+<a name="126"><span class="lineNum">     126 </span>            :         /* used by the cpuidle framework to setup the broadcast timer */</a>
+<a name="127"><span class="lineNum">     127 </span>            :         unsigned int            bctimer:1;</a>
+<a name="128"><span class="lineNum">     128 </span>            :         /* states array must be ordered in decreasing power consumption */</a>
+<a name="129"><span class="lineNum">     129 </span>            :         struct cpuidle_state    states[CPUIDLE_STATE_MAX];</a>
+<a name="130"><span class="lineNum">     130 </span>            :         int                     state_count;</a>
+<a name="131"><span class="lineNum">     131 </span>            :         int                     safe_state_index;</a>
+<a name="132"><span class="lineNum">     132 </span>            : </a>
+<a name="133"><span class="lineNum">     133 </span>            :         /* the driver handles the cpus in cpumask */</a>
+<a name="134"><span class="lineNum">     134 </span>            :         struct cpumask          *cpumask;</a>
+<a name="135"><span class="lineNum">     135 </span>            : </a>
+<a name="136"><span class="lineNum">     136 </span>            :         /* preferred governor to switch at register time */</a>
+<a name="137"><span class="lineNum">     137 </span>            :         const char              *governor;</a>
+<a name="138"><span class="lineNum">     138 </span>            : };</a>
+<a name="139"><span class="lineNum">     139 </span>            : </a>
+<a name="140"><span class="lineNum">     140 </span>            : #ifdef CONFIG_CPU_IDLE</a>
+<a name="141"><span class="lineNum">     141 </span>            : extern void disable_cpuidle(void);</a>
+<a name="142"><span class="lineNum">     142 </span>            : extern bool cpuidle_not_available(struct cpuidle_driver *drv,</a>
+<a name="143"><span class="lineNum">     143 </span>            :                                   struct cpuidle_device *dev);</a>
+<a name="144"><span class="lineNum">     144 </span>            : </a>
+<a name="145"><span class="lineNum">     145 </span>            : extern int cpuidle_select(struct cpuidle_driver *drv,</a>
+<a name="146"><span class="lineNum">     146 </span>            :                           struct cpuidle_device *dev,</a>
+<a name="147"><span class="lineNum">     147 </span>            :                           bool *stop_tick);</a>
+<a name="148"><span class="lineNum">     148 </span>            : extern int cpuidle_enter(struct cpuidle_driver *drv,</a>
+<a name="149"><span class="lineNum">     149 </span>            :                          struct cpuidle_device *dev, int index);</a>
+<a name="150"><span class="lineNum">     150 </span>            : extern void cpuidle_reflect(struct cpuidle_device *dev, int index);</a>
+<a name="151"><span class="lineNum">     151 </span>            : extern u64 cpuidle_poll_time(struct cpuidle_driver *drv,</a>
+<a name="152"><span class="lineNum">     152 </span>            :                              struct cpuidle_device *dev);</a>
+<a name="153"><span class="lineNum">     153 </span>            : </a>
+<a name="154"><span class="lineNum">     154 </span>            : extern int cpuidle_register_driver(struct cpuidle_driver *drv);</a>
+<a name="155"><span class="lineNum">     155 </span>            : extern struct cpuidle_driver *cpuidle_get_driver(void);</a>
+<a name="156"><span class="lineNum">     156 </span>            : extern void cpuidle_driver_state_disabled(struct cpuidle_driver *drv, int idx,</a>
+<a name="157"><span class="lineNum">     157 </span>            :                                         bool disable);</a>
+<a name="158"><span class="lineNum">     158 </span>            : extern void cpuidle_unregister_driver(struct cpuidle_driver *drv);</a>
+<a name="159"><span class="lineNum">     159 </span>            : extern int cpuidle_register_device(struct cpuidle_device *dev);</a>
+<a name="160"><span class="lineNum">     160 </span>            : extern void cpuidle_unregister_device(struct cpuidle_device *dev);</a>
+<a name="161"><span class="lineNum">     161 </span>            : extern int cpuidle_register(struct cpuidle_driver *drv,</a>
+<a name="162"><span class="lineNum">     162 </span>            :                             const struct cpumask *const coupled_cpus);</a>
+<a name="163"><span class="lineNum">     163 </span>            : extern void cpuidle_unregister(struct cpuidle_driver *drv);</a>
+<a name="164"><span class="lineNum">     164 </span>            : extern void cpuidle_pause_and_lock(void);</a>
+<a name="165"><span class="lineNum">     165 </span>            : extern void cpuidle_resume_and_unlock(void);</a>
+<a name="166"><span class="lineNum">     166 </span>            : extern void cpuidle_pause(void);</a>
+<a name="167"><span class="lineNum">     167 </span>            : extern void cpuidle_resume(void);</a>
+<a name="168"><span class="lineNum">     168 </span>            : extern int cpuidle_enable_device(struct cpuidle_device *dev);</a>
+<a name="169"><span class="lineNum">     169 </span>            : extern void cpuidle_disable_device(struct cpuidle_device *dev);</a>
+<a name="170"><span class="lineNum">     170 </span>            : extern int cpuidle_play_dead(void);</a>
+<a name="171"><span class="lineNum">     171 </span>            : </a>
+<a name="172"><span class="lineNum">     172 </span>            : extern struct cpuidle_driver *cpuidle_get_cpu_driver(struct cpuidle_device *dev);</a>
+<a name="173"><span class="lineNum">     173 </span>            : static inline struct cpuidle_device *cpuidle_get_device(void)</a>
+<a name="174"><span class="lineNum">     174 </span>            : {return __this_cpu_read(cpuidle_devices); }</a>
+<a name="175"><span class="lineNum">     175 </span>            : #else</a>
+<a name="176"><span class="lineNum">     176 </span>            : static inline void disable_cpuidle(void) { }</a>
+<a name="177"><span class="lineNum">     177 </span><span class="lineCov">      15378 : static inline bool cpuidle_not_available(struct cpuidle_driver *drv,</span></a>
+<a name="178"><span class="lineNum">     178 </span>            :                                          struct cpuidle_device *dev)</a>
+<a name="179"><span class="lineNum">     179 </span><span class="lineCov">      15378 : {return true; }</span></a>
+<a name="180"><span class="lineNum">     180 </span>            : static inline int cpuidle_select(struct cpuidle_driver *drv,</a>
+<a name="181"><span class="lineNum">     181 </span>            :                                  struct cpuidle_device *dev, bool *stop_tick)</a>
+<a name="182"><span class="lineNum">     182 </span>            : {return -ENODEV; }</a>
+<a name="183"><span class="lineNum">     183 </span>            : static inline int cpuidle_enter(struct cpuidle_driver *drv,</a>
+<a name="184"><span class="lineNum">     184 </span>            :                                 struct cpuidle_device *dev, int index)</a>
+<a name="185"><span class="lineNum">     185 </span>            : {return -ENODEV; }</a>
+<a name="186"><span class="lineNum">     186 </span>            : static inline void cpuidle_reflect(struct cpuidle_device *dev, int index) { }</a>
+<a name="187"><span class="lineNum">     187 </span>            : static inline u64 cpuidle_poll_time(struct cpuidle_driver *drv,</a>
+<a name="188"><span class="lineNum">     188 </span>            :                              struct cpuidle_device *dev)</a>
+<a name="189"><span class="lineNum">     189 </span>            : {return 0; }</a>
+<a name="190"><span class="lineNum">     190 </span>            : static inline int cpuidle_register_driver(struct cpuidle_driver *drv)</a>
+<a name="191"><span class="lineNum">     191 </span>            : {return -ENODEV; }</a>
+<a name="192"><span class="lineNum">     192 </span>            : static inline struct cpuidle_driver *cpuidle_get_driver(void) {return NULL; }</a>
+<a name="193"><span class="lineNum">     193 </span>            : static inline void cpuidle_driver_state_disabled(struct cpuidle_driver *drv,</a>
+<a name="194"><span class="lineNum">     194 </span>            :                                                int idx, bool disable) { }</a>
+<a name="195"><span class="lineNum">     195 </span>            : static inline void cpuidle_unregister_driver(struct cpuidle_driver *drv) { }</a>
+<a name="196"><span class="lineNum">     196 </span>            : static inline int cpuidle_register_device(struct cpuidle_device *dev)</a>
+<a name="197"><span class="lineNum">     197 </span>            : {return -ENODEV; }</a>
+<a name="198"><span class="lineNum">     198 </span>            : static inline void cpuidle_unregister_device(struct cpuidle_device *dev) { }</a>
+<a name="199"><span class="lineNum">     199 </span>            : static inline int cpuidle_register(struct cpuidle_driver *drv,</a>
+<a name="200"><span class="lineNum">     200 </span>            :                                    const struct cpumask *const coupled_cpus)</a>
+<a name="201"><span class="lineNum">     201 </span>            : {return -ENODEV; }</a>
+<a name="202"><span class="lineNum">     202 </span>            : static inline void cpuidle_unregister(struct cpuidle_driver *drv) { }</a>
+<a name="203"><span class="lineNum">     203 </span>            : static inline void cpuidle_pause_and_lock(void) { }</a>
+<a name="204"><span class="lineNum">     204 </span>            : static inline void cpuidle_resume_and_unlock(void) { }</a>
+<a name="205"><span class="lineNum">     205 </span>            : static inline void cpuidle_pause(void) { }</a>
+<a name="206"><span class="lineNum">     206 </span>            : static inline void cpuidle_resume(void) { }</a>
+<a name="207"><span class="lineNum">     207 </span>            : static inline int cpuidle_enable_device(struct cpuidle_device *dev)</a>
+<a name="208"><span class="lineNum">     208 </span>            : {return -ENODEV; }</a>
+<a name="209"><span class="lineNum">     209 </span>            : static inline void cpuidle_disable_device(struct cpuidle_device *dev) { }</a>
+<a name="210"><span class="lineNum">     210 </span><span class="lineNoCov">          0 : static inline int cpuidle_play_dead(void) {return -ENODEV; }</span></a>
+<a name="211"><span class="lineNum">     211 </span><span class="lineCov">      15369 : static inline struct cpuidle_driver *cpuidle_get_cpu_driver(</span></a>
+<a name="212"><span class="lineNum">     212 </span><span class="lineCov">      15369 :         struct cpuidle_device *dev) {return NULL; }</span></a>
+<a name="213"><span class="lineNum">     213 </span><span class="lineCov">      15369 : static inline struct cpuidle_device *cpuidle_get_device(void) {return NULL; }</span></a>
+<a name="214"><span class="lineNum">     214 </span>            : #endif</a>
+<a name="215"><span class="lineNum">     215 </span>            : </a>
+<a name="216"><span class="lineNum">     216 </span>            : #ifdef CONFIG_CPU_IDLE</a>
+<a name="217"><span class="lineNum">     217 </span>            : extern int cpuidle_find_deepest_state(struct cpuidle_driver *drv,</a>
+<a name="218"><span class="lineNum">     218 </span>            :                                       struct cpuidle_device *dev,</a>
+<a name="219"><span class="lineNum">     219 </span>            :                                       u64 latency_limit_ns);</a>
+<a name="220"><span class="lineNum">     220 </span>            : extern int cpuidle_enter_s2idle(struct cpuidle_driver *drv,</a>
+<a name="221"><span class="lineNum">     221 </span>            :                                 struct cpuidle_device *dev);</a>
+<a name="222"><span class="lineNum">     222 </span>            : extern void cpuidle_use_deepest_state(u64 latency_limit_ns);</a>
+<a name="223"><span class="lineNum">     223 </span>            : #else</a>
+<a name="224"><span class="lineNum">     224 </span>            : static inline int cpuidle_find_deepest_state(struct cpuidle_driver *drv,</a>
+<a name="225"><span class="lineNum">     225 </span>            :                                              struct cpuidle_device *dev,</a>
+<a name="226"><span class="lineNum">     226 </span>            :                                              u64 latency_limit_ns)</a>
+<a name="227"><span class="lineNum">     227 </span>            : {return -ENODEV; }</a>
+<a name="228"><span class="lineNum">     228 </span>            : static inline int cpuidle_enter_s2idle(struct cpuidle_driver *drv,</a>
+<a name="229"><span class="lineNum">     229 </span>            :                                        struct cpuidle_device *dev)</a>
+<a name="230"><span class="lineNum">     230 </span>            : {return -ENODEV; }</a>
+<a name="231"><span class="lineNum">     231 </span><span class="lineNoCov">          0 : static inline void cpuidle_use_deepest_state(u64 latency_limit_ns)</span></a>
+<a name="232"><span class="lineNum">     232 </span>            : {</a>
+<a name="233"><span class="lineNum">     233 </span><span class="lineNoCov">          0 : }</span></a>
+<a name="234"><span class="lineNum">     234 </span>            : #endif</a>
+<a name="235"><span class="lineNum">     235 </span>            : </a>
+<a name="236"><span class="lineNum">     236 </span>            : /* kernel/sched/idle.c */</a>
+<a name="237"><span class="lineNum">     237 </span>            : extern void sched_idle_set_state(struct cpuidle_state *idle_state);</a>
+<a name="238"><span class="lineNum">     238 </span>            : extern void default_idle_call(void);</a>
+<a name="239"><span class="lineNum">     239 </span>            : </a>
+<a name="240"><span class="lineNum">     240 </span>            : #ifdef CONFIG_ARCH_NEEDS_CPU_IDLE_COUPLED</a>
+<a name="241"><span class="lineNum">     241 </span>            : void cpuidle_coupled_parallel_barrier(struct cpuidle_device *dev, atomic_t *a);</a>
+<a name="242"><span class="lineNum">     242 </span>            : #else</a>
+<a name="243"><span class="lineNum">     243 </span>            : static inline void cpuidle_coupled_parallel_barrier(struct cpuidle_device *dev, atomic_t *a)</a>
+<a name="244"><span class="lineNum">     244 </span>            : {</a>
+<a name="245"><span class="lineNum">     245 </span>            : }</a>
+<a name="246"><span class="lineNum">     246 </span>            : #endif</a>
+<a name="247"><span class="lineNum">     247 </span>            : </a>
+<a name="248"><span class="lineNum">     248 </span>            : #if defined(CONFIG_CPU_IDLE) &amp;&amp; defined(CONFIG_ARCH_HAS_CPU_RELAX)</a>
+<a name="249"><span class="lineNum">     249 </span>            : void cpuidle_poll_state_init(struct cpuidle_driver *drv);</a>
+<a name="250"><span class="lineNum">     250 </span>            : #else</a>
+<a name="251"><span class="lineNum">     251 </span>            : static inline void cpuidle_poll_state_init(struct cpuidle_driver *drv) {}</a>
+<a name="252"><span class="lineNum">     252 </span>            : #endif</a>
+<a name="253"><span class="lineNum">     253 </span>            : </a>
+<a name="254"><span class="lineNum">     254 </span>            : /******************************</a>
+<a name="255"><span class="lineNum">     255 </span>            :  * CPUIDLE GOVERNOR INTERFACE *</a>
+<a name="256"><span class="lineNum">     256 </span>            :  ******************************/</a>
+<a name="257"><span class="lineNum">     257 </span>            : </a>
+<a name="258"><span class="lineNum">     258 </span>            : struct cpuidle_governor {</a>
+<a name="259"><span class="lineNum">     259 </span>            :         char                    name[CPUIDLE_NAME_LEN];</a>
+<a name="260"><span class="lineNum">     260 </span>            :         struct list_head        governor_list;</a>
+<a name="261"><span class="lineNum">     261 </span>            :         unsigned int            rating;</a>
+<a name="262"><span class="lineNum">     262 </span>            : </a>
+<a name="263"><span class="lineNum">     263 </span>            :         int  (*enable)          (struct cpuidle_driver *drv,</a>
+<a name="264"><span class="lineNum">     264 </span>            :                                         struct cpuidle_device *dev);</a>
+<a name="265"><span class="lineNum">     265 </span>            :         void (*disable)         (struct cpuidle_driver *drv,</a>
+<a name="266"><span class="lineNum">     266 </span>            :                                         struct cpuidle_device *dev);</a>
+<a name="267"><span class="lineNum">     267 </span>            : </a>
+<a name="268"><span class="lineNum">     268 </span>            :         int  (*select)          (struct cpuidle_driver *drv,</a>
+<a name="269"><span class="lineNum">     269 </span>            :                                         struct cpuidle_device *dev,</a>
+<a name="270"><span class="lineNum">     270 </span>            :                                         bool *stop_tick);</a>
+<a name="271"><span class="lineNum">     271 </span>            :         void (*reflect)         (struct cpuidle_device *dev, int index);</a>
+<a name="272"><span class="lineNum">     272 </span>            : };</a>
+<a name="273"><span class="lineNum">     273 </span>            : </a>
+<a name="274"><span class="lineNum">     274 </span>            : extern int cpuidle_register_governor(struct cpuidle_governor *gov);</a>
+<a name="275"><span class="lineNum">     275 </span>            : extern s64 cpuidle_governor_latency_req(unsigned int cpu);</a>
+<a name="276"><span class="lineNum">     276 </span>            : </a>
+<a name="277"><span class="lineNum">     277 </span>            : #define __CPU_PM_CPU_IDLE_ENTER(low_level_idle_enter,                   \</a>
+<a name="278"><span class="lineNum">     278 </span>            :                                 idx,                                    \</a>
+<a name="279"><span class="lineNum">     279 </span>            :                                 state,                                  \</a>
+<a name="280"><span class="lineNum">     280 </span>            :                                 is_retention)                           \</a>
+<a name="281"><span class="lineNum">     281 </span>            : ({                                                                      \</a>
+<a name="282"><span class="lineNum">     282 </span>            :         int __ret = 0;                                                  \</a>
+<a name="283"><span class="lineNum">     283 </span>            :                                                                         \</a>
+<a name="284"><span class="lineNum">     284 </span>            :         if (!idx) {                                                     \</a>
+<a name="285"><span class="lineNum">     285 </span>            :                 cpu_do_idle();                                          \</a>
+<a name="286"><span class="lineNum">     286 </span>            :                 return idx;                                             \</a>
+<a name="287"><span class="lineNum">     287 </span>            :         }                                                               \</a>
+<a name="288"><span class="lineNum">     288 </span>            :                                                                         \</a>
+<a name="289"><span class="lineNum">     289 </span>            :         if (!is_retention)                                              \</a>
+<a name="290"><span class="lineNum">     290 </span>            :                 __ret =  cpu_pm_enter();                                \</a>
+<a name="291"><span class="lineNum">     291 </span>            :         if (!__ret) {                                                   \</a>
+<a name="292"><span class="lineNum">     292 </span>            :                 __ret = low_level_idle_enter(state);                    \</a>
+<a name="293"><span class="lineNum">     293 </span>            :                 if (!is_retention)                                      \</a>
+<a name="294"><span class="lineNum">     294 </span>            :                         cpu_pm_exit();                                  \</a>
+<a name="295"><span class="lineNum">     295 </span>            :         }                                                               \</a>
+<a name="296"><span class="lineNum">     296 </span>            :                                                                         \</a>
+<a name="297"><span class="lineNum">     297 </span>            :         __ret ? -1 : idx;                                               \</a>
+<a name="298"><span class="lineNum">     298 </span>            : })</a>
+<a name="299"><span class="lineNum">     299 </span>            : </a>
+<a name="300"><span class="lineNum">     300 </span>            : #define CPU_PM_CPU_IDLE_ENTER(low_level_idle_enter, idx)        \</a>
+<a name="301"><span class="lineNum">     301 </span>            :         __CPU_PM_CPU_IDLE_ENTER(low_level_idle_enter, idx, idx, 0)</a>
+<a name="302"><span class="lineNum">     302 </span>            : </a>
+<a name="303"><span class="lineNum">     303 </span>            : #define CPU_PM_CPU_IDLE_ENTER_RETENTION(low_level_idle_enter, idx)      \</a>
+<a name="304"><span class="lineNum">     304 </span>            :         __CPU_PM_CPU_IDLE_ENTER(low_level_idle_enter, idx, idx, 1)</a>
+<a name="305"><span class="lineNum">     305 </span>            : </a>
+<a name="306"><span class="lineNum">     306 </span>            : #define CPU_PM_CPU_IDLE_ENTER_PARAM(low_level_idle_enter, idx, state)   \</a>
+<a name="307"><span class="lineNum">     307 </span>            :         __CPU_PM_CPU_IDLE_ENTER(low_level_idle_enter, idx, state, 0)</a>
+<a name="308"><span class="lineNum">     308 </span>            : </a>
+<a name="309"><span class="lineNum">     309 </span>            : #define CPU_PM_CPU_IDLE_ENTER_RETENTION_PARAM(low_level_idle_enter, idx, state) \</a>
+<a name="310"><span class="lineNum">     310 </span>            :         __CPU_PM_CPU_IDLE_ENTER(low_level_idle_enter, idx, state, 1)</a>
+<a name="311"><span class="lineNum">     311 </span>            : </a>
+<a name="312"><span class="lineNum">     312 </span>            : #endif /* _LINUX_CPUIDLE_H */</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>
