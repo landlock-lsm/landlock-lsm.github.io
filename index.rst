@@ -17,6 +17,12 @@ any process, including unprivileged ones, to securely restrict themselves.
 [PATCH v34] -- Landlock LSM
 ---------------------------
 
+.. note::
+
+    Merged in `mainline`__: will be available in Linux 5.13!
+
+    __ https://git.kernel.org/torvalds/c/17ae69aba89dbfa2139b7f8024b757ab3cc42f59
+
 `LKML`__ -- `code`__ -- `sandbox manager example`__ -- `tests`__ -- `documentation`__ -- `LCOV coverage`__ -- `syzkaller coverage`__
 
 __ https://lore.kernel.org/lkml/20210422154123.13086-1-mic@digikod.net/
