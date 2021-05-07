@@ -13,6 +13,13 @@ is expected to help mitigate the security impact of bugs or
 unexpected/malicious behaviors in user space applications.  Landlock empowers
 any process, including unprivileged ones, to securely restrict themselves.
 
+`Mailing list`__ dedicated to user space development involving Landlock: `subscription`__, `posting`__ and `archives`__.
+
+__ https://subspace.kernel.org/lists.linux.dev.html
+__ mailto:landlock+subscribe@lists.linux.dev
+__ mailto:landlock@lists.linux.dev
+__ https://lore.kernel.org/landlock/
+
 
 [PATCH v34] -- Landlock LSM
 ---------------------------
