@@ -43,66 +43,6 @@ __ https://lists.gnu.org/archive/html/bug-tar/2021-04/msg00001.html
 __ https://github.com/landlock-lsm/tar/commits/landlock-v1
 
 
-[PATCH v33] -- Landlock LSM
----------------------------
-
-Landlock is now in Linux `next-20210409`__
-
-__ https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/security/landlock?h=next-20210409&id=e99d8a8495175df8cb8b739f8cf9b0fc9d0cd3b5
-
-
-`LKML`__ -- `code`__ -- `sandbox manager example`__ -- `tests`__ -- `documentation`__ -- `LCOV coverage`__ -- `syzkaller coverage`__
-
-__ https://lore.kernel.org/lkml/20210407160726.542794-1-mic@digikod.net/
-__ https://github.com/landlock-lsm/linux/commits/landlock-v33
-__ https://github.com/landlock-lsm/linux/blob/landlock-v33/samples/landlock/sandboxer.c
-__ https://github.com/landlock-lsm/linux/blob/landlock-v33/tools/testing/selftests/landlock/
-__ linux-doc/landlock-v33/userspace-api/landlock.html
-__ linux-lcov/landlock-v33/security/landlock/index.html
-__ https://storage.googleapis.com/syzkaller/cover/ci-upstream-linux-next-kasan-gce-root.html#security%2flandlock
-
-
-[PATCH v32] -- Landlock LSM
----------------------------
-
-`LKML`__ -- `code`__ -- `sandbox manager example`__ -- `tests`__ -- `documentation`__
-
-__ https://lore.kernel.org/lkml/20210401205208.2756565-1-mic@digikod.net/
-__ https://github.com/landlock-lsm/linux/commits/landlock-v32
-__ https://github.com/landlock-lsm/linux/blob/landlock-v32/samples/landlock/sandboxer.c
-__ https://github.com/landlock-lsm/linux/blob/landlock-v32/tools/testing/selftests/landlock/
-__ linux-doc/landlock-v32/userspace-api/landlock.html
-
-
-[PATCH v31] -- Landlock LSM
----------------------------
-
-`LKML`__ -- `code`__ -- `sandbox manager example`__ -- `tests`__ -- `documentation`__
-
-__ https://lore.kernel.org/lkml/20210324191520.125779-1-mic@digikod.net/
-__ https://github.com/landlock-lsm/linux/commits/landlock-v31
-__ https://github.com/landlock-lsm/linux/blob/landlock-v31/samples/landlock/sandboxer.c
-__ https://github.com/landlock-lsm/linux/blob/landlock-v31/tools/testing/selftests/landlock/
-__ linux-doc/landlock-v31/userspace-api/landlock.html
-
-
-[PATCH v30] -- Landlock LSM
----------------------------
-
-Landlock is now in Linux `next-20210319`__
-
-__ https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git/tree/security/landlock?h=next-20210319&id=f00397ee41c79b6155b9b44abd0055b2c0621349
-
-
-`LKML`__ -- `code`__ -- `sandbox manager example`__ -- `tests`__ -- `documentation`__
-
-__ https://lore.kernel.org/lkml/20210316204252.427806-1-mic@digikod.net/
-__ https://github.com/landlock-lsm/linux/commits/landlock-v30
-__ https://github.com/landlock-lsm/linux/blob/landlock-v30/samples/landlock/sandboxer.c
-__ https://github.com/landlock-lsm/linux/blob/landlock-v30/tools/testing/selftests/landlock/
-__ linux-doc/landlock-v30/userspace-api/landlock.html
-
-
 External links
 ==============
 
@@ -115,23 +55,17 @@ __ https://github.com/landlock-lsm
 Archives
 ========
 
+.. warning::
+
+    Landlock is not based on eBPF anymore.  These talks are outdated but kept for reference.
+
+
 Summary 2019 -- Landlock: a new kind of Linux Security Module leveraging eBPF
 -----------------------------------------------------------------------------
 
 `Slides`__
 
 __ talks/2019-09-12_landlock-summary.pdf
-
-
-[PATCH v10] -- Landlock LSM: toward unprivileged sandboxing
------------------------------------------------------------
-
-`LKML`__ -- `code`__ -- `program example`__ -- `documentation`__
-
-__ https://lore.kernel.org/linux-security-module/20190721213116.23476-1-mic@digikod.net/
-__ https://github.com/landlock-lsm/linux/commits/landlock-v10
-__ https://github.com/landlock-lsm/linux/blob/landlock-v10/samples/bpf/landlock1_kern.c
-__ linux-doc/landlock-v10/security/landlock/index.html
 
 
 Linux Security Summit 2018 -- How to safely restrict access to files in a programmatic way with Landlock?
@@ -158,17 +92,6 @@ __ talks/2018-07-04_landlock-pts_demo-2-dynmap.mkv
 __ https://github.com/landlock-lsm/linux/blob/landlock-v8/samples/bpf/landlock1_kern.c
 
 
-[PATCH v8] -- Landlock LSM: toward unprivileged sandboxing
-----------------------------------------------------------
-
-`LKML`__ -- `code`__ -- `program example`__ -- `documentation`__
-
-__ https://lkml.org/lkml/2018/2/26/1214
-__ https://github.com/landlock-lsm/linux/commits/landlock-v8
-__ https://github.com/landlock-lsm/linux/blob/landlock-v8/samples/bpf/landlock1_kern.c
-__ linux-doc/landlock-v8/security/landlock/index.html
-
-
 FOSDEM 2018 -- File access-control per container with Landlock
 --------------------------------------------------------------
 
@@ -188,14 +111,3 @@ Linux Security Summit 2017 -- Landlock LSM: toward unprivileged sandboxing
 __ talks/2017-09-14_landlock-lss.pdf
 __ talks/2017-09-14_landlock-lss_demo-1-ro-tty.mkv
 __ talks/2017-09-14_landlock-lss_demo-2-fsview-gui.mkv
-
-
-[PATCH v7] -- Landlock LSM: toward unprivileged sandboxing
-----------------------------------------------------------
-
-`LKML`__ -- `code`__ -- `rule example`__ -- `documentation`__
-
-__ https://lkml.org/lkml/2017/8/20/192
-__ https://github.com/landlock-lsm/linux/commits/landlock-v7
-__ https://github.com/landlock-lsm/linux/blob/landlock-v7/samples/bpf/landlock1_kern.c
-__ linux-doc/landlock-v7/security/landlock/index.html
