@@ -21,6 +21,14 @@ __ mailto:landlock@lists.linux.dev
 __ https://lore.kernel.org/landlock/
 
 
+LWN summary (2021-06-17)
+------------------------
+
+`Landlock (finally) sets sail`__
+
+__ https://lwn.net/Articles/859908/
+
+
 [PATCH v34] -- Landlock LSM
 ---------------------------
 
