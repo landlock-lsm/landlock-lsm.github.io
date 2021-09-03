@@ -21,11 +21,13 @@ __ mailto:landlock@lists.linux.dev
 __ https://lore.kernel.org/landlock/
 
 
-LWN summary (2021-06-17)
-------------------------
+News
+----
 
-`Landlock (finally) sets sail`__
+* `Newsletter #1`__ (2021-09-01)
+* `LWN summary: Landlock (finally) sets sail`__ (2021-06-17)
 
+__ https://lore.kernel.org/landlock/2df4887a-1710-bba2-f49c-cd5b785bb565@digikod.net/
 __ https://lwn.net/Articles/859908/
 
 
