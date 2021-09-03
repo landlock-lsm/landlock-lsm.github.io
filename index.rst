@@ -24,8 +24,8 @@ __ https://lore.kernel.org/landlock/
 News
 ----
 
-* `Newsletter #1`__ (2021-09-01)
-* `LWN summary: Landlock (finally) sets sail`__ (2021-06-17)
+* Newsletter (2021-09-01) - `Landlock news #1`__
+* LWN article (2021-06-17) - `Landlock (finally) sets sail`__
 
 __ https://lore.kernel.org/landlock/2df4887a-1710-bba2-f49c-cd5b785bb565@digikod.net/
 __ https://lwn.net/Articles/859908/
