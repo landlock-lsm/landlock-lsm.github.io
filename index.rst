@@ -31,6 +31,23 @@ __ https://lore.kernel.org/landlock/2df4887a-1710-bba2-f49c-cd5b785bb565@digikod
 __ https://lwn.net/Articles/859908/
 
 
+Roadmap (kernel-side)
+---------------------
+
+Short term:
+ * improve kernel performance for the current features;
+ * add the ability to change the parent directory of files (see current Landlock limitations).
+
+Medium term:
+ * add audit features to ease debugging;
+ * extend filesystem access-control types to address the current limitations;
+ * add the ability to follow a deny listing approach, which is required for some use cases.
+
+Long term:
+ * add minimal network access-control types;
+ * add the ability to create (file descriptor) capabilities compatible with Capsicum.
+
+
 [PATCH v34] -- Landlock LSM
 ---------------------------
 
