@@ -31,6 +31,16 @@ __ https://lore.kernel.org/landlock/2df4887a-1710-bba2-f49c-cd5b785bb565@digikod
 __ https://lwn.net/Articles/859908/
 
 
+Conferences
+-----------
+
+* Open Source Summit (2021-09-28) - `Sandboxing Applications with Landlock`__
+* Linux Security Summit (2021-09-29) - `Deep Dive into Landlock Internals`__
+
+__ https://sched.co/lAVl
+__ https://sched.co/ljRQ
+
+
 Roadmap (kernel-side)
 ---------------------
 
