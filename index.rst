@@ -34,10 +34,11 @@ __ https://lwn.net/Articles/859908/
 Conferences
 -----------
 
-* Open Source Summit (2021-09-28) - `Sandboxing Applications with Landlock`__
+* `Open Source Summit`__ (2021-09-28) - `Sandboxing Applications with Landlock`__
 * Linux Security Summit (2021-09-29) - `Deep Dive into Landlock Internals`__
 
 __ https://sched.co/lAVl
+__ talks/2021-09-28_landlock-oss.pdf
 __ https://sched.co/ljRQ
 
 
