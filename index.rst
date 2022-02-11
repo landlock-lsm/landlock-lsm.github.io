@@ -77,7 +77,7 @@ __ https://lore.kernel.org/lkml/20210422154123.13086-1-mic@digikod.net/
 __ https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/tree/security/landlock
 __ https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/tree/samples/landlock/sandboxer.c
 __ https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/tree/tools/testing/selftests/landlock
-__ https://www.kernel.org/doc/html/latest/userspace-api/landlock.html
+__ https://docs.kernel.org/userspace-api/landlock.html
 __ linux-lcov/landlock-v34/security/landlock/index.html
 __ https://storage.googleapis.com/syzkaller/cover/ci-upstream-linux-next-kasan-gce-root.html#security%2flandlock
 
