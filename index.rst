@@ -49,16 +49,17 @@ Roadmap (kernel-side)
 ---------------------
 
 Short term:
+ * add audit features to ease debugging;
+ * add minimal network access-control types;
+ * add minimal process signaling access-control types;
  * improve kernel performance for the current features;
- * add the ability to change the parent directory of files (see current Landlock limitations).
 
 Medium term:
- * add audit features to ease debugging;
  * extend filesystem access-control types to address the current limitations;
  * add the ability to follow a deny listing approach, which is required for some use cases.
+ * extend network access-control types;
 
 Long term:
- * add minimal network access-control types;
  * add the ability to create (file descriptor) capabilities compatible with Capsicum.
 
 
