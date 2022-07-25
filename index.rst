@@ -34,8 +34,12 @@ __ https://lwn.net/Articles/859908/
 Conferences
 -----------
 
+* Linux Security Summit North America (2022-06-24) - `Update on Landlock: Lifting the File Reparenting Limits and Supporting Network Rules`__ -- `slides`__
 * Linux Security Summit (2021-09-29) - `Deep Dive into Landlock Internals`__ -- `slides`__ and `recording`__
 * Open Source Summit (2021-09-28) - `Sandboxing Applications with Landlock`__ -- `slides`__ and `recording`__
+
+__ https://sched.co/11MXq
+__ talks/2022-06-24_landlock-lss-na.pdf
 
 __ https://sched.co/ljRQ
 __ talks/2021-09-29_landlock-lss.pdf
