@@ -21,15 +21,26 @@ __ mailto:landlock@lists.linux.dev
 __ https://lore.kernel.org/landlock/
 
 
+`Landlock documentation`__ -- `code`__ -- `sandbox manager example`__ -- `tests`__ -- `syzkaller coverage`__
+
+__ https://docs.kernel.org/userspace-api/landlock.html
+__ https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/tree/security/landlock
+__ https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/tree/samples/landlock/sandboxer.c
+__ https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/tree/tools/testing/selftests/landlock
+__ https://storage.googleapis.com/syzkaller/cover/ci-upstream-linux-next-kasan-gce-root.html#security%2flandlock
+
+
 News
 ----
 
 * Linux 5.19 (2022-07-31) - `New LANDLOCK_ACCESS_FS_REFER, improved documentation and 16 layers limit`__
 * Newsletter (2021-09-01) - `Landlock news #1`__
+* Linux 5.13 (2021-06-27) - `Initial Landlock version`__
 * LWN article (2021-06-17) - `Landlock (finally) sets sail`__
 
 __ https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=cb44e4f061e16be65b8a16505e121490c66d30d0
 __ https://lore.kernel.org/landlock/2df4887a-1710-bba2-f49c-cd5b785bb565@digikod.net/
+__ https://git.kernel.org/torvalds/c/17ae69aba89dbfa2139b7f8024b757ab3cc42f59
 __ https://lwn.net/Articles/859908/
 
 
@@ -81,26 +92,6 @@ p7zip -- Landlock support (WIP)
 `Add sandboxing with Landlock #184`__
 
 __ https://github.com/jinfeihan57/p7zip/pull/184
-
-
-[PATCH v34] -- Landlock LSM
----------------------------
-
-.. note::
-
-    Merged in `mainline`__: will be available in Linux 5.13!
-
-    __ https://git.kernel.org/torvalds/c/17ae69aba89dbfa2139b7f8024b757ab3cc42f59
-
-`LKML`__ -- `code`__ -- `sandbox manager example`__ -- `tests`__ -- `documentation`__ -- `LCOV coverage`__ -- `syzkaller coverage`__
-
-__ https://lore.kernel.org/lkml/20210422154123.13086-1-mic@digikod.net/
-__ https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/tree/security/landlock
-__ https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/tree/samples/landlock/sandboxer.c
-__ https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/tree/tools/testing/selftests/landlock
-__ https://docs.kernel.org/userspace-api/landlock.html
-__ linux-lcov/landlock-v34/security/landlock/index.html
-__ https://storage.googleapis.com/syzkaller/cover/ci-upstream-linux-next-kasan-gce-root.html#security%2flandlock
 
 
 GNU Tar -- [PATCH v1] Landlock support
