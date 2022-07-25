@@ -24,9 +24,9 @@ __ https://lore.kernel.org/landlock/
 `Landlock documentation`__ -- `code`__ -- `sandbox manager example`__ -- `tests`__ -- `syzkaller coverage`__
 
 __ https://docs.kernel.org/userspace-api/landlock.html
-__ https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/tree/security/landlock
-__ https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/tree/samples/landlock/sandboxer.c
-__ https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/tree/tools/testing/selftests/landlock
+__ https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/security/landlock
+__ https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/samples/landlock/sandboxer.c
+__ https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/tools/testing/selftests/landlock
 __ https://storage.googleapis.com/syzkaller/cover/ci-upstream-linux-next-kasan-gce-root.html#security%2flandlock
 
 
