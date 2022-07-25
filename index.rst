@@ -75,6 +75,14 @@ Long term:
  * add the ability to create (file descriptor) capabilities compatible with Capsicum.
 
 
+p7zip -- Landlock support (WIP)
+-------------------------------
+
+`Add sandboxing with Landlock #184`__
+
+__ https://github.com/jinfeihan57/p7zip/pull/184
+
+
 [PATCH v34] -- Landlock LSM
 ---------------------------
 
