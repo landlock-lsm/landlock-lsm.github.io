@@ -34,15 +34,16 @@ __ https://lwn.net/Articles/859908/
 Conferences
 -----------
 
-* Open Source Summit (2021-09-28) - `Sandboxing Applications with Landlock`__ -- `slides`__ and `recording`__
 * Linux Security Summit (2021-09-29) - `Deep Dive into Landlock Internals`__ -- `slides`__ and `recording`__
+* Open Source Summit (2021-09-28) - `Sandboxing Applications with Landlock`__ -- `slides`__ and `recording`__
+
+__ https://sched.co/ljRQ
+__ talks/2021-09-29_landlock-lss.pdf
+__ https://youtu.be/5Al2z0LTEMs
 
 __ https://sched.co/lAVl
 __ talks/2021-09-28_landlock-oss.pdf
 __ https://youtu.be/ohoofZ62O98
-__ https://sched.co/ljRQ
-__ talks/2021-09-29_landlock-lss.pdf
-__ https://youtu.be/5Al2z0LTEMs
 
 
 Roadmap (kernel-side)
