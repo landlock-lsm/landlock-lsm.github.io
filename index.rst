@@ -38,7 +38,7 @@ News
 * Linux 5.13 (2021-06-27) - `Initial Landlock version`__
 * LWN article (2021-06-17) - `Landlock (finally) sets sail`__
 
-__ https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/commit/?id=cb44e4f061e16be65b8a16505e121490c66d30d0
+__ https://git.kernel.org/torvalds/c/cb44e4f061e16be65b8a16505e121490c66d30d0
 __ https://lore.kernel.org/landlock/2df4887a-1710-bba2-f49c-cd5b785bb565@digikod.net/
 __ https://git.kernel.org/torvalds/c/17ae69aba89dbfa2139b7f8024b757ab3cc42f59
 __ https://lwn.net/Articles/859908/
