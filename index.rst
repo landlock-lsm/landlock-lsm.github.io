@@ -33,12 +33,14 @@ __ https://storage.googleapis.com/syzkaller/cover/ci-upstream-linux-next-kasan-g
 News
 ----
 
+* Linux 6.2 (2023-02-19) - `New LANDLOCK_ACCESS_FS_TRUNCATE`__
 * Newsletter (2022-08-17) - `Landlock news #2`__
 * Linux 5.19 (2022-07-31) - `New LANDLOCK_ACCESS_FS_REFER, improved documentation and 16 layers limit`__
 * Newsletter (2021-09-01) - `Landlock news #1`__
 * Linux 5.13 (2021-06-27) - `Initial Landlock version`__
 * LWN article (2021-06-17) - `Landlock (finally) sets sail`__
 
+__ https://git.kernel.org/torvalds/c/299e2b1967578b1442128ba8b3e86ed3427d3651
 __ https://lore.kernel.org/landlock/441bd1cd-03fd-8e30-c370-3d0f0263d564@digikod.net/
 __ https://git.kernel.org/torvalds/c/cb44e4f061e16be65b8a16505e121490c66d30d0
 __ https://lore.kernel.org/landlock/2df4887a-1710-bba2-f49c-cd5b785bb565@digikod.net/
