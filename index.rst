@@ -63,7 +63,7 @@ __ talks/2023-02-04_rust-landlock-fosdem.pdf
 
 __ https://netdevconf.info/0x16/session.html?How-to-sandbox-a-network-application-with-Landlock
 __ talks/2022-10-24_landlock-netdevconf.pdf
-__ https://github.com/landlock-lsm/tuto-netdevconf-2022
+__ https://github.com/landlock-lsm/tuto-lighttpd
 
 __ https://cfp.pass-the-salt.org/pts2022/talk/BGQGZC/
 __ talks/2022-07-04_landlock-pts.pdf
