@@ -53,12 +53,20 @@ __ https://lwn.net/Articles/859908/
 Conferences
 -----------
 
+* Linux Security Summit Europe (2023-09-21) - `Landlock Workshop: Sandboxing Application for Fun and Protection`__ and `slides`__
+* Linux Security Summit Europe (2023-09-21) - `Update on Landlock: Audit, Debugging and Metrics`__ and `slides`__
 * FOSDEM (2023-02-04) - `Backward and forward compatibility for security features (illustrated with Landlock)`__ -- `slides`__
 * Netdev 0x16 (2022-10-24) - `How to sandbox a network application with Landlock`__ -- `slides`__ and `tutorial files`__
 * Pass the Salt (2022-07-04) - `Sandboxing your application with Landlock, illustration with the p7zip case`__ -- `slides`__ and `recording`__
 * Linux Security Summit North America (2022-06-24) - `Update on Landlock: Lifting the File Reparenting Limits and Supporting Network Rules`__ -- `slides`__ and `recording`__
 * Linux Security Summit (2021-09-29) - `Deep Dive into Landlock Internals`__ -- `slides`__ and `recording`__
 * Open Source Summit (2021-09-28) - `Sandboxing Applications with Landlock`__ -- `slides`__ and `recording`__
+
+__ https://sched.co/1OLAi
+__ talks/2023-09-21_landlock-imagemagick-lss-eu.pdf
+
+__ https://sched.co/1OL79
+__ talks/2023-09-21_landlock-audit-lss-eu.pdf
 
 __ https://fosdem.org/2023/schedule/event/rust_backward_and_forward_compatibility_for_security_features/
 __ talks/2023-02-04_rust-landlock-fosdem.pdf
