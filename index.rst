@@ -29,6 +29,11 @@ __ https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/sampl
 __ https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/tools/testing/selftests/landlock
 __ https://storage.googleapis.com/syzkaller/cover/ci-upstream-linux-next-kasan-gce-root.html#security%2flandlock
 
+`Landlock overview`__ -- `Landlock workshop`__
+
+__ talks/2024-01-22_landlock-overview.pdf
+__ talks/2024-01-22_landlock-workshop.pdf
+
 
 News
 ----
