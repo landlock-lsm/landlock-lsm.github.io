@@ -117,23 +117,6 @@ __ https://github.com/orgs/landlock-lsm/projects/1
 __ https://docs.kernel.org/process/submitting-patches.html
 
 
-p7zip -- Landlock support (WIP)
--------------------------------
-
-`Add sandboxing with Landlock #184`__
-
-__ https://github.com/jinfeihan57/p7zip/pull/184
-
-
-GNU Tar -- [PATCH v1] Landlock support
---------------------------------------
-
-`patch`__ -- `code`__
-
-__ https://lists.gnu.org/archive/html/bug-tar/2021-04/msg00001.html
-__ https://github.com/landlock-lsm/tar/commits/landlock-v1
-
-
 External links
 ==============
 
