@@ -58,6 +58,7 @@ __ https://lwn.net/Articles/859908/
 Conferences
 -----------
 
+* SSTIC (2024-06-06) - `Landlock: From a security mechanism idea to a widely available implementation`__ -- `article`__ and `slides`__
 * Kernel Recipes (2023-09-25) - `Update on Landlock: Audit, Debugging and Metrics`__ -- `slides`__
 * Linux Security Summit Europe (2023-09-21) - `Landlock Workshop: Sandboxing Application for Fun and Protection`__ -- `slides`__
 * Linux Security Summit Europe (2023-09-21) - `Update on Landlock: Audit, Debugging and Metrics`__ -- `slides`__
@@ -67,6 +68,10 @@ Conferences
 * Linux Security Summit North America (2022-06-24) - `Update on Landlock: Lifting the File Reparenting Limits and Supporting Network Rules`__ -- `slides`__ and `recording`__
 * Linux Security Summit (2021-09-29) - `Deep Dive into Landlock Internals`__ -- `slides`__ and `recording`__
 * Open Source Summit (2021-09-28) - `Sandboxing Applications with Landlock`__ -- `slides`__ and `recording`__
+
+__ https://www.sstic.org/2024/presentation/landlock-design/
+__ talks/2024-06-06_landlock-article.pdf
+__ talks/2024-06-06_landlock-design.pdf
 
 __ https://kernel-recipes.org/en/2023/update-on-landlock-audit-debugging-and-metrics/
 __ talks/2023-09-25_landlock-audit-kr.pdf
