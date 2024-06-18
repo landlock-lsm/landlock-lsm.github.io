@@ -120,8 +120,9 @@ __ https://docs.kernel.org/process/submitting-patches.html
 External links
 ==============
 
-Twitter__ -- GitHub__
+Mastodon__ -- Twitter__ -- GitHub__
 
+__ https://mastodon.social/@l0kod
 __ https://twitter.com/l0kod
 __ https://github.com/landlock-lsm
 
