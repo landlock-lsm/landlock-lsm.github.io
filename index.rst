@@ -29,11 +29,6 @@ __ https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/sampl
 __ https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/tools/testing/selftests/landlock
 __ https://storage.googleapis.com/syzkaller/cover/ci-upstream-linux-next-kasan-gce-root.html#security%2flandlock
 
-`Landlock overview`__ -- `Landlock workshop`__
-
-__ talks/2024-01-22_landlock-overview.pdf
-__ talks/2024-01-22_landlock-workshop.pdf
-
 
 News
 ----
@@ -59,6 +54,7 @@ Conferences
 -----------
 
 * SSTIC (2024-06-06) - `Landlock: From a security mechanism idea to a widely available implementation`__ -- `article`__ and `slides`__
+* Class and workshop (2024-01-22) `Landlock overview`__ and `Landlock workshop`__
 * Kernel Recipes (2023-09-25) - `Update on Landlock: Audit, Debugging and Metrics`__ -- `slides`__
 * Linux Security Summit Europe (2023-09-21) - `Landlock Workshop: Sandboxing Application for Fun and Protection`__ -- `slides`__
 * Linux Security Summit Europe (2023-09-21) - `Update on Landlock: Audit, Debugging and Metrics`__ -- `slides`__
@@ -72,6 +68,9 @@ Conferences
 __ https://www.sstic.org/2024/presentation/landlock-design/
 __ talks/2024-06-06_landlock-article.pdf
 __ talks/2024-06-06_landlock-design.pdf
+
+__ talks/2024-01-22_landlock-overview.pdf
+__ talks/2024-01-22_landlock-workshop.pdf
 
 __ https://kernel-recipes.org/en/2023/update-on-landlock-audit-debugging-and-metrics/
 __ talks/2023-09-25_landlock-audit-kr.pdf
