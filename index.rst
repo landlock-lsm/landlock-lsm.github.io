@@ -108,19 +108,13 @@ __ https://youtu.be/ohoofZ62O98
 Roadmap (kernel-side)
 ---------------------
 
-Short term:
- * add audit features to ease debugging;
- * add minimal network access-control types;
- * add minimal process signaling access-control types;
- * improve kernel performance for the current features;
+See `Landlock tasks on GitHub`__.
 
-Medium term:
- * extend filesystem access-control types to address the current limitations;
- * add the ability to follow a deny listing approach, which is required for some use cases.
- * extend network access-control types;
+__ https://github.com/orgs/landlock-lsm/projects/1
 
-Long term:
- * add the ability to create (file descriptor) capabilities compatible with Capsicum.
+`Kernel development`__ still happens on the related mailing lists though.
+
+__ https://docs.kernel.org/process/submitting-patches.html
 
 
 p7zip -- Landlock support (WIP)
