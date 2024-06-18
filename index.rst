@@ -33,6 +33,9 @@ __ https://storage.googleapis.com/syzkaller/cover/ci-upstream-linux-next-kasan-g
 News
 ----
 
+* Linux 6.9 (2024-05-12) - `Add support for KUnit and extend documentation`__
+* Linux 6.7 (2024-01-27) - `New LANDLOCK_ACCESS_NET_BIND_TCP and LANDLOCK_ACCESS_NET_CONNECT_TCP`__
+* Linux 6.5 (2023-08-27) - `Add support to the UML architecture`__
 * Newsletter (2023-03-22) - `Landlock news #3`__
 * Linux 6.2 (2023-02-19) - `New LANDLOCK_ACCESS_FS_TRUNCATE`__
 * Newsletter (2022-08-17) - `Landlock news #2`__
@@ -41,6 +44,9 @@ News
 * Linux 5.13 (2021-06-27) - `Initial Landlock version`__
 * LWN article (2021-06-17) - `Landlock (finally) sets sail`__
 
+__ https://git.kernel.org/torvalds/c/35e886e88c803920644c9d3abb45a9ecb7f1e761
+__ https://git.kernel.org/torvalds/c/136cc1e1f5be75f57f1e0404b94ee1c8792cb07d
+__ https://git.kernel.org/torvalds/c/26642864f8b212964f80fbd69685eb850ced5f45
 __ https://lore.kernel.org/landlock/d4ed5733-d07b-5548-2534-a63e22906778@digikod.net/
 __ https://git.kernel.org/torvalds/c/299e2b1967578b1442128ba8b3e86ed3427d3651
 __ https://lore.kernel.org/landlock/441bd1cd-03fd-8e30-c370-3d0f0263d564@digikod.net/
