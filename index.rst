@@ -58,9 +58,9 @@ __ https://lwn.net/Articles/859908/
 Conferences
 -----------
 
-* Kernel Recipes (2023-09-25) - `Update on Landlock: Audit, Debugging and Metrics`__ and `slides`__
-* Linux Security Summit Europe (2023-09-21) - `Landlock Workshop: Sandboxing Application for Fun and Protection`__ and `slides`__
-* Linux Security Summit Europe (2023-09-21) - `Update on Landlock: Audit, Debugging and Metrics`__ and `slides`__
+* Kernel Recipes (2023-09-25) - `Update on Landlock: Audit, Debugging and Metrics`__ -- `slides`__
+* Linux Security Summit Europe (2023-09-21) - `Landlock Workshop: Sandboxing Application for Fun and Protection`__ -- `slides`__
+* Linux Security Summit Europe (2023-09-21) - `Update on Landlock: Audit, Debugging and Metrics`__ -- `slides`__
 * FOSDEM (2023-02-04) - `Backward and forward compatibility for security features (illustrated with Landlock)`__ -- `slides`__
 * Netdev 0x16 (2022-10-24) - `How to sandbox a network application with Landlock`__ -- `slides`__ and `tutorial files`__
 * Pass the Salt (2022-07-04) - `Sandboxing your application with Landlock, illustration with the p7zip case`__ -- `slides`__ and `recording`__
