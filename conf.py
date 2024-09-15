@@ -20,7 +20,7 @@
 # -- Project information -----------------------------------------------------
 
 project = u'Landlock'
-copyright = u'2016-2021, Mickaël Salaün'
+copyright = u'2016-2024, Mickaël Salaün'
 author = u'Mickaël Salaün'
 
 # The short X.Y version
@@ -76,6 +76,8 @@ pygments_style = None
 # a list of builtin themes.
 #
 html_theme = 'sphinx_rtd_theme'
+
+html_logo = 'landlock-logo-with-shadow.svg'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
