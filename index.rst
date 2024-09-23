@@ -63,6 +63,8 @@ __ https://lwn.net/Articles/859908/
 Conferences
 -----------
 
+* Open Source Summit (2024-09-17) - `Linux sandboxing with Landlock`__ -- `slides`__ and `recording`__
+* Linux Security Summit (2024-09-17) - `Update on Landlock: IOCTL Support`__ -- `slides`__ and `recording`__
 * Pass the Salt (2024-07-03) - `Landlock workshop: Linux sandboxing in practice`__ -- `slides`__
 * SSTIC (2024-06-06) - `Landlock: From a security mechanism idea to a widely available implementation`__ -- `article`__ and `slides`__
 * Class and workshop (2024-01-22) `Landlock overview`__ and `Landlock workshop`__
@@ -75,6 +77,14 @@ Conferences
 * Linux Security Summit North America (2022-06-24) - `Update on Landlock: Lifting the File Reparenting Limits and Supporting Network Rules`__ -- `slides`__ and `recording`__
 * Linux Security Summit (2021-09-29) - `Deep Dive into Landlock Internals`__ -- `slides`__ and `recording`__
 * Open Source Summit (2021-09-28) - `Sandboxing Applications with Landlock`__ -- `slides`__ and `recording`__
+
+__ https://sched.co/1ej3a
+__ talks/2024-09-17_landlock-oss.pdf
+__ https://youtu.be/d85TDpv8L9U
+
+__ https://sched.co/1ebVW
+__ talks/2024-09-17_landlock-lss.pdf
+__ https://youtu.be/yCHGmdXpylA?t=4253s
 
 __ https://cfp.pass-the-salt.org/pts2024/talk/8FVYDF/
 __ talks/2024-07-03_landlock-pts-workshop.pdf
