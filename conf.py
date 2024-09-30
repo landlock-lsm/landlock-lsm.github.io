@@ -78,6 +78,7 @@ pygments_style = None
 html_theme = 'sphinx_rtd_theme'
 
 html_logo = 'landlock-logo-with-shadow.svg'
+html_favicon = 'landlock-logo-with-shadow.svg'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
