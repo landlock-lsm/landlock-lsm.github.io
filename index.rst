@@ -32,8 +32,8 @@ Resources
 
 __ https://docs.kernel.org/userspace-api/landlock.html
 __ talks/2024-06-06_landlock-article.pdf
-__ https://github.com/landlock-lsm/rust-landlock
-__ https://github.com/landlock-lsm/go-landlock
+__ https://crates.io/crates/landlock
+__ https://pkg.go.dev/github.com/landlock-lsm/go-landlock/landlock
 __ https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/samples/landlock/sandboxer.c
 __ https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/security/landlock
 __ https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/tools/testing/selftests/landlock
