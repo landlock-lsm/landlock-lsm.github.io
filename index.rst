@@ -21,12 +21,21 @@ __ mailto:landlock@lists.linux.dev
 __ https://lore.kernel.org/landlock/
 
 
-`Landlock documentation`__ -- `Landlock article`__ -- `kernel code`__ -- `sandbox manager example`__ -- `kernel tests`__ -- `syzkaller coverage`__ -- `Landlock logo`__
+Resources
+---------
+
+* `Landlock documentation`__ and `article`__
+* `Rust`__ and `Go`__ libraries
+* `sandbox manager example (in C)`__
+* `kernel code`__, `tests`__, and `syzkaller coverage`__
+* `Landlock logo`__
 
 __ https://docs.kernel.org/userspace-api/landlock.html
 __ talks/2024-06-06_landlock-article.pdf
-__ https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/security/landlock
+__ https://github.com/landlock-lsm/rust-landlock
+__ https://github.com/landlock-lsm/go-landlock
 __ https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/samples/landlock/sandboxer.c
+__ https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/security/landlock
 __ https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/tools/testing/selftests/landlock
 __ https://storage.googleapis.com/syzkaller/cover/ci-upstream-linux-next-kasan-gce-root.html#security%2flandlock
 __ https://github.com/landlock-lsm/landlock-logo
