@@ -37,7 +37,7 @@ __ https://github.com/landlock-lsm/go-landlock
 __ https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/samples/landlock/sandboxer.c
 __ https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/security/landlock
 __ https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/tools/testing/selftests/landlock
-__ https://storage.googleapis.com/syzkaller/cover/ci-upstream-linux-next-kasan-gce-root.html#security%2flandlock
+__ https://syzkaller.appspot.com/upstream
 __ https://github.com/landlock-lsm/landlock-logo
 
 
