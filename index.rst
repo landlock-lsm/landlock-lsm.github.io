@@ -5,6 +5,10 @@ Landlock: unprivileged access control
    :maxdepth: 2
    :caption: Contents:
 
+.. meta::
+    :description: Landlock: the Linux sandboxing mechanism
+    :keywords: Landlock, sandbox, security, Linux, kernel, unprivileged, access control, LSM, syscalls, filter, restrict, confine, process
+
 The goal of Landlock is to enable to restrict ambient rights (e.g. global
 filesystem access) for a set of processes.  Because Landlock is a stackable
 LSM, it makes possible to create safe security sandboxes as new security layers
