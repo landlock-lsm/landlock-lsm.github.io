@@ -77,6 +77,7 @@ Conferences
 -----------
 
 * FOSDEM (2025-02-01) - `Sandbox IDs with Landlock`__ -- `slides`__ and `recording`__
+* Class and workshop (2025-01-29) `Landlock overview and workshop`__
 * Open Source Summit (2024-09-17) - `Linux sandboxing with Landlock`__ -- `slides`__ and `recording`__
 * Linux Security Summit (2024-09-17) - `Update on Landlock: IOCTL Support`__ -- `slides`__ and `recording`__
 * Pass the Salt (2024-07-03) - `Landlock workshop: Linux sandboxing in practice`__ -- `slides`__
@@ -95,6 +96,8 @@ Conferences
 __ https://fosdem.org/2025/schedule/event/fosdem-2025-6071-sandbox-ids-with-landlock/
 __ talks/2025-02-01_landlock-fosdem.pdf
 __ https://video.fosdem.org/2025/ud2218a/fosdem-2025-6071-sandbox-ids-with-landlock.av1.webm
+
+__ talks/2025-01-29_landlock-workshop.pdf
 
 __ https://sched.co/1ej3a
 __ talks/2024-09-17_landlock-oss.pdf
