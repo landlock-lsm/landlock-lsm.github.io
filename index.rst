@@ -48,6 +48,9 @@ __ https://github.com/landlock-lsm/landlock-logo
 News
 ----
 
+* Linux 6.15 (TBD) - `Add audit support`__
+* Linux 6.12 (2024-11-17) - `New LANDLOCK_SCOPE_ABSTRACT_UNIX_SOCKET and LANDLOCK_SCOPE_SIGNAL`__
+* Linux 6.10 (2024-07-24) - `New LANDLOCK_ACCESS_FS_IOCTL_DEV`__
 * Newsletter (2024-07-16) - `Landlock news #4`__
 * Linux 6.9 (2024-05-12) - `Add support for KUnit and extend documentation`__
 * Linux 6.7 (2024-01-27) - `New LANDLOCK_ACCESS_NET_BIND_TCP and LANDLOCK_ACCESS_NET_CONNECT_TCP`__
@@ -60,6 +63,9 @@ News
 * Linux 5.13 (2021-06-27) - `Initial Landlock version`__
 * LWN article (2021-06-17) - `Landlock (finally) sets sail`__
 
+__ https://git.kernel.org/torvalds/c/72885116069abdd05c245707c3989fc605632970
+__ https://git.kernel.org/torvalds/c/e1b061b444fb01c237838f0d8238653afe6a8094
+__ https://git.kernel.org/torvalds/c/2fc0e7892c10734c1b7c613ef04836d57d4676d5
 __ https://lore.kernel.org/landlock/20240716.yui4Iezai8ae@digikod.net/
 __ https://git.kernel.org/torvalds/c/35e886e88c803920644c9d3abb45a9ecb7f1e761
 __ https://git.kernel.org/torvalds/c/136cc1e1f5be75f57f1e0404b94ee1c8792cb07d
