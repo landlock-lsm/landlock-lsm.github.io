@@ -20,7 +20,7 @@
 # -- Project information -----------------------------------------------------
 
 project = u'Landlock'
-copyright = u'2016-2024, Mickaël Salaün'
+copyright = u'2016-2025, Mickaël Salaün'
 author = u'Mickaël Salaün'
 
 # The short X.Y version
@@ -40,6 +40,7 @@ release = u''
 # ones.
 extensions = [
     'sphinx.ext.githubpages',
+    'sphinx_design',
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -64,7 +65,7 @@ language = 'en'
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = [u'_build', 'Thumbs.db', '.DS_Store']
+exclude_patterns = [u'_build', 'Thumbs.db', '.DS_Store', '.venv']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = None
@@ -75,7 +76,7 @@ pygments_style = None
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'sphinx_rtd_theme'
+html_theme = 'sphinx_book_theme'
 
 html_logo = 'landlock-logo-with-shadow.svg'
 html_favicon = 'landlock-logo-with-shadow.svg'

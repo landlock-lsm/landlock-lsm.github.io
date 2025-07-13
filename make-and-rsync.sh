@@ -2,6 +2,23 @@
 
 set -u -e -o pipefail
 
+VENV=".venv"
+
+if [[ ! -e "${VENV}" ]]; then
+	python -m venv "${VENV}"
+	INSTALLED=false
+else
+	INSTALLED=true
+fi
+
+source "${VENV}/bin/activate"
+
+if ! ${INSTALLED}; then
+	pip install sphinx
+	pip install sphinx-book-theme
+	pip install sphinx_design
+fi
+
 make html
 
 rsync \
