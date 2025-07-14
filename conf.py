@@ -39,6 +39,7 @@ release = u''
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'myst_parser',
     'sphinx.ext.githubpages',
     'sphinx_design',
 ]
@@ -50,7 +51,7 @@ templates_path = ['_templates']
 # You can specify multiple suffix as a list of string:
 #
 # source_suffix = ['.rst', '.md']
-source_suffix = '.rst'
+source_suffix = '.md'
 
 # The master toctree document.
 master_doc = 'index'
@@ -61,6 +62,13 @@ master_doc = 'index'
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
 language = 'en'
+
+myst_html_meta = {
+    "description": "Landlock: the Linux sandboxing mechanism",
+    "keywords": "Landlock, sandbox, security, Linux, kernel, unprivileged, access control, LSM, syscalls, filter, restrict, confine, process",
+}
+
+myst_all_links_external = True
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.

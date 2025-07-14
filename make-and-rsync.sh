@@ -14,6 +14,7 @@ fi
 source "${VENV}/bin/activate"
 
 if ! ${INSTALLED}; then
+	pip install myst_parser
 	pip install sphinx
 	pip install sphinx-book-theme
 	pip install sphinx_design
