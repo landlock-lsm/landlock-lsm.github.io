@@ -3,8 +3,14 @@
 set -u -e -o pipefail
 
 make html
-rm -r website/_static/
-rsync --archive --human-readable --human-readable --info=progress2 _build/html/ website/
+
+rsync \
+	--archive \
+	--delete \
+	--human-readable --human-readable \
+	--info=progress2 \
+	_build/html/* talks \
+	website/
 
 if [[ -n "$(git status --short --porcelain)" ]]; then
 	echo "ERROR: Dirty worktree" >&2
