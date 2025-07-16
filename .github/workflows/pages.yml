@@ -1,0 +1,61 @@
+# SPDX-License-Identifier: Apache-2.0 OR MIT
+
+name: GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+
+  workflow_dispatch:
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.repository == 'landlock-lsm/landlock-lsm.github.io'
+    runs-on: ubuntu-24.04
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+
+    - uses: actions/checkout@v4
+
+    - name: Install Sphinx
+      run: |
+        pip install --requirement requirements.txt \
+          myst_parser \
+          sphinx \
+          sphinx-book-theme \
+          sphinx_design
+
+    - name: Build website
+      run: make html
+
+    - name: Prepare tree
+      run: |
+        mv talks _build/html/
+
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: _build/html
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    permissions:
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
