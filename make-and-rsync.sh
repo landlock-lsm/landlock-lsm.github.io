@@ -21,7 +21,7 @@ if ! ${INSTALLED}; then
 		sphinx_design
 fi
 
-make html
+make clean html
 
 rsync \
 	--archive \

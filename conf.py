@@ -20,7 +20,7 @@
 # -- Project information -----------------------------------------------------
 
 project = u'Landlock'
-copyright = u'2016-2025, Mickaël Salaün'
+copyright = u'2016-2025, Mickaël Salaün. Content licensed under CC BY-SA 4.0'
 author = u'Mickaël Salaün'
 
 # The short X.Y version
@@ -73,7 +73,7 @@ myst_all_links_external = True
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = [u'_build', 'Thumbs.db', '.DS_Store', '.venv']
+exclude_patterns = [u'_build', 'Thumbs.db', '.DS_Store', '.venv', 'README.md']
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = None
