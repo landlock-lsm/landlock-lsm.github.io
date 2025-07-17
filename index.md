@@ -11,7 +11,7 @@
 🌱 Genesis <genesis.md>
 🦀 Rust <https://crates.io/crates/landlock>
 🐹 Go <https://pkg.go.dev/github.com/landlock-lsm/go-landlock/landlock>
-🐘 Mastodon <https://mastodon.social/@l0kod>
+🦣 Mastodon <https://mastodon.social/@l0kod>
 🐙 GitHub <https://github.com/landlock-lsm>
 ```
 
