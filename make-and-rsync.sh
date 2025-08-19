@@ -21,12 +21,16 @@ if ! ${INSTALLED}; then
 		sphinx_design
 fi
 
-make clean html
+make clean dirhtml
 
 rsync \
 	--archive \
 	--delete \
 	--human-readable --human-readable \
 	--info=progress2 \
-	_build/html/* talks \
+	_build/dirhtml/* talks \
 	website/
+
+echo
+echo "To launch the website:"
+echo "python -m http.server -b 127.0.0.1 -d website"
