@@ -1,7 +1,7 @@
 # News & Releases
 
+- Linux 6.15 (2025-05-25) - [Add audit support](https://git.kernel.org/torvalds/c/72885116069abdd05c245707c3989fc605632970)
 - Newsletter (2025-05-19) - [Landlock news #5](https://lore.kernel.org/landlock/20250519.ceihohf6a3uT@digikod.net/)
-- Linux 6.15 (TBD) - [Add audit support](https://git.kernel.org/torvalds/c/72885116069abdd05c245707c3989fc605632970)
 - Linux 6.12 (2024-11-17) - [New LANDLOCK_SCOPE_ABSTRACT_UNIX_SOCKET and LANDLOCK_SCOPE_SIGNAL](https://git.kernel.org/torvalds/c/e1b061b444fb01c237838f0d8238653afe6a8094)
 - Linux 6.10 (2024-07-24) - [New LANDLOCK_ACCESS_FS_IOCTL_DEV](https://git.kernel.org/torvalds/c/2fc0e7892c10734c1b7c613ef04836d57d4676d5)
 - Newsletter (2024-07-16) - [Landlock news #4](https://lore.kernel.org/landlock/20240716.yui4Iezai8ae@digikod.net/)
