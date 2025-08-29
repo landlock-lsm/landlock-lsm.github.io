@@ -1,5 +1,6 @@
 # Talks
 
+- Linux Security Summit Europe (2025-08-29) - [Landlock Config](https://lsseu2025.sched.com/event/25GET) -- [slides](2025-08-29_landlock-config-lss-eu.pdf)
 - FOSDEM (2025-02-01) - [Sandbox IDs with Landlock](https://fosdem.org/2025/schedule/event/fosdem-2025-6071-sandbox-ids-with-landlock/) -- [slides](2025-02-01_landlock-fosdem.pdf) and [recording](https://video.fosdem.org/2025/ud2218a/fosdem-2025-6071-sandbox-ids-with-landlock.av1.webm)
 - Class and workshop (2025-01-29) [Landlock overview and workshop](2025-01-29_landlock-workshop.pdf)
 - Open Source Summit (2024-09-17) - [Linux sandboxing with Landlock](https://sched.co/1ej3a) -- [slides](2024-09-17_landlock-oss.pdf) and [recording](https://youtu.be/d85TDpv8L9U)
