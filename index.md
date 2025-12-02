@@ -8,6 +8,7 @@
 🗺️ Roadmap <https://github.com/orgs/landlock-lsm/projects/1>
 🎤 Talks <talks.md>
 📄 Documentation <https://docs.kernel.org/userspace-api/landlock.html>
+📦 Integrations <integrations.md>
 🌱 Genesis <genesis.md>
 🦀 Rust <https://crates.io/crates/landlock>
 🐹 Go <https://pkg.go.dev/github.com/landlock-lsm/go-landlock/landlock>
