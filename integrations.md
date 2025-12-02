@@ -23,6 +23,16 @@ These lists are provided for informational purposes to highlight potentially int
   - Merged [GitHub PR](https://github.com/cloud-hypervisor/cloud-hypervisor/pull/6214)
   - Virtual machine monitor
 
+* - [Codex CLI](https://github.com/openai/codex)
+  - AI agent
+  - Merged [GitHub PR](https://github.com/openai/codex/pull/629)
+  - OpenAI's CLI agent
+
+* - [Crazy traceroute](https://codeberg.org/mark22k/crazytrace)
+  - Network tool
+  - Merged [Codeberg commit](https://codeberg.org/mark22k/crazytrace/commit/351937f2fee5855648aa1446c05e19df4d9bb68a)
+  - Network simulation program
+
 * - [Pledge for Linux](https://github.com/jart/cosmopolitan/blob/master/libc/calls/unveil.c)
   - Sandbox library
   - [Blog post](https://justine.lol/pledge/)
@@ -62,6 +72,11 @@ These lists are provided for informational purposes to highlight potentially int
   - Development tool
   - Upstream [code](https://git.gameoftrees.org/gitweb/?p=got-portable.git;a=blob;f=compat/landlock.c)
   - Version control system
+
+* - [Gemini CLI](https://github.com/google-gemini/gemini-cli)
+  - AI agent
+  - Open [GitHub PR](https://github.com/google-gemini/gemini-cli/pull/13481)
+  - Google's AI agent
 
 * - [Go Landlock](https://github.com/landlock-lsm/go-landlock)
   - Sandbox library
@@ -148,6 +163,11 @@ These lists are provided for informational purposes to highlight potentially int
   - Merged [GitHub PR](https://github.com/util-linux/util-linux/pull/2628)
   - Utility to run programs with different privileges (support since util-linux v2.40)
 
+* - [snapd](https://github.com/canonical/snapd)
+  - Package manager
+  - Merged [GitHub PR](https://github.com/canonical/snapd/pull/15928)
+  - Package manager (support since v2.72)
+
 * - [sslh](https://github.com/yrutschle/sslh)
   - Network service
   - Merged [release](https://github.com/yrutschle/sslh/releases/tag/v2.1.0)
@@ -163,6 +183,11 @@ These lists are provided for informational purposes to highlight potentially int
   - Merged [GitHub PR](https://github.com/OISF/suricata/pull/7853), see [documentation](https://docs.suricata.io/en/latest/configuration/landlock.html)
   - Network security monitoring engine (support since v7.0.0)
 
+* - [systemd](https://systemd.io/)
+  - Service manager
+  - Open [GitHub PR](https://github.com/systemd/systemd/pull/39174)
+  - System and service manager
+
 * - [tracker-extract](https://gitlab.gnome.org/GNOME/localsearch)
   - Desktop service
   - Merged [GitLab MR](https://gitlab.gnome.org/GNOME/localsearch/-/merge_requests/499)
@@ -177,6 +202,11 @@ These lists are provided for informational purposes to highlight potentially int
   - Archive manager
   - Merged [GitHub PR](https://github.com/onekey-sec/unblob/pull/597)
   - Extraction tool for firmware and file systems (support since v24.12.4)
+
+* - [Warpinator](https://github.com/linuxmint/warpinator)
+  - Network service
+  - Merged [GitHub PR](https://github.com/linuxmint/warpinator/pull/160)
+  - LAN file transfer tool with Landlock isolation
 
 * - [websrv](https://github.com/ngergs/websrv)
   - Network service
