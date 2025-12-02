@@ -30,7 +30,7 @@ These lists are provided for informational purposes to highlight potentially int
 
 * - [Crazy traceroute](https://codeberg.org/mark22k/crazytrace)
   - Network tool
-  - Merged [Codeberg commit](https://codeberg.org/mark22k/crazytrace/commit/351937f2fee5855648aa1446c05e19df4d9bb68a)
+  - Merged [commit](https://codeberg.org/mark22k/crazytrace/commit/351937f2fee5855648aa1446c05e19df4d9bb68a)
   - Network simulation program
 
 * - [Pledge for Linux](https://github.com/jart/cosmopolitan/blob/master/libc/calls/unveil.c)
@@ -195,7 +195,7 @@ These lists are provided for informational purposes to highlight potentially int
 
 * - [Ukuleleweb](https://github.com/gnoack/ukuleleweb)
   - Network service
-  - Merged [GitHub commit](https://github.com/gnoack/ukuleleweb/commit/0ecdd54b36fa)
+  - Merged [commit](https://github.com/gnoack/ukuleleweb/commit/0ecdd54b36fabc397f3d5ca9dc9115d1550052fa)
   - Lightweight wiki server
 
 * - [Unblob](https://unblob.org)
@@ -210,7 +210,7 @@ These lists are provided for informational purposes to highlight potentially int
 
 * - [websrv](https://github.com/ngergs/websrv)
   - Network service
-  - Merged [GitHub commit](https://github.com/ngergs/websrv/commit/40fa2d7d2bbb)
+  - Merged [commit](https://github.com/ngergs/websrv/commit/40fa2d7d2bbb4b7d5533eeb46224fc0242476fda)
   - Web server in Go (support since v3.2.0)
 
 * - [wireproxy](https://github.com/pufferffish/wireproxy)
@@ -220,7 +220,7 @@ These lists are provided for informational purposes to highlight potentially int
 
 * - [XZ Utils](https://github.com/tukaani-project/xz)
   - Archive manager
-  - Merged [GitHub commit](https://github.com/tukaani-project/xz/commit/8276c7f41c671eee4aa3239490658b23dcfd3021)
+  - Merged [commit](https://github.com/tukaani-project/xz/commit/8276c7f41c671eee4aa3239490658b23dcfd3021)
   - Archive manager and compression library (support since v5.6.0), also see the [backdoor incident](https://research.swtch.com/xz-timeline))
 
 * - [Zathura](https://pwmt.org/projects/zathura/)
