@@ -88,6 +88,11 @@ These lists are provided for informational purposes to highlight potentially int
   - [GitHub repository](https://github.com/NicolasT/landlock-hs)
   - Haskell bindings for Landlock
 
+* - [Island](https://github.com/landlock-lsm/island)
+  - Sandboxer
+  - GitHub repository
+  - Official Landlock sandboxing tool
+
 * - [Nomad exec2](https://github.com/hashicorp/nomad-driver-exec2)
   - Orchestrator
   - Upstream [documentation](https://developer.hashicorp.com/nomad/plugins/drivers/exec2)
