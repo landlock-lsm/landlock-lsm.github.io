@@ -188,6 +188,11 @@ These lists are provided for informational purposes to highlight potentially int
   - Merged [GitHub PR](https://github.com/OISF/suricata/pull/7853), see [documentation](https://docs.suricata.io/en/latest/configuration/landlock.html)
   - Network security monitoring engine (support since v7.0.0)
 
+* - [Syd](https://crates.io/crates/syd)
+  - Sandboxer
+  - Merged [commit](https://gitlab.exherbo.org/sydbox/sydbox/-/commit/59e031b7c0b56873c08d76905bc9cab3900da016)
+  - [syd-lock(1) man page](https://man.exherbo.org/syd-lock.1.html)
+
 * - [systemd](https://systemd.io/)
   - Service manager
   - Open [GitHub PR](https://github.com/systemd/systemd/pull/39174)
