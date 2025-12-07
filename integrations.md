@@ -33,6 +33,11 @@ These lists are provided for informational purposes to highlight potentially int
   - Merged [commit](https://codeberg.org/mark22k/crazytrace/commit/351937f2fee5855648aa1446c05e19df4d9bb68a)
   - Network simulation program
 
+* - [C# landlock-sharp](https://www.nuget.org/packages/Landlock)
+  - Sandbox library
+  - [GitHub repository](https://github.com/curiosity-ai/landlock-sharp/)
+  - C# sandbox library
+
 * - [Pledge for Linux](https://github.com/jart/cosmopolitan/blob/master/libc/calls/unveil.c)
   - Sandbox library
   - [Blog post](https://justine.lol/pledge/)
