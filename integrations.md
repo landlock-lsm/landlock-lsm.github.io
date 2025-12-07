@@ -63,6 +63,11 @@ These lists are provided for informational purposes to highlight potentially int
   - Merged [GitHub PR](https://github.com/boustrophedon/extrasafe/pull/28)
   - Rust sandbox library (v0.4.0+)
 
+* - [landlock-sharp](https://www.nuget.org/packages/Landlock)
+  - Sandbox library
+  - [GitHub repository](https://github.com/curiosity-ai/landlock-sharp/)
+  - C# sandbox library (v25.12.63045+)
+
 * - [Firejail](https://github.com/netblue30/firejail)
   - Sandboxer
   - Merged [GitHub PR](https://github.com/netblue30/firejail/pull/6078)
