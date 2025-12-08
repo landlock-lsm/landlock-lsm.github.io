@@ -9,7 +9,8 @@ This website is built using [Sphinx](https://www.sphinx-doc.org/) with [MyST Mar
 ```sh
 mkdir website
 ./make-and-rsync.sh
-xdg-open website/index.html
+uv run python -m http.server -b 127.0.0.1 -d website &
+xdg-open http://127.0.0.1:8000
 ```
 
 ## Resources
