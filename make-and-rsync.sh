@@ -2,26 +2,9 @@
 
 set -u -e -o pipefail
 
-VENV=".venv"
+uv sync
 
-if [[ ! -e "${VENV}" ]]; then
-	python -m venv "${VENV}"
-	INSTALLED=false
-else
-	INSTALLED=true
-fi
-
-source "${VENV}/bin/activate"
-
-if ! ${INSTALLED}; then
-	pip install --requirement requirements.txt \
-		myst_parser \
-		sphinx \
-		sphinx-book-theme \
-		sphinx_design
-fi
-
-make clean dirhtml
+uv run make clean dirhtml
 
 rsync \
 	--archive \
@@ -33,4 +16,4 @@ rsync \
 
 echo
 echo "To launch the website:"
-echo "python -m http.server -b 127.0.0.1 -d website"
+echo "uv run python -m http.server -b 127.0.0.1 -d website"
