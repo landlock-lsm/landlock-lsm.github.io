@@ -277,6 +277,10 @@ The following Linux distributions have Landlock enabled in their kernel configur
   - Enabled by default
   - Merged [commit](https://gitlab.alpinelinux.org/alpine/aports/-/commit/b49410ac39b3c9ef46434b9d5daa79f2c845015e)
 
+* - [Amazon Linux](https://aws.amazon.com/linux/amazon-linux-2023/)
+  - Enabled by default
+  - [Released](https://docs.aws.amazon.com/linux/al2023/release-notes/relnotes-2023.8.20250804.html#release-summary-2023.8.20250804)
+
 * - [Arch Linux](https://archlinux.org/)
   - Enabled by default
   - Merged [commit](https://gitlab.archlinux.org/archlinux/packaging/packages/linux/-/commit/25898768185889a13f3e7a6fa47fcb831ba5b661) (5.13.1.arch1-1)
