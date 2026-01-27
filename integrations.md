@@ -38,6 +38,11 @@ These lists are provided for informational purposes to highlight potentially int
   - [Blog post](https://justine.lol/pledge/)
   - Pledge and Unveil implementation for Linux using Landlock and the Cosmopolitan libc
 
+* - [Podlock](https://flavio.github.io/podlock)
+  - Sandboxer
+  - [GitHub](https://github.com/flavio/podlock)
+  - Sandboxer for Kubernetes Pods
+
 * - [dosemu2](https://github.com/dosemu2/dosemu2)
   - Emulator
   - Merged [GitHub PR](https://github.com/dosemu2/dosemu2/pull/2344)
