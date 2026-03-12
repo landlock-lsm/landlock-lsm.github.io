@@ -43,6 +43,11 @@ These lists are provided for informational purposes to highlight potentially int
   - [GitHub](https://github.com/flavio/podlock)
   - Sandboxer for Kubernetes Pods
 
+* - [Portable]([https://flavio.github.io/podlock](https://github.com/Kraftland/portable))
+  - Sandboxer
+  - GitHub repository
+  - Fast, private, modern sandbox designed for desktop Linux
+
 * - [dosemu2](https://github.com/dosemu2/dosemu2)
   - Emulator
   - Merged [GitHub PR](https://github.com/dosemu2/dosemu2/pull/2344)
