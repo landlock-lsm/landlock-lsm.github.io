@@ -103,6 +103,11 @@ These lists are provided for informational purposes to highlight potentially int
   - Upstream [documentation](https://developer.hashicorp.com/nomad/plugins/drivers/exec2)
   - HashiCorp workload orchestrator
 
+* - [nono](https://nono.sh/)
+  - Sandboxer
+  - [GitHub repository](https://github.com/always-further/nono)
+  - AI agent sandboxing tool and Rust sandbox library
+
 * - [Keysas](https://github.com/r3dlight/keysas)
   - Security tool
   - GitHub repository
