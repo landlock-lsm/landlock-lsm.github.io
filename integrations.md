@@ -143,6 +143,11 @@ These lists are provided for informational purposes to highlight potentially int
   - Upstream [code](https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/minijail/libminijail.c)
   - ChromeOS sandbox manager and library
 
+* - [NVIDIA OpenShell](https://github.com/NVIDIA/OpenShell)
+  - Sandboxer
+  - [GitHub repository](https://github.com/NVIDIA/OpenShell/blob/main/crates/openshell-sandbox/src/sandbox/linux/landlock.rs)
+  - Sandboxing tool for AI agents
+
 * - [OCI Runtime Spec](https://github.com/opencontainers/runtime-spec)
   - Specification
   - Open [GitHub PR](https://github.com/opencontainers/runtime-spec/pull/1111)
