@@ -45,7 +45,7 @@ These lists are provided for informational purposes to highlight potentially int
 
 * - [Portable](https://github.com/Kraftland/portable)
   - Sandboxer
-  - GitHub repository
+  - Merged [GitHub PR](https://github.com/Kraftland/portable/pull/721)
   - Fast, private, modern sandbox designed for desktop Linux
 
 * - [dosemu2](https://github.com/dosemu2/dosemu2)
