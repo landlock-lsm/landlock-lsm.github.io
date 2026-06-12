@@ -78,6 +78,11 @@ These lists are provided for informational purposes to highlight potentially int
   - Merged [GitHub PR](https://github.com/boustrophedon/extrasafe/pull/28)
   - Rust sandbox library (v0.4.0+)
 
+* - [Fence](https://fencesandbox.com/)
+  - Sandboxer
+  - [GitHub repository](https://github.com/fencesandbox/fence)
+  - AI agent sandboxing tool
+
 * - [Firejail](https://github.com/netblue30/firejail)
   - Sandboxer
   - Merged [GitHub PR](https://github.com/netblue30/firejail/pull/6078)
@@ -97,6 +102,11 @@ These lists are provided for informational purposes to highlight potentially int
   - Sandbox library
   - GitHub repository
   - Official Go library for Landlock, see [documentation](https://pkg.go.dev/github.com/landlock-lsm/go-landlock/landlock)
+
+* - [Greywall](https://greywall.io/)
+  - Sandboxer
+  - [GitHub repository](https://github.com/GreyhavenHQ/greywall)
+  - AI agent sandboxing tool
 
 * - [Haskell Landlock](https://hackage.haskell.org/package/landlock)
   - Sandbox library
