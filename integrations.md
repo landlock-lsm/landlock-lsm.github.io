@@ -143,6 +143,11 @@ These lists are provided for informational purposes to highlight potentially int
   - GitHub repository
   - Sandboxing tool leveraging Landlock
 
+* - [Landstrip](https://crates.io/crates/landstrip)
+  - Sandboxer
+  - [GitHub repository](https://github.com/jarkkojs/landstrip)
+  - AI agent sandboxing tool
+
 * - [Minijail](https://chromium.googlesource.com/chromiumos/platform/minijail)
   - Sandboxer
   - Upstream [code](https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/minijail/libminijail.c)
