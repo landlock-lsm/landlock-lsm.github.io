@@ -103,6 +103,11 @@ These lists are provided for informational purposes to highlight potentially int
   - [GitHub repository](https://github.com/NicolasT/landlock-hs)
   - Haskell bindings for Landlock
 
+* - [Harn](https://harnlang.com/)
+  - AI agent
+  - Merged [GitHub PR](https://github.com/burin-labs/harn/pull/1661)
+  - Programming language for orchestrating AI agents
+
 * - [Island](https://github.com/landlock-lsm/island)
   - Sandboxer
   - GitHub repository
