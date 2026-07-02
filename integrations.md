@@ -371,6 +371,10 @@ The following Linux distributions have Landlock enabled in their kernel configur
   - Enabled by default
   - Merged [GitLab MR](https://gitlab.gnome.org/GNOME/gnome-build-meta/-/merge_requests/2559)
 
+* - [NixOS](https://nixos.org/)
+  - Enabled by default
+  - Merged [GitHub PR](https://github.com/NixOS/nixpkgs/pull/155606)
+
 * - [Red Hat Enterprise Linux (RHEL)](https://www.redhat.com/en/technologies/linux-platforms/enterprise-linux)
   - Enabled by default
   - Merged [GitLab MR](https://gitlab.com/redhat/centos-stream/src/kernel/centos-stream-9/-/merge_requests/5490) (since RHEL 9.6.0, backported features up to ABI 5: [kernel-5.14.0-568.el9](https://gitlab.com/redhat/centos-stream/src/kernel/centos-stream-9/-/commit/5ba435c29b4704e87af1a0fd291ea6610ff5af92))
