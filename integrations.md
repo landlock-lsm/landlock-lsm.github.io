@@ -138,6 +138,11 @@ These lists are provided for informational purposes to highlight potentially int
   - GitHub repository
   - USB malware cleaning station
 
+* - [Ladybird](https://github.com/opencontainers/runtime-spec)
+  - Web browser
+  - Merged [GitHub PR](https://github.com/LadybirdBrowser/ladybird/pull/10001)
+  - Independent web browser
+
 * - [Landlock Config](https://github.com/landlock-lsm/landlockconfig)
   - Sandbox library
   - GitHub repository
