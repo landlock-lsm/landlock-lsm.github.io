@@ -118,6 +118,11 @@ These lists are provided for informational purposes to highlight potentially int
   - Merged [GitHub PR](https://github.com/burin-labs/harn/pull/1661)
   - Programming language for orchestrating AI agents
 
+* - [Homebrew](https://brew.sh/)
+  - Package manager
+  - Merged [GitHub PR](https://github.com/Homebrew/brew/pull/23255)
+  - Rootless cross-platform package manager
+
 * - [Island](https://github.com/landlock-lsm/island)
   - Sandboxer
   - GitHub repository
