@@ -1,5 +1,6 @@
 # Talks
 
+- Linux Security Summit Europe (2026-10-08) - [Update on Landlock: Observability, process-wide control, networking and more](https://lsseu2026.sched.com/event/2QmU9) -- [slides](2026-10-08_landlock-lss.pdf) and [demo](2026-10-08_landlock-lss_demo-lltop.webm)
 - FOSDEM (2026-01-31) - [Island: Sandboxing tool powered by Landlock](https://fosdem.org/2026/schedule/event/EW8M3R-island/) -- [slides](2026-01-31_island-fosdem.pdf) and [recording](https://video.fosdem.org/2026/ub5132/EW8M3R-island.av1.webm)
 - All Systems Go (2025-09-30) - [Sandboxing services with Landlock](https://cfp.all-systems-go.io/all-systems-go-2025/talk/FXWDCF/) -- [slides](2025-09-30_landlock-systemd-asg.pdf)
 - Linux Security Summit Europe (2025-08-29) - [Landlock Config](https://lsseu2025.sched.com/event/25GET) -- [slides](2025-08-29_landlock-config-lss-eu.pdf)
